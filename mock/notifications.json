@@ -1,0 +1,79 @@
+{
+    "data": [
+        {
+            "id": "notif-001",
+            "title": "You won $25!",
+            "message": "Congratulations! Your submission to 'Spotify Playlist Art' finished in 2nd place and earned you $25.00.",
+            "type": "reward",
+            "isRead": false,
+            "createdAt": "2026-02-19T08:30:00.000Z",
+            "metadata": {
+                "eventId": "evt-002",
+                "amount": 25.00,
+                "transactionHash": "0xabc123def456..."
+            }
+        },
+        {
+            "id": "notif-002",
+            "title": "Nike Air Max voting ends soon",
+            "message": "The voting period for 'Air Max: Vote for the Best Design' closes in 4 hours. Cast your final votes now!",
+            "type": "event",
+            "isRead": false,
+            "createdAt": "2026-02-19T06:00:00.000Z",
+            "metadata": {
+                "eventId": "evt-001"
+            }
+        },
+        {
+            "id": "notif-003",
+            "title": "Alex followed you",
+            "message": "@alex_creative started following you. Check out their profile!",
+            "type": "social",
+            "isRead": false,
+            "createdAt": "2026-02-18T21:15:00.000Z",
+            "metadata": {
+                "userId": "user-alex"
+            }
+        },
+        {
+            "id": "notif-004",
+            "title": "Your submission is winning!",
+            "message": "Your entry to 'Summer Salad Challenge' is currently ranked #1 with 342 votes. Keep sharing to stay on top!",
+            "type": "event",
+            "isRead": true,
+            "createdAt": "2026-02-18T14:00:00.000Z",
+            "metadata": {
+                "eventId": "evt-004",
+                "rank": 1,
+                "voteCount": 342
+            }
+        },
+        {
+            "id": "notif-005",
+            "title": "New campaign from Meta",
+            "message": "Meta launched a new VR World Builder challenge with a $1,500 pool. It starts in 2 days — be the first to participate!",
+            "type": "event",
+            "isRead": true,
+            "createdAt": "2026-02-17T10:00:00.000Z",
+            "metadata": {
+                "eventId": "evt-005"
+            }
+        },
+        {
+            "id": "notif-006",
+            "title": "Reward pool increased",
+            "message": "The reward pool for 'Cyberpunk Build-off' was boosted to $10,000. Ending soon — get your submission in!",
+            "type": "reward",
+            "isRead": true,
+            "createdAt": "2026-02-16T08:00:00.000Z",
+            "metadata": {
+                "eventId": "trend-003",
+                "newPool": 10000
+            }
+        }
+    ],
+    "meta": {
+        "total": 6,
+        "unreadCount": 3
+    }
+}

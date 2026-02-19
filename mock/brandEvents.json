@@ -1,0 +1,73 @@
+{
+    "data": [
+        {
+            "id": "evt-001",
+            "title": "Air Max: Vote for the Best Design",
+            "eventType": "vote",
+            "status": "live",
+            "leaderboardPool": 5000,
+            "totalSubmissions": 182,
+            "totalVotes": 4230,
+            "startTime": "2026-02-10T10:00:00.000Z",
+            "endTime": "2026-02-23T10:00:00.000Z",
+            "blockchainStatus": "confirmed"
+        },
+        {
+            "id": "evt-b02",
+            "title": "Neon Dreams Campaign",
+            "eventType": "post",
+            "status": "live",
+            "leaderboardPool": 5000,
+            "totalSubmissions": 312,
+            "totalVotes": 18400,
+            "startTime": "2026-02-08T10:00:00.000Z",
+            "endTime": "2026-02-22T10:00:00.000Z",
+            "blockchainStatus": "confirmed"
+        },
+        {
+            "id": "evt-b03",
+            "title": "Summer Vibes Test",
+            "eventType": "post",
+            "status": "draft",
+            "leaderboardPool": 2000,
+            "totalSubmissions": 0,
+            "totalVotes": 0,
+            "startTime": "2026-03-01T10:00:00.000Z",
+            "endTime": "2026-03-15T10:00:00.000Z",
+            "blockchainStatus": "pending"
+        },
+        {
+            "id": "evt-b04",
+            "title": "Tech Review 2024",
+            "eventType": "post",
+            "status": "ended",
+            "leaderboardPool": 10000,
+            "totalSubmissions": 628,
+            "totalVotes": 52100,
+            "startTime": "2025-11-01T10:00:00.000Z",
+            "endTime": "2025-12-15T10:00:00.000Z",
+            "blockchainStatus": "confirmed"
+        },
+        {
+            "id": "evt-b05",
+            "title": "Winter Capsule Drop",
+            "eventType": "vote",
+            "status": "scheduled",
+            "leaderboardPool": 3500,
+            "totalSubmissions": 0,
+            "totalVotes": 0,
+            "startTime": "2026-03-05T10:00:00.000Z",
+            "endTime": "2026-03-20T10:00:00.000Z",
+            "blockchainStatus": "pending"
+        }
+    ],
+    "meta": {
+        "total": 5,
+        "page": 1,
+        "pageSize": 10,
+        "hasMore": false,
+        "activeCount": 2,
+        "draftCount": 1,
+        "endedCount": 1
+    }
+}

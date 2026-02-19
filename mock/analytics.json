@@ -1,0 +1,23 @@
+{
+    "data": {
+        "brandId": "brand-001",
+        "period": "last_7_days",
+        "stats": {
+            "totalViews": 1200000,
+            "viewsChange": 12.0,
+            "engagementRate": 8.5,
+            "engagementChange": 2.1,
+            "totalSpend": 4200,
+            "spendChange": 5.0,
+            "conversions": 850,
+            "conversionsChange": 15.0
+        },
+        "campaignPerformance": [40, 65, 30, 80, 55, 90, 45, 70, 60, 95, 50, 75],
+        "demographics": [
+            { "label": "18-24", "value": 45 },
+            { "label": "25-34", "value": 30 },
+            { "label": "35-44", "value": 15 },
+            { "label": "45+",   "value": 10 }
+        ]
+    }
+}

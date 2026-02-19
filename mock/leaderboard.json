@@ -1,0 +1,152 @@
+{
+    "topUsers": [
+        {
+            "rank": 1,
+            "userId": "user-101",
+            "username": "david_art",
+            "displayName": "David Designs",
+            "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuDNVXmwEIJf-HfKYKQm8ddCtMhlK1XDIOChe8j2gqRGM5wXTpb5cLDZRQ4PS52b1D-eYQkyY2y9Itg_JZP_ndciNiv2B79O0-rjNckL8G29SVeC2V4w_mBQ4KzlPTPV6T9faZbAp8_RbBVGCXgZ18lrfwgfi1tXa91kqkY5_lzySFI98Z_TqBQuSkjHCyeZJbNprhijrsMR_je70VZLO6Dy8iIulY9lXyRBptjgas1xk51VqvYw5Xwqt0c2Ht3YlPmgier1iJRF-95O",
+            "xp": 8420,
+            "streak": 22,
+            "totalVotesReceived": 124000,
+            "totalRewardsEarned": 8940,
+            "challengesWon": 15,
+            "badges": ["Champion", "Streak King", "Top Creator"],
+            "isCurrentUser": false
+        },
+        {
+            "rank": 2,
+            "userId": "user-102",
+            "username": "chef_jen",
+            "displayName": "Jenna Cooks",
+            "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuAgF1VCxevbqRB_WgyEhCZWo1d-o35_V3i3NEanc4bGeKCWlHy8V5-N-mN56_d_WtjOC2pvXOjyI17RJP-JUHvrPXMsM9g3f2Qe79rZM1SznOG51L-e3h8lVejsIoiHEgRMeiRqiptUm65iiOt4Otd0NNb-NbAdY1Dh6kWTAuQ5OUlsmaejtIyK1t7mKgtsyAyTTO5Yaj2W8K3IviStMg2ILXTvNpbDieYMekRfGIxO6ZaOXIvztjuRC7yW9xHZ8LBLPwN5bw14_Iez",
+            "xp": 6150,
+            "streak": 18,
+            "totalVotesReceived": 52000,
+            "totalRewardsEarned": 4250,
+            "challengesWon": 8,
+            "badges": ["Rising Star", "High Earner"],
+            "isCurrentUser": false
+        },
+        {
+            "rank": 3,
+            "userId": "user-103",
+            "username": "moto_mike",
+            "displayName": "Mike Rides",
+            "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuA8m6aSUmPtcg8cE9y5ZoS53XdjWkqQwcw9JTT_cbpcDvRZ1quoAtgi69E0rNymTovvitspR-hdEvaM9eDYT5K5nOZMwpXXOyaPSzRbgXlO_yH8TStJv2xHD49Sq_s4YwL9r7F3tIu_WFC3RIUVqGVbvX4Kq5ekKVEVdcHqNN8ie_uy578UqZBQ9cZO41_ZqLcButtveXzNr2Xb1M4osSr3_aU4PBGwRh5iQ_abwm6MA3qw89yn1VfE4-iBdjkuFq2op24Wf_zitVuW",
+            "xp": 4890,
+            "streak": 14,
+            "totalVotesReceived": 29000,
+            "totalRewardsEarned": 3100,
+            "challengesWon": 5,
+            "badges": ["Trend Starter"],
+            "isCurrentUser": false
+        }
+    ],
+    "data": [
+        {
+            "rank": 4,
+            "userId": "user-104",
+            "username": "DesignGuru",
+            "displayName": "Design Guru",
+            "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuDu3Z5ZfFflrR7nwXiinXsfahr8_upRdi5JI5OJXvMQn9Q0k7xBZkHlyQ85e-P08KVlPxUM2cyBDGdTlLXQAaVfR0RhAOslyC6NlT05-LM_q4wA2LDN-O4tiOPAo7vovza6a1uUBgwqTFotLQi85RHG_rm17N3IHWTPr-HGohBPdjuPFC4HT_f2najvgwUE4toXyp5FApO78af1qY-nAbPrvxL5rKkcp6qydIb9U3N2wdqliJ_ZYrVRlDJ3aE8q8_OpbWhbjwJdiDlz",
+            "xp": 3480,
+            "streak": 12,
+            "totalVotesReceived": 1900,
+            "totalRewardsEarned": 142,
+            "challengesWon": 3,
+            "badges": ["Top Voter", "Streak King"],
+            "isCurrentUser": false
+        },
+        {
+            "rank": 5,
+            "userId": "user-105",
+            "username": "CryptoArtist",
+            "displayName": "Crypto Artist",
+            "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuC4WpxfVBsccHh4X8PBpdgMbQ3t23QZFXk76atdNvXUJQNq52lW5Vdur7qK5bNjVMRakm1avQDDHvizUahANLKMaCCreprdEVUi7YVkfyfi74WtdavEkEXHFMq9IwWT8hyUdewcYHDbIr7M6QDtFDUazSrW_XsPCAso8sGrp2odJKJy8GMqMceOxaL-BUU2CLu56NOvUmCsyQyNKDlNJ6TQ-IT4cWcTlK3NLf9_P0kgm1h5t_CU4k1YULM4QIPcMe7m44_2TguHWKAP",
+            "xp": 3120,
+            "streak": 9,
+            "totalVotesReceived": 1650,
+            "totalRewardsEarned": 118,
+            "challengesWon": 2,
+            "badges": ["High Earner"],
+            "isCurrentUser": false
+        },
+        {
+            "rank": 6,
+            "userId": "user-106",
+            "username": "VibeCheck",
+            "displayName": "Vibe Check",
+            "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuCeX0W6jD4HEg4XxbvMNd399oMKeL8mFZlxtMTcuh_9eLYme7NYScIWqgclJlAns8SrIdf2L9-QNFmtFB0lbHjX1EPHWHtgTQnkE86rUP8nb3fpg_r-AJ7lPHdyIHV6X9uU25pzKznp_vDptvi5PCEpAnW55kI8W5kpLFduFu9hXBN9lMPh16mJFWLz0Hxk6VGHQ5KpmpTKDyzomdJchZfDmv93KA98sAeU0snbqcirPkU-zX8NcqnMAw1CWrQEt27Ruwx-0XgZiOsr",
+            "xp": 2890,
+            "streak": 7,
+            "totalVotesReceived": 1420,
+            "totalRewardsEarned": 95,
+            "challengesWon": 2,
+            "badges": ["Trend Starter"],
+            "isCurrentUser": false
+        },
+        {
+            "rank": 7,
+            "userId": "user-107",
+            "username": "FlowState",
+            "displayName": "Flow State",
+            "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuCpvRP1uIv4EYmZx7GJoB2xyit-_JZPG0D9Xe0_dfElQsWFOYgdGldCOsdGc6Xsa7PaSNCwHC7MuD40zb81qpZkqnlgpjWvCnnDNw4lzjFxGYpWgNNRG_j8TQbhjNeNhTQGzcWZPhRwB6yGD_kCLWjvqMoRX1--H_nkrWiHWh1tcxE5WeyJ1d9aNZiVGmXDe7Z1qXM6_MVtjlygxIkqfq4DQaEts01yQgmdzlkkJmiFWB5SygvoM4k0HbOiFN17OjKPyizn728NIk6H",
+            "xp": 2650,
+            "streak": 11,
+            "totalVotesReceived": 1100,
+            "totalRewardsEarned": 88,
+            "challengesWon": 1,
+            "badges": ["Streak King"],
+            "isCurrentUser": false
+        },
+        {
+            "rank": 8,
+            "userId": "user-current",
+            "username": "You",
+            "displayName": "Current User",
+            "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuC6sD8shcEbuD1sEWqq_k9nBz6jYqCaILxk058kBiCwlwVdu9qFIfZxlQnh5BDwQhyeNNMD8zPG6w5PZNz5SW2R1GOlu3Zmh6hUYGMxRRQOuSWRiPcTG8n5eOb03VlvlW27x-HnAdO-0MWUmldh-SIDwr6fw_J2CRzUpPr-TtHAl-NTFI7tZEvP_ts4aOpuQKxH92CjPdAXUV8Opd5SOHIXZB8fr-rU9B9-DRUgY51RYxnY0cAyhSkZXheEfrkR4KWzScuV5TQQuA5s",
+            "xp": 2480,
+            "streak": 6,
+            "totalVotesReceived": 980,
+            "totalRewardsEarned": 72,
+            "challengesWon": 1,
+            "badges": ["Top Voter", "Rising Star"],
+            "isCurrentUser": true
+        },
+        {
+            "rank": 9,
+            "userId": "user-109",
+            "username": "ByteRunner",
+            "displayName": "Byte Runner",
+            "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuBfC3TG6uFaXUvlzRGaPGZTLof-BZXSNFQUNRiGX-Bm_g_gUC2jsSMfAfOYvLSOTdxsK7uxY-_hk4QdvQ_0SwTInuLn-FNjqDhXqwNESYlrdjpNae_-hwThUF9XCVV-6zF5ennn8k5D_AaCW-Vn9r1rqFoQcx0beOmOGxpjXBsRmL0wUIy7CbJeR_74HUUkbaaIEX4rxudD8PY0X8JJ681MINPMSStKpns4rNEKhTYmBeklmIigyQv1ky_XKegXxSdpmJrIcCaWp2q8",
+            "xp": 2310,
+            "streak": 5,
+            "totalVotesReceived": 870,
+            "totalRewardsEarned": 64,
+            "challengesWon": 1,
+            "badges": ["High Earner"],
+            "isCurrentUser": false
+        },
+        {
+            "rank": 10,
+            "userId": "user-110",
+            "username": "GridLock",
+            "displayName": "Grid Lock",
+            "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuCYDk32Cg4J9AhFpxS7AX6jeC7MUb7Wazu1dII8lCacxAve1ZjWQRD13BCTwJOxUcOH2VD0ReoQV2ZTngC6K7bMW2xYZ-xQP0IrcN5W0u1Wgn8LUHzoGJICcbdqurp85LTVc9GopvH23Nq2bBMe8WWBsIwJLgKjtDyuBZs8IZGolNmSyHp28eyqzNn02lruGh2PBwfb2AiH777YFRJullwgTR0JqTSRsnYgMGOOtzk2NgVK-KDtKjOCh8lmJ3D5ThXuosqrI-Vcaww9",
+            "xp": 2180,
+            "streak": 4,
+            "totalVotesReceived": 760,
+            "totalRewardsEarned": 55,
+            "challengesWon": 0,
+            "badges": ["Trend Starter"],
+            "isCurrentUser": false
+        }
+    ],
+    "meta": {
+        "total": 100,
+        "page": 1,
+        "pageSize": 10,
+        "hasMore": true
+    }
+}

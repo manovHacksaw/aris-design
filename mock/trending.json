@@ -1,0 +1,61 @@
+{
+    "data": [
+        {
+            "id": "trend-001",
+            "title": "Nike Air Max Creative",
+            "description": "Design the future of air.",
+            "eventType": "vote",
+            "status": "live",
+            "leaderboardPool": 5000,
+            "endTime": "2026-02-23T10:00:00.000Z",
+            "timeRemaining": "2d 14h",
+            "totalParticipants": 4200,
+            "coverImage": "https://lh3.googleusercontent.com/aida-public/AB6AXuBLbgT1oExwMAiJyiQGoTmr2_kR2RzwNJYJBtC10wBZMijE3OCEsrPgdSvzCdO5lXHk81lddNFm7XOVW5duvH0UNSvRbqqMfszPAppy5WzzJdxdDJ-W914K5bL2peoY2EZRnCxcTpKN05hnX_Q5trEB_C66YSHiNMx8bouhFfYb9QKO1YlOzCUEsJ-DDg7D9kM6N2quwuaYRXbRgmImK56qxAz4QG-jtC26S1jV-6xiLtbbDDfXGKBwxW4JMERm6bODCcQUE0dsB3ZQ",
+            "brand": {
+                "id": "brand-001",
+                "name": "Nike Originals",
+                "handle": "nike",
+                "avatar": "https://ui-avatars.com/api/?name=Nike&background=2F6AFF&color=fff",
+                "verified": true
+            }
+        },
+        {
+            "id": "trend-002",
+            "title": "Coke Zero Refresh",
+            "description": "Capture your refresh moment.",
+            "eventType": "post",
+            "status": "live",
+            "leaderboardPool": 2500,
+            "endTime": "2026-02-27T08:00:00.000Z",
+            "timeRemaining": "4d 08h",
+            "totalParticipants": 1300,
+            "coverImage": "https://lh3.googleusercontent.com/aida-public/AB6AXuCWXdij1SyjTwEpsDcfi27vNIMR4A5kWzyZfgXSq-mNBctN3XeoBAwyn1g6ybVKUu1YIggx-T1A3GeGdKmM97wDDhhFYUoCTYY9dUfcS2GSxdBLNbM89apBymuKSSUSg9x6IVmEm-rRSAjhvuCnkWTsnIqXACRbYYyEOa7vaIcN5vE9GAK6CqPqxPcvsV_Ftd8pzSynscsHYatTZwiLkpy9MWBHUG8Brz5Xsw_SdbH7CYr-DPyKxsktn0n4qnSaV1vXmE_NlgiqIwbA",
+            "brand": {
+                "id": "brand-007",
+                "name": "Coca Cola",
+                "handle": "cocacola",
+                "avatar": "https://ui-avatars.com/api/?name=Coke&background=EF4444&color=fff",
+                "verified": true
+            }
+        },
+        {
+            "id": "trend-003",
+            "title": "Cyberpunk Build-off",
+            "description": "Show us your best rig setup.",
+            "eventType": "post",
+            "status": "ending_soon",
+            "leaderboardPool": 10000,
+            "endTime": "2026-02-20T02:30:00.000Z",
+            "timeRemaining": "12h 30m",
+            "totalParticipants": 8400,
+            "coverImage": "https://lh3.googleusercontent.com/aida-public/AB6AXuAXUoby-fhRCSeQQ8igxjUiZ_YxeJiBodMgWCinUX2jDiFePLEC0wy6j-kl8D7BQLl6iQXIr-tiOzxGTRNVeTMz9MitvRJi-2WU6mEbV_JMgRDekxmRbtcl8ZLie4qmBiq7Kpwx_K4HXe2oznYbWoncrTL0nzX3v6Oj92rpKEAUUjFQqFstdy0N1dRfRlEXhD8O9ETehqXagsL81m_o1S1UEiO9QGPe9TsMFy6ZOZWqi3goCsXyGffkeUjWpfsmMIdFd2k1ZHOCeToz",
+            "brand": {
+                "id": "brand-008",
+                "name": "Razer",
+                "handle": "razer",
+                "avatar": "https://ui-avatars.com/api/?name=Razer&background=00D649&color=111",
+                "verified": true
+            }
+        }
+    ]
+}

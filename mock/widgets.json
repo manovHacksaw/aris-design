@@ -1,0 +1,58 @@
+{
+    "hotChallenges": [
+        {
+            "id": "hc-001",
+            "eventId": "evt-001",
+            "title": "Air Max Build",
+            "brandName": "Nike",
+            "reward": "$500",
+            "coverImage": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=200&fit=crop"
+        },
+        {
+            "id": "hc-002",
+            "eventId": "trend-002",
+            "title": "Summer Vibes",
+            "brandName": "Coca Cola",
+            "reward": "$250",
+            "coverImage": "https://images.unsplash.com/photo-1554866585-cd94860890b7?w=400&h=200&fit=crop"
+        }
+    ],
+    "recentSubmissions": [
+        {
+            "id": "rs-001",
+            "userId": "user-neon",
+            "username": "NeonVibe",
+            "eventTitle": "Nike Air Max",
+            "coverImage": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=100&h=100&fit=crop",
+            "createdAt": "2026-02-19T08:18:00.000Z",
+            "isActive": true
+        },
+        {
+            "id": "rs-002",
+            "userId": "user-pixel",
+            "username": "PixelArt",
+            "eventTitle": "Spotify Art",
+            "coverImage": "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=100&h=100&fit=crop",
+            "createdAt": "2026-02-19T08:05:00.000Z",
+            "isActive": false
+        },
+        {
+            "id": "rs-003",
+            "userId": "user-retro",
+            "username": "RetroStyle",
+            "eventTitle": "Coke Refresh",
+            "coverImage": "https://images.unsplash.com/photo-1554866585-cd94860890b7?w=100&h=100&fit=crop",
+            "createdAt": "2026-02-19T07:20:00.000Z",
+            "isActive": false
+        },
+        {
+            "id": "rs-004",
+            "userId": "user-artj",
+            "username": "ArtisticJ",
+            "eventTitle": "Meta World",
+            "coverImage": "https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?w=100&h=100&fit=crop",
+            "createdAt": "2026-02-19T05:20:00.000Z",
+            "isActive": false
+        }
+    ]
+}

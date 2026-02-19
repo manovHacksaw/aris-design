@@ -1,0 +1,22 @@
+{
+    "data": [
+        {
+            "id": "bn-001",
+            "text": "Low reward pool balance for 'Summer Vibes Test'",
+            "type": "warning",
+            "createdAt": "2026-02-19T06:00:00.000Z"
+        },
+        {
+            "id": "bn-002",
+            "text": "3 new high-value submissions on 'Neon Dreams Campaign'",
+            "type": "info",
+            "createdAt": "2026-02-19T01:00:00.000Z"
+        },
+        {
+            "id": "bn-003",
+            "text": "Campaign 'Air Max Vote' ending in 4 days",
+            "type": "alert",
+            "createdAt": "2026-02-18T10:00:00.000Z"
+        }
+    ]
+}

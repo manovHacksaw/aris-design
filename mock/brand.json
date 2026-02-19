@@ -1,0 +1,17 @@
+{
+    "id": "brand-001",
+    "name": "Nike Inc.",
+    "handle": "nike",
+    "avatar": "https://ui-avatars.com/api/?name=Nike&background=2F6AFF&color=fff",
+    "description": "Just Do It. Bringing inspiration and innovation to every athlete.",
+    "website": "https://nike.com",
+    "verified": true,
+    "createdAt": "2024-01-15T00:00:00.000Z",
+    "stats": {
+        "totalEvents": 12,
+        "activeEvents": 3,
+        "totalRewardsPaid": 48200,
+        "totalParticipants": 24500,
+        "avgEngagementRate": 8.5
+    }
+}

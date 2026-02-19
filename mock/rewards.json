@@ -1,0 +1,72 @@
+{
+    "data": [
+        {
+            "poolId": "pool-001",
+            "eventId": "evt-006",
+            "claimType": "winner",
+            "baseAmount": 25.00,
+            "finalAmount": 25.00,
+            "status": "claimable",
+            "transactionHash": null,
+            "claimedAt": null,
+            "event": {
+                "id": "evt-006",
+                "title": "Peak Adventure Photo",
+                "coverImage": "https://lh3.googleusercontent.com/aida-public/AB6AXuC3AGais-gwxMRoyDzXwF7j1yp-ppTPDvKQpSh9_z1RrlG0-uy2iDCln-qkMhPxvna7M4HIAu1iS-VpZ6rFu3V90m_5Wh2kkd3FE3NN3t8Jt5XDbsdrUPk7DEKfDm0wDQEop2PqrLdxDUgEVc2jTGgFu1fDPPGlVUP9gbP6xCJfcf_t8IU9OJpdZopHXOPkK20XQG_Mb05AEEI3IRbNeupHSp41uTo_gbmehfqR98-GmDkILfle7be5DiA4dIX20yqjsKSsLq-La0U0"
+            }
+        },
+        {
+            "poolId": "pool-002",
+            "eventId": "evt-004",
+            "claimType": "participation",
+            "baseAmount": 0.08,
+            "finalAmount": 0.08,
+            "status": "claimed",
+            "transactionHash": "0x7f4a3b2c1d9e8f56a3b2c1d9e8f567890abcdef1234567890abcdef12345678",
+            "claimedAt": "2026-02-18T15:30:00.000Z",
+            "event": {
+                "id": "evt-004",
+                "title": "Summer Salad Challenge",
+                "coverImage": "https://lh3.googleusercontent.com/aida-public/AB6AXuA3n6P0VAMdsJsdnJJc521hdALiqRySabaOBYBM2_vy7XtURi37q-rxU_aIFUasQjKfgpRBCyzl4C9vMSqy_pq9pP84PySV55piDFPn6DpLhgnPD-mRBT5InUrEmaYfKttw9U-41BRrxyKH1f5O4nVxoaIzB6Cb5trB_GLIylsVkkJ47DFZBwx54MlWMHuk37x5G_4lBsu7wNVLk4vXL8gwXCqKZ1ezieJDjc2XWhf_IdcHZDRcHobi7qIi2GtRoSa_f80QjD5B5Mbb"
+            }
+        },
+        {
+            "poolId": "pool-003",
+            "eventId": "evt-002",
+            "claimType": "leaderboard",
+            "baseAmount": 50.00,
+            "finalAmount": 50.00,
+            "status": "claimable",
+            "transactionHash": null,
+            "claimedAt": null,
+            "event": {
+                "id": "evt-002",
+                "title": "Playlist Cover Art",
+                "coverImage": "https://lh3.googleusercontent.com/aida-public/AB6AXuBhMKldK8ut-GonyZ8kV-6qVEeafBOLVHaRRDUUgDJdulQr1t4_KWnmsZzVDdsNnHNO3tbwHfPGxDRfgSFU3X1JnD56bMgJw_f_mq2zkdiKXg2wt5mMeus-4dxs7Br6mAFeI2jwUoXd3ZZqL5ouc-V6GmLsUYRDzxg4EUWiwvJcMnn2sHjfwMt7ftzaUOnQ_yzsFgox-jfDLfWmpZLLulk_NunmOHnSFh6tQgCgEH3ejbFqKJN_6dmC9VBlCf9fUWtoDdQv0laOCpfM"
+            }
+        },
+        {
+            "poolId": "pool-004",
+            "eventId": "evt-001",
+            "claimType": "participation",
+            "baseAmount": 0.05,
+            "finalAmount": 0.05,
+            "status": "pending",
+            "transactionHash": null,
+            "claimedAt": null,
+            "event": {
+                "id": "evt-001",
+                "title": "Air Max: Vote for the Best Design",
+                "coverImage": "https://lh3.googleusercontent.com/aida-public/AB6AXuCYiG-zIhRn_VJ8cj1EL2PwG6YhycgoqKoayLqHvOciU27W6ymsq3dAES2LeCuiYkMC8M0saTD50kGdcOZUXXOET8UNKfxoHKPGqvYUjJ_rM2C5D9MwiPp9i6BXFAlHr34VGtAB6j_nlXnmCLEM_EcQ8inYkiAVQXsLv93k_0vvBbwEVjXn-YDBki0M44ogo_9PpGDrfAZ0eDWVQqenqgTTPHg043QFcZOUPPS3qkEef6k80vOQI_GZNeBTeht1HsvUGDOmy_ZzGOSk"
+            }
+        }
+    ],
+    "meta": {
+        "total": 4,
+        "page": 1,
+        "pageSize": 10,
+        "hasMore": false,
+        "totalEarned": 75.13,
+        "pendingClaims": 2
+    }
+}

@@ -1,0 +1,12 @@
+{
+    "data": {
+        "userId": "user-current",
+        "streak": 12,
+        "rankLabel": "Bronze IV",
+        "rankTier": "bronze",
+        "rankProgress": 82,
+        "weeklyXp": [40, 65, 45, 80, 55, 90, 75],
+        "totalXp": 2480,
+        "nextTierLabel": "Silver"
+    }
+}

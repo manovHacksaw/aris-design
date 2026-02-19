@@ -1,0 +1,168 @@
+@import "tailwindcss";
+
+:root {
+  /* Clean Light Theme */
+  --color-background: #FAFAFA;
+  --color-foreground: #09090b;
+
+  /* Primary: Sapphire Blue */
+  --color-primary: #2F6AFF;
+  --color-primary-foreground: #FFFFFF;
+  --color-primary-dark: #1F5AFF;
+  --color-primary-light: #4F8AFF;
+
+  /* Secondary: Light Gray */
+  --color-secondary: #f4f4f5;
+  --color-secondary-foreground: #09090b;
+
+  /* Accent: Muted Pink */
+  --color-accent: #FF7AA2;
+  --color-accent-foreground: #FFFFFF;
+
+  /* UI Surfaces */
+  --color-card: #FFFFFF;
+  --color-card-border: rgba(0, 0, 0, 0.08);
+  --color-input: #ffffff;
+  --color-folder: #f4f4f5;
+
+  /* Radius System */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Premium Shadows */
+  --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-spotify: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+
+  /* Soft Border Override */
+  --border-soft: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dark {
+  /* Professional Dark Grey */
+  --color-background: #09090b;
+  --color-foreground: #FAFAFA;
+  --color-primary: #2F6AFF;
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #181818;
+  --color-secondary-foreground: #FFFFFF;
+  --color-accent: #FF7AA2;
+  --color-card: #121212;
+  --color-card-border: rgba(255, 255, 255, 0.03);
+  --color-input: #1f1f1f;
+  --color-folder: #18181b;
+
+  /* Shadows for Dark Mode */
+  --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-spotify: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+}
+
+@theme inline {
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-foreground);
+
+  --color-primary: var(--color-primary);
+  --color-primary-foreground: var(--color-primary-foreground);
+  --color-primary-dark: var(--color-primary-dark);
+  --color-primary-light: var(--color-primary-light);
+
+  --color-secondary: var(--color-secondary);
+  --color-secondary-foreground: var(--color-secondary-foreground);
+
+  --color-accent: var(--color-accent);
+  --color-accent-foreground: var(--color-accent-foreground);
+
+  /* Sapphire specific semantic names */
+  --color-sapphire: #2F6AFF;
+  --color-aris-bg: #09090b;
+  --color-aris-card: #18181b;
+  --color-aris-border: #27272a;
+  --color-muted-pink: #FF7AA2;
+
+  --color-card: var(--color-card);
+  --color-card-border: var(--color-card-border);
+  --color-border: var(--color-card-border);
+  --color-input: var(--color-input);
+  --color-folder: var(--color-folder);
+
+  --font-sans: var(--font-inter), sans-serif;
+  --font-display: var(--font-inter), sans-serif;
+
+  /* Radius tokens */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+  --radius-full: 9999px;
+
+  /* Animations */
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-marquee: marquee 25s linear infinite;
+
+  @keyframes float {
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+
+  @keyframes marquee {
+    0% {
+      transform: translateX(0%);
+    }
+
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+}
+
+/* Base Styles */
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2F6AFF;
+}
+
+/* Utility to hide scrollbar but keep functionality */
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar,
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

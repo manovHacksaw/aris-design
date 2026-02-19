@@ -1,0 +1,40 @@
+{
+    "data": [
+        {
+            "id": "act-001",
+            "friendId": "user-alex",
+            "friendName": "Alex",
+            "friendAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
+            "actionType": "submitted",
+            "actionText": "submitted an entry to",
+            "eventId": "evt-001",
+            "eventTitle": "Nike Air Max Creative",
+            "eventImage": "https://lh3.googleusercontent.com/aida-public/AB6AXuCYiG-zIhRn_VJ8cj1EL2PwG6YhycgoqKoayLqHvOciU27W6ymsq3dAES2LeCuiYkMC8M0saTD50kGdcOZUXXOET8UNKfxoHKPGqvYUjJ_rM2C5D9MwiPp9i6BXFAlHr34VGtAB6j_nlXnmCLEM_EcQ8inYkiAVQXsLv93k_0vvBbwEVjXn-YDBki0M44ogo_9PpGDrfAZ0eDWVQqenqgTTPHg043QFcZOUPPS3qkEef6k80vOQI_GZNeBTeht1HsvUGDOmy_ZzGOSk",
+            "createdAt": "2026-02-19T07:50:00.000Z"
+        },
+        {
+            "id": "act-002",
+            "friendId": "user-mira",
+            "friendName": "Mira",
+            "friendAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Mira",
+            "actionType": "won",
+            "actionText": "won $25 from",
+            "eventId": "evt-002",
+            "eventTitle": "Spotify Playlist Art",
+            "eventImage": "https://lh3.googleusercontent.com/aida-public/AB6AXuBhMKldK8ut-GonyZ8kV-6qVEeafBOLVHaRRDUUgDJdulQr1t4_KWnmsZzVDdsNnHNO3tbwHfPGxDRfgSFU3X1JnD56bMgJw_f_mq2zkdiKXg2wt5mMeus-4dxs7Br6mAFeI2jwUoXd3ZZqL5ouc-V6GmLsUYRDzxg4EUWiwvJcMnn2sHjfwMt7ftzaUOnQ_yzsFgox-jfDLfWmpZLLulk_NunmOHnSFh6tQgCgEH3ejbFqKJN_6dmC9VBlCf9fUWtoDdQv0laOCpfM",
+            "createdAt": "2026-02-19T07:10:00.000Z"
+        },
+        {
+            "id": "act-003",
+            "friendId": "user-jay",
+            "friendName": "Jay",
+            "friendAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Jay",
+            "actionType": "following",
+            "actionText": "started following",
+            "eventId": "trend-003",
+            "eventTitle": "Razer Build-off",
+            "eventImage": "https://lh3.googleusercontent.com/aida-public/AB6AXuAXUoby-fhRCSeQQ8igxjUiZ_YxeJiBodMgWCinUX2jDiFePLEC0wy6j-kl8D7BQLl6iQXIr-tiOzxGTRNVeTMz9MitvRJi-2WU6mEbV_JMgRDekxmRbtcl8ZLie4qmBiq7Kpwx_K4HXe2oznYbWoncrTL0nzX3v6Oj92rpKEAUUjFQqFstdy0N1dRfRlEXhD8O9ETehqXagsL81m_o1S1UEiO9QGPe9TsMFy6ZOZWqi3goCsXyGffkeUjWpfsmMIdFd2k1ZHOCeToz",
+            "createdAt": "2026-02-19T06:20:00.000Z"
+        }
+    ]
+}

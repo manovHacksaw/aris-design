@@ -1,0 +1,70 @@
+{
+    "data": [
+        {
+            "id": "sub-001",
+            "eventId": "evt-001",
+            "userId": "user-alex",
+            "username": "alex_creative",
+            "userAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
+            "mediaUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuCYiG-zIhRn_VJ8cj1EL2PwG6YhycgoqKoayLqHvOciU27W6ymsq3dAES2LeCuiYkMC8M0saTD50kGdcOZUXXOET8UNKfxoHKPGqvYUjJ_rM2C5D9MwiPp9i6BXFAlHr34VGtAB6j_nlXnmCLEM_EcQ8inYkiAVQXsLv93k_0vvBbwEVjXn-YDBki0M44ogo_9PpGDrfAZ0eDWVQqenqgTTPHg043QFcZOUPPS3qkEef6k80vOQI_GZNeBTeht1HsvUGDOmy_ZzGOSk",
+            "mediaType": "image",
+            "textContent": null,
+            "voteCount": 342,
+            "rank": 1,
+            "status": "winning",
+            "isAiAssisted": false,
+            "isCurrentUser": false,
+            "engagementStats": {
+                "views": 12400,
+                "shares": 230
+            },
+            "createdAt": "2026-02-11T14:22:00.000Z"
+        },
+        {
+            "id": "sub-002",
+            "eventId": "evt-001",
+            "userId": "user-104",
+            "username": "DesignGuru",
+            "userAvatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuDu3Z5ZfFflrR7nwXiinXsfahr8_upRdi5JI5OJXvMQn9Q0k7xBZkHlyQ85e-P08KVlPxUM2cyBDGdTlLXQAaVfR0RhAOslyC6NlT05-LM_q4wA2LDN-O4tiOPAo7vovza6a1uUBgwqTFotLQi85RHG_rm17N3IHWTPr-HGohBPdjuPFC4HT_f2najvgwUE4toXyp5FApO78af1qY-nAbPrvxL5rKkcp6qydIb9U3N2wdqliJ_ZYrVRlDJ3aE8q8_OpbWhbjwJdiDlz",
+            "mediaUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuBhMKldK8ut-GonyZ8kV-6qVEeafBOLVHaRRDUUgDJdulQr1t4_KWnmsZzVDdsNnHNO3tbwHfPGxDRfgSFU3X1JnD56bMgJw_f_mq2zkdiKXg2wt5mMeus-4dxs7Br6mAFeI2jwUoXd3ZZqL5ouc-V6GmLsUYRDzxg4EUWiwvJcMnn2sHjfwMt7ftzaUOnQ_yzsFgox-jfDLfWmpZLLulk_NunmOHnSFh6tQgCgEH3ejbFqKJN_6dmC9VBlCf9fUWtoDdQv0laOCpfM",
+            "mediaType": "image",
+            "textContent": null,
+            "voteCount": 298,
+            "rank": 2,
+            "status": "eligible",
+            "isAiAssisted": true,
+            "isCurrentUser": false,
+            "engagementStats": {
+                "views": 9800,
+                "shares": 145
+            },
+            "createdAt": "2026-02-11T16:45:00.000Z"
+        },
+        {
+            "id": "sub-003",
+            "eventId": "evt-001",
+            "userId": "user-current",
+            "username": "You",
+            "userAvatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuC6sD8shcEbuD1sEWqq_k9nBz6jYqCaILxk058kBiCwlwVdu9qFIfZxlQnh5BDwQhyeNNMD8zPG6w5PZNz5SW2R1GOlu3Zmh6hUYGMxRRQOuSWRiPcTG8n5eOb03VlvlW27x-HnAdO-0MWUmldh-SIDwr6fw_J2CRzUpPr-TtHAl-NTFI7tZEvP_ts4aOpuQKxH92CjPdAXUV8Opd5SOHIXZB8fr-rU9B9-DRUgY51RYxnY0cAyhSkZXheEfrkR4KWzScuV5TQQuA5s",
+            "mediaUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuCIQc4XTLhvfd8OoVZm5ddVU-PaVsNsHSukuY_3HcJg84l2RK-YhkoY_dU07xPZQIDLeJ8XJbIxHi54V_3BJ3_1LjsdojT89HtQb6R0aG2LP9dyxc4FdlSGc0uqxty-qY_FIEkzpFqGtlx_uDLUElN7z_BD25-PJPi9t2Fy6YDD2tDS5mqRk-1FMjJWQWYKlOUrfiW10qM_XcnTjrbXIr5-NPjtaTxQoTrK2xB0aK86SZCCMXvqTV31iUz_9ytY7e_MQ65D-orXxR_W",
+            "mediaType": "image",
+            "textContent": null,
+            "voteCount": 215,
+            "rank": 3,
+            "status": "ranked",
+            "isAiAssisted": false,
+            "isCurrentUser": true,
+            "engagementStats": {
+                "views": 7200,
+                "shares": 88
+            },
+            "createdAt": "2026-02-12T09:10:00.000Z"
+        }
+    ],
+    "meta": {
+        "total": 182,
+        "page": 1,
+        "pageSize": 10,
+        "hasMore": true
+    }
+}
