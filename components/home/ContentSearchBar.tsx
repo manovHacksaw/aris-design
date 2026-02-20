@@ -16,7 +16,7 @@ export default function ContentSearchBar({ className, value, onChange }: { class
                 type="text"
                 value={value}
                 onChange={onChange}
-                placeholder="Search creators, challenges, or tags..."
+                placeholder="Search events, creators, or brands..."
                 className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-foreground/40 text-sm md:text-base font-bold"
             />
             <div className="hidden md:flex items-center gap-1.5 ml-2">

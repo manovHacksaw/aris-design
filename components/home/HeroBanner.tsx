@@ -52,11 +52,11 @@ export default function HeroBanner() {
                     transition={{ delay: 0.3 }}
                     className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4"
                 >
-                    <button className="bg-foreground text-background px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all hover:bg-foreground/90 active:scale-95">
+                    <button className="bg-foreground text-background px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all hover:bg-foreground hover:shadow-lg hover:shadow-foreground/30 hover:-translate-y-1 active:scale-95">
                         Register Now
                         <ArrowRight className="w-4 h-4" />
                     </button>
-                    <button className="bg-white/10 backdrop-blur-xl border border-white/20 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all hover:bg-white/20 active:scale-95">
+                    <button className="bg-white/10 backdrop-blur-xl border border-white/20 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all hover:bg-white/20 hover:border-white/40 hover:-translate-y-1 active:scale-95">
                         View Details
                     </button>
                 </motion.div>

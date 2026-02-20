@@ -56,7 +56,7 @@ function FeedSkeleton() {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const breakpointColumnsObj = { default: 3, 1300: 3, 1100: 2, 700: 1 };
+const breakpointColumnsObj = { default: 3, 1536: 4, 1280: 3, 1024: 2, 768: 2, 640: 1, 0: 1 };
 
 export default function FeedGrid() {
     const [events, setEvents] = useState<EventData[]>([]);

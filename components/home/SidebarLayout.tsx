@@ -25,9 +25,9 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
                 </Suspense>
                 <MobileHeader />
 
-                {/* Content wrapper - Removed mobile horizontal padding for edge-to-edge feel if needed */}
-                <div className="flex-1 w-full max-w-[1400px] mx-auto pt-4 px-0 md:px-8">
-                    <div className="px-4 md:px-0">
+                {/* Content wrapper - Responsive padding and container sizing */}
+                <div className="flex-1 w-full max-w-[1600px] mx-auto pt-3 px-0 md:pt-4 lg:pt-6 md:px-6 lg:px-8">
+                    <div className="px-3 sm:px-4 md:px-0">
                         {children}
                     </div>
                 </div>
