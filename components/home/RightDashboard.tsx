@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { TrendingUp, Flame, Zap, ChevronRight, Play } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { getUserStats } from "@/services/mockUserService";
 import { getHotChallenges, getRecentSubmissions } from "@/services/mockEventService";
@@ -24,9 +25,9 @@ export default function RightDashboard() {
     const [recentSubs, setRecentSubs] = useState<RecentSubmission[]>([]);
 
     useEffect(() => {
-        getUserStats().then(setStats).catch(() => {});
-        getHotChallenges().then(setHotChallenges).catch(() => {});
-        getRecentSubmissions().then(setRecentSubs).catch(() => {});
+        getUserStats().then(setStats).catch(() => { });
+        getHotChallenges().then(setHotChallenges).catch(() => { });
+        getRecentSubmissions().then(setRecentSubs).catch(() => { });
     }, []);
 
     return (
@@ -96,48 +97,49 @@ export default function RightDashboard() {
                     ))}
                 </div>
                 <div className="flex items-center justify-between text-[10px] text-foreground/30 font-black uppercase tracking-widest px-1">
-                    {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map((d) => <span key={d}>{d}</span>)}
+                    {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => <span key={d}>{d}</span>)}
                 </div>
             </div>
 
-            {/* 3. Hot Challenges */}
-            {hotChallenges.length > 0 && (
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between px-2">
-                        <h3 className="text-[13px] font-black text-foreground uppercase tracking-widest">Hot Challenges</h3>
-                        <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-1">
-                            View All <ChevronRight className="w-3 h-3" />
-                        </button>
-                    </div>
-                    <div className="space-y-3">
-                        {hotChallenges.map((item) => (
-                            <div key={item.id} className="bg-card/50 hover:bg-card hover:-translate-y-1 transition-all border border-border rounded-[24px] p-5 group cursor-pointer shadow-sm hover:shadow-md">
-                                <div className="flex gap-4">
-                                    <div className="w-16 h-16 rounded-2xl overflow-hidden relative flex-shrink-0">
-                                        <img src={item.coverImage} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={item.brandName} />
-                                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Play className="w-6 h-6 text-white fill-current" />
-                                        </div>
-                                    </div>
-                                    <div className="flex-1 py-1">
-                                        <div className="flex justify-between items-start mb-1">
-                                            <span className="text-[10px] font-black text-primary uppercase tracking-widest">{item.brandName}</span>
-                                            <div className="flex items-center gap-1 text-foreground font-black text-sm">
-                                                <Zap className="w-3 h-3 text-accent fill-current" />
-                                                {item.reward}
-                                            </div>
-                                        </div>
-                                        <h4 className="text-sm font-black text-foreground mb-3 tracking-tight">{item.title}</h4>
-                                        <button className="bg-primary hover:bg-primary-dark text-background text-[9px] font-black uppercase tracking-widest py-1.5 px-4 rounded-full transition-colors shadow-lg shadow-primary/20">
-                                            Participate
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+            {/* 3. Recent Activity */}
+            <div className="space-y-4">
+                <div className="flex items-center justify-between px-2">
+                    <h3 className="text-[13px] font-black text-foreground uppercase tracking-widest">Recent Activity</h3>
+                    <Link href="/activity" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-1 transition-colors">
+                        View All <ChevronRight className="w-3 h-3" />
+                    </Link>
                 </div>
-            )}
+                <div className="space-y-3">
+                    {[
+                        {
+                            id: 1,
+                            type: "Post Event",
+                            title: "Nike Air Max Redesign",
+                            status: "Completed",
+                            points: "+250 XP"
+                        },
+                        {
+                            id: 2,
+                            type: "Vote Event",
+                            title: "Summer Vibes Campaign",
+                            status: "In Progress",
+                            points: "+50 XP"
+                        }
+                    ].map((item) => (
+                        <Link href="/activity" key={item.id} className="block bg-card/50 hover:bg-card hover:-translate-y-1 transition-all border border-border rounded-[24px] p-5 group cursor-pointer shadow-sm hover:shadow-md">
+                            <div className="flex justify-between items-start mb-1">
+                                <span className={cn("text-[10px] font-black uppercase tracking-widest", item.type === "Vote Event" ? "text-accent" : "text-primary")}>{item.type}</span>
+                                <span className="text-[10px] font-black text-foreground/40 bg-secondary px-2 py-0.5 rounded-full">{item.status}</span>
+                            </div>
+                            <h4 className="text-sm font-black text-foreground mb-3 tracking-tight">{item.title}</h4>
+                            <div className="flex items-center gap-1 text-primary font-black text-xs">
+                                <Zap className="w-3 h-3 fill-current" />
+                                {item.points}
+                            </div>
+                        </Link>
+                    ))}
+                </div>
+            </div>
 
             {/* 4. Recent Submissions */}
             {recentSubs.length > 0 && (
