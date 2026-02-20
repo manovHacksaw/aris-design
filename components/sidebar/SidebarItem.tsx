@@ -39,7 +39,10 @@ export default function SidebarItem({
                 "rounded-xl"
             )}
         >
-            {/* Left accent pill removed in favor of filled icon container */}
+            {/* Left accent pill for active state */}
+            {isActive && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary rounded-full transition-all duration-200" />
+            )}
 
             <div className="flex-shrink-0 relative flex items-center justify-center w-8 h-8 transition-all duration-200">
                 {avatar ? (
