@@ -91,26 +91,26 @@ export default function Explore() {
     );
 
     return (
-        <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
+        <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30 noise-texture">
             <SidebarLayout>
                 <div className="space-y-6 sm:space-y-8 lg:space-y-10 pb-24 md:pb-20">
 
                     {/* Page Header */}
-                    <div className="mb-4 sm:mb-6 lg:mb-8">
-                        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-foreground tracking-tighter mb-1.5 sm:mb-2">Explore</h1>
-                        <p className="text-xs sm:text-sm font-medium text-foreground/40 leading-relaxed uppercase tracking-widest">Explore challenges, creators, and trending content</p>
+                    <div className="mb-6 sm:mb-8 lg:mb-10">
+                        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-neon-gradient tracking-tighter mb-2 sm:mb-3">Explore</h1>
+                        <p className="text-xs sm:text-sm font-medium text-gray-400 leading-relaxed uppercase tracking-widest">Discover challenges, creators, and Web3 opportunities</p>
                     </div>
 
-                    {/* Search Bar - Stronger visual presence */}
-                    <div className="w-full max-w-full lg:max-w-[1400px] bg-card rounded-[20px] sm:rounded-[24px] border border-border/50 p-1 sm:p-1.5 shadow-spotify">
+                    {/* Search Bar - Glass Morphism */}
+                    <div className="w-full max-w-full lg:max-w-[1400px] glass-card rounded-[24px] sm:rounded-[28px] border border-neon-blue/40 p-1 sm:p-1.5 hover:border-neon-blue/80 transition-all duration-300">
                         <ContentSearchBar
-                            className="h-10 sm:h-12 md:h-14 py-0 border-0 bg-transparent shadow-none text-sm sm:text-base"
+                            className="h-10 sm:h-12 md:h-14 py-0 border-0 bg-transparent shadow-none text-sm sm:text-base text-white placeholder:text-gray-500"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
 
-                    {/* Category Chips - Refined and consistent */}
+                    {/* Category Chips - Neon Pill Style */}
                     <div className="relative">
                         <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
                             {categories.map((cat) => {
@@ -121,10 +121,10 @@ export default function Explore() {
                                         key={cat.label}
                                         onClick={() => setActiveCategory(cat.label)}
                                         className={cn(
-                                            "flex items-center gap-2.5 px-6 h-11 rounded-[20px] text-sm font-bold whitespace-nowrap transition-all border",
+                                            "flex items-center gap-2.5 px-6 h-11 rounded-full text-sm font-bold whitespace-nowrap transition-all border uppercase tracking-wider",
                                             isActive
-                                                ? "bg-foreground text-background border-foreground shadow-lg shadow-foreground/10 scale-100"
-                                                : "bg-secondary/50 text-foreground/50 border-border/40 hover:bg-secondary hover:text-foreground hover:border-border hover:scale-105"
+                                                ? "bg-gradient-to-r from-neon-blue to-neon-cyan text-white border-neon-cyan shadow-lg glow-cyan scale-100"
+                                                : "bg-secondary/30 text-gray-400 border-neon-blue/30 hover:bg-secondary/50 hover:text-neon-cyan hover:border-neon-blue/60 hover:glow-blue hover:scale-105"
                                         )}
                                     >
                                         <Icon className={cn("w-4 h-4", isActive ? "fill-current" : "")} />
@@ -136,15 +136,15 @@ export default function Explore() {
                         <div className="absolute right-0 top-0 bottom-2 w-12 bg-gradient-to-l from-background via-background/50 to-transparent pointer-events-none md:hidden" />
                     </div>
 
-                    {/* Featured Events — Refined large hero cards */}
+                    {/* Featured Events — Glass Morphism Cards */}
                     {filteredChallenges.length > 0 && (
                         <section>
-                            <div className="flex items-center justify-between mb-4 sm:mb-6 px-3 sm:px-4 md:px-0 gap-3">
-                                <h2 className="text-xl font-black text-foreground uppercase tracking-wider">
+                            <div className="flex items-center justify-between mb-6 sm:mb-8 px-3 sm:px-4 md:px-0 gap-3">
+                                <h2 className="text-2xl font-black text-neon-cyan uppercase tracking-wider">
                                     {searchQuery ? `Matching Events (${filteredChallenges.length})` : "Featured Events"}
                                 </h2>
-                                <button className="text-[11px] font-bold text-primary uppercase tracking-[0.2em] hover:text-foreground transition-colors flex items-center gap-1.5">
-                                    {searchQuery ? "Show More" : "View All"} <ArrowRight className="w-3.5 h-3.5" />
+                                <button className="text-[11px] font-bold text-neon-cyan uppercase tracking-[0.2em] hover:text-white transition-colors flex items-center gap-1.5 hover:glow-cyan">
+                                    {searchQuery ? "Show More" : "View All"} <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                                 </button>
                             </div>
 
@@ -158,30 +158,30 @@ export default function Explore() {
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: i * 0.1 }}
                                                 whileHover={{ y: -4 }}
-                                                className="relative h-64 md:h-72 rounded-[24px] md:rounded-[28px] overflow-hidden group cursor-pointer border border-border shadow-spotify"
+                                                className="relative h-64 md:h-72 rounded-[28px] md:rounded-[32px] overflow-hidden group cursor-pointer border border-neon-blue/40 hover:border-neon-cyan/80 transition-all hover:glow-cyan shadow-lg"
                                             >
                                                 <img
                                                     src={ch.image}
                                                     alt={ch.brand}
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                                 />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
 
-                                                <div className="absolute top-4 left-4 bg-primary text-white text-[10px] font-black px-3 py-1.5 rounded-full tracking-[0.1em] uppercase">
+                                                <div className="absolute top-4 left-4 bg-gradient-to-r from-neon-cyan to-neon-blue text-white text-[10px] font-black px-4 py-2 rounded-full tracking-[0.12em] uppercase glow-cyan">
                                                     {ch.tag}
                                                 </div>
 
                                                 <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-                                                    <h3 className="text-xl md:text-2xl font-black text-white mb-2 tracking-tight">{ch.brand}</h3>
-                                                    <p className="text-xs md:text-sm font-medium text-white/70 mb-4 md:mb-5 leading-relaxed line-clamp-2 md:line-clamp-none">{ch.title}</p>
+                                                    <h3 className="text-xl md:text-2xl font-black text-neon-cyan mb-2 tracking-tight">{ch.brand}</h3>
+                                                    <p className="text-xs md:text-sm font-medium text-gray-300 mb-4 md:mb-5 leading-relaxed line-clamp-2 md:line-clamp-none">{ch.title}</p>
                                                     <div className="flex items-center gap-4 md:gap-6">
                                                         <div className="flex items-center gap-2">
-                                                            <Trophy className="w-3.5 md:w-4 h-3.5 md:h-4 text-accent fill-accent/20" />
+                                                            <Trophy className="w-3.5 md:w-4 h-3.5 md:h-4 text-neon-magenta" />
                                                             <span className="text-xs md:text-sm font-black text-white">{ch.reward} Pool</span>
                                                         </div>
                                                         <div className="flex items-center gap-2">
-                                                            <Users className="w-3.5 md:w-4 h-3.5 md:h-4 text-white/40" />
-                                                            <span className="text-xs md:text-sm font-bold text-white/60">{ch.entries.toLocaleString()} Enrolled</span>
+                                                            <Users className="w-3.5 md:w-4 h-3.5 md:h-4 text-neon-blue" />
+                                                            <span className="text-xs md:text-sm font-bold text-gray-300">{ch.entries.toLocaleString()} Enrolled</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -197,12 +197,12 @@ export default function Explore() {
                     {/* Top Creators Grid */}
                     {filteredCreators.length > 0 && (
                         <section>
-                            <div className="flex items-center justify-between mb-4 sm:mb-6 px-3 sm:px-4 md:px-0 gap-3">
-                                <h2 className="text-xl font-black text-foreground uppercase tracking-wider">
+                            <div className="flex items-center justify-between mb-6 sm:mb-8 px-3 sm:px-4 md:px-0 gap-3">
+                                <h2 className="text-2xl font-black text-neon-cyan uppercase tracking-wider">
                                     {searchQuery ? `Matching Users (${filteredCreators.length})` : "Top Creators"}
                                 </h2>
-                                <button className="text-[11px] font-bold text-primary uppercase tracking-[0.2em] hover:text-foreground transition-colors flex items-center gap-1.5">
-                                    {searchQuery ? "Show More" : "View All"} <ArrowRight className="w-3.5 h-3.5" />
+                                <button className="text-[11px] font-bold text-neon-cyan uppercase tracking-[0.2em] hover:text-white transition-colors flex items-center gap-1.5 hover:glow-cyan">
+                                    {searchQuery ? "Show More" : "View All"} <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                                 </button>
                             </div>
                             <div className="relative">
@@ -214,32 +214,32 @@ export default function Explore() {
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: i * 0.08 }}
                                             whileHover={{ y: -4 }}
-                                            className="min-w-[140px] md:min-w-0 snap-center bg-card/50 backdrop-blur-sm border border-border/60 rounded-[24px] md:rounded-[28px] p-4 md:p-6 text-center hover:bg-card hover:border-primary/30 transition-all cursor-pointer group shadow-sm hover:shadow-xl flex flex-col items-center"
+                                            className="min-w-[140px] md:min-w-0 snap-center glass-card border border-neon-blue/40 rounded-[28px] md:rounded-[32px] p-4 md:p-6 text-center hover:border-neon-cyan/80 transition-all cursor-pointer group hover:glow-cyan flex flex-col items-center"
                                         >
                                             <div className="relative w-16 h-16 md:w-20 md:h-20 mx-auto mb-3 md:mb-4">
-                                                <div className="absolute inset-0 bg-gradient-to-br from-primary via-accent to-primary rounded-full animate-spin-slow opacity-0 group-hover:opacity-100 transition-opacity blur-md" />
+                                                <div className="absolute inset-0 bg-gradient-to-br from-neon-cyan via-neon-blue to-neon-magenta rounded-full opacity-0 group-hover:opacity-100 transition-opacity blur-lg" />
                                                 <img
                                                     src={creator.avatar}
                                                     alt={creator.name}
-                                                    className="relative w-full h-full rounded-full object-cover border-2 border-border group-hover:border-primary transition-colors p-0.5 bg-background"
+                                                    className="relative w-full h-full rounded-full object-cover border-2 border-neon-blue/60 group-hover:border-neon-cyan transition-colors p-0.5 bg-background"
                                                 />
                                             </div>
-                                            <h3 className="text-sm md:text-base font-black text-foreground tracking-tight truncate w-full">{creator.name}</h3>
-                                            <p className="text-[10px] md:text-[11px] font-bold text-foreground/40 uppercase tracking-widest mb-3 md:mb-4 truncate w-full">{creator.handle}</p>
+                                            <h3 className="text-sm md:text-base font-black text-white tracking-tight truncate w-full">{creator.name}</h3>
+                                            <p className="text-[10px] md:text-[11px] font-bold text-neon-cyan uppercase tracking-widest mb-3 md:mb-4 truncate w-full">{creator.handle}</p>
 
                                             <div className="flex items-center justify-center gap-2 md:gap-4 text-[9px] md:text-[10px] font-black uppercase tracking-widest mb-4 md:mb-6 w-full">
-                                                <div className="flex flex-col gap-0.5 md:gap-1 text-foreground/30 items-center">
+                                                <div className="flex flex-col gap-0.5 md:gap-1 text-gray-400 items-center">
                                                     <span>Followers</span>
-                                                    <span className="text-foreground text-[10px] md:text-xs">{creator.followers}</span>
+                                                    <span className="text-white text-[10px] md:text-xs">{creator.followers}</span>
                                                 </div>
-                                                <div className="w-px h-6 bg-border/50" />
-                                                <div className="flex flex-col gap-0.5 md:gap-1 text-foreground/30 items-center">
+                                                <div className="w-px h-6 bg-neon-blue/30" />
+                                                <div className="flex flex-col gap-0.5 md:gap-1 text-gray-400 items-center">
                                                     <span>XP</span>
-                                                    <span className="text-primary text-[10px] md:text-xs">{creator.xp.toLocaleString()}</span>
+                                                    <span className="text-neon-cyan text-[10px] md:text-xs">{creator.xp.toLocaleString()}</span>
                                                 </div>
                                             </div>
 
-                                            <button className="w-full py-2 md:py-2.5 rounded-xl bg-secondary/80 hover:bg-foreground hover:text-background text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] transition-all mt-auto">
+                                            <button className="w-full py-2 md:py-2.5 rounded-xl bg-gradient-to-r from-neon-blue/20 to-neon-cyan/20 hover:from-neon-blue/40 hover:to-neon-cyan/40 border border-neon-blue/40 hover:border-neon-cyan/80 text-neon-cyan hover:text-white text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] transition-all mt-auto hover:glow-cyan">
                                                 Follow
                                             </button>
                                         </motion.div>
@@ -253,12 +253,12 @@ export default function Explore() {
                     {/* Featured Brands Grid */}
                     {filteredBrands.length > 0 && (
                         <section>
-                            <div className="flex items-center justify-between mb-4 sm:mb-6 px-3 sm:px-4 md:px-0 gap-3">
-                                <h2 className="text-xl font-black text-foreground uppercase tracking-wider">
+                            <div className="flex items-center justify-between mb-6 sm:mb-8 px-3 sm:px-4 md:px-0 gap-3">
+                                <h2 className="text-2xl font-black text-neon-cyan uppercase tracking-wider">
                                     {searchQuery ? `Matching Brands (${filteredBrands.length})` : "Featured Brands"}
                                 </h2>
-                                <button className="text-[11px] font-bold text-primary uppercase tracking-[0.2em] hover:text-foreground transition-colors flex items-center gap-1.5">
-                                    {searchQuery ? "Show More" : "View All"} <ArrowRight className="w-3.5 h-3.5" />
+                                <button className="text-[11px] font-bold text-neon-cyan uppercase tracking-[0.2em] hover:text-white transition-colors flex items-center gap-1.5 hover:glow-cyan">
+                                    {searchQuery ? "Show More" : "View All"} <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                                 </button>
                             </div>
                             <div className="relative">
@@ -270,33 +270,33 @@ export default function Explore() {
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: i * 0.08 }}
                                             whileHover={{ y: -4 }}
-                                            className="min-w-[140px] md:min-w-0 snap-center bg-card/50 backdrop-blur-sm border border-border/60 rounded-[24px] md:rounded-[28px] p-4 md:p-6 text-center hover:bg-card hover:border-primary/30 transition-all cursor-pointer group shadow-sm hover:shadow-xl flex flex-col items-center"
+                                            className="min-w-[140px] md:min-w-0 snap-center glass-card border border-neon-blue/40 rounded-[28px] md:rounded-[32px] p-4 md:p-6 text-center hover:border-neon-magenta/80 transition-all cursor-pointer group hover:glow-magenta flex flex-col items-center"
                                         >
                                             <div className="relative w-16 h-16 md:w-20 md:h-20 mx-auto mb-3 md:mb-4">
-                                                <div className="absolute inset-0 bg-gradient-to-br from-primary via-accent to-primary rounded-full animate-spin-slow opacity-0 group-hover:opacity-100 transition-opacity blur-md" />
+                                                <div className="absolute inset-0 bg-gradient-to-br from-neon-magenta via-neon-violet to-neon-blue rounded-full opacity-0 group-hover:opacity-100 transition-opacity blur-lg" />
                                                 <img
                                                     src={brand.avatar}
                                                     alt={brand.name}
-                                                    className="relative w-full h-full rounded-full object-cover border-2 border-border group-hover:border-primary transition-colors p-0.5 bg-background"
+                                                    className="relative w-full h-full rounded-full object-cover border-2 border-neon-blue/60 group-hover:border-neon-magenta transition-colors p-0.5 bg-background"
                                                 />
                                             </div>
-                                            <h3 className="text-sm md:text-base font-black text-foreground tracking-tight truncate w-full">{brand.name}</h3>
-                                            <p className="text-[10px] md:text-[11px] font-bold text-foreground/40 uppercase tracking-widest mb-3 md:mb-4 truncate w-full">{brand.handle}</p>
+                                            <h3 className="text-sm md:text-base font-black text-white tracking-tight truncate w-full">{brand.name}</h3>
+                                            <p className="text-[10px] md:text-[11px] font-bold text-neon-magenta uppercase tracking-widest mb-3 md:mb-4 truncate w-full">{brand.handle}</p>
 
                                             <div className="flex items-center justify-center gap-2 md:gap-4 text-[9px] md:text-[10px] font-black uppercase tracking-widest mb-4 md:mb-6 w-full">
-                                                <div className="flex flex-col gap-0.5 md:gap-1 text-foreground/30 items-center">
+                                                <div className="flex flex-col gap-0.5 md:gap-1 text-gray-400 items-center">
                                                     <span>Followers</span>
-                                                    <span className="text-foreground text-[10px] md:text-xs">{brand.followers}</span>
+                                                    <span className="text-white text-[10px] md:text-xs">{brand.followers}</span>
                                                 </div>
-                                                <div className="w-px h-6 bg-border/50" />
-                                                <div className="flex flex-col gap-0.5 md:gap-1 text-foreground/30 items-center">
+                                                <div className="w-px h-6 bg-neon-blue/30" />
+                                                <div className="flex flex-col gap-0.5 md:gap-1 text-gray-400 items-center">
                                                     <span>Events</span>
-                                                    <span className="text-primary text-[10px] md:text-xs">{brand.campaigns}</span>
+                                                    <span className="text-neon-magenta text-[10px] md:text-xs">{brand.campaigns}</span>
                                                 </div>
                                             </div>
 
-                                            <button className="w-full py-2 md:py-2.5 rounded-xl bg-secondary/80 hover:bg-foreground hover:text-background text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] transition-all mt-auto">
-                                                View
+                                            <button className="w-full py-2 md:py-2.5 rounded-xl bg-gradient-to-r from-neon-magenta/20 to-neon-violet/20 hover:from-neon-magenta/40 hover:to-neon-violet/40 border border-neon-magenta/40 hover:border-neon-magenta/80 text-neon-magenta hover:text-white text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] transition-all mt-auto hover:glow-magenta">
+                                                View Events
                                             </button>
                                         </motion.div>
                                     ))}

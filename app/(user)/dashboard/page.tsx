@@ -1,7 +1,7 @@
 "use client";
 
 import SidebarLayout from "@/components/home/SidebarLayout";
-import { Eye, Heart, MessageSquare, BarChart2, TrendingUp, Calendar, Zap, Users, UserPlus, UserMinus, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Eye, Heart, MessageSquare, BarChart2, TrendingUp, Calendar, Zap, Users, UserPlus, UserMinus, ArrowUpRight, ArrowDownRight, Sparkles } from "lucide-react";
 
 // Mock Data for Posts Analytics
 const POSTS_ANALYTICS = [
@@ -71,46 +71,51 @@ const OVERALL_STATS = [
 
 export default function DashboardPage() {
     return (
-        <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
+        <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30 noise-texture">
             <SidebarLayout>
                 <div className="flex flex-col min-h-screen">
                     <main className="flex-1 p-4 md:p-8 w-full max-w-[1600px] mx-auto space-y-8 pb-24 md:pb-8">
 
-                        {/* Header */}
-                        <div>
-                            <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
-                            <p className="text-gray-400">Track content performance and audience growth.</p>
+                        {/* Header with Cyberpunk Hero */}
+                        <div className="space-y-4 mb-12">
+                            <div className="flex items-center gap-3">
+                                <Sparkles className="w-6 h-6 text-neon-cyan" />
+                                <h1 className="text-4xl md:text-5xl font-bold text-neon-gradient tracking-tight">Creator Dashboard</h1>
+                            </div>
+                            <p className="text-gray-300 text-lg">Track your content performance, earnings, and audience growth in real-time.</p>
                         </div>
 
-                        {/* Top Stats Cards */}
+                        {/* Top Stats Cards - Glass Morphism */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {OVERALL_STATS.map((stat, i) => (
-                                <div key={i} className="bg-card border border-border rounded-2xl p-5 flex items-center justify-between hover:border-gray-800 transition-colors group shadow-sm hover:shadow-md hover:shadow-black/20">
-                                    <div>
-                                        <p className="text-gray-400 text-sm font-medium mb-1 group-hover:text-gray-300 transition-colors">{stat.label}</p>
-                                        <h2 className="text-3xl font-bold text-foreground tracking-tight">{stat.value}</h2>
-                                        <span className="text-xs font-medium text-green-400 mt-2 inline-flex items-center gap-1 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/10">
-                                            <ArrowUpRight className="w-3 h-3" /> {stat.trend}
-                                        </span>
+                                <div key={i} className="glass-card rounded-3xl p-6 flex flex-col justify-between h-full border border-neon-blue/40 hover:border-neon-blue/80 transition-all duration-300 group hover:shadow-xl">
+                                    <div className="space-y-4">
+                                        <p className="text-gray-400 text-sm font-medium uppercase tracking-wider">{stat.label}</p>
+                                        <div>
+                                            <h2 className="text-4xl font-bold text-white tracking-tight mb-3">{stat.value}</h2>
+                                            <span className="text-xs font-bold text-neon-cyan inline-flex items-center gap-1 bg-neon-cyan/10 px-3 py-1 rounded-full border border-neon-cyan/30 uppercase tracking-wider">
+                                                <ArrowUpRight className="w-3 h-3" /> {stat.trend}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${stat.bg} shadow-lg shadow-black/10 group-hover:scale-105 transition-transform duration-300 border border-white/5`}>
-                                        <stat.icon className={`w-7 h-7 ${stat.color}`} />
+                                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br from-primary/20 to-neon-cyan/20 group-hover:from-primary/40 group-hover:to-neon-cyan/40 transition-all duration-300 border border-neon-blue/30 group-hover:glow-blue">
+                                        <stat.icon className={`w-8 h-8 ${stat.color}`} />
                                     </div>
                                 </div>
                             ))}
                         </div>
 
                         {/* Recent Posts Analytics */}
-                        <div className="space-y-4">
-                            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-                                <TrendingUp className="w-5 h-5 text-primary" />
+                        <div className="space-y-6">
+                            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                                <TrendingUp className="w-6 h-6 text-neon-cyan" />
                                 Content Performance
                             </h2>
 
-                            <div className="bg-card border border-border rounded-3xl overflow-hidden shadow-lg shadow-black/20">
+                            <div className="glass-card rounded-3xl overflow-hidden border border-neon-blue/40 hover:border-neon-blue/80 transition-all duration-300">
 
                                 {/* Table Header - Desktop */}
-                                <div className="hidden md:grid grid-cols-12 gap-4 border-b border-border bg-secondary px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider sticky top-0 z-10">
+                                <div className="hidden md:grid grid-cols-12 gap-4 border-b border-neon-blue/30 bg-secondary/30 px-6 py-4 text-xs font-bold text-neon-cyan uppercase tracking-widest sticky top-0 z-10">
                                     <div className="col-span-4">Post</div>
                                     <div className="col-span-2 text-center">Views</div>
                                     <div className="col-span-2 text-center">Engagement</div>
@@ -119,19 +124,19 @@ export default function DashboardPage() {
                                 </div>
 
                                 {/* Table Body */}
-                                <div className="divide-y divide-border">
+                                <div className="divide-y divide-neon-blue/20">
                                     {POSTS_ANALYTICS.map((post) => (
-                                        <div key={post.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-5 items-center hover:bg-secondary/50 transition-colors group">
+                                        <div key={post.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-5 items-center hover:bg-secondary/40 transition-all duration-300 group border-b border-neon-blue/10 hover:border-neon-blue/40">
 
                                             {/* Post Info (Mobile: Full Width, Desktop: Col 4) */}
                                             <div className="col-span-1 md:col-span-4 flex items-center gap-4">
-                                                <div className="relative w-20 h-14 rounded-xl overflow-hidden flex-shrink-0 border border-border group-hover:border-primary/50 transition-colors shadow-sm">
+                                                <div className="relative w-20 h-14 rounded-xl overflow-hidden flex-shrink-0 border border-neon-blue/40 group-hover:border-neon-cyan/60 transition-all group-hover:glow-cyan">
                                                     <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out" />
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <h3 className="text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors pr-2 leading-tight">{post.title}</h3>
+                                                    <h3 className="text-sm font-bold text-white truncate group-hover:text-neon-cyan transition-colors pr-2 leading-tight">{post.title}</h3>
                                                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                                        <span className="text-xs text-gray-500 flex items-center gap-1 bg-background px-1.5 py-0.5 rounded border border-border">
+                                                        <span className="text-xs text-gray-400 flex items-center gap-1 bg-background/40 px-2 py-0.5 rounded-full border border-neon-blue/20">
                                                             <Calendar className="w-3 h-3" /> {post.date}
                                                         </span>
                                                         {/* Mobile Stats Summary */}
@@ -144,46 +149,44 @@ export default function DashboardPage() {
                                             </div>
 
                                             {/* Views - Desktop */}
-                                            <div className="hidden md:flex col-span-2 flex-col justify-center items-center gap-1">
-                                                <div className="flex items-center gap-1.5 text-foreground font-bold text-base">
-                                                    <Eye className="w-4 h-4 text-blue-500" />
+                                            <div className="hidden md:flex col-span-2 flex-col justify-center items-center gap-2">
+                                                <div className="flex items-center gap-2 text-white font-bold text-base">
+                                                    <Eye className="w-4 h-4 text-neon-blue" />
                                                     {post.views}
                                                 </div>
-                                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${post.performance === 'high' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
-                                                    {post.trend} Trend
+                                                <span className={`text-[10px] font-bold px-2 py-1 rounded-full border uppercase tracking-wider ${post.performance === 'high' ? 'bg-neon-cyan/10 text-neon-cyan border-neon-cyan/30' : 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
+                                                    {post.trend}
                                                 </span>
                                             </div>
 
                                             {/* Engagement - Desktop */}
-                                            <div className="hidden md:flex col-span-2 justify-center items-center gap-6">
-                                                <div className="flex flex-col items-center gap-1" title="Likes">
-                                                    <Heart className="w-5 h-5 text-gray-600 group-hover:text-pink-500 group-hover:fill-pink-500/10 transition-all duration-300" />
-                                                    <span className="text-xs font-medium text-gray-400 group-hover:text-foreground transition-colors">{post.likes}</span>
+                                            <div className="hidden md:flex col-span-2 justify-center items-center gap-8">
+                                                <div className="flex flex-col items-center gap-2" title="Likes">
+                                                    <Heart className="w-5 h-5 text-gray-500 group-hover:text-neon-magenta group-hover:fill-neon-magenta transition-all duration-300" />
+                                                    <span className="text-xs font-medium text-gray-400 group-hover:text-white transition-colors">{post.likes}</span>
                                                 </div>
-                                                <div className="flex flex-col items-center gap-1" title="Remarks">
-                                                    <MessageSquare className="w-5 h-5 text-gray-600 group-hover:text-blue-400 group-hover:fill-blue-400/10 transition-all duration-300" />
-                                                    <span className="text-xs font-medium text-gray-400 group-hover:text-foreground transition-colors">{post.remarks}</span>
+                                                <div className="flex flex-col items-center gap-2" title="Remarks">
+                                                    <MessageSquare className="w-5 h-5 text-gray-500 group-hover:text-neon-blue group-hover:fill-neon-blue/10 transition-all duration-300" />
+                                                    <span className="text-xs font-medium text-gray-400 group-hover:text-white transition-colors">{post.remarks}</span>
                                                 </div>
                                             </div>
 
                                             {/* Audience Impact (Followers) - Desktop */}
                                             <div className="hidden md:flex col-span-2 flex-col justify-center items-center gap-2">
-                                                <div className="flex items-center gap-2 text-xs font-medium bg-green-500/5 px-3 py-1.5 rounded-lg border border-green-500/10 w-full max-w-[120px] justify-between group-hover:bg-green-500/10 transition-colors">
-                                                    <span className="text-green-400 flex items-center gap-1.5"><UserPlus className="w-3.5 h-3.5" /> Gained</span>
-                                                    <span className="text-foreground font-bold">+{post.followersGained}</span>
+                                                <div className="flex items-center gap-2 text-xs font-medium bg-neon-cyan/5 px-3 py-1.5 rounded-lg border border-neon-cyan/30 w-full max-w-[140px] justify-between group-hover:bg-neon-cyan/10 group-hover:glow-cyan transition-all">
+                                                    <span className="text-neon-cyan flex items-center gap-1.5"><UserPlus className="w-3.5 h-3.5" /> +{post.followersGained}</span>
                                                 </div>
-                                                <div className="flex items-center gap-2 text-xs font-medium bg-red-500/5 px-3 py-1.5 rounded-lg border border-red-500/10 w-full max-w-[120px] justify-between group-hover:bg-red-500/10 transition-colors">
-                                                    <span className="text-red-400 flex items-center gap-1.5 opacity-80"><UserMinus className="w-3.5 h-3.5" /> Lost</span>
-                                                    <span className="text-gray-300">-{post.followersLost}</span>
+                                                <div className="flex items-center gap-2 text-xs font-medium bg-neon-magenta/5 px-3 py-1.5 rounded-lg border border-neon-magenta/30 w-full max-w-[140px] justify-between group-hover:bg-neon-magenta/10 group-hover:glow-magenta transition-all">
+                                                    <span className="text-neon-magenta flex items-center gap-1.5"><UserMinus className="w-3.5 h-3.5" /> -{post.followersLost}</span>
                                                 </div>
                                             </div>
 
                                             {/* Earnings - Desktop */}
                                             <div className="hidden md:flex col-span-2 flex-col justify-center items-end pr-4">
-                                                <span className="text-lg font-mono font-black text-foreground group-hover:text-yellow-400 transition-colors tracking-tight">
+                                                <span className="text-lg font-mono font-black text-neon-cyan group-hover:text-white transition-colors tracking-tight">
                                                     {post.earnings}
                                                 </span>
-                                                <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Total Payout</span>
+                                                <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Earnings</span>
                                             </div>
 
                                         </div>
@@ -191,9 +194,9 @@ export default function DashboardPage() {
                                 </div>
 
                                 {/* Footer / Pagination */}
-                                <div className="p-4 bg-card border-t border-border flex justify-center hover:bg-secondary/30 transition-colors cursor-pointer">
-                                    <button className="text-sm text-primary hover:text-primary/80 font-bold transition-colors flex items-center gap-1">
-                                        View Full Analytics Report <ArrowUpRight className="w-3 h-3" />
+                                <div className="p-6 bg-secondary/20 border-t border-neon-blue/30 flex justify-center hover:bg-secondary/40 transition-colors cursor-pointer group">
+                                    <button className="text-sm text-neon-cyan hover:text-white font-bold transition-colors flex items-center gap-2 group-hover:glow-cyan">
+                                        View Full Analytics Report <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                                     </button>
                                 </div>
                             </div>

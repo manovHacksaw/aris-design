@@ -28,18 +28,18 @@ export default function SidebarItem({
             href={href}
             className={cn(
                 "group flex items-center relative w-full pl-3 py-3",
-                "transition-colors duration-150 ease-out",
-                // Active/Hover states
+                "transition-all duration-150 ease-out",
+                // Active state with neon glow
                 isActive
-                    ? "text-white"
-                    : "text-[#9CA3AF] hover:bg-secondary hover:text-white",
+                    ? "text-white border border-neon-blue/60 bg-secondary/30 glow-blue"
+                    : "text-[#9CA3AF] hover:bg-secondary/20 hover:text-white hover:border hover:border-neon-blue/30 hover:glow-blue",
                 // Rounded
                 "rounded-xl"
             )}
         >
-            {/* Left accent pill for active state */}
+            {/* Left neon accent pill for active state */}
             {isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary rounded-full" />
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-gradient-to-b from-neon-cyan to-neon-blue rounded-full shadow-lg" />
             )}
 
             <div className="flex-shrink-0 relative flex items-center justify-center w-8 h-8">
@@ -49,7 +49,7 @@ export default function SidebarItem({
                         alt={label}
                         className={cn(
                             "w-7 h-7 rounded-full object-cover transition-all duration-150",
-                            isActive ? "ring-2 ring-primary" : "border border-transparent"
+                            isActive ? "ring-2 ring-neon-cyan glow-cyan" : "border border-neon-blue/30 group-hover:border-neon-blue/60"
                         )}
                     />
                 ) : Icon ? (
@@ -58,8 +58,8 @@ export default function SidebarItem({
                         className={cn(
                             "transition-colors duration-150",
                             isActive
-                                ? "text-white"
-                                : "text-[#9CA3AF] group-hover:text-white"
+                                ? "text-neon-cyan"
+                                : "text-[#9CA3AF] group-hover:text-neon-cyan"
                         )}
                     />
                 ) : null}

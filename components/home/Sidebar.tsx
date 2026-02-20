@@ -55,9 +55,7 @@ export default function Sidebar() {
 
             <motion.aside
                 className={cn(
-                    "fixed left-0 top-0 h-screen bg-background border-r border-border flex flex-col z-50 overflow-hidden",
-                    // Mobile styles: fixed inset-y-0 left-0 transform transition-transform
-                    // Desktop styles: hidden md:flex
+                    "fixed left-0 top-0 h-screen bg-background border-r border-neon-blue flex flex-col z-50 overflow-hidden noise-texture",
                     isMobileOpen ? "translate-x-0 w-[240px]" : "-translate-x-full md:translate-x-0",
                     "md:flex transition-transform duration-300 ease-in-out md:transition-none"
                 )}
@@ -73,12 +71,12 @@ export default function Sidebar() {
                 {/* Logo Section */}
                 <div className="flex items-center pt-6 pb-5 pl-4 pr-3">
                     <Link href="/home" className="flex items-center group">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20 transition-transform duration-150 group-hover:scale-105 active:scale-95">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-neon-cyan flex items-center justify-center shadow-lg glow-blue transition-all duration-150 group-hover:scale-105 group-hover:shadow-xl active:scale-95">
                             <span className="text-white font-bold text-base select-none">A</span>
                         </div>
                         <span
                             className={cn(
-                                "text-xl font-bold tracking-tight text-foreground overflow-hidden transition-all duration-150 ease-out whitespace-nowrap ml-3",
+                                "text-xl font-bold tracking-tight text-neon-gradient overflow-hidden transition-all duration-150 ease-out whitespace-nowrap ml-3",
                                 showExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
                             )}
                         >
@@ -87,8 +85,8 @@ export default function Sidebar() {
                     </Link>
                 </div>
 
-                {/* Subtle divider under logo */}
-                <div className="mx-4 h-[1px] bg-border mb-2" />
+                {/* Neon divider under logo */}
+                <div className="mx-4 h-[1px] bg-gradient-to-r from-transparent via-neon-blue to-transparent mb-2 opacity-50" />
 
                 {/* Navigation */}
                 <nav className="flex-1 flex flex-col px-3 pt-2">
@@ -112,8 +110,8 @@ export default function Sidebar() {
 
                     {/* Footer cluster - pushed to bottom */}
                     <div className="mt-auto pb-6">
-                        {/* Subtle separator */}
-                        <div className="mx-1 h-[1px] bg-border mb-2" />
+                        {/* Neon separator */}
+                        <div className="mx-1 h-[1px] bg-gradient-to-r from-transparent via-neon-blue to-transparent mb-2 opacity-50" />
 
                         <div className="flex flex-col gap-1">
                             {/* Theme Toggle */}
@@ -121,21 +119,21 @@ export default function Sidebar() {
                                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                                 className={cn(
                                     "group flex items-center w-full pl-3 py-3 rounded-xl",
-                                    "text-foreground/60 hover:bg-secondary hover:text-foreground",
-                                    "transition-colors duration-150 ease-out"
+                                    "text-foreground/60 hover:bg-secondary hover:text-foreground border border-neon-blue/30 hover:border-neon-blue/60",
+                                    "transition-all duration-150 ease-out hover:glow-blue"
                                 )}
                             >
                                 <div className="flex-shrink-0 flex items-center justify-center w-8 h-8">
                                     {theme === "dark"
-                                        ? <IoSunnyOutline size={20} className="transition-colors duration-150" />
+                                        ? <IoSunnyOutline size={20} className="transition-colors duration-150 text-neon-cyan" />
                                         : <IoMoonOutline size={20} className="transition-colors duration-150" />
                                     }
                                 </div>
                                 {showExpanded && (
                                     <div className="ml-3 mr-2">
                                         <div className={cn(
-                                            "relative w-9 h-5 rounded-full transition-colors duration-200 shrink-0",
-                                            theme === "dark" ? "bg-primary" : "bg-foreground/20"
+                                            "relative w-9 h-5 rounded-full transition-all duration-200 shrink-0 border border-neon-blue/40",
+                                            theme === "dark" ? "bg-gradient-to-r from-primary to-neon-cyan shadow-lg glow-blue" : "bg-foreground/20"
                                         )}>
                                             <div className={cn(
                                                 "absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200",
@@ -154,15 +152,15 @@ export default function Sidebar() {
                                 onClick={toggleSidebar}
                                 className={cn(
                                     "group flex items-center w-full pl-3 py-3 rounded-xl",
-                                    "text-foreground/60 hover:bg-secondary hover:text-foreground",
-                                    "transition-colors duration-150 ease-out"
+                                    "text-foreground/60 hover:bg-secondary hover:text-foreground border border-neon-blue/30 hover:border-neon-blue/60",
+                                    "transition-all duration-150 ease-out hover:glow-blue"
                                 )}
                                 aria-label={showExpanded ? "Collapse sidebar" : "Expand sidebar"}
                             >
                                 <div className="flex-shrink-0 flex items-center justify-center w-8 h-8">
                                     {showExpanded
-                                        ? <IoChevronBackOutline size={20} className="transition-colors duration-150" />
-                                        : <IoChevronForwardOutline size={20} className="transition-colors duration-150" />
+                                        ? <IoChevronBackOutline size={20} className="transition-colors duration-150 group-hover:text-neon-cyan" />
+                                        : <IoChevronForwardOutline size={20} className="transition-colors duration-150 group-hover:text-neon-cyan" />
                                     }
                                 </div>
                             </button>

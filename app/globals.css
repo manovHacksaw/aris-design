@@ -1,64 +1,72 @@
 @import "tailwindcss";
 
 :root {
-  /* Clean Light Theme */
+  /* Light Theme - Desktop Fallback */
   --color-background: #FAFAFA;
   --color-foreground: #09090b;
-
-  /* Primary: Sapphire Blue */
   --color-primary: #2F6AFF;
   --color-primary-foreground: #FFFFFF;
-  --color-primary-dark: #1F5AFF;
-  --color-primary-light: #4F8AFF;
-
-  /* Secondary: Light Gray */
   --color-secondary: #f4f4f5;
   --color-secondary-foreground: #09090b;
-
-  /* Accent: Muted Pink */
   --color-accent: #FF7AA2;
   --color-accent-foreground: #FFFFFF;
-
-  /* UI Surfaces */
   --color-card: #FFFFFF;
   --color-card-border: rgba(0, 0, 0, 0.08);
   --color-input: #ffffff;
   --color-folder: #f4f4f5;
-
-  /* Radius System */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 24px;
   --radius-full: 9999px;
-
-  /* Premium Shadows */
   --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.08);
   --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.05);
   --shadow-spotify: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
-
-  /* Soft Border Override */
   --border-soft: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .dark {
-  /* Professional Dark Grey */
-  --color-background: #09090b;
-  --color-foreground: #FAFAFA;
-  --color-primary: #2F6AFF;
+  /* Cyberpunk Dark Theme - Deep Navy/Black Base */
+  --color-background: #07080C;
+  --color-foreground: #E4E8F5;
+  
+  /* Neon Accent Palette */
+  --color-primary: #4F7CFF;
   --color-primary-foreground: #FFFFFF;
-  --color-secondary: #181818;
-  --color-secondary-foreground: #FFFFFF;
-  --color-accent: #FF7AA2;
-  --color-card: #121212;
-  --color-card-border: rgba(255, 255, 255, 0.03);
-  --color-input: #1f1f1f;
-  --color-folder: #18181b;
-
-  /* Shadows for Dark Mode */
-  --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.4);
-  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.3);
-  --shadow-spotify: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+  --color-primary-dark: #3A5FDD;
+  --color-primary-light: #6B95FF;
+  
+  /* Cyberpunk Cyan Accent */
+  --color-secondary: #0B0F1A;
+  --color-secondary-foreground: #E4E8F5;
+  
+  /* Neon Magenta Accent */
+  --color-accent: #FF3DAA;
+  --color-accent-foreground: #FFFFFF;
+  
+  /* Glass Surfaces with slight lighter tone */
+  --color-card: #111628;
+  --color-card-border: rgba(79, 124, 255, 0.15);
+  --color-input: #0B0F1A;
+  --color-folder: #0F1321;
+  
+  /* Cyberpunk Specific Neon Colors */
+  --color-neon-blue: #4F7CFF;
+  --color-neon-violet: #8A5CFF;
+  --color-neon-magenta: #FF3DAA;
+  --color-neon-cyan: #27F0FF;
+  
+  /* Glass Morphism and Glow */
+  --shadow-glow-blue: 0 0 20px rgba(79, 124, 255, 0.4);
+  --shadow-glow-cyan: 0 0 20px rgba(39, 240, 255, 0.4);
+  --shadow-glow-magenta: 0 0 20px rgba(255, 61, 170, 0.4);
+  --shadow-glow-violet: 0 0 20px rgba(138, 92, 255, 0.4);
+  
+  /* Shadows for Cyberpunk */
+  --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 4px 20px rgba(79, 124, 255, 0.1);
+  --shadow-spotify: 0 10px 40px -5px rgba(79, 124, 255, 0.2);
+  --border-soft: 1px solid rgba(79, 124, 255, 0.15);
 }
 
 @theme inline {
@@ -76,18 +84,17 @@
   --color-accent: var(--color-accent);
   --color-accent-foreground: var(--color-accent-foreground);
 
-  /* Sapphire specific semantic names */
-  --color-sapphire: #2F6AFF;
-  --color-aris-bg: #09090b;
-  --color-aris-card: #18181b;
-  --color-aris-border: #27272a;
-  --color-muted-pink: #FF7AA2;
-
   --color-card: var(--color-card);
   --color-card-border: var(--color-card-border);
   --color-border: var(--color-card-border);
   --color-input: var(--color-input);
   --color-folder: var(--color-folder);
+
+  /* Cyberpunk Neon Colors */
+  --color-neon-blue: var(--color-neon-blue);
+  --color-neon-violet: var(--color-neon-violet);
+  --color-neon-magenta: var(--color-neon-magenta);
+  --color-neon-cyan: var(--color-neon-cyan);
 
   --font-sans: var(--font-inter), sans-serif;
   --font-display: var(--font-inter), sans-serif;
@@ -99,18 +106,17 @@
   --radius-xl: 28px;
   --radius-full: 9999px;
 
-  /* Animations */
+  /* Cyberpunk Animations */
   --animate-float: float 6s ease-in-out infinite;
   --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-marquee: marquee 25s linear infinite;
+  --animate-glow-pulse: glow-pulse 3s ease-in-out infinite;
+  --animate-neon-flicker: neon-flicker 0.15s infinite;
 
   @keyframes float {
-
-    0%,
-    100% {
+    0%, 100% {
       transform: translateY(0);
     }
-
     50% {
       transform: translateY(-20px);
     }
@@ -120,9 +126,26 @@
     0% {
       transform: translateX(0%);
     }
-
     100% {
       transform: translateX(-100%);
+    }
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(79, 124, 255, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 30px rgba(79, 124, 255, 0.6);
+    }
+  }
+
+  @keyframes neon-flicker {
+    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+      opacity: 1;
+    }
+    20%, 24%, 55% {
+      opacity: 0.8;
     }
   }
 }
@@ -165,4 +188,91 @@ body {
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Cyberpunk Glass Morphism */
+.glass-card {
+  backdrop-filter: blur(10px);
+  background: rgba(17, 22, 40, 0.4);
+  border: 1px solid rgba(79, 124, 255, 0.15);
+}
+
+.glass-card:hover {
+  background: rgba(17, 22, 40, 0.6);
+  border-color: rgba(79, 124, 255, 0.25);
+  box-shadow: 0 0 20px rgba(79, 124, 255, 0.2);
+}
+
+/* Neon Glow Effects */
+.glow-blue {
+  box-shadow: 0 0 20px rgba(79, 124, 255, 0.4);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 20px rgba(39, 240, 255, 0.4);
+}
+
+.glow-magenta {
+  box-shadow: 0 0 20px rgba(255, 61, 170, 0.4);
+}
+
+.glow-violet {
+  box-shadow: 0 0 20px rgba(138, 92, 255, 0.4);
+}
+
+/* Neon Border Effects */
+.border-neon-blue {
+  border-color: rgba(79, 124, 255, 0.3);
+}
+
+.border-neon-blue:hover {
+  border-color: rgba(79, 124, 255, 0.6);
+  box-shadow: 0 0 15px rgba(79, 124, 255, 0.3);
+}
+
+.border-neon-cyan {
+  border-color: rgba(39, 240, 255, 0.3);
+}
+
+.border-neon-cyan:hover {
+  border-color: rgba(39, 240, 255, 0.6);
+  box-shadow: 0 0 15px rgba(39, 240, 255, 0.3);
+}
+
+/* Gradient Text */
+.text-neon-gradient {
+  background: linear-gradient(135deg, #4F7CFF 0%, #27F0FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Subtle Noise Texture */
+.noise-texture {
+  position: relative;
+  overflow: hidden;
+}
+
+.noise-texture::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' result='noise'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* Floating Animation */
+.float-animation {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Pulsing Glow Animation */
+.pulse-glow {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* Cyberpunk Text Glow */
+.text-glow {
+  text-shadow: 0 0 10px rgba(79, 124, 255, 0.6), 0 0 20px rgba(79, 124, 255, 0.3);
 }
