@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { IoNotificationsOutline, IoPersonCircleOutline } from "react-icons/io5";
+import { useRouter } from "next/navigation";
+import { IoNotificationsOutline, IoPersonCircleOutline, IoEyeOutline } from "react-icons/io5";
 
 export default function BrandMobileHeader() {
+    const router = useRouter();
+
     return (
         <header className="md:hidden flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-md border-b border-border sticky top-0 z-40">
             {/* Left: Brand Logo */}
@@ -21,6 +24,13 @@ export default function BrandMobileHeader() {
 
             {/* Right: Actions */}
             <div className="flex items-center gap-1">
+                <button
+                    onClick={() => router.push("/home?preview=brand")}
+                    className="p-2 rounded-full hover:bg-secondary text-foreground/80 transition-colors"
+                    title="View as User"
+                >
+                    <IoEyeOutline size={22} />
+                </button>
                 <button className="p-2 rounded-full hover:bg-secondary text-foreground/80 transition-colors relative">
                     <IoNotificationsOutline size={22} />
                     <span className="absolute top-2 right-2.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-background" />

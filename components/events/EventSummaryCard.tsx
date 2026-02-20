@@ -71,6 +71,7 @@ export default function EventSummaryCard({ event }: EventSummaryCardProps) {
                     <RewardBlock
                         rewardPool={event.rewardPool}
                         baseReward={event.baseReward}
+                        topReward={event.topReward}
                         mode={event.mode}
                         variant="compact"
                         className="mb-4"

@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { IoGridOutline, IoMegaphoneOutline, IoAddCircleOutline, IoBarChartOutline, IoWalletOutline } from "react-icons/io5";
+import { IoGridOutline, IoMegaphoneOutline, IoAddCircleOutline, IoWalletOutline, IoSettingsOutline } from "react-icons/io5";
 
 const navItems = [
     { label: "Home", href: "/brand/dashboard", icon: IoGridOutline },
     { label: "Campaigns", href: "/brand/events", icon: IoMegaphoneOutline },
     { label: "Create", href: "/brand/create-event", icon: IoAddCircleOutline, isProminent: true },
-    { label: "Analytics", href: "/brand/analytics", icon: IoBarChartOutline },
     { label: "Wallet", href: "/brand/financials", icon: IoWalletOutline },
+    { label: "Settings", href: "/brand/settings", icon: IoSettingsOutline },
 ];
 
 export default function BrandBottomNav() {

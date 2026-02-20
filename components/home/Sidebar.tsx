@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { IoHomeOutline, IoCompassOutline, IoAddCircleOutline, IoTrophyOutline, IoGridOutline, IoWalletOutline, IoSunnyOutline, IoMoonOutline, IoChevronBackOutline, IoChevronForwardOutline, IoNotificationsOutline } from "react-icons/io5";
 import SidebarItem from "@/components/sidebar/SidebarItem";
-import SidebarButton from "@/components/sidebar/SidebarButton";
 import SidebarMore from "@/components/sidebar/SidebarMore";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/context/SidebarContext";
@@ -27,12 +26,14 @@ export default function Sidebar() {
     const navItems = [
         { label: "Home", href: "/home", icon: IoHomeOutline },
 
+
         { label: "Discover", href: "/discover", icon: IoCompassOutline },
+        { label: "Create", href: "/create", icon: IoAddCircleOutline },
         { label: "Leaderboard", href: "/leaderboard", icon: IoTrophyOutline },
         { label: "Dashboard", href: "/dashboard", icon: IoGridOutline },
         { label: "Notifications", href: "/notifications", icon: IoNotificationsOutline },
         { label: "Wallet", href: "/wallet", icon: IoWalletOutline },
-        { label: "Create", href: "/create", icon: IoAddCircleOutline },
+
         {
             label: "Profile",
             href: "/profile",
@@ -116,11 +117,34 @@ export default function Sidebar() {
 
                         <div className="flex flex-col gap-1">
                             {/* Theme Toggle */}
-                            <SidebarButton
-                                label={theme === "dark" ? "Light Mode" : "Dark Mode"}
-                                icon={theme === "dark" ? IoSunnyOutline : IoMoonOutline}
+                            <button
                                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                            />
+                                className={cn(
+                                    "group flex items-center w-full pl-3 py-3 rounded-xl",
+                                    "text-foreground/60 hover:bg-secondary hover:text-foreground",
+                                    "transition-colors duration-150 ease-out"
+                                )}
+                            >
+                                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8">
+                                    {theme === "dark"
+                                        ? <IoSunnyOutline size={20} className="transition-colors duration-150" />
+                                        : <IoMoonOutline size={20} className="transition-colors duration-150" />
+                                    }
+                                </div>
+                                {showExpanded && (
+                                    <div className="ml-3 mr-2">
+                                        <div className={cn(
+                                            "relative w-9 h-5 rounded-full transition-colors duration-200 shrink-0",
+                                            theme === "dark" ? "bg-primary" : "bg-foreground/20"
+                                        )}>
+                                            <div className={cn(
+                                                "absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200",
+                                                theme === "dark" ? "translate-x-4" : "translate-x-0.5"
+                                            )} />
+                                        </div>
+                                    </div>
+                                )}
+                            </button>
 
                             {/* More Menu */}
                             <SidebarMore />

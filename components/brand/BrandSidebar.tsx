@@ -7,15 +7,16 @@ import {
     IoGridOutline,
     IoMegaphoneOutline,
     IoAddCircleOutline,
-    IoBarChartOutline,
     IoWalletOutline,
     IoSettingsOutline,
     IoSunnyOutline,
     IoMoonOutline,
     IoChevronBackOutline,
     IoChevronForwardOutline,
-    IoLogOutOutline
+    IoLogOutOutline,
+    IoEyeOutline
 } from "react-icons/io5";
+import { useRouter } from "next/navigation";
 import SidebarItem from "@/components/sidebar/SidebarItem";
 import SidebarButton from "@/components/sidebar/SidebarButton";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ import { useTheme } from "next-themes";
 
 export default function BrandSidebar() {
     const pathname = usePathname();
+    const router = useRouter();
     const { isCollapsed, toggleSidebar } = useSidebar();
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
@@ -39,7 +41,6 @@ export default function BrandSidebar() {
         { label: "Dashboard", href: "/brand/dashboard", icon: IoGridOutline },
         { label: "Campaigns", href: "/brand/events", icon: IoMegaphoneOutline },
         { label: "Create Campaign", href: "/brand/create-event", icon: IoAddCircleOutline },
-        { label: "Analytics", href: "/brand/analytics", icon: IoBarChartOutline },
         { label: "Financials", href: "/brand/financials", icon: IoWalletOutline },
         { label: "Settings", href: "/brand/settings", icon: IoSettingsOutline },
     ];
@@ -102,12 +103,42 @@ export default function BrandSidebar() {
                     <div className="mx-1 h-[1px] bg-border mb-2" />
 
                     <div className="flex flex-col gap-1">
-                        {/* Theme Toggle */}
+                        {/* View as User */}
                         <SidebarButton
-                            label={theme === "dark" ? "Light Mode" : "Dark Mode"}
-                            icon={theme === "dark" ? IoSunnyOutline : IoMoonOutline}
-                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                            label="View as User"
+                            icon={IoEyeOutline}
+                            onClick={() => router.push("/home?preview=brand")}
                         />
+
+                        {/* Theme Toggle */}
+                        <button
+                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                            className={cn(
+                                "group flex items-center w-full pl-3 py-3 rounded-xl",
+                                "text-foreground/60 hover:bg-secondary hover:text-foreground",
+                                "transition-colors duration-150 ease-out"
+                            )}
+                        >
+                            <div className="flex-shrink-0 flex items-center justify-center w-8 h-8">
+                                {theme === "dark"
+                                    ? <IoSunnyOutline size={20} className="transition-colors duration-150" />
+                                    : <IoMoonOutline size={20} className="transition-colors duration-150" />
+                                }
+                            </div>
+                            {showExpanded && (
+                                <div className="ml-3 mr-2">
+                                    <div className={cn(
+                                        "relative w-9 h-5 rounded-full transition-colors duration-200 shrink-0",
+                                        theme === "dark" ? "bg-primary" : "bg-foreground/20"
+                                    )}>
+                                        <div className={cn(
+                                            "absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200",
+                                            theme === "dark" ? "translate-x-4" : "translate-x-0.5"
+                                        )} />
+                                    </div>
+                                </div>
+                            )}
+                        </button>
 
                         {/* Logout - Placeholder */}
                         <SidebarButton

@@ -11,13 +11,19 @@ import {
     ChevronRight,
     Camera,
     ToggleLeft as Toggle,
-    ExternalLink
+    ExternalLink,
+    Calendar,
+    Link as LinkIcon,
+    Hash,
+    Tag
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 const settingsSections = [
     { id: 'profile', label: 'Profile Settings', icon: User },
+    { id: 'socials', label: 'Social Links', icon: LinkIcon },
+    { id: 'preferences', label: 'Preferences', icon: Hash },
     { id: 'account', label: 'Account & Wallet', icon: Wallet },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'privacy', label: 'Privacy & Security', icon: Shield },
@@ -111,6 +117,16 @@ export default function SettingsPage() {
                                                 className="w-full bg-secondary/30 border border-border/40 rounded-2xl px-5 py-4 text-sm font-bold text-foreground/40 cursor-not-allowed"
                                             />
                                         </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Date of Birth</label>
+                                            <div className="relative">
+                                                <input
+                                                    type="date"
+                                                    className="w-full bg-secondary/50 border border-border/60 rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none focus:border-primary/40 transition-colors appearance-none"
+                                                />
+                                                <Calendar className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40 pointer-events-none" />
+                                            </div>
+                                        </div>
                                         <div className="md:col-span-2 space-y-2">
                                             <label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">Bio</label>
                                             <textarea
@@ -127,6 +143,113 @@ export default function SettingsPage() {
                                 </div>
                             </motion.div>
                         )}
+
+                        {/* Social Links Section */}
+                        {activeSection === 'socials' && (
+                            <motion.div
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="bg-card border border-border/60 rounded-[32px] overflow-hidden shadow-sm"
+                            >
+                                <div className="p-8 space-y-8">
+                                    <div>
+                                        <h3 className="text-xl font-black text-foreground mb-2">Social Connections</h3>
+                                        <p className="text-sm text-foreground/50">Add your social media profiles to gain trust and display them on your profile.</p>
+                                    </div>
+
+                                    <div className="grid gap-6">
+                                        {[
+                                            { label: "Twitter / X", placeholder: "https://x.com/username" },
+                                            { label: "Instagram", placeholder: "https://instagram.com/username" },
+                                            { label: "LinkedIn", placeholder: "https://linkedin.com/in/username" },
+                                            { label: "Website", placeholder: "https://yourwebsite.com" },
+                                            { label: "Discord", placeholder: "Discord Username#0000" }
+                                        ].map((social) => (
+                                            <div key={social.label} className="space-y-2">
+                                                <label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">{social.label}</label>
+                                                <div className="relative">
+                                                    <input
+                                                        type="text"
+                                                        placeholder={social.placeholder}
+                                                        className="w-full bg-secondary/50 border border-border/60 rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none focus:border-primary/40 transition-colors placeholder:text-foreground/20"
+                                                    />
+                                                    <div className="absolute right-5 top-1/2 -translate-y-1/2">
+                                                        <ExternalLink className="w-4 h-4 text-foreground/20" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="flex justify-end gap-3 pt-4">
+                                        <button className="bg-foreground text-background px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-foreground/90 transition-all active:scale-95 shadow-lg shadow-foreground/10">Update Links</button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* Preferences Section */}
+                        {activeSection === 'preferences' && (
+                            <motion.div
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="bg-card border border-border/60 rounded-[32px] overflow-hidden shadow-sm"
+                            >
+                                <div className="p-8 space-y-10">
+                                    {/* Brand Preferences */}
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                                                <Tag className="w-5 h-5 text-primary" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-black text-foreground">Brand Preferences</h3>
+                                                <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">What brands do you like?</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-wrap gap-3">
+                                            {["Nike", "Adidas", "Apple", "Samsung", "Gucci", "Tesla", "Red Bull", "Spotify", "Netflix"].map((brand) => (
+                                                <button key={brand} className="px-4 py-2 bg-secondary/50 hover:bg-primary/10 hover:border-primary/30 border border-border/60 rounded-xl text-xs font-bold text-foreground transition-all">
+                                                    {brand}
+                                                </button>
+                                            ))}
+                                            <button className="px-4 py-2 border border-dashed border-border hover:border-foreground/40 rounded-xl text-xs font-bold text-foreground/40 hover:text-foreground transition-all">
+                                                + Add Custom
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="h-[1px] bg-border/40" />
+
+                                    {/* Content Preferences */}
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="w-10 h-10 bg-orange-500/10 rounded-xl flex items-center justify-center">
+                                                <Hash className="w-5 h-5 text-orange-500" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-black text-foreground">Content Feed</h3>
+                                                <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">Customize your discovery</p>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                            {["Technology", "Fashion", "Gaming", "Music", "Sports", "Art & Design", "Crypto", "Food", "Travel"].map((topic) => (
+                                                <div key={topic} className="flex items-center justify-between p-4 bg-secondary/30 rounded-2xl border border-border/40 cursor-pointer hover:bg-secondary/60 transition-colors">
+                                                    <span className="text-xs font-bold text-foreground">{topic}</span>
+                                                    <div className="w-5 h-5 rounded-full border-2 border-border flex items-center justify-center">
+                                                        <div className="w-2.5 h-2.5 rounded-full bg-transparent" />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end gap-3 pt-4">
+                                        <button className="bg-foreground text-background px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-foreground/90 transition-all active:scale-95 shadow-lg shadow-foreground/10">Save Preferences</button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+
 
                         {activeSection === 'account' && (
                             <motion.div

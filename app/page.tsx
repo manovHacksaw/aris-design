@@ -5,7 +5,7 @@ import TrendingCarousel from "@/components/home/TrendingCarousel";
 import FilterChips from "@/components/home/FilterChips";
 import FeedGrid from "@/components/home/FeedGrid";
 import BottomNav from "@/components/BottomNav";
-import ContentSearchBar from "@/components/home/ContentSearchBar";
+
 import RightDashboard from "@/components/home/RightDashboard";
 import HeroBanner from "@/components/home/HeroBanner";
 
@@ -27,9 +27,7 @@ export default function Home() {
             <div className="space-y-8">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <FilterChips />
-                <div className="w-full md:w-80">
-                  <ContentSearchBar className="h-11 py-0" />
-                </div>
+
               </div>
               <FeedGrid />
             </div>

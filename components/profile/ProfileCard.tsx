@@ -1,7 +1,9 @@
 "use client";
 
-import { CheckCircle, Edit2, UserPlus, MessageSquare, Flame, Trophy } from "lucide-react";
+import { CheckCircle, Edit2, UserPlus, MessageSquare, Flame, Trophy, Share2, Instagram, Twitter, Globe, Linkedin, Facebook } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { useState } from "react";
 
 interface ProfileCardProps {
     user: {
@@ -22,6 +24,14 @@ interface ProfileCardProps {
         };
         rank?: string;
         streak?: number;
+        level?: number;
+        links?: {
+            twitter?: string;
+            instagram?: string;
+            website?: string;
+            linkedin?: string;
+            facebook?: string;
+        }
     };
     isOwnProfile?: boolean;
     onFollowersClick?: () => void;
@@ -36,6 +46,14 @@ export default function ProfileCard({
 }: ProfileCardProps) {
     const rank = user.rank || "Bronze IV";
     const streak = user.streak || 12;
+    const level = user.level || 42;
+    const [copied, setCopied] = useState(false);
+
+    const handleShare = () => {
+        navigator.clipboard.writeText(window.location.href);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
 
     return (
         <div className="relative z-10 w-full">
@@ -64,7 +82,17 @@ export default function ProfileCard({
                         {/* Identity */}
                         <div className="flex-1 min-w-0 pt-1">
                             <h2 className="text-2xl md:text-3xl font-black text-foreground tracking-tight leading-none mb-1">{user.name}</h2>
-                            <p className="text-foreground/40 text-xs font-bold uppercase tracking-widest mb-3">{user.handle}</p>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-3">
+                                <p className="text-foreground/40 text-xs font-bold uppercase tracking-widest">{user.handle}</p>
+
+                                {/* Social Links */}
+                                <div className="flex items-center gap-3 border-l border-border/40 pl-4">
+                                    {/* Mock links if none provided for demo */}
+                                    <Link href="#" className="text-foreground/30 hover:text-foreground transition-colors"><Twitter className="w-3.5 h-3.5" /></Link>
+                                    <Link href="#" className="text-foreground/30 hover:text-foreground transition-colors"><Instagram className="w-3.5 h-3.5" /></Link>
+                                    <Link href="#" className="text-foreground/30 hover:text-foreground transition-colors"><Globe className="w-3.5 h-3.5" /></Link>
+                                </div>
+                            </div>
 
                             {/* Social counts inline */}
                             <div className="flex items-center gap-4">
@@ -80,12 +108,20 @@ export default function ProfileCard({
                         </div>
 
                         {/* Action button */}
-                        <div className="shrink-0 hidden md:block">
+                        <div className="shrink-0 hidden md:flex items-center gap-2">
+                            <button
+                                onClick={handleShare}
+                                className="p-2.5 bg-secondary text-foreground/60 rounded-xl border border-border hover:bg-foreground/10 transition-all active:scale-95"
+                                title="Share Profile"
+                            >
+                                {copied ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Share2 className="w-4 h-4" />}
+                            </button>
+
                             {isOwnProfile ? (
-                                <button className="flex items-center gap-2 bg-secondary text-foreground px-5 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] border border-border hover:bg-foreground hover:text-background transition-all">
+                                <Link href="/settings" className="flex items-center gap-2 bg-secondary text-foreground px-5 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] border border-border hover:bg-foreground hover:text-background transition-all">
                                     <Edit2 className="w-3 h-3" />
                                     Edit Profile
-                                </button>
+                                </Link>
                             ) : (
                                 <div className="flex gap-2">
                                     <button className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-primary-dark transition-all shadow-lg shadow-primary/20">
@@ -135,6 +171,9 @@ export default function ProfileCard({
                             <Trophy className="w-3.5 h-3.5 text-primary" />
                             <span className="text-[10px] font-black text-foreground uppercase tracking-widest">{rank}</span>
                         </div>
+                        <div className="flex items-center gap-2 bg-purple-500/5 rounded-xl px-3 py-2 border border-purple-500/10">
+                            <div className="text-[10px] font-black text-purple-500 uppercase tracking-widest">LVL {level}</div>
+                        </div>
                         <div className="flex items-center gap-2 bg-orange-500/5 rounded-xl px-3 py-2 border border-orange-500/10">
                             <Flame className="w-3.5 h-3.5 text-orange-500" />
                             <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">{streak}d streak</span>
@@ -144,11 +183,18 @@ export default function ProfileCard({
 
                     {/* Mobile action buttons */}
                     <div className="flex gap-3 mt-5 md:hidden">
+                        <button
+                            onClick={handleShare}
+                            className="flex items-center justify-center p-3 bg-secondary text-foreground/60 rounded-xl border border-border hover:bg-foreground/10 transition-all active:scale-95"
+                        >
+                            {copied ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Share2 className="w-4 h-4" />}
+                        </button>
+
                         {isOwnProfile ? (
-                            <button className="flex-1 flex items-center justify-center gap-2 bg-foreground text-background py-3 rounded-xl font-black uppercase tracking-widest text-[10px]">
+                            <Link href="/settings" className="flex-1 flex items-center justify-center gap-2 bg-foreground text-background py-3 rounded-xl font-black uppercase tracking-widest text-[10px]">
                                 <Edit2 className="w-3 h-3" />
                                 Edit Profile
-                            </button>
+                            </Link>
                         ) : (
                             <>
                                 <button className="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20">

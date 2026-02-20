@@ -24,14 +24,44 @@ export default function RewardBlock({
     className,
 }: RewardBlockProps) {
     if (variant === "compact") {
+        if (mode === "vote") {
+            return (
+                <div className={cn("flex items-center justify-between", className)}>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                        <Zap className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                        <span className="text-sm font-black text-foreground truncate">{baseReward}</span>
+                        <span className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest hidden sm:inline-block">/ Vote</span>
+                    </div>
+
+                    {topReward ? (
+                        <div className="flex items-center gap-1.5 min-w-0">
+                            <Trophy className="w-3.5 h-3.5 text-accent flex-shrink-0" />
+                            <span className="text-sm font-black text-foreground truncate">{topReward}</span>
+                            <span className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest hidden sm:inline-block">Top</span>
+                        </div>
+                    ) : (
+                        /* Fallback if no top reward, show pool? User said Base, Top. If no top, maybe just Base? Or Pool? I'll show Pool as fallback or nothing? 
+                           Let's show Pool as fallback to avoid emptiness */
+                        <div className="flex items-center gap-1.5 min-w-0">
+                            <Trophy className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                            <span className="text-sm font-black text-foreground truncate">{rewardPool}</span>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Post Mode
         return (
             <div className={cn("flex items-center justify-between", className)}>
-                <div className="flex items-center gap-2">
-                    <Trophy className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-sm font-black text-foreground">{rewardPool}</span>
+                <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-sm font-black text-foreground truncate">{baseReward}</span>
+                    <span className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest hidden sm:inline-block">Base</span>
                 </div>
-                <div className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">
-                    {mode === "vote" ? `${baseReward}/vote` : `${baseReward} base`}
+                <div className="flex items-center gap-1.5 min-w-0">
+                    <Trophy className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                    <span className="text-sm font-black text-foreground truncate">{rewardPool}</span>
+                    <span className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest hidden sm:inline-block">Pool</span>
                 </div>
             </div>
         );

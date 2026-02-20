@@ -100,10 +100,41 @@ export interface LeaderboardEntry {
     xp: number;
     streak: number;
     totalVotesReceived: number;
+    votesCast: number; // Added field
     totalRewardsEarned: number;
     challengesWon: number;
     badges: string[];
     isCurrentUser?: boolean;
+}
+
+export interface BrandLeaderboardEntry {
+    rank: number;
+    brandId: string;
+    name: string;
+    avatar: string;
+    campaignsCount: number;
+    totalPrizePool: number;
+    totalEngagements: number;
+}
+
+export interface EventLeaderboardEntry {
+    rank: number;
+    eventId: string;
+    title: string;
+    coverImage: string;
+    participants: number;
+    totalVotes: number;
+    prizePool: number;
+}
+
+export interface ContentLeaderboardEntry {
+    rank: number;
+    contentId: string;
+    title: string;
+    coverImage: string;
+    creatorName: string;
+    votes: number;
+    earned: number;
 }
 
 export interface LeaderboardResponse {

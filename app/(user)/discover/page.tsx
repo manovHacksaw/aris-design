@@ -59,6 +59,24 @@ const exploreGrid = [
 
 export default function Discover() {
     const [activeCategory, setActiveCategory] = useState("All");
+    const [searchQuery, setSearchQuery] = useState("");
+
+    // Simulate Search Filter
+    const filteredChallenges = featuredChallenges.filter(ch =>
+        ch.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ch.brand.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const filteredCreators = topCreators.filter(c =>
+        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.handle.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const filteredGrid = exploreGrid.filter(item =>
+        (activeCategory === "All" || item.category === activeCategory) &&
+        (item.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.category.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
 
     return (
         <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
@@ -73,7 +91,11 @@ export default function Discover() {
 
                     {/* Search Bar - Stronger visual presence */}
                     <div className="w-full max-w-[1400px] bg-card rounded-[24px] border border-border/50 p-1.5 shadow-spotify">
-                        <ContentSearchBar className="h-12 md:h-14 py-0 border-0 bg-transparent shadow-none" />
+                        <ContentSearchBar
+                            className="h-12 md:h-14 py-0 border-0 bg-transparent shadow-none"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
                     </div>
 
                     {/* Category Chips - Refined and consistent */}
@@ -100,147 +122,163 @@ export default function Discover() {
                     </div>
 
                     {/* Featured Challenges — Refined large hero cards */}
-                    <section>
-                        <div className="flex items-center justify-between mb-6 px-4 md:px-0">
-                            <h2 className="text-xl font-black text-foreground uppercase tracking-wider">Featured Challenges</h2>
-                            <button className="text-[11px] font-bold text-primary uppercase tracking-[0.2em] hover:text-foreground transition-colors flex items-center gap-1.5">
-                                View All <ArrowRight className="w-3.5 h-3.5" />
-                            </button>
-                        </div>
+                    {filteredChallenges.length > 0 && (
+                        <section>
+                            <div className="flex items-center justify-between mb-6 px-4 md:px-0">
+                                <h2 className="text-xl font-black text-foreground uppercase tracking-wider">
+                                    {searchQuery ? "Matching Brands & Events" : "Featured Challenges"}
+                                </h2>
+                                <button className="text-[11px] font-bold text-primary uppercase tracking-[0.2em] hover:text-foreground transition-colors flex items-center gap-1.5">
+                                    {searchQuery ? "View All" : "View All"} <ArrowRight className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
 
-                        {/* Mobile Horizontal Scroll / Desktop Grid */}
-                        <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 px-4 md:px-0 md:grid md:grid-cols-2 md:gap-6 pb-4 md:pb-0 scrollbar-hide">
-                            {featuredChallenges.map((ch, i) => (
-                                <Link key={ch.id} href={`/events/${ch.brand.toLowerCase().replace(/ /g, '-')}`} className="block min-w-[300px] md:min-w-0 snap-center">
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 16 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: i * 0.1 }}
-                                        whileHover={{ y: -4 }}
-                                        className="relative h-64 md:h-72 rounded-[24px] md:rounded-[28px] overflow-hidden group cursor-pointer border border-border shadow-spotify"
-                                    >
-                                        <img
-                                            src={ch.image}
-                                            alt={ch.brand}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                            {/* Mobile Horizontal Scroll / Desktop Grid */}
+                            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 px-4 md:px-0 md:grid md:grid-cols-2 md:gap-6 pb-4 md:pb-0 scrollbar-hide">
+                                {filteredChallenges.map((ch, i) => (
+                                    <Link key={ch.id} href={`/events/${ch.brand.toLowerCase().replace(/ /g, '-')}`} className="block min-w-[300px] md:min-w-0 snap-center">
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 16 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: i * 0.1 }}
+                                            whileHover={{ y: -4 }}
+                                            className="relative h-64 md:h-72 rounded-[24px] md:rounded-[28px] overflow-hidden group cursor-pointer border border-border shadow-spotify"
+                                        >
+                                            <img
+                                                src={ch.image}
+                                                alt={ch.brand}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
 
-                                        <div className="absolute top-4 left-4 bg-primary text-white text-[10px] font-black px-3 py-1.5 rounded-full tracking-[0.1em] uppercase">
-                                            {ch.tag}
-                                        </div>
+                                            <div className="absolute top-4 left-4 bg-primary text-white text-[10px] font-black px-3 py-1.5 rounded-full tracking-[0.1em] uppercase">
+                                                {ch.tag}
+                                            </div>
 
-                                        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-                                            <h3 className="text-xl md:text-2xl font-black text-white mb-2 tracking-tight">{ch.brand}</h3>
-                                            <p className="text-xs md:text-sm font-medium text-white/70 mb-4 md:mb-5 leading-relaxed line-clamp-2 md:line-clamp-none">{ch.title}</p>
-                                            <div className="flex items-center gap-4 md:gap-6">
-                                                <div className="flex items-center gap-2">
-                                                    <Trophy className="w-3.5 md:w-4 h-3.5 md:h-4 text-accent fill-accent/20" />
-                                                    <span className="text-xs md:text-sm font-black text-white">{ch.reward} Pool</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <Users className="w-3.5 md:w-4 h-3.5 md:h-4 text-white/40" />
-                                                    <span className="text-xs md:text-sm font-bold text-white/60">{ch.entries.toLocaleString()} Enrolled</span>
+                                            <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+                                                <h3 className="text-xl md:text-2xl font-black text-white mb-2 tracking-tight">{ch.brand}</h3>
+                                                <p className="text-xs md:text-sm font-medium text-white/70 mb-4 md:mb-5 leading-relaxed line-clamp-2 md:line-clamp-none">{ch.title}</p>
+                                                <div className="flex items-center gap-4 md:gap-6">
+                                                    <div className="flex items-center gap-2">
+                                                        <Trophy className="w-3.5 md:w-4 h-3.5 md:h-4 text-accent fill-accent/20" />
+                                                        <span className="text-xs md:text-sm font-black text-white">{ch.reward} Pool</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Users className="w-3.5 md:w-4 h-3.5 md:h-4 text-white/40" />
+                                                        <span className="text-xs md:text-sm font-bold text-white/60">{ch.entries.toLocaleString()} Enrolled</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </motion.div>
-                                </Link>
-                            ))}
-                        </div>
-                    </section>
+                                        </motion.div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </section>
+                    )}
 
                     {/* Top Creators Grid */}
-                    <section>
-                        <div className="flex items-center justify-between mb-6 px-4 md:px-0">
-                            <h2 className="text-xl font-black text-foreground uppercase tracking-wider">Top Creators</h2>
-                            <button className="text-[11px] font-bold text-primary uppercase tracking-[0.2em] hover:text-foreground transition-colors flex items-center gap-1.5">
-                                See All <ArrowRight className="w-3.5 h-3.5" />
-                            </button>
-                        </div>
-                        <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 px-4 md:px-0 md:grid md:grid-cols-4 md:gap-6 pb-4 md:pb-0 scrollbar-hide">
-                            {topCreators.map((creator, i) => (
-                                <motion.div
-                                    key={creator.handle}
-                                    initial={{ opacity: 0, y: 12 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: i * 0.08 }}
-                                    whileHover={{ y: -4 }}
-                                    className="min-w-[140px] md:min-w-0 snap-center bg-card/50 backdrop-blur-sm border border-border/60 rounded-[24px] md:rounded-[28px] p-4 md:p-6 text-center hover:bg-card hover:border-primary/30 transition-all cursor-pointer group shadow-sm hover:shadow-xl flex flex-col items-center"
-                                >
-                                    <div className="relative w-16 h-16 md:w-20 md:h-20 mx-auto mb-3 md:mb-4">
-                                        <div className="absolute inset-0 bg-gradient-to-br from-primary via-accent to-primary rounded-full animate-spin-slow opacity-0 group-hover:opacity-100 transition-opacity blur-md" />
-                                        <img
-                                            src={creator.avatar}
-                                            alt={creator.name}
-                                            className="relative w-full h-full rounded-full object-cover border-2 border-border group-hover:border-primary transition-colors p-0.5 bg-background"
-                                        />
-                                    </div>
-                                    <h3 className="text-sm md:text-base font-black text-foreground tracking-tight truncate w-full">{creator.name}</h3>
-                                    <p className="text-[10px] md:text-[11px] font-bold text-foreground/40 uppercase tracking-widest mb-3 md:mb-4 truncate w-full">{creator.handle}</p>
-
-                                    <div className="flex items-center justify-center gap-2 md:gap-4 text-[9px] md:text-[10px] font-black uppercase tracking-widest mb-4 md:mb-6 w-full">
-                                        <div className="flex flex-col gap-0.5 md:gap-1 text-foreground/30 items-center">
-                                            <span>Followers</span>
-                                            <span className="text-foreground text-[10px] md:text-xs">{creator.followers}</span>
+                    {filteredCreators.length > 0 && (
+                        <section>
+                            <div className="flex items-center justify-between mb-6 px-4 md:px-0">
+                                <h2 className="text-xl font-black text-foreground uppercase tracking-wider">
+                                    {searchQuery ? "Matching Users" : "Top Creators"}
+                                </h2>
+                                <button className="text-[11px] font-bold text-primary uppercase tracking-[0.2em] hover:text-foreground transition-colors flex items-center gap-1.5">
+                                    {searchQuery ? "See All" : "See All"} <ArrowRight className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                            <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 px-4 md:px-0 md:grid md:grid-cols-4 md:gap-6 pb-4 md:pb-0 scrollbar-hide">
+                                {filteredCreators.map((creator, i) => (
+                                    <motion.div
+                                        key={creator.handle}
+                                        initial={{ opacity: 0, y: 12 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: i * 0.08 }}
+                                        whileHover={{ y: -4 }}
+                                        className="min-w-[140px] md:min-w-0 snap-center bg-card/50 backdrop-blur-sm border border-border/60 rounded-[24px] md:rounded-[28px] p-4 md:p-6 text-center hover:bg-card hover:border-primary/30 transition-all cursor-pointer group shadow-sm hover:shadow-xl flex flex-col items-center"
+                                    >
+                                        <div className="relative w-16 h-16 md:w-20 md:h-20 mx-auto mb-3 md:mb-4">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-primary via-accent to-primary rounded-full animate-spin-slow opacity-0 group-hover:opacity-100 transition-opacity blur-md" />
+                                            <img
+                                                src={creator.avatar}
+                                                alt={creator.name}
+                                                className="relative w-full h-full rounded-full object-cover border-2 border-border group-hover:border-primary transition-colors p-0.5 bg-background"
+                                            />
                                         </div>
-                                        <div className="w-px h-6 bg-border/50" />
-                                        <div className="flex flex-col gap-0.5 md:gap-1 text-foreground/30 items-center">
-                                            <span>XP</span>
-                                            <span className="text-primary text-[10px] md:text-xs">{creator.xp.toLocaleString()}</span>
-                                        </div>
-                                    </div>
+                                        <h3 className="text-sm md:text-base font-black text-foreground tracking-tight truncate w-full">{creator.name}</h3>
+                                        <p className="text-[10px] md:text-[11px] font-bold text-foreground/40 uppercase tracking-widest mb-3 md:mb-4 truncate w-full">{creator.handle}</p>
 
-                                    <button className="w-full py-2 md:py-2.5 rounded-xl bg-secondary/80 hover:bg-foreground hover:text-background text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] transition-all mt-auto">
-                                        Follow
-                                    </button>
-                                </motion.div>
-                            ))}
-                        </div>
-                    </section>
+                                        <div className="flex items-center justify-center gap-2 md:gap-4 text-[9px] md:text-[10px] font-black uppercase tracking-widest mb-4 md:mb-6 w-full">
+                                            <div className="flex flex-col gap-0.5 md:gap-1 text-foreground/30 items-center">
+                                                <span>Followers</span>
+                                                <span className="text-foreground text-[10px] md:text-xs">{creator.followers}</span>
+                                            </div>
+                                            <div className="w-px h-6 bg-border/50" />
+                                            <div className="flex flex-col gap-0.5 md:gap-1 text-foreground/30 items-center">
+                                                <span>XP</span>
+                                                <span className="text-primary text-[10px] md:text-xs">{creator.xp.toLocaleString()}</span>
+                                            </div>
+                                        </div>
+
+                                        <button className="w-full py-2 md:py-2.5 rounded-xl bg-secondary/80 hover:bg-foreground hover:text-background text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] transition-all mt-auto">
+                                            Follow
+                                        </button>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </section>
+                    )}
 
                     {/* Explore Grid - Clean Tiles */}
-                    <section>
-                        <div className="flex items-center justify-between mb-6 px-4 md:px-0">
-                            <h2 className="text-xl font-black text-foreground uppercase tracking-wider">Explore Feed</h2>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 px-4 md:px-0">
-                            {exploreGrid.map((item, i) => (
-                                <motion.div
-                                    key={item.id}
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ delay: i * 0.06 }}
-                                    whileHover={{ y: -4 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    className="aspect-square rounded-[16px] md:rounded-[24px] overflow-hidden relative group cursor-pointer border border-border shadow-soft"
-                                >
-                                    <img
-                                        src={item.image}
-                                        alt="Explore"
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 md:opacity-0 md:group-hover:opacity-100 transition-opacity" />
+                    {filteredGrid.length > 0 ? (
+                        <section>
+                            <div className="flex items-center justify-between mb-6 px-4 md:px-0">
+                                <h2 className="text-xl font-black text-foreground uppercase tracking-wider">
+                                    {searchQuery ? "Matching Content" : "Explore Feed"}
+                                </h2>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 px-4 md:px-0">
+                                {filteredGrid.map((item, i) => (
+                                    <motion.div
+                                        key={item.id}
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: i * 0.06 }}
+                                        whileHover={{ y: -4 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        className="aspect-square rounded-[16px] md:rounded-[24px] overflow-hidden relative group cursor-pointer border border-border shadow-soft"
+                                    >
+                                        <img
+                                            src={item.image}
+                                            alt="Explore"
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 md:opacity-0 md:group-hover:opacity-100 transition-opacity" />
 
-                                    {/* Overlay on hover (always visible on mobile) */}
-                                    <div className="absolute bottom-0 left-0 right-0 p-3 md:p-5 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-300">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[10px] md:text-xs text-white font-black tracking-tight truncate mr-2">{item.user}</span>
-                                            <span className="flex items-center gap-1 md:gap-1.5 text-[10px] md:text-xs text-white font-black">
-                                                <ThumbsUp className="w-3 md:w-3.5 h-3 md:h-3.5 text-primary fill-primary/20" />
-                                                {item.votes > 1000 ? `${(item.votes / 1000).toFixed(1)}k` : item.votes}
-                                            </span>
+                                        {/* Overlay on hover (always visible on mobile) */}
+                                        <div className="absolute bottom-0 left-0 right-0 p-3 md:p-5 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-300">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[10px] md:text-xs text-white font-black tracking-tight truncate mr-2">{item.user}</span>
+                                                <span className="flex items-center gap-1 md:gap-1.5 text-[10px] md:text-xs text-white font-black">
+                                                    <ThumbsUp className="w-3 md:w-3.5 h-3 md:h-3.5 text-primary fill-primary/20" />
+                                                    {item.votes > 1000 ? `${(item.votes / 1000).toFixed(1)}k` : item.votes}
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    {/* Category tag */}
-                                    <div className="absolute top-2 left-2 md:top-4 md:left-4 bg-background/60 backdrop-blur-sm px-2 md:px-3 py-0.5 md:py-1 rounded-full text-[9px] md:text-[10px] text-foreground font-black uppercase tracking-wider border border-white/10">
-                                        {item.category}
-                                    </div>
-                                </motion.div>
-                            ))}
+                                        {/* Category tag */}
+                                        <div className="absolute top-2 left-2 md:top-4 md:left-4 bg-background/60 backdrop-blur-sm px-2 md:px-3 py-0.5 md:py-1 rounded-full text-[9px] md:text-[10px] text-foreground font-black uppercase tracking-wider border border-white/10">
+                                            {item.category}
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </section>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                            <p className="text-foreground/40 font-bold uppercase tracking-widest text-sm">No results found</p>
                         </div>
-                    </section>
+                    )}
 
                 </div>
 

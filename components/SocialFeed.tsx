@@ -1,45 +1,54 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import FeedItem from "./FeedItem";
-
-const FEED_DATA = [
-    {
-        id: 1,
-        username: "alex_creative",
-        image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&q=80", // Cyberpunk city
-        caption: "Just dropped my submission for the new Neon challenge! What do you think? ⚡️ #Aris #NeonDreams",
-        reward: 0.05,
-        votes: 1240,
-    },
-    {
-        id: 2,
-        username: "sarah_design",
-        image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80", // Abstract liquid
-        caption: "Minimalist vibes only. 🎨 Voting helps me unlock the next tier!",
-        reward: 0.05,
-        votes: 856,
-    },
-    {
-        id: 3,
-        username: "tech_guru",
-        image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&q=80", // Retro gaming
-        caption: "The future is here. Check out this gadget review. 📱",
-        reward: 0.10,
-        votes: 2100,
-    }
-];
+import { getSocialFeed } from "@/services/mockEventService";
+import type { SocialPost } from "@/types/api";
 
 export default function SocialFeed() {
+    const [posts, setPosts] = useState<SocialPost[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        getSocialFeed()
+            .then((res) => { setPosts(res.data); setLoading(false); })
+            .catch(() => setLoading(false));
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="pb-24 pt-4 px-4 space-y-6 animate-pulse">
+                {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="bg-card rounded-[22px] border border-border/40 overflow-hidden">
+                        <div className="h-64 bg-secondary/50" />
+                        <div className="p-4 space-y-2">
+                            <div className="h-3 bg-secondary/50 rounded w-1/4" />
+                            <div className="h-4 bg-secondary/50 rounded w-3/4" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
+    if (!posts.length) {
+        return (
+            <div className="pb-24 pt-12 px-4 text-center">
+                <p className="text-foreground/40 font-bold text-sm">No posts yet.</p>
+            </div>
+        );
+    }
+
     return (
         <div className="pb-24 pt-4 px-4 space-y-6">
-            {FEED_DATA.map((item) => (
+            {posts.map((post) => (
                 <FeedItem
-                    key={item.id}
-                    username={item.username}
-                    image={item.image}
-                    caption={item.caption}
-                    reward={item.reward}
-                    votes={item.votes}
+                    key={post.id}
+                    username={post.username}
+                    image={post.coverImage}
+                    caption={post.caption}
+                    reward={post.reward}
+                    votes={post.votes}
                 />
             ))}
         </div>

@@ -1,8 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSidebar } from "@/context/SidebarContext";
 import Sidebar from "@/components/home/Sidebar";
 import MobileHeader from "@/components/MobileHeader";
+import BrandPreviewBanner from "@/components/brand/BrandPreviewBanner";
 import { cn } from "@/lib/utils";
 
 export default function SidebarLayout({ children }: { children: React.ReactNode }) {
@@ -18,6 +20,9 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
                     isCollapsed ? "md:ml-[72px]" : "md:ml-[220px]"
                 )}
             >
+                <Suspense>
+                    <BrandPreviewBanner />
+                </Suspense>
                 <MobileHeader />
 
                 {/* Content wrapper - Removed mobile horizontal padding for edge-to-edge feel if needed */}

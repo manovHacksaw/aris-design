@@ -3,7 +3,7 @@
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function ContentSearchBar({ className }: { className?: string }) {
+export default function ContentSearchBar({ className, value, onChange }: { className?: string, value?: string, onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void }) {
     return (
         <div
             className={cn(
@@ -14,6 +14,8 @@ export default function ContentSearchBar({ className }: { className?: string }) 
             <Search className="w-5 h-5 text-foreground/50 mr-3 group-focus-within:text-foreground transition-colors" />
             <input
                 type="text"
+                value={value}
+                onChange={onChange}
                 placeholder="Search creators, challenges, or tags..."
                 className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-foreground/40 text-sm md:text-base font-bold"
             />

@@ -45,13 +45,32 @@ export default function CompactEventCard({ event }: CompactEventCardProps) {
                         {event.creator.name}
                     </p>
 
-                    <div className="mt-auto pt-2 border-t border-border/40 flex items-center justify-between">
-                        <span className="text-[10px] font-black text-primary">
-                            {event.rewardPool}
-                        </span>
-                        <span className="text-[9px] font-bold text-foreground/30 uppercase">
-                            {event.status === 'live' ? 'Live' : 'Ended'}
-                        </span>
+                    <div className="mt-auto pt-2 border-t border-border/40 flex items-center justify-between gap-2">
+                        {event.mode === 'vote' ? (
+                            <>
+                                <div className="flex flex-col min-w-0">
+                                    <span className="text-[8px] uppercase font-bold text-foreground/40 leading-none mb-0.5">Base</span>
+                                    <span className="text-[10px] font-black text-foreground truncate">{event.baseReward}</span>
+                                </div>
+                                {event.topReward && (
+                                    <div className="flex flex-col items-end min-w-0">
+                                        <span className="text-[8px] uppercase font-bold text-foreground/40 leading-none mb-0.5">Top Prize</span>
+                                        <span className="text-[10px] font-black text-accent truncate">{event.topReward}</span>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <div className="flex flex-col min-w-0">
+                                    <span className="text-[8px] uppercase font-bold text-foreground/40 leading-none mb-0.5">Base</span>
+                                    <span className="text-[10px] font-black text-foreground truncate">{event.baseReward}</span>
+                                </div>
+                                <div className="flex flex-col items-end min-w-0">
+                                    <span className="text-[8px] uppercase font-bold text-foreground/40 leading-none mb-0.5">Pool</span>
+                                    <span className="text-[10px] font-black text-primary truncate">{event.rewardPool}</span>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </motion.div>
