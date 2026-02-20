@@ -33,20 +33,20 @@ export default function TrendingCarousel() {
     return (
         <section className="relative">
             <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-black flex items-center gap-2 text-foreground tracking-tight">
+                <h2 className="text-2xl font-black flex items-center gap-2 text-foreground tracking-tight uppercase">
                     <TrendingUp className="text-accent w-6 h-6" />
                     Trending Challenges
                 </h2>
                 <div className="flex gap-3 relative z-20">
                     <button
                         onClick={() => scroll('left')}
-                        className="w-11 h-11 flex items-center justify-center rounded-full bg-secondary hover:bg-foreground hover:text-background text-foreground/40 transition-all border border-border shadow-md"
+                        className="w-11 h-11 flex items-center justify-center rounded-full bg-secondary hover:bg-foreground hover:text-background text-foreground/40 transition-all border border-border shadow-md hover:scale-110"
                     >
                         <ChevronLeft className="w-6 h-6" />
                     </button>
                     <button
                         onClick={() => scroll('right')}
-                        className="w-11 h-11 flex items-center justify-center rounded-full bg-secondary hover:bg-foreground hover:text-background text-foreground/40 transition-all border border-border shadow-md"
+                        className="w-11 h-11 flex items-center justify-center rounded-full bg-secondary hover:bg-foreground hover:text-background text-foreground/40 transition-all border border-border shadow-md hover:scale-110"
                     >
                         <ChevronRight className="w-6 h-6" />
                     </button>
