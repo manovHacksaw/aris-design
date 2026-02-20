@@ -22,30 +22,39 @@ export default function YourActivityPage() {
         { label: "Activity Time", value: "128h", icon: Clock, color: "text-primary" },
     ];
 
-    const recentActivities = [
+    const participatedEvents = [
         {
-            type: "Submission",
-            title: "Nike Air Max Design",
-            time: "2h ago",
-            status: "Featured",
+            type: "Post Event",
+            brand: "Nike",
+            title: "Air Max Redesign",
+            time: "Ended Feb 14",
+            status: "Completed",
+            role: "Creator",
             icon: Layout,
+            reward: "$150 Earned",
             points: "+250 XP"
         },
         {
-            type: "Vote",
-            title: "Coke Summer Vibes",
-            time: "5h ago",
-            status: "Completed",
+            type: "Vote Event",
+            brand: "Coca-Cola",
+            title: "Summer Vibes",
+            time: "Active",
+            status: "In Progress",
+            role: "Voter",
             icon: ThumbsUp,
-            points: "+10 XP"
+            reward: "Top 10%",
+            points: "+50 XP"
         },
         {
-            type: "Comment",
-            title: "On Apple Vision Pro Pro...",
-            time: "Yesterday",
-            status: "Replied",
-            icon: MessageCircle,
-            points: "+5 XP"
+            type: "Post Event",
+            brand: "Red Bull",
+            title: "Extreme Sports Edit",
+            time: "Ended Jan 28",
+            status: "Judging",
+            role: "Creator",
+            icon: Zap,
+            reward: "Pending",
+            points: "+100 XP"
         },
     ];
 
@@ -87,24 +96,27 @@ export default function YourActivityPage() {
                 <div className="grid lg:grid-cols-[1fr_340px] gap-8 px-4 md:px-0">
                     {/* Main Timeline */}
                     <div className="space-y-6">
-                        <h2 className="text-xs font-black uppercase tracking-[0.25em] text-foreground/40 pl-1">Recent Milestones</h2>
+                        <h2 className="text-xs font-black uppercase tracking-[0.25em] text-foreground/40 pl-1">Events Participated In</h2>
                         <div className="bg-card/50 backdrop-blur-xl border border-border/60 rounded-[32px] overflow-hidden">
-                            {recentActivities.map((activity, i) => (
+                            {participatedEvents.map((event, i) => (
                                 <div key={i} className="flex items-center gap-6 p-7 border-b border-border/40 last:border-0 hover:bg-foreground/[0.02] transition-colors group cursor-pointer">
                                     <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center shrink-0">
-                                        <activity.icon className="w-6 h-6 text-foreground/20 group-hover:text-primary transition-colors" />
+                                        <event.icon className={cn("w-6 h-6 transition-colors", event.type === "Vote Event" ? "text-accent group-hover:text-accent/80" : "text-primary group-hover:text-primary/80")} />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-[9px] font-black text-primary uppercase tracking-widest">{activity.type}</span>
+                                            <span className={cn("text-[9px] font-black uppercase tracking-widest", event.type === "Vote Event" ? "text-accent" : "text-primary")}>{event.type}</span>
                                             <span className="text-[10px] text-foreground/20">•</span>
-                                            <span className="text-[9px] font-bold text-foreground/30 uppercase tracking-widest">{activity.time}</span>
+                                            <span className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest">{event.brand}</span>
                                         </div>
-                                        <h4 className="text-sm font-black text-foreground truncate tracking-tight">{activity.title}</h4>
+                                        <h4 className="text-sm font-black text-foreground truncate tracking-tight">{event.title}</h4>
+                                        <div className="flex items-center gap-3 mt-1.5 text-[10px] font-bold text-foreground/40 tracking-wider">
+                                            <span className="flex items-center gap-1.5"><Calendar className="w-3 h-3" /> {event.time}</span>
+                                        </div>
                                     </div>
                                     <div className="text-right hidden sm:block">
-                                        <p className="text-[10px] font-black text-accent mb-1">{activity.points}</p>
-                                        <span className="text-[9px] font-bold text-foreground/30 uppercase tracking-widest bg-secondary px-2 py-0.5 rounded-full">{activity.status}</span>
+                                        <p className="text-[10px] font-black text-primary mb-1">{event.reward}</p>
+                                        <span className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest bg-secondary px-2 py-0.5 rounded-full">{event.status}</span>
                                     </div>
                                     <ArrowUpRight className="w-4 h-4 text-foreground/10 group-hover:text-foreground/40 transition-colors" />
                                 </div>
