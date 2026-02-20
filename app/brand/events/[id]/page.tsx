@@ -166,8 +166,8 @@ export default function BrandEventDetailsPage() {
                     <div className="grid md:grid-cols-2 gap-6">
                         <div>
                             <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Budget Allocation</h4>
-                            <div className="bg-secondary/50 rounded-xl p-4">
-                                <div className="flex justify-between mb-2">
+                            <div className="bg-secondary/50 rounded-xl p-4 space-y-2">
+                                <div className="flex justify-between">
                                     <span className="text-sm font-medium">Reward Pool</span>
                                     <span className="font-bold">$4,500</span>
                                 </div>
@@ -179,7 +179,7 @@ export default function BrandEventDetailsPage() {
                         </div>
                         <div>
                             <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Target Audience</h4>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="bg-secondary/50 rounded-xl p-4 flex flex-wrap gap-2">
                                 {["Art", "Design", "Cyberpunk", "Digital"].map(tag => (
                                     <span key={tag} className="px-3 py-1 bg-secondary rounded-full text-xs font-bold text-muted-foreground">
                                         {tag}
