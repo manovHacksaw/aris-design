@@ -2,32 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, Flame, Zap, ChevronRight, Play } from "lucide-react";
+import { TrendingUp, Flame, Zap, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { getUserStats } from "@/services/mockUserService";
-import { getHotChallenges, getRecentSubmissions } from "@/services/mockEventService";
-import type { UserStats, HotChallenge, RecentSubmission } from "@/types/api";
-
-function relativeTime(iso: string): string {
-    const diff = Date.now() - new Date(iso).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 2) return "just now";
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    return `${Math.floor(hrs / 24)}d ago`;
-}
+import type { UserStats } from "@/types/api";
 
 export default function RightDashboard() {
     const [stats, setStats] = useState<UserStats | null>(null);
-    const [hotChallenges, setHotChallenges] = useState<HotChallenge[]>([]);
-    const [recentSubs, setRecentSubs] = useState<RecentSubmission[]>([]);
 
     useEffect(() => {
         getUserStats().then(setStats).catch(() => { });
-        getHotChallenges().then(setHotChallenges).catch(() => { });
-        getRecentSubmissions().then(setRecentSubs).catch(() => { });
     }, []);
 
     return (
@@ -140,46 +125,6 @@ export default function RightDashboard() {
                     ))}
                 </div>
             </div>
-
-            {/* 4. Recent Submissions */}
-            {recentSubs.length > 0 && (
-                <div className="space-y-4">
-                    <div className="px-2">
-                        <h3 className="text-[13px] font-black text-foreground uppercase tracking-widest">Recent Submissions</h3>
-                    </div>
-                    <div className="bg-card/30 backdrop-blur-xl border border-border rounded-[32px] overflow-hidden">
-                        {recentSubs.map((item) => (
-                            <div key={item.id} className={cn(
-                                "flex items-center gap-4 p-5 transition-all hover:bg-foreground/5 cursor-pointer border-b border-border/50 last:border-0",
-                                item.isActive && "bg-primary/10 hover:bg-primary/20"
-                            )}>
-                                <div className="relative w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
-                                    <img src={item.coverImage} className="w-full h-full object-cover" alt={item.username} />
-                                    {item.isActive && (
-                                        <div className="absolute inset-0 bg-primary/40 flex items-center justify-center">
-                                            <Play className="w-5 h-5 text-white fill-current" />
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <h4 className={cn("text-sm font-black truncate tracking-tight", item.isActive ? "text-primary" : "text-foreground")}>
-                                        {item.eventTitle}
-                                    </h4>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-black text-foreground/40 uppercase tracking-widest">{item.username}</span>
-                                        <span className="text-[10px] text-foreground/20">•</span>
-                                        <span className="text-[10px] font-bold text-foreground/30">{relativeTime(item.createdAt)}</span>
-                                    </div>
-                                </div>
-                                {item.isActive && <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />}
-                            </div>
-                        ))}
-                    </div>
-                    <button className="w-full text-center text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em] py-2 hover:text-foreground/60 transition-colors">
-                        All Activity
-                    </button>
-                </div>
-            )}
         </div>
     );
 }
