@@ -13,10 +13,10 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
       <SidebarLayout>
-        <div className="flex flex-col xl:flex-row gap-8 w-full mx-auto pb-20">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 w-full mx-auto pb-20">
 
-          {/* Left: Main Content Area (~72%) */}
-          <main className="flex-1 min-w-0 space-y-8 pt-2">
+          {/* Left: Main Content Area (~70%) */}
+          <main className="flex-1 min-w-0 space-y-6 lg:space-y-8 pt-1 lg:pt-2">
             {/* 1. Hero Section & Right Panel Top Alignment Row */}
             <HeroBanner />
 
@@ -24,8 +24,8 @@ export default function Home() {
             <TrendingCarousel />
 
             {/* 3. Filters & Feed grid */}
-            <div className="space-y-8">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-6 lg:space-y-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
                 <FilterChips />
 
               </div>
@@ -33,8 +33,8 @@ export default function Home() {
             </div>
           </main>
 
-          {/* Right: Personal Activity & XP (~28%) */}
-          <aside className="hidden xl:block w-[340px] 2xl:w-[380px] flex-shrink-0">
+          {/* Right: Personal Activity & XP (~30%) */}
+          <aside className="hidden lg:block w-full lg:w-[340px] 2xl:w-[380px] flex-shrink-0">
             <RightDashboard />
           </aside>
         </div>

@@ -93,18 +93,18 @@ export default function Discover() {
     return (
         <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
             <SidebarLayout>
-                <div className="space-y-10 pb-24 md:pb-20">
+                <div className="space-y-6 sm:space-y-8 lg:space-y-10 pb-24 md:pb-20">
 
                     {/* Page Header */}
-                    <div className="mb-6">
-                        <h1 className="text-3xl font-black text-foreground tracking-tighter mb-2">Discover</h1>
-                        <p className="text-sm font-medium text-foreground/40 leading-relaxed uppercase tracking-widest">Explore challenges, creators, and trending content</p>
+                    <div className="mb-4 sm:mb-6 lg:mb-8">
+                        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-foreground tracking-tighter mb-1.5 sm:mb-2">Discover</h1>
+                        <p className="text-xs sm:text-sm font-medium text-foreground/40 leading-relaxed uppercase tracking-widest">Explore challenges, creators, and trending content</p>
                     </div>
 
                     {/* Search Bar - Stronger visual presence */}
-                    <div className="w-full max-w-[1400px] bg-card rounded-[24px] border border-border/50 p-1.5 shadow-spotify">
+                    <div className="w-full max-w-full lg:max-w-[1400px] bg-card rounded-[20px] sm:rounded-[24px] border border-border/50 p-1 sm:p-1.5 shadow-spotify">
                         <ContentSearchBar
-                            className="h-12 md:h-14 py-0 border-0 bg-transparent shadow-none"
+                            className="h-10 sm:h-12 md:h-14 py-0 border-0 bg-transparent shadow-none text-sm sm:text-base"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -139,7 +139,7 @@ export default function Discover() {
                     {/* Featured Events — Refined large hero cards */}
                     {filteredChallenges.length > 0 && (
                         <section>
-                            <div className="flex items-center justify-between mb-6 px-4 md:px-0">
+                            <div className="flex items-center justify-between mb-4 sm:mb-6 px-3 sm:px-4 md:px-0 gap-3">
                                 <h2 className="text-xl font-black text-foreground uppercase tracking-wider">
                                     {searchQuery ? `Matching Events (${filteredChallenges.length})` : "Featured Events"}
                                 </h2>
@@ -197,7 +197,7 @@ export default function Discover() {
                     {/* Top Creators Grid */}
                     {filteredCreators.length > 0 && (
                         <section>
-                            <div className="flex items-center justify-between mb-6 px-4 md:px-0">
+                            <div className="flex items-center justify-between mb-4 sm:mb-6 px-3 sm:px-4 md:px-0 gap-3">
                                 <h2 className="text-xl font-black text-foreground uppercase tracking-wider">
                                     {searchQuery ? `Matching Users (${filteredCreators.length})` : "Top Creators"}
                                 </h2>
@@ -253,7 +253,7 @@ export default function Discover() {
                     {/* Featured Brands Grid */}
                     {filteredBrands.length > 0 && (
                         <section>
-                            <div className="flex items-center justify-between mb-6 px-4 md:px-0">
+                            <div className="flex items-center justify-between mb-4 sm:mb-6 px-3 sm:px-4 md:px-0 gap-3">
                                 <h2 className="text-xl font-black text-foreground uppercase tracking-wider">
                                     {searchQuery ? `Matching Brands (${filteredBrands.length})` : "Featured Brands"}
                                 </h2>

@@ -28,7 +28,7 @@ export default function EventSummaryCard({ event }: EventSummaryCardProps) {
                 )}
             >
                 {/* Image Area */}
-                <div className="relative h-44 overflow-hidden">
+                <div className="relative h-40 sm:h-44 md:h-48 overflow-hidden">
                     <img
                         src={event.image}
                         alt={event.title}
@@ -37,30 +37,30 @@ export default function EventSummaryCard({ event }: EventSummaryCardProps) {
                     <div className="absolute inset-0 bg-gradient-to-t from-card via-card/10 to-transparent opacity-60" />
 
                     {/* Badges */}
-                    <div className="absolute top-3 left-3">
+                    <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
                         <ModeBadge mode={event.mode} />
                     </div>
-                    <div className="absolute top-3 right-3">
+                    <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
                         <StatusBadge status={event.status} userState={event.userState} />
                     </div>
                 </div>
 
                 {/* Content */}
-                <div className="p-5 flex flex-col flex-1">
+                <div className="p-3 sm:p-4 md:p-5 flex flex-col flex-1">
                     {/* Creator */}
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2 mb-2 sm:mb-3">
                         <img
-                            className="w-6 h-6 rounded-full border border-border p-0.5 bg-secondary"
+                            className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-border p-0.5 bg-secondary flex-shrink-0"
                             src={event.creator.avatar}
                             alt={event.creator.name}
                         />
-                        <span className="text-[11px] text-foreground/50 font-bold tracking-tight">
+                        <span className="text-[10px] sm:text-[11px] text-foreground/50 font-bold tracking-tight truncate">
                             {event.creator.name}
                         </span>
                     </div>
 
                     {/* Title */}
-                    <h4 className="font-black text-foreground text-base leading-tight tracking-tight mb-4 line-clamp-2">
+                    <h4 className="font-black text-foreground text-sm sm:text-base md:text-lg leading-tight tracking-tight mb-3 sm:mb-4 line-clamp-2">
                         {event.title}
                     </h4>
 
@@ -88,27 +88,27 @@ export default function EventSummaryCard({ event }: EventSummaryCardProps) {
                     )}
 
                     {/* Footer: Participants + Time */}
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-foreground/40">
-                            <Users className="w-3 h-3" />
-                            <span className="text-[10px] font-bold">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1 sm:gap-1.5 text-foreground/40 min-w-0">
+                            <Users className="w-3 h-3 flex-shrink-0" />
+                            <span className="text-[9px] sm:text-[10px] font-bold truncate">
                                 {formatCount(event.participationCount)}
                             </span>
                         </div>
-                        <span className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">
+                        <span className="text-[9px] sm:text-[10px] font-bold text-foreground/40 uppercase tracking-widest flex-shrink-0">
                             {event.status === "ended" ? "Ended" : event.timeRemaining}
                         </span>
                     </div>
 
                     {/* CTA */}
                     {styles.ctaEnabled && (
-                        <button className="w-full bg-foreground text-background text-xs font-black py-3 rounded-[14px] active:scale-[0.98] transition-all mt-4 hover:bg-foreground/90 uppercase tracking-widest">
+                        <button className="w-full bg-foreground text-background text-[10px] sm:text-xs font-black py-2.5 sm:py-3 rounded-[14px] active:scale-[0.98] transition-all mt-3 sm:mt-4 hover:bg-foreground/90 uppercase tracking-widest">
                             {event.mode === "vote" ? "Vote Now" : "Participate"}
                         </button>
                     )}
 
                     {!styles.ctaEnabled && event.userState === "participated" && (
-                        <div className="w-full text-center text-[10px] font-black text-primary/60 uppercase tracking-widest mt-4 py-3">
+                        <div className="w-full text-center text-[9px] sm:text-[10px] font-black text-primary/60 uppercase tracking-widest mt-3 sm:mt-4 py-2.5 sm:py-3">
                             You participated
                         </div>
                     )}

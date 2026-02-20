@@ -37,15 +37,15 @@ export default function CompactEventCard({ event }: CompactEventCardProps) {
                 </div>
 
                 {/* Content */}
-                <div className="p-2.5 flex flex-col flex-1">
-                    <h3 className="text-xs font-bold text-foreground leading-tight line-clamp-2 mb-1">
+                <div className="p-2.5 sm:p-3 flex flex-col flex-1">
+                    <h3 className="text-xs sm:text-sm font-bold text-foreground leading-tight line-clamp-2 mb-1.5 sm:mb-2">
                         {event.title}
                     </h3>
-                    <p className="text-[10px] text-foreground/50 line-clamp-1 mb-2">
+                    <p className="text-[9px] sm:text-[10px] text-foreground/50 line-clamp-1 mb-2">
                         {event.creator.name}
                     </p>
 
-                    <div className="mt-auto pt-2 border-t border-border/40 flex items-center justify-between gap-2">
+                    <div className="mt-auto pt-2 sm:pt-2.5 border-t border-border/40 flex items-center justify-between gap-2">
                         {event.mode === 'vote' ? (
                             <>
                                 <div className="flex flex-col min-w-0">
