@@ -121,12 +121,12 @@ export default function Discover() {
                         })}
                     </div>
 
-                    {/* Featured Challenges — Refined large hero cards */}
+                    {/* Featured Events — Refined large hero cards */}
                     {filteredChallenges.length > 0 && (
                         <section>
                             <div className="flex items-center justify-between mb-6 px-4 md:px-0">
                                 <h2 className="text-xl font-black text-foreground uppercase tracking-wider">
-                                    {searchQuery ? "Matching Brands & Events" : "Featured Challenges"}
+                                    {searchQuery ? "Matching Brands & Events" : "Featured Events"}
                                 </h2>
                                 <button className="text-[11px] font-bold text-primary uppercase tracking-[0.2em] hover:text-foreground transition-colors flex items-center gap-1.5">
                                     {searchQuery ? "View All" : "View All"} <ArrowRight className="w-3.5 h-3.5" />
