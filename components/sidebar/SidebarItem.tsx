@@ -37,28 +37,28 @@ export default function SidebarItem({
                 "rounded-xl"
             )}
         >
-            {/* Left accent pill for active state */}
-            {isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary rounded-full" />
-            )}
+            {/* Left accent pill removed in favor of filled icon container */}
 
-            <div className="flex-shrink-0 relative flex items-center justify-center w-8 h-8">
+            <div className={cn(
+                "flex-shrink-0 relative flex items-center justify-center w-8 h-8 transition-all duration-200",
+                isActive ? "bg-white rounded-[10px] shadow-sm" : ""
+            )}>
                 {avatar ? (
                     <img
                         src={avatar}
                         alt={label}
                         className={cn(
                             "w-7 h-7 rounded-full object-cover transition-all duration-150",
-                            isActive ? "ring-2 ring-primary" : "border border-transparent"
+                            isActive ? "ring-2 ring-white" : "border border-transparent"
                         )}
                     />
                 ) : Icon ? (
                     <Icon
-                        size={24}
+                        size={isActive ? 20 : 24}
                         className={cn(
                             "transition-colors duration-150",
                             isActive
-                                ? "text-white"
+                                ? "text-black"
                                 : "text-[#9CA3AF] group-hover:text-white"
                         )}
                     />
