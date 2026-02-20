@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { IoHomeOutline, IoCompassOutline, IoAddCircleOutline, IoTrophyOutline, IoGridOutline, IoWalletOutline, IoSunnyOutline, IoMoonOutline, IoChevronBackOutline, IoChevronForwardOutline, IoNotificationsOutline } from "react-icons/io5";
+import { IoHomeOutline, IoHome, IoCompassOutline, IoCompass, IoAddCircleOutline, IoAddCircle, IoTrophyOutline, IoTrophy, IoGridOutline, IoGrid, IoWalletOutline, IoWallet, IoNotificationsOutline, IoNotifications, IoSunnyOutline, IoMoonOutline, IoChevronBackOutline, IoChevronForwardOutline } from "react-icons/io5";
 import SidebarItem from "@/components/sidebar/SidebarItem";
 import SidebarMore from "@/components/sidebar/SidebarMore";
 import { cn } from "@/lib/utils";
@@ -24,15 +24,15 @@ export default function Sidebar() {
     }, []);
 
     const navItems = [
-        { label: "Home", href: "/home", icon: IoHomeOutline },
+        { label: "Home", href: "/home", icon: IoHomeOutline, activeIcon: IoHome },
 
 
-        { label: "Explore", href: "/explore", icon: IoCompassOutline },
-        { label: "Create", href: "/create", icon: IoAddCircleOutline },
-        { label: "Leaderboard", href: "/leaderboard", icon: IoTrophyOutline },
-        { label: "Dashboard", href: "/dashboard", icon: IoGridOutline },
-        { label: "Notifications", href: "/notifications", icon: IoNotificationsOutline },
-        { label: "Wallet", href: "/wallet", icon: IoWalletOutline },
+        { label: "Explore", href: "/explore", icon: IoCompassOutline, activeIcon: IoCompass },
+        { label: "Create", href: "/create", icon: IoAddCircleOutline, activeIcon: IoAddCircle },
+        { label: "Leaderboard", href: "/leaderboard", icon: IoTrophyOutline, activeIcon: IoTrophy },
+        { label: "Dashboard", href: "/dashboard", icon: IoGridOutline, activeIcon: IoGrid },
+        { label: "Notifications", href: "/notifications", icon: IoNotificationsOutline, activeIcon: IoNotifications },
+        { label: "Wallet", href: "/wallet", icon: IoWalletOutline, activeIcon: IoWallet },
 
         {
             label: "Profile",
@@ -101,8 +101,9 @@ export default function Sidebar() {
                                     <SidebarItem
                                         label={item.label}
                                         href={item.href}
-                                        icon={'icon' in item ? item.icon : undefined}
-                                        avatar={'avatar' in item ? item.avatar : undefined}
+                                        icon={item.icon}
+                                        activeIcon={item.activeIcon}
+                                        avatar={item.avatar}
                                         isActive={isActive}
                                     />
                                 </div>

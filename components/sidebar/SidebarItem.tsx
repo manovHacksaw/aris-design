@@ -9,6 +9,7 @@ interface SidebarItemProps {
     label: string;
     href: string;
     icon?: IconType;
+    activeIcon?: IconType;
     avatar?: string;
     isActive?: boolean;
 }
@@ -17,6 +18,7 @@ export default function SidebarItem({
     label,
     href,
     icon: Icon,
+    activeIcon: ActiveIcon,
     avatar,
     isActive,
 }: SidebarItemProps) {
@@ -39,10 +41,7 @@ export default function SidebarItem({
         >
             {/* Left accent pill removed in favor of filled icon container */}
 
-            <div className={cn(
-                "flex-shrink-0 relative flex items-center justify-center w-8 h-8 transition-all duration-200",
-                isActive ? "bg-white rounded-[10px] shadow-sm" : ""
-            )}>
+            <div className="flex-shrink-0 relative flex items-center justify-center w-8 h-8 transition-all duration-200">
                 {avatar ? (
                     <img
                         src={avatar}
@@ -52,13 +51,18 @@ export default function SidebarItem({
                             isActive ? "ring-2 ring-white" : "border border-transparent"
                         )}
                     />
+                ) : isActive && ActiveIcon ? (
+                    <ActiveIcon
+                        size={24}
+                        className="transition-colors duration-150 text-white"
+                    />
                 ) : Icon ? (
                     <Icon
-                        size={isActive ? 20 : 24}
+                        size={24}
                         className={cn(
                             "transition-colors duration-150",
                             isActive
-                                ? "text-black"
+                                ? "text-white"
                                 : "text-[#9CA3AF] group-hover:text-white"
                         )}
                     />
