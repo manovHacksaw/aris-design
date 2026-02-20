@@ -27,7 +27,7 @@ export default function Sidebar() {
         { label: "Home", href: "/home", icon: IoHomeOutline },
 
 
-        { label: "Discover", href: "/discover", icon: IoCompassOutline },
+        { label: "Explore", href: "/explore", icon: IoCompassOutline },
         { label: "Create", href: "/create", icon: IoAddCircleOutline },
         { label: "Leaderboard", href: "/leaderboard", icon: IoTrophyOutline },
         { label: "Dashboard", href: "/dashboard", icon: IoGridOutline },

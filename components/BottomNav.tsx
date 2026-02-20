@@ -7,7 +7,7 @@ import { clsx } from "clsx";
 
 const navItems = [
     { icon: Home, label: "Home", href: "/home" },
-    { icon: Compass, label: "Discover", href: "/discover" },
+    { icon: Compass, label: "Explore", href: "/explore" },
     { icon: PlusCircle, label: "Create", href: "/create" },
     { icon: Trophy, label: "Leaderboard", href: "/leaderboard" },
     { icon: User, label: "Profile", href: "/profile" },

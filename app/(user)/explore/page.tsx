@@ -64,7 +64,7 @@ const exploreGrid = [
     { id: 6, image: "https://lh3.googleusercontent.com/aida-public/AB6AXuC3AGais-gwxMRoyDzXwF7j1yp-ppTPDvKQpSh9_z1RrlG0-uy2iDCln-qkMhPxvna7M4HIAu1iS-VpZ6rFu3V90m_5Wh2kkd3FE3NN3t8Jt5XDbsdrUPk7DEKfDm0wDQEop2PqrLdxDUgEVc2jTGgFu1fDPPGlVUP9gbP6xCJfcf_t8IU9OJpdZopHXOPkK20XQG_Mb05AEEI3IRbNeupHSp41uTo_gbmehfqR98-GmDkILfle7be5DiA4dIX20yqjsKSsLq-La0U0", votes: 1540, user: "@grid_lock", category: "Design" },
 ];
 
-export default function Discover() {
+export default function Explore() {
     const [activeCategory, setActiveCategory] = useState("All");
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -97,7 +97,7 @@ export default function Discover() {
 
                     {/* Page Header */}
                     <div className="mb-6">
-                        <h1 className="text-3xl font-black text-foreground tracking-tighter mb-2">Discover</h1>
+                        <h1 className="text-3xl font-black text-foreground tracking-tighter mb-2">Explore</h1>
                         <p className="text-sm font-medium text-foreground/40 leading-relaxed uppercase tracking-widest">Explore challenges, creators, and trending content</p>
                     </div>
 
