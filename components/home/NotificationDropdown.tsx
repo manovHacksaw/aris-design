@@ -47,7 +47,7 @@ const DUMMY_NOTIFICATIONS = [
         type: "like",
         user: "Mike Chen",
         avatar: "https://i.pravatar.cc/150?u=a04258114e29026302d",
-        content: "liked your comment",
+        content: "liked your remark",
         time: "1d ago",
         read: true,
     },

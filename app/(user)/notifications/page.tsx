@@ -48,16 +48,16 @@ const DUMMY_NOTIFICATIONS = [
         type: "like",
         user: "Mike Chen",
         avatar: "https://i.pravatar.cc/150?u=a04258114e29026302d",
-        content: "liked your comment",
+        content: "liked your remark",
         time: "1d ago",
         read: true,
     },
     {
         id: 6,
-        type: "comment",
+        type: "remark",
         user: "Jessica Wu",
         avatar: "https://i.pravatar.cc/150?img=5",
-        content: "commented: 'Love the colors on this one!'",
+        content: "remarked: 'Love the colors on this one!'",
         target: "Neon City Vibes",
         time: "2d ago",
         read: true,
@@ -78,7 +78,7 @@ export default function NotificationsPage() {
     // Filter logic
     const notifications = DUMMY_NOTIFICATIONS.filter(n => {
         if (filter === "all") return true;
-        if (filter === "mentions") return n.type === "like" || n.type === "follow" || n.type === "comment";
+        if (filter === "mentions") return n.type === "like" || n.type === "follow" || n.type === "remark";
         if (filter === "system") return n.type === "system" || n.type === "challenge" || n.type === "award";
         return true;
     });
@@ -144,7 +144,7 @@ export default function NotificationsPage() {
                                                     <UserPlus className="w-3 h-3 text-white" />
                                                 </div>
                                             </div>
-                                        ) : notification.type === "comment" ? (
+                                        ) : notification.type === "remark" ? (
                                             <div className="relative">
                                                 <img src={notification.avatar} alt="" className="w-12 h-12 rounded-full object-cover border-2 border-border" />
                                                 <div className="absolute -bottom-1 -right-1 bg-purple-500 rounded-full p-1 border-2 border-card">

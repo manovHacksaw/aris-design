@@ -18,7 +18,7 @@ export default function YourActivityPage() {
     const activityStats = [
         { label: "Total Submissions", value: "24", icon: Layout, color: "text-primary" },
         { label: "Votes Cast", value: "1,420", icon: ThumbsUp, color: "text-accent" },
-        { label: "Comments", value: "86", icon: MessageCircle, color: "text-accent" },
+        { label: "Remarks", value: "86", icon: MessageCircle, color: "text-accent" },
         { label: "Activity Time", value: "128h", icon: Clock, color: "text-primary" },
     ];
 

@@ -12,7 +12,7 @@ const POSTS_ANALYTICS = [
         date: "Feb 14, 2026",
         views: "12.5k",
         likes: "2.4k",
-        comments: "342",
+        remarks: "342",
         earnings: "$120.50",
         performance: "high", // high, medium, low
         trend: "+15%",
@@ -26,7 +26,7 @@ const POSTS_ANALYTICS = [
         date: "Feb 10, 2026",
         views: "8.2k",
         likes: "1.1k",
-        comments: "156",
+        remarks: "156",
         earnings: "$45.00",
         performance: "medium",
         trend: "+5%",
@@ -40,7 +40,7 @@ const POSTS_ANALYTICS = [
         date: "Feb 05, 2026",
         views: "3.4k",
         likes: "420",
-        comments: "89",
+        remarks: "89",
         earnings: "$12.00",
         performance: "low",
         trend: "-2%",
@@ -54,7 +54,7 @@ const POSTS_ANALYTICS = [
         date: "Jan 28, 2026",
         views: "25.1k",
         likes: "4.8k",
-        comments: "892",
+        remarks: "892",
         earnings: "$350.25",
         performance: "high",
         trend: "+22%",
@@ -160,9 +160,9 @@ export default function DashboardPage() {
                                                     <Heart className="w-5 h-5 text-gray-600 group-hover:text-pink-500 group-hover:fill-pink-500/10 transition-all duration-300" />
                                                     <span className="text-xs font-medium text-gray-400 group-hover:text-foreground transition-colors">{post.likes}</span>
                                                 </div>
-                                                <div className="flex flex-col items-center gap-1" title="Comments">
+                                                <div className="flex flex-col items-center gap-1" title="Remarks">
                                                     <MessageSquare className="w-5 h-5 text-gray-600 group-hover:text-blue-400 group-hover:fill-blue-400/10 transition-all duration-300" />
-                                                    <span className="text-xs font-medium text-gray-400 group-hover:text-foreground transition-colors">{post.comments}</span>
+                                                    <span className="text-xs font-medium text-gray-400 group-hover:text-foreground transition-colors">{post.remarks}</span>
                                                 </div>
                                             </div>
 

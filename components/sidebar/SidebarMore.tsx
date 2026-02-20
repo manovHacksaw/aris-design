@@ -9,7 +9,9 @@ import {
     IoPulseOutline,
     IoBookmarkOutline,
     IoWarningOutline,
-    IoPersonAddOutline
+    IoPersonAddOutline,
+    IoLinkOutline,
+    IoDocumentTextOutline
 } from "react-icons/io5";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/context/SidebarContext";
@@ -74,6 +76,8 @@ export default function SidebarMore() {
         { label: "Your Activity", icon: IoPulseOutline, href: "/activity" },
         { label: "Saved", icon: IoBookmarkOutline, href: "/saved" },
         { label: "Report a problem", icon: IoWarningOutline, href: "/report" },
+        { label: "Link Tree", icon: IoLinkOutline, href: "/link-tree" },
+        { label: "Terms and Conditions", icon: IoDocumentTextOutline, href: "/terms" },
     ];
 
     return (
