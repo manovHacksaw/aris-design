@@ -85,7 +85,7 @@ export default function DashboardPage() {
                         {/* Top Stats Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {OVERALL_STATS.map((stat, i) => (
-                                <div key={i} className="bg-card border border-border rounded-2xl p-5 flex items-center justify-between hover:border-gray-800 transition-colors group shadow-sm hover:shadow-md hover:shadow-black/20">
+                                <div key={i} className="bg-card/70 backdrop-blur-md border border-border/80 rounded-xl p-5 flex items-center justify-between hover:border-border transition-colors group shadow-sm hover:shadow-md hover:shadow-black/20">
                                     <div>
                                         <p className="text-gray-400 text-xs font-mono uppercase tracking-widest mb-1 group-hover:text-gray-300 transition-colors">{stat.label}</p>
                                         <h2 className="text-3xl font-mono font-bold text-foreground tracking-tighter">{stat.value}</h2>
@@ -93,7 +93,7 @@ export default function DashboardPage() {
                                             <ArrowUpRight className="w-3 h-3" /> {stat.trend}
                                         </span>
                                     </div>
-                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${stat.bg} shadow-lg shadow-black/10 group-hover:scale-105 transition-transform duration-300 border border-white/5`}>
+                                    <div className={`w-14 h-14 rounded-lg flex items-center justify-center ${stat.bg} shadow-lg shadow-black/10 group-hover:scale-105 transition-transform duration-300 border border-white/5`}>
                                         <stat.icon className={`w-7 h-7 ${stat.color}`} />
                                     </div>
                                 </div>
@@ -107,7 +107,7 @@ export default function DashboardPage() {
                                 Content Performance
                             </h2>
 
-                            <div className="bg-card border border-border rounded-3xl overflow-hidden shadow-lg shadow-black/20">
+                            <div className="bg-card/70 backdrop-blur-md border border-border/80 rounded-2xl overflow-hidden shadow-lg shadow-black/20">
 
                                 {/* Table Header - Desktop */}
                                 <div className="hidden md:grid grid-cols-12 gap-4 border-b border-border bg-secondary px-6 py-4 font-mono text-[10px] font-bold text-gray-400 uppercase tracking-widest sticky top-0 z-10">
@@ -125,7 +125,7 @@ export default function DashboardPage() {
 
                                             {/* Post Info (Mobile: Full Width, Desktop: Col 4) */}
                                             <div className="col-span-1 md:col-span-4 flex items-center gap-4">
-                                                <div className="relative w-20 h-14 rounded-xl overflow-hidden flex-shrink-0 border border-border group-hover:border-primary/50 transition-colors shadow-sm">
+                                                <div className="relative w-20 h-14 rounded-lg overflow-hidden flex-shrink-0 border border-border group-hover:border-primary/50 transition-colors shadow-sm">
                                                     <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out" />
                                                 </div>
                                                 <div className="min-w-0">

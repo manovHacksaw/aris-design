@@ -158,7 +158,7 @@ export default function Explore() {
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: i * 0.1 }}
                                                 whileHover={{ y: -4 }}
-                                                className="relative h-64 md:h-72 rounded-[24px] md:rounded-[28px] overflow-hidden group cursor-pointer border border-border shadow-spotify"
+                                                className="relative h-64 md:h-72 rounded-xl md:rounded-2xl overflow-hidden group cursor-pointer border border-border/80 shadow-spotify backdrop-blur-md bg-card/60"
                                             >
                                                 <img
                                                     src={ch.image}
@@ -214,7 +214,7 @@ export default function Explore() {
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: i * 0.08 }}
                                             whileHover={{ y: -4 }}
-                                            className="min-w-[140px] md:min-w-0 snap-center bg-card/50 backdrop-blur-sm border border-border/60 rounded-[24px] md:rounded-[28px] p-4 md:p-6 text-center hover:bg-card hover:border-primary/30 transition-all cursor-pointer group shadow-sm hover:shadow-xl flex flex-col items-center"
+                                            className="min-w-[140px] md:min-w-0 snap-center bg-card/60 backdrop-blur-md border border-border/60 rounded-xl md:rounded-2xl p-4 md:p-6 text-center hover:bg-card hover:border-primary/50 transition-all cursor-pointer group shadow-sm hover:shadow-xl flex flex-col items-center"
                                         >
                                             <div className="relative w-16 h-16 md:w-20 md:h-20 mx-auto mb-3 md:mb-4">
                                                 <div className="absolute inset-0 bg-gradient-to-br from-primary via-accent to-primary rounded-full animate-spin-slow opacity-0 group-hover:opacity-100 transition-opacity blur-md" />
@@ -270,7 +270,7 @@ export default function Explore() {
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: i * 0.08 }}
                                             whileHover={{ y: -4 }}
-                                            className="min-w-[140px] md:min-w-0 snap-center bg-card/50 backdrop-blur-sm border border-border/60 rounded-[24px] md:rounded-[28px] p-4 md:p-6 text-center hover:bg-card hover:border-primary/30 transition-all cursor-pointer group shadow-sm hover:shadow-xl flex flex-col items-center"
+                                            className="min-w-[140px] md:min-w-0 snap-center bg-card/60 backdrop-blur-md border border-border/60 rounded-xl md:rounded-2xl p-4 md:p-6 text-center hover:bg-card hover:border-primary/50 transition-all cursor-pointer group shadow-sm hover:shadow-xl flex flex-col items-center"
                                         >
                                             <div className="relative w-16 h-16 md:w-20 md:h-20 mx-auto mb-3 md:mb-4">
                                                 <div className="absolute inset-0 bg-gradient-to-br from-primary via-accent to-primary rounded-full animate-spin-slow opacity-0 group-hover:opacity-100 transition-opacity blur-md" />
@@ -323,7 +323,7 @@ export default function Explore() {
                                         transition={{ delay: i * 0.06 }}
                                         whileHover={{ y: -4 }}
                                         whileTap={{ scale: 0.95 }}
-                                        className="aspect-square rounded-[16px] md:rounded-[24px] overflow-hidden relative group cursor-pointer border border-border shadow-soft"
+                                        className="aspect-square rounded-xl md:rounded-2xl overflow-hidden relative group cursor-pointer border border-border/80 shadow-soft"
                                     >
                                         <img
                                             src={item.image}

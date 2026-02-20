@@ -67,7 +67,7 @@ export default function YourActivityPage() {
                         <h1 className="text-4xl font-black text-foreground tracking-tighter mb-2">Your Activity</h1>
                         <p className="text-[11px] font-black text-foreground/30 uppercase tracking-[0.2em]">Track your digital footprints and growth on Aris</p>
                     </div>
-                    <div className="flex items-center gap-3 bg-card px-5 py-3 rounded-2xl border border-border/50 shadow-sm">
+                    <div className="flex items-center gap-3 bg-card/70 backdrop-blur-md px-5 py-3 rounded-xl border border-border/50 shadow-sm">
                         <Calendar className="w-4 h-4 text-primary" />
                         <span className="text-[10px] font-black uppercase tracking-widest text-foreground/60">Last 30 Days</span>
                     </div>
@@ -81,7 +81,7 @@ export default function YourActivityPage() {
                             initial={{ opacity: 0, y: 15 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.1 }}
-                            className="bg-card border border-border/60 p-6 rounded-[28px] group hover:border-primary/30 transition-all duration-300 shadow-sm"
+                            className="bg-card/70 backdrop-blur-md border border-border/60 p-6 rounded-xl md:rounded-2xl group hover:border-primary/30 transition-all duration-300 shadow-sm"
                         >
                             <div className={cn("w-10 h-10 rounded-xl bg-secondary flex items-center justify-center mb-5 group-hover:scale-110 transition-transform", stat.color)}>
                                 <stat.icon className="w-5 h-5" />
@@ -97,7 +97,7 @@ export default function YourActivityPage() {
                     {/* Main Timeline */}
                     <div className="space-y-6">
                         <h2 className="text-xs font-black uppercase tracking-[0.25em] text-foreground/40 pl-1">Events Participated In</h2>
-                        <div className="bg-card/50 backdrop-blur-xl border border-border/60 rounded-[32px] overflow-hidden">
+                        <div className="bg-card/70 backdrop-blur-md border border-border/60 rounded-2xl md:rounded-3xl overflow-hidden shadow-sm">
                             {participatedEvents.map((event, i) => (
                                 <div key={i} className="flex items-center gap-6 p-7 border-b border-border/40 last:border-0 hover:bg-foreground/[0.02] transition-colors group cursor-pointer">
                                     <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center shrink-0">

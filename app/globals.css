@@ -1,29 +1,29 @@
 @import "tailwindcss";
 
 :root {
-  /* Clean Light Theme */
-  --color-background: #FAFAFA;
-  --color-foreground: #09090b;
+  /* Light Theme */
+  --color-background: #F4F6FA;
+  --color-foreground: #0B0E18;
 
-  /* Primary: Sapphire Blue */
-  --color-primary: #2F6AFF;
+  /* Primary: Emerald Green */
+  --color-primary: #00C853;
   --color-primary-foreground: #FFFFFF;
-  --color-primary-dark: #1F5AFF;
-  --color-primary-light: #4F8AFF;
+  --color-primary-dark: #00A844;
+  --color-primary-light: #33D470;
 
-  /* Secondary: Light Gray */
-  --color-secondary: #f4f4f5;
-  --color-secondary-foreground: #09090b;
+  /* Secondary: Light Gray-Blue */
+  --color-secondary: #E8ECF4;
+  --color-secondary-foreground: #0B0E18;
 
-  /* Accent: Muted Pink */
-  --color-accent: #FF7AA2;
+  /* Accent: Amber Orange */
+  --color-accent: #FF8C42;
   --color-accent-foreground: #FFFFFF;
 
   /* UI Surfaces */
   --color-card: #FFFFFF;
-  --color-card-border: rgba(0, 0, 0, 0.08);
-  --color-input: #ffffff;
-  --color-folder: #f4f4f5;
+  --color-card-border: rgba(11, 14, 24, 0.08);
+  --color-input: #FFFFFF;
+  --color-folder: #E8ECF4;
 
   /* Radius System */
   --radius-sm: 8px;
@@ -38,27 +38,30 @@
   --shadow-spotify: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
 
   /* Soft Border Override */
-  --border-soft: 1px solid rgba(0, 0, 0, 0.08);
+  --border-soft: 1px solid rgba(11, 14, 24, 0.08);
 }
 
 .dark {
-  /* Professional Dark Grey */
-  --color-background: #09090b;
-  --color-foreground: #FAFAFA;
-  --color-primary: #2F6AFF;
+  /* Dark Navy Theme — Crypto Dashboard */
+  --color-background: #0B0E18;
+  --color-foreground: #F0F2F8;
+  --color-primary: #00C853;
   --color-primary-foreground: #FFFFFF;
-  --color-secondary: #181818;
-  --color-secondary-foreground: #FFFFFF;
-  --color-accent: #FF7AA2;
-  --color-card: #121212;
-  --color-card-border: rgba(255, 255, 255, 0.03);
-  --color-input: #1f1f1f;
-  --color-folder: #18181b;
+  --color-primary-dark: #00A844;
+  --color-primary-light: #33D470;
+  --color-secondary: #161C2D;
+  --color-secondary-foreground: #F0F2F8;
+  --color-accent: #FF8C42;
+  --color-accent-foreground: #FFFFFF;
+  --color-card: rgba(16, 20, 31, 0.75);
+  --color-card-border: rgba(255, 255, 255, 0.08);
+  --color-input: #161C2D;
+  --color-folder: #161C2D;
 
   /* Shadows for Dark Mode */
-  --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.4);
-  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.3);
-  --shadow-spotify: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+  --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-spotify: 0 10px 30px -5px rgba(0, 0, 0, 0.6);
 }
 
 @theme inline {
@@ -76,12 +79,12 @@
   --color-accent: var(--color-accent);
   --color-accent-foreground: var(--color-accent-foreground);
 
-  /* Sapphire specific semantic names */
-  --color-sapphire: #2F6AFF;
-  --color-aris-bg: #09090b;
-  --color-aris-card: #18181b;
-  --color-aris-border: #27272a;
-  --color-muted-pink: #FF7AA2;
+  /* Semantic design tokens */
+  --color-emerald: #00C853;
+  --color-aris-bg: #0B0E18;
+  --color-aris-card: #10141F;
+  --color-aris-border: #1E2538;
+  --color-amber: #FF8C42;
 
   --color-card: var(--color-card);
   --color-card-border: var(--color-card-border);
@@ -94,10 +97,10 @@
   --font-mono: var(--font-jetbrains-mono), monospace;
 
   /* Radius tokens */
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 22px;
-  --radius-xl: 28px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
   --radius-full: 9999px;
 
   /* Animations */
@@ -137,6 +140,11 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.bg-card {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -144,16 +152,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #09090b;
+  background: #0B0E18;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
+  background: #1E2538;
   border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2F6AFF;
+  background: #00C853;
 }
 
 /* Utility to hide scrollbar but keep functionality */
