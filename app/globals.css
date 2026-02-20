@@ -43,20 +43,20 @@
 
 .dark {
   /* Dark Navy Theme — Crypto Dashboard */
-  --color-background: #0B0E18;
+  --color-background: #090B10;
   --color-foreground: #F0F2F8;
   --color-primary: #00C853;
   --color-primary-foreground: #FFFFFF;
   --color-primary-dark: #00A844;
   --color-primary-light: #33D470;
-  --color-secondary: #161C2D;
+  --color-secondary: #12161F;
   --color-secondary-foreground: #F0F2F8;
   --color-accent: #FF8C42;
   --color-accent-foreground: #FFFFFF;
-  --color-card: rgba(16, 20, 31, 0.75);
-  --color-card-border: rgba(255, 255, 255, 0.08);
-  --color-input: #161C2D;
-  --color-folder: #161C2D;
+  --color-card: rgba(18, 22, 31, 0.75);
+  --color-card-border: rgba(255, 255, 255, 0.06);
+  --color-input: #12161F;
+  --color-folder: #12161F;
 
   /* Shadows for Dark Mode */
   --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.5);
@@ -81,9 +81,9 @@
 
   /* Semantic design tokens */
   --color-emerald: #00C853;
-  --color-aris-bg: #0B0E18;
-  --color-aris-card: #10141F;
-  --color-aris-border: #1E2538;
+  --color-aris-bg: #090B10;
+  --color-aris-card: #12161F;
+  --color-aris-border: #1C2230;
   --color-amber: #FF8C42;
 
   --color-card: var(--color-card);
@@ -152,11 +152,11 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0B0E18;
+  background: #090B10;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1E2538;
+  background: #1C2230;
   border-radius: var(--radius-full);
 }
 
