@@ -78,7 +78,7 @@ export default function DashboardPage() {
 
                         {/* Header */}
                         <div>
-                            <h1 className="text-3xl font-bold text-foreground mb-2">Creator Dashboard</h1>
+                            <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
                             <p className="text-gray-400">Track content performance and audience growth.</p>
                         </div>
 

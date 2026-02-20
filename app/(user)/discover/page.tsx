@@ -48,6 +48,13 @@ const topCreators = [
     { name: "FlowState", handle: "@flowstate", followers: "7.1k", avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuCpvRP1uIv4EYmZx7GJoB2xyit-_JZPG0D9Xe0_dfElQsWFOYgdGldCOsdGc6Xsa7PaSNCwHC7MuD40zb81qpZkqnlgpjWvCnnDNw4lzjFxGYpWgNNRG_j8TQbhjNeNhTQGzcWZPhRwB6yGD_kCLWjvqMoRX1--H_nkrWiHWh1tcxE5WeyJ1d9aNZiVGmXDe7Z1qXM6_MVtjlygxIkqfq4DQaEts01yQgmdzlkkJmiFWB5SygvoM4k0HbOiFN17OjKPyizn728NIk6H", xp: 2650 },
 ];
 
+const featuredBrands = [
+    { name: "Adidas", handle: "@adidas", followers: "850k", avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuBLbgT1oExwMAiJyiQGoTmr2_kR2RzwNJYJBtC10wBZMijE3OCEsrPgdSvzCdO5lXHk81lddNFm7XOVW5duvH0UNSvRbqqMfszPAppy5WzzJdxdDJ-W914K5bL2peoY2EZRnCxcTpKN05hnX_Q5trEB_C66YSHiNMx8bouhFfYb9QKO1YlOzCUEsJ-DDg7D9kM6N2quwuaYRXbRgmImK56qxAz4QG-jtC26S1jV-6xiLtbbDDfXGKBwxW4JMERm6bODCcQUE0dsB3ZQ", campaigns: 12 },
+    { name: "Red Bull", handle: "@redbull", followers: "1.2M", avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuCWXdij1SyjTwEpsDcfi27vNIMR4A5kWzyZfgXSq-mNBctN3XeoBAwyn1g6ybVKUu1YIggx-T1A3GeGdKmM97wDDhhFYUoCTYY9dUfcS2GSxdBLNbM89apBymuKSSUSg9x6IVmEm-rRSAjhvuCnkWTsnIqXACRbYYyEOa7vaIcN5vE9GAK6CqPqxPcvsV_Ftd8pzSynscsHYatTZwiLkpy9MWBHUG8Brz5Xsw_SdbH7CYr-DPyKxsktn0n4qnSaV1vXmE_NlgiqIwbA", campaigns: 8 },
+    { name: "Nike", handle: "@nike", followers: "2.1M", avatar: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=150&q=80", campaigns: 15 },
+    { name: "Sony", handle: "@sony", followers: "920k", avatar: "https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=150&q=80", campaigns: 5 },
+];
+
 const exploreGrid = [
     { id: 1, image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCYiG-zIhRn_VJ8cj1EL2PwG6YhycgoqKoayLqHvOciU27W6ymsq3dAES2LeCuiYkMC8M0saTD50kGdcOZUXXOET8UNKfxoHKPGqvYUjJ_rM2C5D9MwiPp9i6BXFAlHr34VGtAB6j_nlXnmCLEM_EcQ8inYkiAVQXsLv93k_0vvBbwEVjXn-YDBki0M44ogo_9PpGDrfAZ0eDWVQqenqgTTPHg043QFcZOUPPS3qkEef6k80vOQI_GZNeBTeht1HsvUGDOmy_ZzGOSk", votes: 1200, user: "@david_art", category: "Art" },
     { id: 2, image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBhMKldK8ut-GonyZ8kV-6qVEeafBOLVHaRRDUUgDJdulQr1t4_KWnmsZzVDdsNnHNO3tbwHfPGxDRfgSFU3X1JnD56bMgJw_f_mq2zkdiKXg2wt5mMeus-4dxs7Br6mAFeI2jwUoXd3ZZqL5ouc-V6GmLsUYRDzxg4EUWiwvJcMnn2sHjfwMt7ftzaUOnQ_yzsFgox-jfDLfWmpZLLulk_NunmOHnSFh6tQgCgEH3ejbFqKJN_6dmC9VBlCf9fUWtoDdQv0laOCpfM", votes: 856, user: "@moto_mike", category: "Music" },
@@ -70,6 +77,11 @@ export default function Discover() {
     const filteredCreators = topCreators.filter(c =>
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.handle.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const filteredBrands = featuredBrands.filter(b =>
+        b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        b.handle.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const filteredGrid = exploreGrid.filter(item =>
@@ -222,6 +234,59 @@ export default function Discover() {
 
                                         <button className="w-full py-2 md:py-2.5 rounded-xl bg-secondary/80 hover:bg-foreground hover:text-background text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] transition-all mt-auto">
                                             Follow
+                                        </button>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Featured Brands Grid */}
+                    {filteredBrands.length > 0 && (
+                        <section>
+                            <div className="flex items-center justify-between mb-6 px-4 md:px-0">
+                                <h2 className="text-xl font-black text-foreground uppercase tracking-wider">
+                                    {searchQuery ? "Matching Brands" : "Featured Brands"}
+                                </h2>
+                                <button className="text-[11px] font-bold text-primary uppercase tracking-[0.2em] hover:text-foreground transition-colors flex items-center gap-1.5">
+                                    {searchQuery ? "See All" : "See All"} <ArrowRight className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                            <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 px-4 md:px-0 md:grid md:grid-cols-4 md:gap-6 pb-4 md:pb-0 scrollbar-hide">
+                                {filteredBrands.map((brand, i) => (
+                                    <motion.div
+                                        key={brand.handle}
+                                        initial={{ opacity: 0, y: 12 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: i * 0.08 }}
+                                        whileHover={{ y: -4 }}
+                                        className="min-w-[140px] md:min-w-0 snap-center bg-card/50 backdrop-blur-sm border border-border/60 rounded-[24px] md:rounded-[28px] p-4 md:p-6 text-center hover:bg-card hover:border-primary/30 transition-all cursor-pointer group shadow-sm hover:shadow-xl flex flex-col items-center"
+                                    >
+                                        <div className="relative w-16 h-16 md:w-20 md:h-20 mx-auto mb-3 md:mb-4">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-primary via-accent to-primary rounded-full animate-spin-slow opacity-0 group-hover:opacity-100 transition-opacity blur-md" />
+                                            <img
+                                                src={brand.avatar}
+                                                alt={brand.name}
+                                                className="relative w-full h-full rounded-full object-cover border-2 border-border group-hover:border-primary transition-colors p-0.5 bg-background"
+                                            />
+                                        </div>
+                                        <h3 className="text-sm md:text-base font-black text-foreground tracking-tight truncate w-full">{brand.name}</h3>
+                                        <p className="text-[10px] md:text-[11px] font-bold text-foreground/40 uppercase tracking-widest mb-3 md:mb-4 truncate w-full">{brand.handle}</p>
+
+                                        <div className="flex items-center justify-center gap-2 md:gap-4 text-[9px] md:text-[10px] font-black uppercase tracking-widest mb-4 md:mb-6 w-full">
+                                            <div className="flex flex-col gap-0.5 md:gap-1 text-foreground/30 items-center">
+                                                <span>Followers</span>
+                                                <span className="text-foreground text-[10px] md:text-xs">{brand.followers}</span>
+                                            </div>
+                                            <div className="w-px h-6 bg-border/50" />
+                                            <div className="flex flex-col gap-0.5 md:gap-1 text-foreground/30 items-center">
+                                                <span>Events</span>
+                                                <span className="text-primary text-[10px] md:text-xs">{brand.campaigns}</span>
+                                            </div>
+                                        </div>
+
+                                        <button className="w-full py-2 md:py-2.5 rounded-xl bg-secondary/80 hover:bg-foreground hover:text-background text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] transition-all mt-auto">
+                                            View
                                         </button>
                                     </motion.div>
                                 ))}

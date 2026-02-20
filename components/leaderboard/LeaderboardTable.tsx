@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Flame, ThumbsUp, Trophy, Zap, MousePointerClick } from "lucide-react";
+import { Flame, ThumbsUp, Trophy, Zap, MousePointerClick, Users } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import CompactLeaderboardCard from "@/components/leaderboard/CompactLeaderboardCard";
@@ -82,11 +82,10 @@ export default function LeaderboardTable({ activeTab }: LeaderboardTableProps) {
                 );
             case 'events':
                 return (
-                    <div className="hidden md:grid grid-cols-[80px_1fr_150px_150px_150px] gap-4 px-8 py-5 text-[10px] text-foreground/30 uppercase tracking-[0.2em] font-black border-b border-border/60">
+                    <div className="hidden md:grid grid-cols-[80px_1fr_150px_150px] gap-4 px-8 py-5 text-[10px] text-foreground/30 uppercase tracking-[0.2em] font-black border-b border-border/60">
                         <span>Rank</span>
                         <span>Event</span>
                         <span>Participants</span>
-                        <span>Total Votes</span>
                         <span>Prize Pool</span>
                     </div>
                 );
@@ -133,7 +132,9 @@ export default function LeaderboardTable({ activeTab }: LeaderboardTableProps) {
             >
                 <div className={cn(
                     "grid gap-4 items-center px-8 py-6 cursor-pointer",
-                    isUser ? "grid-cols-[80px_1fr_150px_150px_150px_1fr]" : "grid-cols-[80px_1fr_150px_150px_150px]"
+                    isUser ? "grid-cols-[80px_1fr_150px_150px_150px_1fr]" :
+                        isEvent ? "grid-cols-[80px_1fr_150px_150px]" :
+                            "grid-cols-[80px_1fr_150px_150px_150px]"
                 )}>
                     {/* Rank */}
                     <span className={cn("text-sm font-black tracking-tight", item.rank <= 3 ? "text-primary" : "text-foreground/30")}>
@@ -186,8 +187,10 @@ export default function LeaderboardTable({ activeTab }: LeaderboardTableProps) {
 
                     {isEvent && (
                         <>
-                            <span className="text-sm font-bold text-foreground/60">{item.participants?.toLocaleString()}</span>
-                            <span className="text-sm font-bold text-foreground/60">{item.totalVotes?.toLocaleString()}</span>
+                            <span className="text-sm font-bold text-foreground/60 flex items-center gap-2">
+                                <Users className="w-4 h-4 text-foreground/20" />
+                                {item.participants?.toLocaleString()}
+                            </span>
                             <span className="text-sm font-black text-accent">${item.prizePool?.toLocaleString()}</span>
                         </>
                     )}
