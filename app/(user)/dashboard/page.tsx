@@ -78,7 +78,7 @@ export default function DashboardPage() {
 
                         {/* Header */}
                         <div>
-                            <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
+                            <h1 className="text-3xl font-display font-bold text-foreground mb-2 tracking-wide">Dashboard</h1>
                             <p className="text-gray-400">Track content performance and audience growth.</p>
                         </div>
 
@@ -87,9 +87,9 @@ export default function DashboardPage() {
                             {OVERALL_STATS.map((stat, i) => (
                                 <div key={i} className="bg-card border border-border rounded-2xl p-5 flex items-center justify-between hover:border-gray-800 transition-colors group shadow-sm hover:shadow-md hover:shadow-black/20">
                                     <div>
-                                        <p className="text-gray-400 text-sm font-medium mb-1 group-hover:text-gray-300 transition-colors">{stat.label}</p>
-                                        <h2 className="text-3xl font-bold text-foreground tracking-tight">{stat.value}</h2>
-                                        <span className="text-xs font-medium text-green-400 mt-2 inline-flex items-center gap-1 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/10">
+                                        <p className="text-gray-400 text-xs font-mono uppercase tracking-widest mb-1 group-hover:text-gray-300 transition-colors">{stat.label}</p>
+                                        <h2 className="text-3xl font-mono font-bold text-foreground tracking-tighter">{stat.value}</h2>
+                                        <span className="font-mono text-[10px] font-medium text-green-400 mt-2 inline-flex items-center gap-1 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">
                                             <ArrowUpRight className="w-3 h-3" /> {stat.trend}
                                         </span>
                                     </div>
@@ -102,7 +102,7 @@ export default function DashboardPage() {
 
                         {/* Recent Posts Analytics */}
                         <div className="space-y-4">
-                            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                            <h2 className="text-xl font-display font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
                                 <TrendingUp className="w-5 h-5 text-primary" />
                                 Content Performance
                             </h2>
@@ -110,7 +110,7 @@ export default function DashboardPage() {
                             <div className="bg-card border border-border rounded-3xl overflow-hidden shadow-lg shadow-black/20">
 
                                 {/* Table Header - Desktop */}
-                                <div className="hidden md:grid grid-cols-12 gap-4 border-b border-border bg-secondary px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider sticky top-0 z-10">
+                                <div className="hidden md:grid grid-cols-12 gap-4 border-b border-border bg-secondary px-6 py-4 font-mono text-[10px] font-bold text-gray-400 uppercase tracking-widest sticky top-0 z-10">
                                     <div className="col-span-4">Post</div>
                                     <div className="col-span-2 text-center">Views</div>
                                     <div className="col-span-2 text-center">Engagement</div>
@@ -131,7 +131,7 @@ export default function DashboardPage() {
                                                 <div className="min-w-0">
                                                     <h3 className="text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors pr-2 leading-tight">{post.title}</h3>
                                                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                                        <span className="text-xs text-gray-500 flex items-center gap-1 bg-background px-1.5 py-0.5 rounded border border-border">
+                                                        <span className="font-mono text-[10px] text-gray-500 flex items-center gap-1 bg-background px-1.5 py-0.5 rounded border border-border">
                                                             <Calendar className="w-3 h-3" /> {post.date}
                                                         </span>
                                                         {/* Mobile Stats Summary */}
@@ -145,11 +145,11 @@ export default function DashboardPage() {
 
                                             {/* Views - Desktop */}
                                             <div className="hidden md:flex col-span-2 flex-col justify-center items-center gap-1">
-                                                <div className="flex items-center gap-1.5 text-foreground font-bold text-base">
+                                                <div className="flex items-center gap-1.5 font-mono text-foreground font-bold text-base">
                                                     <Eye className="w-4 h-4 text-blue-500" />
                                                     {post.views}
                                                 </div>
-                                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${post.performance === 'high' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
+                                                <span className={`font-mono text-[9px] font-bold px-1.5 py-0.5 rounded border ${post.performance === 'high' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
                                                     {post.trend} Trend
                                                 </span>
                                             </div>
@@ -158,11 +158,11 @@ export default function DashboardPage() {
                                             <div className="hidden md:flex col-span-2 justify-center items-center gap-6">
                                                 <div className="flex flex-col items-center gap-1" title="Likes">
                                                     <Heart className="w-5 h-5 text-gray-600 group-hover:text-pink-500 group-hover:fill-pink-500/10 transition-all duration-300" />
-                                                    <span className="text-xs font-medium text-gray-400 group-hover:text-foreground transition-colors">{post.likes}</span>
+                                                    <span className="font-mono text-[10px] font-medium text-gray-400 group-hover:text-foreground transition-colors">{post.likes}</span>
                                                 </div>
                                                 <div className="flex flex-col items-center gap-1" title="Remarks">
                                                     <MessageSquare className="w-5 h-5 text-gray-600 group-hover:text-blue-400 group-hover:fill-blue-400/10 transition-all duration-300" />
-                                                    <span className="text-xs font-medium text-gray-400 group-hover:text-foreground transition-colors">{post.remarks}</span>
+                                                    <span className="font-mono text-[10px] font-medium text-gray-400 group-hover:text-foreground transition-colors">{post.remarks}</span>
                                                 </div>
                                             </div>
 
@@ -170,11 +170,11 @@ export default function DashboardPage() {
                                             <div className="hidden md:flex col-span-2 flex-col justify-center items-center gap-2">
                                                 <div className="flex items-center gap-2 text-xs font-medium bg-green-500/5 px-3 py-1.5 rounded-lg border border-green-500/10 w-full max-w-[120px] justify-between group-hover:bg-green-500/10 transition-colors">
                                                     <span className="text-green-400 flex items-center gap-1.5"><UserPlus className="w-3.5 h-3.5" /> Gained</span>
-                                                    <span className="text-foreground font-bold">+{post.followersGained}</span>
+                                                    <span className="font-mono text-[11px] text-foreground font-bold">+{post.followersGained}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-xs font-medium bg-red-500/5 px-3 py-1.5 rounded-lg border border-red-500/10 w-full max-w-[120px] justify-between group-hover:bg-red-500/10 transition-colors">
                                                     <span className="text-red-400 flex items-center gap-1.5 opacity-80"><UserMinus className="w-3.5 h-3.5" /> Lost</span>
-                                                    <span className="text-gray-300">-{post.followersLost}</span>
+                                                    <span className="font-mono text-[11px] text-gray-300">-{post.followersLost}</span>
                                                 </div>
                                             </div>
 
@@ -183,7 +183,7 @@ export default function DashboardPage() {
                                                 <span className="text-lg font-mono font-black text-foreground group-hover:text-yellow-400 transition-colors tracking-tight">
                                                     {post.earnings}
                                                 </span>
-                                                <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Total Payout</span>
+                                                <span className="font-mono text-[9px] text-gray-500 uppercase tracking-widest font-bold">Total Payout</span>
                                             </div>
 
                                         </div>
@@ -192,7 +192,7 @@ export default function DashboardPage() {
 
                                 {/* Footer / Pagination */}
                                 <div className="p-4 bg-card border-t border-border flex justify-center hover:bg-secondary/30 transition-colors cursor-pointer">
-                                    <button className="text-sm text-primary hover:text-primary/80 font-bold transition-colors flex items-center gap-1">
+                                    <button className="font-mono text-[10px] uppercase tracking-widest text-primary hover:text-primary/80 font-bold transition-colors flex items-center gap-1">
                                         View Full Analytics Report <ArrowUpRight className="w-3 h-3" />
                                     </button>
                                 </div>
