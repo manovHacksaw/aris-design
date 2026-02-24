@@ -1,0 +1,572 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                      String    @id @default(uuid())
+  email                   String    @unique
+  username                String?   @unique
+  phoneNumber             String?   @unique
+  displayName             String?
+  avatarUrl               String?
+  bio                     String?
+  gender                  String?
+  dateOfBirth             DateTime?
+  emailVerified           Boolean   @default(false)
+  emailVerificationCode   String?
+  emailVerificationExpiry DateTime?
+  phoneVerified           Boolean   @default(false)
+  preferredBrands         String[]
+  preferredCategories     String[]
+  xp                      Int       @default(0)
+  walletAddress           String?   @unique
+  isOnboarded             Boolean   @default(false)
+  socialLinks             Json?
+  lastLoginAt             DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  role                    UserRole  @default(USER)
+  level                   Int       @default(1)
+  referralCode            String?   @unique
+
+  // Performance optimization counters (avoid heavy queries)
+  totalEarnings           Float @default(0) // Total USDC earned from rewards
+  totalVotes              Int   @default(0) // Total votes cast
+  totalSubmissions        Int   @default(0) // Total submissions made
+  totalEventsParticipated Int   @default(0) // Unique events participated in
+  totalRewardsClaimed     Int   @default(0) // Number of rewards claimed
+  trustScore              Float @default(0.5) // Trust Score (0.0–1.0), EMA-updated on event completion
+
+  activityLogs        ActivityLog[]
+  brandSubscriptions  BrandSubscription[]
+  ownedBrands         Brand[]              @relation("BrandOwner")
+  notifications       Notification[]
+  referralReceived    Referral?            @relation("ReferralReceived")
+  referralsMade       Referral[]           @relation("ReferralsMade")
+  rewardClaims        RewardClaim[]
+  submissions         Submission[]
+  tokenActivityLogs   TokenActivityLog[]
+  followers           UserFollowers[]      @relation("UserFollowers")
+  following           UserFollowers[]      @relation("UserFollowing")
+  sessions            UserSession[]
+  loginStreak         UserLoginStreak?
+  votes               Vote[]
+  xpMilestonesClaimed XpMilestoneClaimed[]
+  xpTransactions      XpTransaction[]
+  interactions        EventInteraction[]
+
+  @@map("users")
+}
+
+model UserSession {
+  id         String   @id @default(uuid())
+  userId     String
+  deviceInfo String?
+  ip         String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  expiredAt  DateTime
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("userSessions")
+}
+
+model Brand {
+  id                 String               @id @default(uuid())
+  name               String               @unique
+  tagline            String?
+  description        String?
+  categories         String[]
+  logoCid            String?
+  socialLinks        Json?
+  websiteUrl         String?
+  contactEmail       String?
+  contactName        String?
+  contactRole        String?
+  contactPhone       String?
+  platformGoals      String?
+  kycDocuments       Json?
+  isVerified         Boolean              @default(false)
+  eventsCreated      Int                  @default(0)
+  artMinted          Int                  @default(0)
+  walletAddress      String?              @unique
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  ownerId            String?
+  applicationId      String?
+  companyName        String?
+  gstNumber          String?
+  isActive           Boolean              @default(false)
+  panNumber          String?
+  discountPercent    Float                @default(0)
+  level              Int                  @default(0)
+  totalUsdcGiven     Float                @default(0)
+  uniqueParticipants Int                  @default(0)
+  subscriptions      BrandSubscription[]
+  applications       BrandApplication[]
+  levelSnapshots     BrandLevelSnapshot[]
+  owner              User?                @relation("BrandOwner", fields: [ownerId], references: [id])
+  events             Event[]
+  notifications      Notification[]
+  tokenActivityLogs  TokenActivityLog[]
+
+  @@map("brands")
+}
+
+model Event {
+  id               String    @id @default(uuid())
+  title            String
+  description      String?
+  category         String?
+  eventType        EventType
+  status           String
+  allowSubmissions Boolean   @default(true)
+  allowVoting      Boolean   @default(true)
+  autoTransition   Boolean   @default(false)
+  nextPhaseAt      DateTime?
+  isVerified       Boolean   @default(false)
+  startTime        DateTime
+  endTime          DateTime
+  postingStart     DateTime?
+  postingEnd       DateTime?
+  imageCid         String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  brandId          String
+  deletedAt        DateTime?
+  isDeleted        Boolean   @default(false)
+  baseReward       Float?
+  capacity         Int?
+  topReward        Float?
+  leaderboardPool  Float?    // Only for post_and_vote - separate pool for top 3 creators (50/35/15)
+  samples          String[]
+  preferredGender  String?   @default("All")
+  ageGroup         String?   @default("All Ages")
+
+  // Web3 blockchain fields
+  onChainEventId   String? // bytes32 hash of event ID
+  poolTxHash       String? // Transaction hash of createEvent
+  blockchainStatus String? @default("PENDING") // PENDING, PENDING_BLOCKCHAIN, ACTIVE, FAILED
+
+  activityLogs         ActivityLog[]
+  eventAnalytics       EventAnalytics?
+  rewardsPool          EventRewardsPool?
+  brand                Brand                 @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  leaderboardSnapshots LeaderboardSnapshot[]
+  proposals            Proposal[]
+  submissions          Submission[]
+  votes                Vote[]
+  interactions         EventInteraction[]
+
+  @@map("events")
+}
+
+model Submission {
+  id              String           @id @default(uuid())
+  eventId         String
+  imageCid        String?
+  caption         String?
+  status          String
+  metadata        Json?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  userId          String
+  finalRank       Int?
+  voteCount       Int              @default(0)
+  activityLogs    ActivityLog[]
+  submissionStats SubmissionStats?
+  event           Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  votes           Vote[]
+
+  @@map("submissions")
+}
+
+model SubmissionStats {
+  id           String     @id @default(uuid())
+  submissionId String     @unique
+  votes        Int        @default(0)
+  clicks       Int        @default(0)
+  viewTime     Int        @default(0)
+  lastUpdated  DateTime   @default(now()) @updatedAt
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@map("submission_stats")
+}
+
+model Proposal {
+  id        String       @id @default(uuid())
+  eventId   String
+  type      ProposalType
+  title     String
+  order     Int          @default(0)
+  voteCount Int          @default(0)
+  finalRank Int?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  content   String?
+  imageCid  String?
+  event     Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  votes     Vote[]
+
+  @@map("proposals")
+}
+
+model Vote {
+  id             String      @id @default(uuid())
+  eventId        String
+  submissionId   String?
+  userId         String
+  rankAfterEvent Int?
+  createdAt      DateTime    @default(now())
+  proposalId     String?
+  event          Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  proposal       Proposal?   @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  submission     Submission? @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, submissionId, userId], name: "unique_submission_vote")
+  @@unique([eventId, proposalId, userId], name: "unique_proposal_vote")
+  @@map("votes")
+}
+
+model ActivityLog {
+  id           String      @id @default(uuid())
+  eventId      String?
+  submissionId String?
+  type         String
+  metadata     Json?
+  createdAt    DateTime    @default(now())
+  userId       String?
+  event        Event?      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  submission   Submission? @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  user         User?       @relation(fields: [userId], references: [id])
+
+  @@map("activityLogs")
+}
+
+model EventAnalytics {
+  id                 String   @id @default(uuid())
+  eventId            String   @unique
+  totalViews         Int      @default(0)
+  totalSubmissions   Int      @default(0)
+  totalVotes         Int      @default(0)
+  uniqueParticipants Int      @default(0)
+  totalShares        Int      @default(0)
+  totalClicks        Int      @default(0)
+  aiSummary          String?
+  updatedAt          DateTime @default(now()) @updatedAt
+  event              Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("eventAnalytics")
+}
+
+model LeaderboardSnapshot {
+  id             String   @id @default(uuid())
+  eventId        String
+  topUsers       Json
+  topSubmissions Json
+  topBrands      Json
+  createdAt      DateTime @default(now())
+  event          Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("leaderboardSnapshots")
+}
+
+model UserFollowers {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  follower    User     @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@map("userFollowers")
+}
+
+model BrandSubscription {
+  id           String   @id @default(uuid())
+  userId       String
+  brandId      String
+  subscribedAt DateTime @default(now())
+  brand        Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, brandId])
+  @@map("brandSubscriptions")
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String?
+  brandId   String?
+  title     String
+  message   String
+  isRead    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+  metadata  Json?
+  type      String    @default("GENERAL")
+  brand     Brand?    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model TokenActivityLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  brandId    String?
+  actorType  String
+  actionType String
+  amount     Float
+  tokenType  String
+  txHash     String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  brand      Brand?   @relation(fields: [brandId], references: [id])
+  user       User?    @relation(fields: [userId], references: [id])
+
+  @@map("tokenActivityLogs")
+}
+
+model BrandApplication {
+  id                  String            @id @default(uuid())
+  brandName           String
+  companyName         String?
+  tagline             String?
+  description         String?
+  categories          String[]
+  logoCid             String?
+  websiteUrl          String?
+  contactEmail        String
+  contactPersonName   String
+  contactRole         String
+  phoneNumber         String?
+  telegramHandle      String?
+  socialLinks         Json?
+  gstNumber           String?
+  panNumber           String?
+  platformUsageReason String
+  agreementAuthorized Boolean
+  agreementAccurate   Boolean
+  status              ApplicationStatus @default(PENDING)
+  submittedAt         DateTime          @default(now())
+  reviewedAt          DateTime?
+  reviewedBy          String?
+  rejectionReason     String?
+  documents           Json?
+  brandId             String?
+  claimToken          String?           @unique
+  claimTokenExpiry    DateTime?
+  brand               Brand?            @relation(fields: [brandId], references: [id])
+
+  @@map("brand_applications")
+}
+
+model UserLoginStreak {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  currentStreak Int      @default(0)
+  longestStreak Int      @default(0)
+  lastLoginDate DateTime @db.Date
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_login_streaks")
+}
+
+model XpMilestoneClaimed {
+  id        String            @id @default(uuid())
+  userId    String
+  category  MilestoneCategory
+  threshold Int
+  xpAwarded Int
+  claimedAt DateTime          @default(now())
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category, threshold])
+  @@map("xp_milestones_claimed")
+}
+
+model XpTransaction {
+  id           String             @id @default(uuid())
+  userId       String
+  amount       Int
+  type         XpTransactionType
+  category     MilestoneCategory?
+  threshold    Int?
+  description  String?
+  metadata     Json?
+  balanceAfter Int
+  createdAt    DateTime           @default(now())
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("xp_transactions")
+}
+
+model Referral {
+  id         String   @id @default(uuid())
+  referrerId String
+  referredId String   @unique
+  xpAwarded  Int      @default(5)
+  createdAt  DateTime @default(now())
+  referred   User     @relation("ReferralReceived", fields: [referredId], references: [id], onDelete: Cascade)
+  referrer   User     @relation("ReferralsMade", fields: [referrerId], references: [id], onDelete: Cascade)
+
+  @@index([referrerId])
+  @@map("referrals")
+}
+
+model BrandLevelSnapshot {
+  id                 String   @id @default(uuid())
+  brandId            String
+  level              Int
+  previousLevel      Int
+  totalUsdcGiven     Float
+  eventsCreated      Int
+  uniqueParticipants Int
+  discountPercent    Float
+  triggeredBy        String
+  eventId            String?
+  createdAt          DateTime @default(now())
+  brand              Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@index([brandId, createdAt])
+  @@map("brand_level_snapshots")
+}
+
+model EventRewardsPool {
+  id               String            @id @default(uuid())
+  eventId          String            @unique
+  maxParticipants  Int
+  basePoolUsdc        Float
+  topPoolUsdc         Float             // Top voter pool (goes to 1st place voters)
+  leaderboardPoolUsdc Float             @default(0) // Leaderboard pool for top 3 creators (50/35/15)
+  platformFeeUsdc     Float
+  creatorPoolUsdc     Float             @default(0) // Creator base pool (capacity × $0.05)
+  totalDisbursed   Float             @default(0)
+  participantCount Int               @default(0)
+  status           RewardsPoolStatus @default(ACTIVE)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  completedAt      DateTime?
+  event            Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  claims           RewardClaim[]
+
+  @@map("event_rewards_pools")
+}
+
+model RewardClaim {
+  id          String           @id @default(uuid())
+  poolId      String
+  userId      String
+  claimType   ClaimType
+  baseAmount  Float
+  multiplier  Float
+  finalAmount Float
+  status          ClaimStatus      @default(PENDING)
+  transactionHash String?
+  claimedAt   DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  pool        EventRewardsPool @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([poolId, userId, claimType])
+  @@index([userId, status])
+  @@map("reward_claims")
+}
+
+enum EventType {
+  vote_only
+  post_and_vote
+}
+
+enum ProposalType {
+  IMAGE
+  TEXT
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  BRAND_OWNER
+}
+
+enum MilestoneCategory {
+  VOTES_CAST
+  TOP_VOTES
+  LOGIN_STREAK
+  POSTS_CREATED
+  VOTES_RECEIVED
+  TOP_3_CONTENT
+  REFERRAL
+}
+
+enum XpTransactionType {
+  MILESTONE_REWARD
+  REFERRAL_BASE
+  ADMIN_ADJUSTMENT
+}
+
+enum RewardsPoolStatus {
+  PENDING
+  ACTIVE
+  FINALIZED
+  CANCELLED
+  FAILED
+  COMPLETED
+}
+
+enum ClaimType {
+  BASE_VOTER
+  TOP_VOTER
+  CREATOR
+  LEADERBOARD
+}
+
+enum ClaimStatus {
+  PENDING
+  SIGNED
+  CLAIMED
+  EXHAUSTED
+  EXPIRED
+  CREDITED
+}
+
+model EventInteraction {
+  id        String          @id @default(uuid())
+  eventId   String
+  userId    String?         // Optional: track anonymous views if needed, or enforce login
+  type      InteractionType
+  metadata  Json?           // For extra details (e.g., specific element clicked)
+  createdAt DateTime        @default(now())
+  event     Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, type])
+  @@index([userId, eventId, type]) // Beneficial for unique checks
+  @@map("event_interactions")
+}
+
+enum InteractionType {
+  VIEW
+  CLICK
+  SHARE
+  EXPAND
+  VOTE
+}
