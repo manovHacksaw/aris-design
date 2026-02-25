@@ -4,16 +4,17 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import {
   getUserByUsername,
-  getUserStatsById,
   getFollowers,
   getFollowing,
   followUser,
   unfollowUser,
 } from "@/services/user.service";
 import { useUser } from "@/context/UserContext";
-import ProfileView from "@/components/profile/ProfileView";
+import { ProfileView } from "@/components/profile/ProfileView";
+import SidebarLayout from "@/components/home/SidebarLayout";
+import BottomNav from "@/components/BottomNav";
 import { Loader2, UserX } from "lucide-react";
-import type { User, UserStats } from "@/types/user";
+import type { User } from "@/types/user";
 
 export default function UserProfilePage() {
   const params = useParams();
@@ -23,7 +24,6 @@ export default function UserProfilePage() {
   const { user: currentUser } = useUser();
 
   const [profileUser, setProfileUser] = useState<User | null>(null);
-  const [stats, setStats] = useState<UserStats | null>(null);
   const [followers, setFollowers] = useState<User[]>([]);
   const [following, setFollowing] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,12 +38,10 @@ export default function UserProfilePage() {
     getUserByUsername(username)
       .then(async (u) => {
         setProfileUser(u);
-        const [s, frs, fwg] = await Promise.allSettled([
-          getUserStatsById(u.id),
+        const [frs, fwg] = await Promise.allSettled([
           getFollowers(u.id),
           getFollowing(u.id),
         ]);
-        if (s.status === "fulfilled") setStats(s.value);
         if (frs.status === "fulfilled") setFollowers(frs.value);
         if (fwg.status === "fulfilled") setFollowing(fwg.value);
       })
@@ -57,7 +55,6 @@ export default function UserProfilePage() {
     if (!profileUser || !currentUser || isFollowLoading) return;
     setIsFollowLoading(true);
 
-    // Optimistic update
     if (isFollowing) {
       setFollowers((prev) => prev.filter((f) => f.id !== currentUser.id));
     } else {
@@ -65,18 +62,11 @@ export default function UserProfilePage() {
     }
 
     try {
-      if (isFollowing) {
-        await unfollowUser(profileUser.id);
-      } else {
-        await followUser(profileUser.id);
-      }
+      if (isFollowing) await unfollowUser(profileUser.id);
+      else await followUser(profileUser.id);
     } catch {
-      // Revert on error
-      if (isFollowing) {
-        setFollowers((prev) => [...prev, currentUser]);
-      } else {
-        setFollowers((prev) => prev.filter((f) => f.id !== currentUser.id));
-      }
+      if (isFollowing) setFollowers((prev) => [...prev, currentUser]);
+      else setFollowers((prev) => prev.filter((f) => f.id !== currentUser.id));
     } finally {
       setIsFollowLoading(false);
     }
@@ -103,15 +93,24 @@ export default function UserProfilePage() {
   const isOwn = currentUser?.id === profileUser.id || currentUser?.username === username;
 
   return (
-    <ProfileView
-      isOwnProfile={isOwn}
-      user={profileUser}
-      stats={stats}
-      followers={followers}
-      following={following}
-      isFollowing={isFollowing}
-      isFollowLoading={isFollowLoading}
-      onToggleFollow={handleToggleFollow}
-    />
+    <div className="min-h-screen bg-background text-foreground font-sans">
+      <SidebarLayout>
+        <main className="flex-1 pb-24 md:pb-8">
+          <ProfileView
+            user={profileUser}
+            isOwner={isOwn}
+            followersCount={followers.length}
+            followingCount={following.length}
+            isFollowing={isFollowing}
+            onFollowToggle={handleToggleFollow}
+            followersList={followers}
+            followingList={following}
+          />
+        </main>
+        <div className="md:hidden">
+          <BottomNav />
+        </div>
+      </SidebarLayout>
+    </div>
   );
 }
