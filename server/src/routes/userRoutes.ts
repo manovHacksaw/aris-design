@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getUsers, getUserById, getUserByUsername, upsertUser, getCurrentUser, updateProfile, checkUsernameAvailability, getUserStats, getUserStatsById, getFollowers, getFollowing, followUser, unfollowUser, updateWalletAddress, saveOnboardingAnalytics, applyReferral } from '../controllers/userController';
+import { getUsers, getUserById, getUserByUsername, upsertUser, getCurrentUser, updateProfile, checkUsernameAvailability, getUserStats, getUserStatsById, getFollowers, getFollowing, followUser, unfollowUser, updateWalletAddress, saveOnboardingAnalytics, applyReferral, validateReferral } from '../controllers/userController';
 import { getSubmissionsByUser } from '../controllers/submissionController';
 import { sendOTP, verifyOTP } from '../controllers/emailController';
 import { authenticateJWT, requireEmailVerification } from '../middlewares/authMiddleware';
@@ -14,6 +14,7 @@ router.put('/', authenticateJWT, requireEmailVerification, upsertUser); // Alter
 router.patch('/profile', authenticateJWT, requireEmailVerification, updateProfile); // Update user profile
 router.patch('/wallet', authenticateJWT, updateWalletAddress); // Update wallet address (no email verification required)
 router.post('/onboarding-analytics', authenticateJWT, saveOnboardingAnalytics); // Save onboarding analytics (analytics-only)
+router.get('/validate-referral', authenticateJWT, validateReferral); // Validate a referral code (read-only)
 router.post('/apply-referral', authenticateJWT, applyReferral); // Apply a referral code
 router.post('/email/send-otp', authenticateJWT, sendOTP); // Send email OTP
 router.post('/email/verify-otp', authenticateJWT, verifyOTP); // Verify email OTP

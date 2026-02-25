@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Sparkles, Trophy, Zap, ArrowRight, Loader2, Copy, Check, Share2, Gift } from "lucide-react";
+import { useState, useRef, useCallback } from "react";
+import { Sparkles, Trophy, Zap, ArrowRight, Loader2, Copy, Check, Share2, Gift, X } from "lucide-react";
 import { toast } from "sonner";
+import { validateReferralCode } from "@/services/user.service";
 
 const MOCK_EVENTS = [
   {
@@ -34,6 +35,8 @@ const MOCK_EVENTS = [
   },
 ];
 
+type CodeStatus = "idle" | "checking" | "valid" | "invalid";
+
 interface Props {
   displayName: string;
   referralCode?: string | null;
@@ -44,9 +47,49 @@ interface Props {
 
 export default function StepComplete({ displayName, referralCode, isSaving, onComplete, onBack }: Props) {
   const firstName = displayName.split(" ")[0] || "there";
+
+  // My referral code (share)
   const [copied, setCopied] = useState(false);
+
+  // Incoming referral code (enter)
   const [incomingCode, setIncomingCode] = useState("");
-  const [codeApplied, setCodeApplied] = useState(false);
+  const [codeStatus, setCodeStatus] = useState<CodeStatus>("idle");
+  const [referrerName, setReferrerName] = useState<string | null>(null);
+  const [invalidReason, setInvalidReason] = useState<string | null>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const checkCode = useCallback(async (code: string) => {
+    if (!code) { setCodeStatus("idle"); setReferrerName(null); setInvalidReason(null); return; }
+
+    setCodeStatus("checking");
+    try {
+      const res = await validateReferralCode(code);
+      if (res.valid) {
+        setCodeStatus("valid");
+        setReferrerName(res.referrerName ?? null);
+        setInvalidReason(null);
+      } else {
+        setCodeStatus("invalid");
+        setReferrerName(null);
+        setInvalidReason(res.reason ?? "Invalid code");
+      }
+    } catch {
+      setCodeStatus("idle");
+    }
+  }, []);
+
+  const handleCodeChange = (raw: string) => {
+    const value = raw.toUpperCase();
+    setIncomingCode(value);
+    setCodeStatus("idle");
+    setReferrerName(null);
+    setInvalidReason(null);
+
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    if (value.length >= 6) {
+      debounceTimer.current = setTimeout(() => checkCode(value), 500);
+    }
+  };
 
   const handleCopy = () => {
     if (!referralCode) return;
@@ -67,6 +110,11 @@ export default function StepComplete({ displayName, referralCode, isSaving, onCo
       toast.success("Share text copied!");
     }
   };
+
+  const inputBorderClass =
+    codeStatus === "valid"   ? "border-emerald-400/60 focus:border-emerald-400" :
+    codeStatus === "invalid" ? "border-red-400/60 focus:border-red-400" :
+                               "border-border/50 focus:border-primary/50";
 
   return (
     <div className="space-y-6">
@@ -92,7 +140,7 @@ export default function StepComplete({ displayName, referralCode, isSaving, onCo
         </div>
       </div>
 
-      {/* Referral section */}
+      {/* My referral code (share) */}
       {referralCode && (
         <div className="space-y-3 p-4 rounded-[16px] bg-card border border-border/50">
           <div className="flex items-center gap-2">
@@ -103,24 +151,13 @@ export default function StepComplete({ displayName, referralCode, isSaving, onCo
             Share your code — you earn <span className="text-primary font-bold">+5 XP</span> for every friend who joins using it.
           </p>
           <div className="flex items-center gap-2">
-            <div className="flex-1 flex items-center gap-3 bg-background border border-border/50 rounded-[12px] px-4 py-3">
+            <div className="flex-1 bg-background border border-border/50 rounded-[12px] px-4 py-3">
               <span className="text-sm font-black text-foreground tracking-wider font-mono">{referralCode}</span>
             </div>
-            <button
-              onClick={handleCopy}
-              className="p-3 rounded-[12px] bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
-              title="Copy code"
-            >
-              {copied
-                ? <Check className="w-4 h-4 text-emerald-400" />
-                : <Copy className="w-4 h-4 text-primary" />
-              }
+            <button onClick={handleCopy} className="p-3 rounded-[12px] bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors" title="Copy">
+              {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-primary" />}
             </button>
-            <button
-              onClick={handleShare}
-              className="p-3 rounded-[12px] bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
-              title="Share"
-            >
+            <button onClick={handleShare} className="p-3 rounded-[12px] bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors" title="Share">
               <Share2 className="w-4 h-4 text-primary" />
             </button>
           </div>
@@ -136,11 +173,7 @@ export default function StepComplete({ displayName, referralCode, isSaving, onCo
         <div className="space-y-2">
           {MOCK_EVENTS.map(ev => (
             <div key={ev.id} className="flex items-center gap-3 p-3 rounded-[14px] bg-card border border-border/40 hover:border-border/70 transition-colors cursor-pointer group">
-              <img
-                src={ev.img}
-                alt={ev.title}
-                className="w-14 h-14 rounded-[10px] object-cover shrink-0 group-hover:scale-105 transition-transform duration-300"
-              />
+              <img src={ev.img} alt={ev.title} className="w-14 h-14 rounded-[10px] object-cover shrink-0 group-hover:scale-105 transition-transform duration-300" />
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">{ev.brand} · {ev.category}</p>
                 <p className="text-sm font-black text-foreground truncate">{ev.title}</p>
@@ -162,19 +195,32 @@ export default function StepComplete({ displayName, referralCode, isSaving, onCo
           <p className="text-xs font-bold text-foreground/50 uppercase tracking-widest">Got a Referral Code?</p>
         </div>
         <p className="text-xs text-foreground/40">Enter a friend's code to credit them with +5 XP.</p>
-        <div className="flex gap-2">
+
+        <div className="relative">
           <input
             type="text"
             value={incomingCode}
-            onChange={e => setIncomingCode(e.target.value.toUpperCase())}
-            disabled={codeApplied}
+            onChange={e => handleCodeChange(e.target.value)}
             placeholder="ARIS-XXXXXX-XXXX"
-            className="flex-1 bg-background border border-border/50 rounded-[12px] px-4 py-3 text-sm font-mono font-bold placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors disabled:opacity-40"
+            className={`w-full bg-background border rounded-[12px] px-4 py-3 pr-10 text-sm font-mono font-bold placeholder:text-foreground/20 focus:outline-none transition-colors ${inputBorderClass}`}
           />
-          {codeApplied && (
-            <div className="flex items-center gap-1.5 px-4 py-3 rounded-[12px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-black">
-              <Check className="w-3.5 h-3.5" /> Applied
-            </div>
+          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+            {codeStatus === "checking" && <Loader2 className="w-4 h-4 text-foreground/40 animate-spin" />}
+            {codeStatus === "valid"    && <Check className="w-4 h-4 text-emerald-400" />}
+            {codeStatus === "invalid"  && <X className="w-4 h-4 text-red-400" />}
+          </div>
+        </div>
+
+        {/* Status hint */}
+        <div className="px-1 h-4">
+          {codeStatus === "checking" && (
+            <p className="text-[11px] text-foreground/40">Checking…</p>
+          )}
+          {codeStatus === "valid" && referrerName && (
+            <p className="text-[11px] text-emerald-400 font-bold">Referred by {referrerName} — they'll earn +5 XP!</p>
+          )}
+          {codeStatus === "invalid" && invalidReason && (
+            <p className="text-[11px] text-red-400 font-bold">{invalidReason}</p>
           )}
         </div>
       </div>
@@ -182,8 +228,8 @@ export default function StepComplete({ displayName, referralCode, isSaving, onCo
       {/* CTA */}
       <div className="space-y-2 pt-1">
         <button
-          onClick={() => onComplete(incomingCode.trim() || undefined)}
-          disabled={isSaving}
+          onClick={() => onComplete(codeStatus === "valid" ? incomingCode.trim() : undefined)}
+          disabled={isSaving || codeStatus === "checking"}
           className="w-full py-4 rounded-[16px] bg-primary text-white font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving

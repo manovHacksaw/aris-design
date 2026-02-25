@@ -77,6 +77,15 @@ export async function checkUsernameAvailability(
   );
 }
 
+/** GET /api/users/validate-referral?code=... */
+export async function validateReferralCode(
+  code: string
+): Promise<{ valid: boolean; referrerName?: string; reason?: string }> {
+  return apiRequest<{ valid: boolean; referrerName?: string; reason?: string }>(
+    `/users/validate-referral?code=${encodeURIComponent(code)}`
+  );
+}
+
 /** POST /api/users/apply-referral */
 export async function applyReferralCode(
   referralCode: string

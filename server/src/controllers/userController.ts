@@ -549,6 +549,23 @@ export const saveOnboardingAnalytics = async (req: AuthenticatedRequest, res: Re
 };
 
 /**
+ * Validate a referral code (read-only, no side effects)
+ */
+export const validateReferral = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) { res.status(401).json({ error: 'Unauthorized' }); return; }
+
+    const { code } = req.query;
+    if (!code || typeof code !== 'string') { res.status(400).json({ error: 'code is required' }); return; }
+
+    const result = await UserService.validateReferralCode(code.trim().toUpperCase(), req.user.id);
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Validation failed' });
+  }
+};
+
+/**
  * Apply a referral code for the authenticated user
  */
 export const applyReferral = async (req: AuthenticatedRequest, res: Response): Promise<void> => {

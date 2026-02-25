@@ -500,6 +500,25 @@ export class UserService {
     }
 
     /**
+     * Validate a referral code without applying it
+     * Returns the referrer's display name if valid
+     */
+    static async validateReferralCode(referralCode: string, requestingUserId: string) {
+        const referrer = await prisma.user.findUnique({
+            where: { referralCode },
+            select: { id: true, displayName: true, username: true },
+        });
+
+        if (!referrer) return { valid: false, reason: 'Invalid code' };
+        if (referrer.id === requestingUserId) return { valid: false, reason: 'Cannot use your own code' };
+
+        const alreadyUsed = await prisma.referral.findUnique({ where: { referredId: requestingUserId } });
+        if (alreadyUsed) return { valid: false, reason: 'You have already used a referral code' };
+
+        return { valid: true, referrerName: referrer.displayName || referrer.username || 'a friend' };
+    }
+
+    /**
      * Apply a referral code — links referrer to new user and awards XP to referrer
      */
     static async applyReferral(referredId: string, referralCode: string) {
