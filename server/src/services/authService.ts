@@ -12,6 +12,30 @@ import { ReferralService } from './referralService';
 // In-memory nonce store (in production, use Redis or database)
 const nonceStore = new Map<string, { nonce: string; expiresAt: number }>();
 
+/** Generate a unique username from a base string (email prefix, name, or fallback) */
+async function generateUniqueUsername(base: string): Promise<string> {
+    // Sanitise: lowercase, replace spaces/dots/hyphens with _, strip everything else
+    const cleaned = base
+        .toLowerCase()
+        .replace(/[@.+\-\s]/g, '_')
+        .replace(/[^a-z0-9_]/g, '')
+        .replace(/_+/g, '_')
+        .replace(/^_|_$/g, '')
+        .slice(0, 20) || 'user';
+
+    // Try the clean base first, then append random suffix until unique
+    let candidate = cleaned;
+    let attempts = 0;
+    while (attempts < 10) {
+        const existing = await prisma.user.findUnique({ where: { username: candidate }, select: { id: true } });
+        if (!existing) return candidate;
+        candidate = `${cleaned}_${Math.floor(1000 + Math.random() * 9000)}`;
+        attempts++;
+    }
+    // Last resort: full random
+    return `user_${Math.random().toString(36).slice(2, 10)}`;
+}
+
 // Nonce expiration time (5 minutes)
 const NONCE_EXPIRATION_MS = 5 * 60 * 1000;
 
@@ -179,9 +203,12 @@ export class AuthService {
                 // TEMPORARILY DISABLED: Email/Phone Verification
                 // ============================================================================
                 const isVerificationEnabled = process.env.ENABLE_VERIFICATION === 'true';
+                const emailBase2 = email ? email.split('@')[0] : 'user';
+                const username2 = await generateUniqueUsername(emailBase2);
                 user = await prisma.user.create({
                     data: {
                         email: email?.toLowerCase() || `${targetWalletAddress}@wallet.local`, // Use provided email or placeholder
+                        username: username2,
                         displayName: email ? email.split('@')[0] : undefined,
                         walletAddress: targetWalletAddress,
                         lastLoginAt: new Date(),
@@ -340,9 +367,12 @@ export class AuthService {
             // Create new user
             const isVerificationEnabled = process.env.ENABLE_VERIFICATION === 'true';
             const placeholderAddress = targetWalletAddress || `privy:${verifiedClaims.userId}`;
+            const emailBase = email ? email.split('@')[0] : 'user';
+            const username = await generateUniqueUsername(emailBase);
             user = await prisma.user.create({
                 data: {
                     email: email?.toLowerCase() || `${placeholderAddress}@wallet.local`,
+                    username,
                     displayName: email ? email.split('@')[0] : undefined,
                     avatarUrl: avatarUrl || null,
                     walletAddress: placeholderAddress,
