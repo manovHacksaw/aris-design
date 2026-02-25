@@ -207,6 +207,11 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response): P
         dateOfBirth: updatedUser.dateOfBirth,
         role: updatedUser.role,
         currentStreak: (updatedUser as any).loginStreak?.currentStreak || 0,
+        web3Level: (updatedUser as any).web3Level,
+        intentGoals: (updatedUser as any).intentGoals,
+        contentFormat: (updatedUser as any).contentFormat,
+        creatorCategories: (updatedUser as any).creatorCategories,
+        onboardingStep: (updatedUser as any).onboardingStep,
       },
     });
   } catch (error: any) {
@@ -510,6 +515,34 @@ export const updateWalletAddress = async (req: AuthenticatedRequest, res: Respon
       success: false,
       error: error.message || 'Failed to update wallet address',
     });
+  }
+};
+
+/**
+ * Save onboarding analytics (analytics-only, not exposed back to user)
+ */
+export const saveOnboardingAnalytics = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: 'Unauthorized' });
+      return;
+    }
+
+    const { adsSeenDaily, referralSource, joinMotivation, socialPlatforms, rewardPreference, engagementStyle } = req.body;
+
+    await UserService.saveOnboardingAnalytics(req.user.id, {
+      adsSeenDaily,
+      referralSource,
+      joinMotivation,
+      socialPlatforms,
+      rewardPreference,
+      engagementStyle,
+    });
+
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Error saving onboarding analytics:', error);
+    res.status(500).json({ success: false, error: error.message || 'Failed to save analytics' });
   }
 };
 

@@ -168,6 +168,11 @@ export class UserService {
             phoneNumber,
             gender,
             dateOfBirth,
+            web3Level,
+            intentGoals,
+            contentFormat,
+            creatorCategories,
+            onboardingStep,
         } = data;
 
         // Validate bio
@@ -205,6 +210,11 @@ export class UserService {
         if (isOnboarded !== undefined) updateData.isOnboarded = isOnboarded;
         if (gender !== undefined) updateData.gender = gender;
         if (dateOfBirth !== undefined) updateData.dateOfBirth = dateOfBirth ? new Date(dateOfBirth) : null;
+        if (web3Level !== undefined) updateData.web3Level = web3Level;
+        if (intentGoals !== undefined) updateData.intentGoals = intentGoals;
+        if (contentFormat !== undefined) updateData.contentFormat = contentFormat;
+        if (creatorCategories !== undefined) updateData.creatorCategories = creatorCategories;
+        if (onboardingStep !== undefined) updateData.onboardingStep = onboardingStep;
 
         if (phoneNumber !== undefined) {
             const currentUser = await prisma.user.findUnique({ where: { id: userId } });
@@ -460,5 +470,23 @@ export class UserService {
 
         console.log(`[UserService] Updated wallet address for user ${userId}: ${walletAddress}`);
         return user;
+    }
+
+    /**
+     * Save (upsert) onboarding analytics — analytics-only, not exposed in UI
+     */
+    static async saveOnboardingAnalytics(userId: string, data: {
+        adsSeenDaily?: string;
+        referralSource?: string;
+        joinMotivation?: string[];
+        socialPlatforms?: string[];
+        rewardPreference?: string[];
+        engagementStyle?: string;
+    }) {
+        return prisma.onboardingAnalytics.upsert({
+            where: { userId },
+            update: { ...data, updatedAt: new Date() },
+            create: { userId, ...data },
+        });
     }
 }

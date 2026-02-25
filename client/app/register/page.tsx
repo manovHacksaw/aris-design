@@ -46,9 +46,9 @@ export default function Register() {
       } else {
         // Already connected — go straight to signup flow
         if (selectedRole === "user") {
-          router.push("/signup/user");
+          router.push("/onboard/user");
         } else {
-          router.push("/signup/brand");
+          router.push("/onboard/brand");
         }
       }
     } catch (err) {
@@ -63,9 +63,9 @@ export default function Register() {
     if (isConnected && !isOnboarded) {
       const storedRole = selectedRole;
       if (storedRole === "user") {
-        router.push("/signup/user");
+        router.push("/onboard/user");
       } else if (storedRole === "brand") {
-        router.push("/signup/brand");
+        router.push("/onboard/brand");
       }
     }
   }, [isConnected, isOnboarded]);

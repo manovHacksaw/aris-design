@@ -76,3 +76,18 @@ export async function checkUsernameAvailability(
     `/users/check-username?username=${encodeURIComponent(username)}`
   );
 }
+
+/** POST /api/users/onboarding-analytics — analytics-only, not shown in UI */
+export async function saveOnboardingAnalytics(data: {
+  adsSeenDaily?: string;
+  referralSource?: string;
+  joinMotivation?: string[];
+  socialPlatforms?: string[];
+  rewardPreference?: string[];
+  engagementStyle?: string;
+}): Promise<{ success: boolean }> {
+  return apiRequest<{ success: boolean }>("/users/onboarding-analytics", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
