@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getUsers, getUserById, getUserByUsername, upsertUser, getCurrentUser, updateProfile, checkUsernameAvailability, getUserStats, getUserStatsById, getFollowers, getFollowing, followUser, unfollowUser, updateWalletAddress, saveOnboardingAnalytics, applyReferral, validateReferral } from '../controllers/userController';
+import { getUsers, getUserById, getUserByUsername, upsertUser, getCurrentUser, updateProfile, checkUsernameAvailability, getUserStats, getUserStatsById, getFollowers, getFollowing, followUser, unfollowUser, updateWalletAddress, saveOnboardingAnalytics, applyReferral, validateReferral, searchUsers } from '../controllers/userController';
 import { getSubmissionsByUser } from '../controllers/submissionController';
 import { sendOTP, verifyOTP } from '../controllers/emailController';
 import { authenticateJWT, requireEmailVerification } from '../middlewares/authMiddleware';
@@ -31,6 +31,7 @@ router.get('/:userId/following', getFollowing);
 router.get('/:userId/stats', getUserStatsById); // Public user stats
 
 // Public routes (/:id must be last to avoid matching /me)
+router.get('/search', searchUsers); // Search users by username/displayName
 router.get('/username/:username', getUserByUsername); // Get user by username
 router.get('/check-username', checkUsernameAvailability); // Check username availability
 router.get('/:userId/submissions', getSubmissionsByUser); // Get user submissions

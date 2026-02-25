@@ -13,6 +13,37 @@ export class UserService {
     }
 
     /**
+     * Search users by username or displayName
+     */
+    static async searchUsers(query: string, take = 20) {
+        if (!query || query.trim().length < 2) return [];
+        const q = query.trim();
+        return prisma.user.findMany({
+            where: {
+                OR: [
+                    { username: { contains: q, mode: 'insensitive' } },
+                    { displayName: { contains: q, mode: 'insensitive' } },
+                ],
+            },
+            select: {
+                id: true,
+                username: true,
+                displayName: true,
+                avatarUrl: true,
+                bio: true,
+                xp: true,
+                level: true,
+                isOnboarded: true,
+                _count: {
+                    select: { followers: true },
+                },
+            },
+            orderBy: { xp: 'desc' },
+            take,
+        });
+    }
+
+    /**
      * Get user by ID
      */
     static async getUserById(id: string) {

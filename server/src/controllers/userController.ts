@@ -3,6 +3,22 @@ import { UserService } from '../services/userService';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';
 
 /**
+ * Search users by username or display name
+ * GET /api/users/search?q=...
+ */
+export const searchUsers = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const q = (req.query.q as string) || "";
+    const take = Math.min(Number(req.query.take) || 20, 50);
+    const results = await UserService.searchUsers(q, take);
+    res.json({ results });
+  } catch (error) {
+    console.error('Error searching users:', error);
+    res.status(500).json({ error: 'Search failed' });
+  }
+};
+
+/**
  * Get all users
  */
 export const getUsers = async (_req: Request, res: Response): Promise<void> => {

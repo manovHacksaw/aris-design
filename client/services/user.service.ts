@@ -77,6 +77,17 @@ export async function checkUsernameAvailability(
   );
 }
 
+/** GET /api/users/search?q=... (public) */
+export async function searchUsers(
+  query: string,
+  take = 20
+): Promise<{ id: string; username: string | null; displayName: string | null; avatarUrl: string | null; bio: string | null; xp: number; level: number; _count: { followers: number } }[]> {
+  const res = await apiRequest<{ results: any[] }>(
+    `/users/search?q=${encodeURIComponent(query)}&take=${take}`
+  );
+  return res.results;
+}
+
 /** GET /api/users/validate-referral?code=... */
 export async function validateReferralCode(
   code: string
