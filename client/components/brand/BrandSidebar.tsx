@@ -19,6 +19,7 @@ import {
 import { useRouter } from "next/navigation";
 import SidebarItem from "@/components/sidebar/SidebarItem";
 import SidebarButton from "@/components/sidebar/SidebarButton";
+import { useWallet } from "@/context/WalletContext";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/context/SidebarContext";
 import { motion } from "framer-motion";
@@ -29,6 +30,7 @@ export default function BrandSidebar() {
     const router = useRouter();
     const { isCollapsed, toggleSidebar } = useSidebar();
     const { theme, setTheme } = useTheme();
+    const { disconnect } = useWallet();
     const [mounted, setMounted] = useState(false);
 
     const showExpanded = !isCollapsed;
@@ -140,11 +142,11 @@ export default function BrandSidebar() {
                             )}
                         </button>
 
-                        {/* Logout - Placeholder */}
+                        {/* Sign Out */}
                         <SidebarButton
                             label="Sign Out"
                             icon={IoLogOutOutline}
-                            onClick={() => console.log("Sign out clicked")}
+                            onClick={() => disconnect()}
                         />
 
                         {/* Collapse Toggle - icon only, subtle */}

@@ -7,8 +7,8 @@ import { useAuth } from "@/context/AuthContext";
 
 import { useUser } from "@/context/UserContext";
 
-// Paths that don't require authentication
-const PUBLIC_PATHS = ["/register", "/onboard"];
+// Paths that don't require authentication (wallet or onboarding)
+const PUBLIC_PATHS = ["/register", "/onboard", "/admin", "/claim-brand", "/brand/pending"];
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some(
@@ -104,7 +104,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   const isOnboarded = user?.isOnboarded || authIsOnboarded;
-  const role = user?.role || authRole;
+  // Normalize: backend sends "BRAND_OWNER", localStorage sends "brand"
+  const isBrand = user?.role === "BRAND_OWNER" || authRole === "brand";
+  // Brand is active only after admin approval + claim. Null/undefined ownedBrands means not yet claimed.
+  const brandIsActive = user?.ownedBrands?.[0]?.isActive === true;
 
   const isLoading = !isInitialized || walletLoading || authLoading || userLoading;
 
@@ -122,7 +125,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     // Authenticated but not onboarded — send to signup to complete onboarding
     if (!isOnboarded) {
       if (!isPublicPath(pathname)) {
-        if (role === "brand") {
+        if (isBrand) {
           router.replace("/onboard/brand");
         } else {
           router.replace("/onboard/user");
@@ -132,27 +135,35 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     }
 
     // Already onboarded — skip signup/register pages and redirect to their home
-    if (isOnboarded && isPublicPath(pathname)) {
-      if (role === "brand") {
-        router.replace("/brand/dashboard");
+    // But only redirect away from truly "public" paths (not /admin, /claim-brand, /brand/pending)
+    const isAuthOnlyPublicPath = pathname === "/register" || pathname.startsWith("/register/") || pathname === "/onboard" || pathname.startsWith("/onboard/");
+    if (isOnboarded && isAuthOnlyPublicPath) {
+      if (isBrand) {
+        router.replace(brandIsActive ? "/brand/dashboard" : "/brand/pending");
       } else {
         router.replace("/");
       }
       return;
     }
 
-    // Brand owner trying to access user-only routes → redirect to brand dashboard
-    if (isOnboarded && role === "brand" && !pathname.startsWith("/brand/")) {
-      router.replace("/brand/dashboard");
+    // Brand owner trying to access user-only routes → redirect to brand dashboard (or pending)
+    if (isOnboarded && isBrand && !pathname.startsWith("/brand/")) {
+      router.replace(brandIsActive ? "/brand/dashboard" : "/brand/pending");
+      return;
+    }
+
+    // Brand owner accessing brand routes but not yet approved/active → redirect to pending
+    if (isOnboarded && isBrand && pathname.startsWith("/brand/") && !pathname.startsWith("/brand/pending") && !brandIsActive) {
+      router.replace("/brand/pending");
       return;
     }
 
     // Regular user trying to access brand routes → redirect to home
-    if (isOnboarded && role === "user" && pathname.startsWith("/brand/")) {
+    if (isOnboarded && !isBrand && pathname.startsWith("/brand/")) {
       router.replace("/");
       return;
     }
-  }, [isLoading, isConnected, isOnboarded, role, pathname, router]);
+  }, [isLoading, isConnected, isOnboarded, isBrand, brandIsActive, pathname, router]);
 
   // Public paths handle their own loading state
   if (isLoading) {
@@ -172,8 +183,17 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  // Already onboarded on a public path — render null while redirect fires
-  if (isConnected && isOnboarded && isPublicPath(pathname)) {
+  // Brand owner accessing brand routes (except /brand/pending) while not yet active
+  // — render null so the sidebar + page never flash before the redirect fires
+  const isBrandProtectedRoute = pathname.startsWith("/brand/") && !pathname.startsWith("/brand/pending");
+  if (isConnected && isOnboarded && isBrand && isBrandProtectedRoute && !brandIsActive) {
+    return null;
+  }
+
+  // Already onboarded on /register or /onboard — render null while redirect fires
+  // (but not /admin, /claim-brand, /brand/pending — those are always accessible)
+  const isAuthOnlyPublicPath = pathname === "/register" || pathname.startsWith("/register/") || pathname === "/onboard" || pathname.startsWith("/onboard/");
+  if (isConnected && isOnboarded && isAuthOnlyPublicPath) {
     return null;
   }
 

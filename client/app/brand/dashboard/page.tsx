@@ -7,6 +7,8 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { getBrandEvents, getBrandNotifications } from "@/services/mockBrandService";
 import type { BrandEvent, BrandNotification } from "@/types/api";
+import { useUser } from "@/context/UserContext";
+import { useAuth } from "@/context/AuthContext";
 
 const CAMPAIGN_STATUS_STYLES: Record<string, string> = {
     live:        "bg-green-500/10 text-green-500 border-green-500/20",
@@ -31,6 +33,11 @@ function formatPool(pool: number): string {
 }
 
 export default function BrandDashboard() {
+    const { user } = useUser();
+    const { onboardingData } = useAuth();
+    // Prefer backend brand name → localStorage brand name → fallback
+    const brandName = user?.ownedBrands?.[0]?.name ?? onboardingData?.brandName ?? "Your Brand";
+
     const [events, setEvents] = useState<BrandEvent[]>([]);
     const [notifications, setNotifications] = useState<BrandNotification[]>([]);
     const [loadingEvents, setLoadingEvents] = useState(true);
@@ -50,7 +57,7 @@ export default function BrandDashboard() {
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-black text-foreground tracking-tight mb-1">Overview</h1>
-                    <p className="text-muted-foreground">Welcome back, Nike Inc.</p>
+                    <p className="text-muted-foreground">Welcome back, {brandName}</p>
                 </div>
                 <Link
                     href="/brand/create-event"

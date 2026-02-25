@@ -8,6 +8,7 @@ import { RoleCard } from "@/components/RoleCard";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
 import { useAuth } from "@/context/AuthContext";
+import { useUser } from "@/context/UserContext";
 
 export default function Register() {
   const [selectedRole, setSelectedRole] = useState<"user" | "brand" | null>("user");
@@ -16,18 +17,22 @@ export default function Register() {
 
   const { isConnected, isInitialized, isLoading: walletLoading, connect } = useWallet();
   const { isOnboarded, role, isLoading: authLoading, setOnboardingData } = useAuth();
+  const { user } = useUser();
+
+  // Normalize role: backend sends "BRAND_OWNER", localStorage sends "brand"
+  const isBrand = user?.role === "BRAND_OWNER" || role === "brand";
 
   // Redirect if already fully onboarded
   useEffect(() => {
     if (!isInitialized) return;
     if (isConnected && isOnboarded) {
-      if (role === "brand") {
+      if (isBrand) {
         router.replace("/brand/dashboard");
       } else {
         router.replace("/");
       }
     }
-  }, [isConnected, isOnboarded, isInitialized, role, router]);
+  }, [isConnected, isOnboarded, isInitialized, isBrand, router]);
 
   const handleContinue = async () => {
     if (!selectedRole) return;
@@ -58,18 +63,19 @@ export default function Register() {
     }
   };
 
-  // After Privy login completes, redirect to appropriate signup
+  // After Privy login completes, redirect to appropriate signup.
+  // Use `role` from AuthContext (localStorage) as the source of truth — NOT local
+  // `selectedRole` state which can reset to "user" on Privy-triggered remounts.
   useEffect(() => {
     if (!isInitialized || walletLoading || authLoading) return;
     if (isConnected && !isOnboarded) {
-      const storedRole = selectedRole;
-      if (storedRole === "user") {
-        router.push("/onboard/user");
-      } else if (storedRole === "brand") {
+      if (role === "brand") {
         router.push("/onboard/brand");
+      } else {
+        router.push("/onboard/user");
       }
     }
-  }, [isConnected, isOnboarded, isInitialized, walletLoading, authLoading, selectedRole, router]);
+  }, [isConnected, isOnboarded, isInitialized, walletLoading, authLoading, role, router]);
 
   return (
     <div className="flex min-h-screen bg-background text-white font-sans selection:bg-primary/30">
