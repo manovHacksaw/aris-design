@@ -1,8 +1,9 @@
 "use client";
 
-import { Sparkles, Trophy, Zap, ArrowRight, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { Sparkles, Trophy, Zap, ArrowRight, Loader2, Copy, Check, Share2 } from "lucide-react";
+import { toast } from "sonner";
 
-// Mock personalized events based on interests
 const MOCK_EVENTS = [
   {
     id: "e1",
@@ -35,13 +36,35 @@ const MOCK_EVENTS = [
 
 interface Props {
   displayName: string;
+  referralCode?: string | null;
   isSaving: boolean;
   onComplete: () => void;
   onBack: () => void;
 }
 
-export default function StepComplete({ displayName, isSaving, onComplete, onBack }: Props) {
+export default function StepComplete({ displayName, referralCode, isSaving, onComplete, onBack }: Props) {
   const firstName = displayName.split(" ")[0] || "there";
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (!referralCode) return;
+    navigator.clipboard.writeText(referralCode).then(() => {
+      setCopied(true);
+      toast.success("Referral code copied!");
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const handleShare = () => {
+    if (!referralCode) return;
+    const text = `Join me on Aris — the platform where your engagement earns real rewards! Use my code ${referralCode} to sign up and we both earn XP. 🚀`;
+    if (navigator.share) {
+      navigator.share({ title: "Join Aris", text }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(text);
+      toast.success("Share text copied!");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -62,10 +85,45 @@ export default function StepComplete({ displayName, isSaving, onComplete, onBack
         </div>
         <div className="ml-auto">
           <span className="text-xs font-black text-primary bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-full">
-            🔥 Earned
+            Earned
           </span>
         </div>
       </div>
+
+      {/* Referral section */}
+      {referralCode && (
+        <div className="space-y-3 p-4 rounded-[16px] bg-card border border-border/50">
+          <div className="flex items-center gap-2">
+            <Share2 className="w-4 h-4 text-amber-400" />
+            <p className="text-xs font-bold text-foreground/50 uppercase tracking-widest">Refer Friends, Earn XP</p>
+          </div>
+          <p className="text-sm text-foreground/60 leading-relaxed">
+            Share your code — you earn <span className="text-primary font-bold">+5 XP</span> for every friend who joins using it.
+          </p>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 flex items-center gap-3 bg-background border border-border/50 rounded-[12px] px-4 py-3">
+              <span className="text-sm font-black text-foreground tracking-wider font-mono">{referralCode}</span>
+            </div>
+            <button
+              onClick={handleCopy}
+              className="p-3 rounded-[12px] bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
+              title="Copy code"
+            >
+              {copied
+                ? <Check className="w-4 h-4 text-emerald-400" />
+                : <Copy className="w-4 h-4 text-primary" />
+              }
+            </button>
+            <button
+              onClick={handleShare}
+              className="p-3 rounded-[12px] bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
+              title="Share"
+            >
+              <Share2 className="w-4 h-4 text-primary" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Suggested events */}
       <div className="space-y-2.5">

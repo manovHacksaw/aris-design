@@ -33,6 +33,7 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   role: "USER" | "BRAND_OWNER" | "ADMIN";
+  referralCode?: string | null;
   currentStreak?: number;
   ownedBrands?: {
     id: string;

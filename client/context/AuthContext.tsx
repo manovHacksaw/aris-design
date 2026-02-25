@@ -20,6 +20,9 @@ export type OnboardingData = {
   username?: string;
   bio?: string;
   avatarUrl?: string;
+  gender?: string;
+  phoneNumber?: string;
+  dateOfBirth?: string;
   // User presence
   location?: string;
   website?: string;

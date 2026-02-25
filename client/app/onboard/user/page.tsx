@@ -120,6 +120,9 @@ interface OnboardingForm {
   username: string;
   bio: string;
   avatarUrl: string;
+  gender: string;
+  phoneNumber: string;
+  dateOfBirth: string;
   intentGoals: string[];
   web3Level: "beginner" | "basic" | "intermediate" | "advanced" | "";
   preferredCategories: string[];
@@ -145,7 +148,7 @@ export default function UserOnboarding() {
   const router = useRouter();
   const { isConnected, isInitialized, isLoading: walletLoading, userInfo } = useWallet();
   const { completeOnboarding, setOnboardingData, isOnboarded, onboardingData, isLoading: authLoading } = useAuth();
-  const { updateProfile } = useUser();
+  const { updateProfile, user } = useUser();
 
   const [step, setStep] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
@@ -155,6 +158,9 @@ export default function UserOnboarding() {
     username: onboardingData?.username || "",
     bio: onboardingData?.bio || "",
     avatarUrl: onboardingData?.avatarUrl || userInfo?.profileImage || "",
+    gender: onboardingData?.gender || "",
+    phoneNumber: onboardingData?.phoneNumber || "",
+    dateOfBirth: onboardingData?.dateOfBirth || "",
     intentGoals: onboardingData?.intentGoals || [],
     web3Level: (onboardingData?.web3Level as OnboardingForm["web3Level"]) || "",
     preferredCategories: onboardingData?.preferredCategories || [],
@@ -195,6 +201,9 @@ export default function UserOnboarding() {
       username: next.username,
       bio: next.bio,
       avatarUrl: next.avatarUrl,
+      gender: next.gender,
+      phoneNumber: next.phoneNumber,
+      dateOfBirth: next.dateOfBirth,
       intentGoals: next.intentGoals,
       web3Level: next.web3Level as any,
       preferredCategories: next.preferredCategories,
@@ -218,6 +227,9 @@ export default function UserOnboarding() {
         username: form.username,
         bio: form.bio,
         avatarUrl: form.avatarUrl,
+        gender: form.gender || undefined,
+        phoneNumber: form.phoneNumber || undefined,
+        dateOfBirth: form.dateOfBirth ? new Date(form.dateOfBirth).toISOString() : undefined,
         preferredCategories: form.preferredCategories,
         isOnboarded: true,
         intentGoals: form.intentGoals,
@@ -244,6 +256,9 @@ export default function UserOnboarding() {
         username: form.username,
         bio: form.bio,
         avatarUrl: form.avatarUrl,
+        gender: form.gender,
+        phoneNumber: form.phoneNumber,
+        dateOfBirth: form.dateOfBirth,
         intentGoals: form.intentGoals,
         web3Level: form.web3Level as any,
         preferredCategories: form.preferredCategories,
@@ -281,7 +296,7 @@ export default function UserOnboarding() {
 
       {step === 1 && (
         <StepIdentity
-          initial={{ displayName: form.displayName, username: form.username, bio: form.bio, avatarUrl: form.avatarUrl }}
+          initial={{ displayName: form.displayName, username: form.username, bio: form.bio, avatarUrl: form.avatarUrl, gender: form.gender, phoneNumber: form.phoneNumber, dateOfBirth: form.dateOfBirth }}
           prefillName={userInfo?.name}
           prefillAvatar={userInfo?.profileImage}
           onNext={(data: IdentityData) => advance(data)}
@@ -338,6 +353,7 @@ export default function UserOnboarding() {
       {step === 8 && (
         <StepComplete
           displayName={form.displayName}
+          referralCode={user?.referralCode}
           isSaving={isSaving}
           onComplete={handleComplete}
           onBack={back}

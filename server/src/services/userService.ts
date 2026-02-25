@@ -207,7 +207,16 @@ export class UserService {
         if (socialLinks !== undefined) updateData.socialLinks = socialLinks;
         if (preferredBrands !== undefined) updateData.preferredBrands = preferredBrands;
         if (preferredCategories !== undefined) updateData.preferredCategories = preferredCategories;
-        if (isOnboarded !== undefined) updateData.isOnboarded = isOnboarded;
+        if (isOnboarded !== undefined) {
+            updateData.isOnboarded = isOnboarded;
+            // Auto-generate referral code on first onboarding completion
+            if (isOnboarded === true) {
+                const currentUser = await prisma.user.findUnique({ where: { id: userId }, select: { referralCode: true } });
+                if (!currentUser?.referralCode) {
+                    updateData.referralCode = `ARIS-${userId.slice(0, 6).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+                }
+            }
+        }
         if (gender !== undefined) updateData.gender = gender;
         if (dateOfBirth !== undefined) updateData.dateOfBirth = dateOfBirth ? new Date(dateOfBirth) : null;
         if (web3Level !== undefined) updateData.web3Level = web3Level;

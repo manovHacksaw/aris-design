@@ -141,6 +141,7 @@ export const getCurrentUser = async (req: AuthenticatedRequest, res: Response): 
       gender: user.gender,
       dateOfBirth: user.dateOfBirth,
       role: user.role,
+      referralCode: user.referralCode,
       ownedBrands: user.ownedBrands,
       currentStreak: (user as any).loginStreak?.currentStreak || 0,
     });
@@ -212,6 +213,7 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response): P
         contentFormat: (updatedUser as any).contentFormat,
         creatorCategories: (updatedUser as any).creatorCategories,
         onboardingStep: (updatedUser as any).onboardingStep,
+        referralCode: updatedUser.referralCode,
       },
     });
   } catch (error: any) {
