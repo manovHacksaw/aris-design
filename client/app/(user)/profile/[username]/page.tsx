@@ -4,17 +4,16 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import {
   getUserByUsername,
+  getUserStatsById,
   getFollowers,
   getFollowing,
   followUser,
   unfollowUser,
 } from "@/services/user.service";
 import { useUser } from "@/context/UserContext";
-import { ProfileView } from "@/components/profile/ProfileView";
-import SidebarLayout from "@/components/home/SidebarLayout";
-import BottomNav from "@/components/BottomNav";
+import ProfileView from "@/components/profile/ProfileView";
 import { Loader2, UserX } from "lucide-react";
-import type { User } from "@/types/user";
+import type { User, UserStats } from "@/types/user";
 
 export default function UserProfilePage() {
   const params = useParams();
@@ -24,6 +23,7 @@ export default function UserProfilePage() {
   const { user: currentUser } = useUser();
 
   const [profileUser, setProfileUser] = useState<User | null>(null);
+  const [stats, setStats] = useState<UserStats | null>(null);
   const [followers, setFollowers] = useState<User[]>([]);
   const [following, setFollowing] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,10 +38,12 @@ export default function UserProfilePage() {
     getUserByUsername(username)
       .then(async (u) => {
         setProfileUser(u);
-        const [frs, fwg] = await Promise.allSettled([
+        const [s, frs, fwg] = await Promise.allSettled([
+          getUserStatsById(u.id),
           getFollowers(u.id),
           getFollowing(u.id),
         ]);
+        if (s.status === "fulfilled") setStats(s.value);
         if (frs.status === "fulfilled") setFollowers(frs.value);
         if (fwg.status === "fulfilled") setFollowing(fwg.value);
       })
@@ -93,24 +95,15 @@ export default function UserProfilePage() {
   const isOwn = currentUser?.id === profileUser.id || currentUser?.username === username;
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans">
-      <SidebarLayout>
-        <main className="flex-1 pb-24 md:pb-8">
-          <ProfileView
-            user={profileUser}
-            isOwner={isOwn}
-            followersCount={followers.length}
-            followingCount={following.length}
-            isFollowing={isFollowing}
-            onFollowToggle={handleToggleFollow}
-            followersList={followers}
-            followingList={following}
-          />
-        </main>
-        <div className="md:hidden">
-          <BottomNav />
-        </div>
-      </SidebarLayout>
-    </div>
+    <ProfileView
+      isOwnProfile={isOwn}
+      user={profileUser}
+      stats={stats}
+      followers={followers}
+      following={following}
+      isFollowing={isFollowing}
+      isFollowLoading={isFollowLoading}
+      onToggleFollow={handleToggleFollow}
+    />
   );
 }

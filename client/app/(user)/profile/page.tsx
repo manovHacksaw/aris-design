@@ -3,14 +3,12 @@
 import { useEffect, useState } from "react";
 import { useUser } from "@/context/UserContext";
 import { getFollowers, getFollowing } from "@/services/user.service";
-import { ProfileView } from "@/components/profile/ProfileView";
-import SidebarLayout from "@/components/home/SidebarLayout";
-import BottomNav from "@/components/BottomNav";
+import ProfileView from "@/components/profile/ProfileView";
 import { Loader2 } from "lucide-react";
 import type { User } from "@/types/user";
 
 export default function ProfilePage() {
-  const { user, isLoading } = useUser();
+  const { user, stats, isLoading } = useUser();
   const [followers, setFollowers] = useState<User[]>([]);
   const [following, setFollowing] = useState<User[]>([]);
 
@@ -29,22 +27,12 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans">
-      <SidebarLayout>
-        <main className="flex-1 pb-24 md:pb-8">
-          <ProfileView
-            user={user}
-            isOwner={true}
-            followersCount={followers.length}
-            followingCount={following.length}
-            followersList={followers}
-            followingList={following}
-          />
-        </main>
-        <div className="md:hidden">
-          <BottomNav />
-        </div>
-      </SidebarLayout>
-    </div>
+    <ProfileView
+      isOwnProfile={true}
+      user={user}
+      stats={stats}
+      followers={followers}
+      following={following}
+    />
   );
 }
