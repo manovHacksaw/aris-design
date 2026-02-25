@@ -498,4 +498,46 @@ export class UserService {
             create: { userId, ...data },
         });
     }
+
+    /**
+     * Apply a referral code — links referrer to new user and awards XP to referrer
+     */
+    static async applyReferral(referredId: string, referralCode: string) {
+        // Find the referrer by their code
+        const referrer = await prisma.user.findUnique({
+            where: { referralCode },
+            select: { id: true, xp: true },
+        });
+
+        if (!referrer) throw new Error('Invalid referral code');
+        if (referrer.id === referredId) throw new Error('You cannot use your own referral code');
+
+        // Make sure this user hasn't already been referred
+        const existing = await prisma.referral.findUnique({
+            where: { referredId },
+        });
+        if (existing) throw new Error('You have already used a referral code');
+
+        // Create the referral record and award XP to referrer atomically
+        await prisma.$transaction([
+            prisma.referral.create({
+                data: { referrerId: referrer.id, referredId, xpAwarded: 5 },
+            }),
+            prisma.user.update({
+                where: { id: referrer.id },
+                data: { xp: { increment: 5 } },
+            }),
+            prisma.xpTransaction.create({
+                data: {
+                    userId: referrer.id,
+                    amount: 5,
+                    type: 'REFERRAL_BASE',
+                    description: `Referral bonus — friend joined using your code`,
+                    balanceAfter: referrer.xp + 5,
+                },
+            }),
+        ]);
+
+        return { success: true };
+    }
 }

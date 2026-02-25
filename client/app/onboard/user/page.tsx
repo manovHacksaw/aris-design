@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useWallet } from "@/context/WalletContext";
 import { useAuth } from "@/context/AuthContext";
 import { useUser } from "@/context/UserContext";
-import { saveOnboardingAnalytics } from "@/services/user.service";
+import { saveOnboardingAnalytics, applyReferralCode } from "@/services/user.service";
 
 import OnboardingShell, { type StepMeta } from "@/components/onboarding/OnboardingShell";
 import StepIdentity, { type IdentityData } from "@/components/onboarding/steps/StepIdentity";
@@ -219,7 +219,7 @@ export default function UserOnboarding() {
 
   const back = () => setStep(s => Math.max(1, s - 1));
 
-  const handleComplete = async () => {
+  const handleComplete = async (appliedReferralCode?: string) => {
     setIsSaving(true);
     try {
       await updateProfile({
@@ -248,6 +248,16 @@ export default function UserOnboarding() {
           rewardPreference: form.analyticsData.rewardPreference,
           engagementStyle: form.analyticsData.engagementStyle,
         }).catch(err => console.warn("Analytics save failed:", err));
+      }
+
+      if (appliedReferralCode) {
+        try {
+          const result = await applyReferralCode(appliedReferralCode);
+          toast.success(result.message || "Referral applied!");
+        } catch (err: any) {
+          // Non-fatal — warn but don't block onboarding
+          toast.warning(err?.message || "Referral code could not be applied.");
+        }
       }
 
       completeOnboarding({
@@ -355,7 +365,7 @@ export default function UserOnboarding() {
           displayName={form.displayName}
           referralCode={user?.referralCode}
           isSaving={isSaving}
-          onComplete={handleComplete}
+          onComplete={(code) => handleComplete(code)}
           onBack={back}
         />
       )}

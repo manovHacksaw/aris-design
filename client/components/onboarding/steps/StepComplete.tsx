@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Trophy, Zap, ArrowRight, Loader2, Copy, Check, Share2 } from "lucide-react";
+import { Sparkles, Trophy, Zap, ArrowRight, Loader2, Copy, Check, Share2, Gift } from "lucide-react";
 import { toast } from "sonner";
 
 const MOCK_EVENTS = [
@@ -38,13 +38,15 @@ interface Props {
   displayName: string;
   referralCode?: string | null;
   isSaving: boolean;
-  onComplete: () => void;
+  onComplete: (appliedReferralCode?: string) => void;
   onBack: () => void;
 }
 
 export default function StepComplete({ displayName, referralCode, isSaving, onComplete, onBack }: Props) {
   const firstName = displayName.split(" ")[0] || "there";
   const [copied, setCopied] = useState(false);
+  const [incomingCode, setIncomingCode] = useState("");
+  const [codeApplied, setCodeApplied] = useState(false);
 
   const handleCopy = () => {
     if (!referralCode) return;
@@ -153,10 +155,34 @@ export default function StepComplete({ displayName, referralCode, isSaving, onCo
         </div>
       </div>
 
+      {/* Incoming referral code */}
+      <div className="space-y-2.5 p-4 rounded-[16px] bg-card border border-border/50">
+        <div className="flex items-center gap-2">
+          <Gift className="w-4 h-4 text-emerald-400" />
+          <p className="text-xs font-bold text-foreground/50 uppercase tracking-widest">Got a Referral Code?</p>
+        </div>
+        <p className="text-xs text-foreground/40">Enter a friend's code to credit them with +5 XP.</p>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={incomingCode}
+            onChange={e => setIncomingCode(e.target.value.toUpperCase())}
+            disabled={codeApplied}
+            placeholder="ARIS-XXXXXX-XXXX"
+            className="flex-1 bg-background border border-border/50 rounded-[12px] px-4 py-3 text-sm font-mono font-bold placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors disabled:opacity-40"
+          />
+          {codeApplied && (
+            <div className="flex items-center gap-1.5 px-4 py-3 rounded-[12px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-black">
+              <Check className="w-3.5 h-3.5" /> Applied
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* CTA */}
       <div className="space-y-2 pt-1">
         <button
-          onClick={onComplete}
+          onClick={() => onComplete(incomingCode.trim() || undefined)}
           disabled={isSaving}
           className="w-full py-4 rounded-[16px] bg-primary text-white font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >

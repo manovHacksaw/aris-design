@@ -548,3 +548,28 @@ export const saveOnboardingAnalytics = async (req: AuthenticatedRequest, res: Re
   }
 };
 
+/**
+ * Apply a referral code for the authenticated user
+ */
+export const applyReferral = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { referralCode } = req.body;
+    if (!referralCode || typeof referralCode !== 'string') {
+      res.status(400).json({ error: 'referralCode is required' });
+      return;
+    }
+
+    await UserService.applyReferral(req.user.id, referralCode.trim().toUpperCase());
+    res.json({ success: true, message: 'Referral applied! Your referrer earned +5 XP.' });
+  } catch (error: any) {
+    const clientErrors = ['Invalid referral code', 'You cannot use your own referral code', 'You have already used a referral code'];
+    const isClientError = clientErrors.some(msg => error.message?.includes(msg));
+    res.status(isClientError ? 400 : 500).json({ error: error.message || 'Failed to apply referral' });
+  }
+};
+

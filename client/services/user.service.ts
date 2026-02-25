@@ -77,6 +77,16 @@ export async function checkUsernameAvailability(
   );
 }
 
+/** POST /api/users/apply-referral */
+export async function applyReferralCode(
+  referralCode: string
+): Promise<{ success: boolean; message: string }> {
+  return apiRequest<{ success: boolean; message: string }>("/users/apply-referral", {
+    method: "POST",
+    body: JSON.stringify({ referralCode }),
+  });
+}
+
 /** POST /api/users/onboarding-analytics — analytics-only, not shown in UI */
 export async function saveOnboardingAnalytics(data: {
   adsSeenDaily?: string;
