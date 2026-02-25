@@ -1,0 +1,7 @@
+(globalThis.TURBOPACK || (globalThis.TURBOPACK = [])).push([typeof document === "object" ? document.currentScript : undefined,
+"[project]/mock/socialFeed.json (json)", ((__turbopack_context__) => {
+
+__turbopack_context__.v({"data":[{"id":"post-001","userId":"user-alex","username":"alex_creative","userAvatar":"https://api.dicebear.com/7.x/avataaars/svg?seed=alex_creative","coverImage":"https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&q=80","caption":"Just dropped my submission for the new Neon challenge! What do you think? ⚡️ #Aris #NeonDreams","reward":0.05,"votes":1240,"createdAt":"2026-02-19T05:30:00.000Z"},{"id":"post-002","userId":"user-sarah","username":"sarah_design","userAvatar":"https://api.dicebear.com/7.x/avataaars/svg?seed=sarah_design","coverImage":"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80","caption":"Minimalist vibes only. 🎨 Voting helps me unlock the next tier!","reward":0.05,"votes":856,"createdAt":"2026-02-18T21:00:00.000Z"},{"id":"post-003","userId":"user-techguru","username":"tech_guru","userAvatar":"https://api.dicebear.com/7.x/avataaars/svg?seed=tech_guru","coverImage":"https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&q=80","caption":"The future is here. Check out this gadget review. 📱","reward":0.1,"votes":2100,"createdAt":"2026-02-18T18:45:00.000Z"}],"meta":{"total":42,"page":1,"pageSize":10,"hasMore":true}});}),
+]);
+
+//# sourceMappingURL=mock_socialFeed_json_0df9d5b9._.js.map

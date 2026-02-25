@@ -1,0 +1,14 @@
+{
+  "pages": {},
+  "app": {
+    "[project]/app/(user)/settings/page": [
+      "static/media/83afe278b6a6bb3c-s.p.3a6ba036.woff2",
+      "static/media/a079e02bba5bf7ab-s.p.7367eab7.woff2",
+      "static/media/d23f31b94ad01e54-s.p.4b0b0c7e.woff2",
+      "static/media/3206eb66b875a5b3-s.p.e2b99870.woff2",
+      "static/media/70bc3e132a0a741e-s.p.15008bfb.woff2"
+    ]
+  },
+  "appUsingSizeAdjust": true,
+  "pagesUsingSizeAdjust": false
+}

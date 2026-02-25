@@ -41,3 +41,5 @@ server/reward_logs.txt
 *.pem
 .vercel
 coverage
+
+oldFrontend/

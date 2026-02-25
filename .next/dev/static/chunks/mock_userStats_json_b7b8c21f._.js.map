@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 3, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/mock/userStats.json"],"sourcesContent":["{\"data\":{\"userId\":\"user-current\",\"streak\":12,\"rankLabel\":\"Bronze IV\",\"rankTier\":\"bronze\",\"rankProgress\":82,\"weeklyXp\":[40,65,45,80,55,90,75],\"totalXp\":2480,\"nextTierLabel\":\"Silver\"}}"],"names":[],"mappings":"AAAA"}},
+    {"offset": {"line": 3, "column": 208}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}}]
+}

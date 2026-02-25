@@ -64,7 +64,7 @@ export default function OnboardingPage() {
     };
 
     const handleComplete = () => {
-        router.push("/home");
+        router.push("/");
     };
 
     const handleWalletConnect = () => {

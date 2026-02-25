@@ -92,6 +92,14 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
   const [walletClient, setWalletClient] = useState<any | null>(null);
   const [smartAccountClient, setSmartAccountClient] = useState<any | null>(null);
   const [smartAccountAddress, setSmartAccountAddress] = useState<Address | null>(null);
+  const [timedOut, setTimedOut] = useState(false);
+
+  // If Privy never becomes ready (e.g. invalid App ID), unblock the auth guard after 5s
+  useEffect(() => {
+    if (ready) return;
+    const id = setTimeout(() => setTimedOut(true), 5000);
+    return () => clearTimeout(id);
+  }, [ready]);
 
   const publicClient = useMemo(
     () =>
@@ -107,7 +115,7 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
 
   const address = smartAccountAddress || eoaAddress;
   const isConnected = ready && authenticated;
-  const isInitialized = ready;
+  const isInitialized = ready || timedOut;
 
   const userInfo = privyUser
     ? {
@@ -284,7 +292,7 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
         walletClient,
         publicClient,
         isConnected,
-        isLoading: !ready,
+        isLoading: !ready && !timedOut,
         isInitialized,
         userInfo,
         connect: login,
