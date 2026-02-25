@@ -9,8 +9,10 @@ import { cn } from "@/lib/utils";
 import {
   Trophy, Users, Flame, ArrowRight, ThumbsUp, Palette, Camera,
   Clapperboard, Music, Shirt, Laptop, Gamepad, Search, Loader2, UserX,
+  UserPlus, UserMinus, UserCheck,
 } from "lucide-react";
-import { searchUsers } from "@/services/user.service";
+import { searchUsers, followUser, unfollowUser } from "@/services/user.service";
+import { useUser } from "@/context/UserContext";
 
 // ─── Static data (events + brands remain mock for now) ───────────────────────
 
@@ -68,6 +70,7 @@ function formatFollowers(n: number) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Explore() {
+  const { user: currentUser } = useUser();
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -76,6 +79,37 @@ export default function Explore() {
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Follow state: set of IDs the current user is following, and loading
+  const [followingSet, setFollowingSet] = useState<Set<string>>(new Set());
+  const [followLoadingId, setFollowLoadingId] = useState<string | null>(null);
+
+  const handleFollowToggle = useCallback(async (userId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!currentUser || followLoadingId) return;
+    setFollowLoadingId(userId);
+    const wasFollowing = followingSet.has(userId);
+    // Optimistic update
+    setFollowingSet((prev) => {
+      const next = new Set(prev);
+      if (wasFollowing) next.delete(userId); else next.add(userId);
+      return next;
+    });
+    try {
+      if (wasFollowing) await unfollowUser(userId);
+      else await followUser(userId);
+    } catch {
+      // Revert
+      setFollowingSet((prev) => {
+        const next = new Set(prev);
+        if (wasFollowing) next.add(userId); else next.delete(userId);
+        return next;
+      });
+    } finally {
+      setFollowLoadingId(null);
+    }
+  }, [currentUser, followingSet, followLoadingId]);
 
   const runSearch = useCallback(async (q: string) => {
     if (q.trim().length < 2) {
@@ -226,17 +260,18 @@ export default function Explore() {
                     const handle = u.username ? `@${u.username}` : "—";
                     const name = u.displayName || u.username || "Unknown";
                     const href = u.username ? `/profile/${u.username}` : "#";
+                    const isSelf = currentUser?.id === u.id;
+                    const isFollowed = followingSet.has(u.id);
+                    const isLoadingThis = followLoadingId === u.id;
                     return (
                       <motion.div
                         key={u.id}
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.05 }}
+                        className="group flex flex-col items-center bg-card/60 backdrop-blur-md border border-border/60 rounded-2xl p-5 text-center hover:bg-card hover:border-primary/40 hover:shadow-xl transition-all"
                       >
-                        <Link
-                          href={href}
-                          className="group flex flex-col items-center bg-card/60 backdrop-blur-md border border-border/60 rounded-2xl p-5 text-center hover:bg-card hover:border-primary/40 hover:shadow-xl transition-all"
-                        >
+                        <Link href={href} className="flex flex-col items-center w-full">
                           {/* Avatar */}
                           <div className="relative w-16 h-16 mb-3">
                             {u.avatarUrl ? (
@@ -246,7 +281,6 @@ export default function Explore() {
                                 <span className="text-primary text-xl font-black uppercase">{name.charAt(0)}</span>
                               </div>
                             )}
-                            {/* Level badge */}
                             <div className="absolute -bottom-1 -right-1 bg-primary text-white text-[9px] font-black px-1.5 py-0.5 rounded-full border-2 border-card">
                               {u.level}
                             </div>
@@ -270,11 +304,43 @@ export default function Explore() {
                               <span className="text-primary text-xs">{u.xp.toLocaleString()}</span>
                             </div>
                           </div>
-
-                          <span className="w-full py-2 rounded-xl bg-secondary/80 group-hover:bg-foreground group-hover:text-background text-[10px] font-black uppercase tracking-[0.15em] transition-all">
-                            View Profile
-                          </span>
                         </Link>
+
+                        {/* Follow / View Profile buttons */}
+                        {isSelf ? (
+                          <Link href={href} className="w-full py-2 rounded-xl bg-secondary/80 group-hover:bg-foreground group-hover:text-background text-[10px] font-black uppercase tracking-[0.15em] transition-all text-center">
+                            Your Profile
+                          </Link>
+                        ) : currentUser ? (
+                          <div className="flex gap-2 w-full">
+                            <Link href={href} className="flex-1 py-2 rounded-xl bg-secondary/80 group-hover:bg-secondary text-[10px] font-black uppercase tracking-[0.1em] transition-all text-center text-foreground/60">
+                              View
+                            </Link>
+                            <button
+                              onClick={(e) => handleFollowToggle(u.id, e)}
+                              disabled={isLoadingThis}
+                              className={cn(
+                                "flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] transition-all disabled:opacity-50",
+                                isFollowed
+                                  ? "bg-secondary border border-border text-foreground/60 hover:border-red-500/40 hover:text-red-400"
+                                  : "bg-primary/10 border border-primary/30 text-primary hover:bg-primary hover:text-white"
+                              )}
+                            >
+                              {isLoadingThis ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : isFollowed ? (
+                                <UserMinus className="w-3 h-3" />
+                              ) : (
+                                <UserPlus className="w-3 h-3" />
+                              )}
+                              {isFollowed ? "Unfollow" : "Follow"}
+                            </button>
+                          </div>
+                        ) : (
+                          <Link href={href} className="w-full py-2 rounded-xl bg-secondary/80 group-hover:bg-foreground group-hover:text-background text-[10px] font-black uppercase tracking-[0.15em] transition-all text-center">
+                            View Profile
+                          </Link>
+                        )}
                       </motion.div>
                     );
                   })}

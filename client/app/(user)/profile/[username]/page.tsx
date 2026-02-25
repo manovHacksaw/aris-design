@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import {
   getUserByUsername,
   getUserStatsById,
   getFollowers,
   getFollowing,
+  followUser,
+  unfollowUser,
 } from "@/services/user.service";
 import { useUser } from "@/context/UserContext";
 import ProfileView from "@/components/profile/ProfileView";
@@ -26,6 +28,7 @@ export default function UserProfilePage() {
   const [following, setFollowing] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   useEffect(() => {
     if (!username) return;
@@ -47,6 +50,37 @@ export default function UserProfilePage() {
       .catch(() => setNotFound(true))
       .finally(() => setIsLoading(false));
   }, [username]);
+
+  const isFollowing = !!(currentUser && followers.some((f) => f.id === currentUser.id));
+
+  const handleToggleFollow = useCallback(async () => {
+    if (!profileUser || !currentUser || isFollowLoading) return;
+    setIsFollowLoading(true);
+
+    // Optimistic update
+    if (isFollowing) {
+      setFollowers((prev) => prev.filter((f) => f.id !== currentUser.id));
+    } else {
+      setFollowers((prev) => [...prev, currentUser]);
+    }
+
+    try {
+      if (isFollowing) {
+        await unfollowUser(profileUser.id);
+      } else {
+        await followUser(profileUser.id);
+      }
+    } catch {
+      // Revert on error
+      if (isFollowing) {
+        setFollowers((prev) => [...prev, currentUser]);
+      } else {
+        setFollowers((prev) => prev.filter((f) => f.id !== currentUser.id));
+      }
+    } finally {
+      setIsFollowLoading(false);
+    }
+  }, [profileUser, currentUser, isFollowing, isFollowLoading]);
 
   if (isLoading) {
     return (
@@ -75,6 +109,9 @@ export default function UserProfilePage() {
       stats={stats}
       followers={followers}
       following={following}
+      isFollowing={isFollowing}
+      isFollowLoading={isFollowLoading}
+      onToggleFollow={handleToggleFollow}
     />
   );
 }
