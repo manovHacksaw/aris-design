@@ -9,7 +9,7 @@ import { AuthenticatedRequest } from '../middlewares/authMiddleware';
  */
 export const privyLogin = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { privyToken, walletAddress, email } = req.body;
+    const { privyToken, walletAddress, email, avatarUrl } = req.body;
     if (!privyToken) {
       res.status(400).json({ error: 'privyToken is required' });
       return;
@@ -24,7 +24,7 @@ export const privyLogin = async (req: Request, res: Response): Promise<void> => 
     const deviceInfo = req.headers['user-agent'];
     const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.socket.remoteAddress;
 
-    const result = await AuthService.privyLogin(verifiedClaims, walletAddress, email, deviceInfo, ip);
+    const result = await AuthService.privyLogin(verifiedClaims, walletAddress, email, deviceInfo, ip, avatarUrl);
     res.json(result);
   } catch (error: any) {
     console.error('Error during Privy authentication:', error);

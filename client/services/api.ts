@@ -73,13 +73,14 @@ export async function apiRequest<T>(
 export async function authenticateWithPrivy(
   privyToken: string,
   walletAddress?: string,
-  email?: string
+  email?: string,
+  avatarUrl?: string
 ): Promise<{ token: string; user: any }> {
   const data = await apiRequest<{ success: boolean; token: string; user: any }>(
     "/auth/privy-login",
     {
       method: "POST",
-      body: JSON.stringify({ privyToken, walletAddress, email }),
+      body: JSON.stringify({ privyToken, walletAddress, email, avatarUrl }),
     }
   );
   if (data.token) setAuthToken(data.token);

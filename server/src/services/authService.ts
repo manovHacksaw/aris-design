@@ -308,7 +308,8 @@ export class AuthService {
         walletAddress?: string,
         email?: string,
         deviceInfo?: string,
-        ip?: string
+        ip?: string,
+        avatarUrl?: string
     ): Promise<AuthResponse> {
         const targetWalletAddress = walletAddress?.toLowerCase();
 
@@ -343,6 +344,7 @@ export class AuthService {
                 data: {
                     email: email?.toLowerCase() || `${placeholderAddress}@wallet.local`,
                     displayName: email ? email.split('@')[0] : undefined,
+                    avatarUrl: avatarUrl || null,
                     walletAddress: placeholderAddress,
                     lastLoginAt: new Date(),
                     emailVerified: !isVerificationEnabled,
@@ -360,9 +362,13 @@ export class AuthService {
                 }
             })();
         } else {
+            // Backfill avatarUrl from Google if the user has none set yet
             user = await prisma.user.update({
                 where: { id: user.id },
-                data: { lastLoginAt: new Date() },
+                data: {
+                    lastLoginAt: new Date(),
+                    ...(avatarUrl && !user.avatarUrl ? { avatarUrl } : {}),
+                },
             });
         }
 
