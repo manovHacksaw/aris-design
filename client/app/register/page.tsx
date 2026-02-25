@@ -46,9 +46,9 @@ export default function Register() {
       } else {
         // Already connected — go straight to signup flow
         if (selectedRole === "user") {
-          router.push("/signup/user");
+          router.push("/onboard/user");
         } else {
-          router.push("/signup/brand");
+          router.push("/onboard/brand");
         }
       }
     } catch (err) {
@@ -62,10 +62,11 @@ export default function Register() {
   useEffect(() => {
     if (!isInitialized || walletLoading || authLoading) return;
     if (isConnected && !isOnboarded) {
-      if (selectedRole === "brand") {
-        router.push("/signup/brand");
-      } else {
-        router.push("/signup/user");
+      const storedRole = selectedRole;
+      if (storedRole === "user") {
+        router.push("/onboard/user");
+      } else if (storedRole === "brand") {
+        router.push("/onboard/brand");
       }
     }
   }, [isConnected, isOnboarded, isInitialized, walletLoading, authLoading, selectedRole, router]);

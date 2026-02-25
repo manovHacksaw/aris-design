@@ -17,12 +17,15 @@ import {
     Hash,
     Tag,
     Loader2,
-    Check
+    Check,
+    X,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/context/UserContext";
 import { useWallet } from "@/context/WalletContext";
+import { uploadToPinata, validateImageFile } from "@/lib/pinata-upload";
 
 const settingsSections = [
     { id: 'profile', label: 'Profile Settings', icon: User },
@@ -37,6 +40,11 @@ export default function SettingsPage() {
     const [activeSection, setActiveSection] = useState('profile');
     const { user, updateProfile } = useUser();
     const { address, eoaAddress, disconnect } = useWallet();
+
+    // Avatar state
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
     // Profile form state
     const [displayName, setDisplayName] = useState("");
@@ -61,8 +69,44 @@ export default function SettingsPage() {
             setTwitter(user.socialLinks?.twitter || "");
             setInstagram(user.socialLinks?.instagram || "");
             setWebsite(user.socialLinks?.website || "");
+            setAvatarPreview(user.avatarUrl || null);
         }
     }, [user]);
+
+    const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const validation = validateImageFile(file);
+        if (!validation.valid) { toast.error(validation.error); return; }
+
+        // Show local preview immediately
+        const localUrl = URL.createObjectURL(file);
+        setAvatarPreview(localUrl);
+        setIsUploadingAvatar(true);
+
+        try {
+            const { url } = await uploadToPinata(file);
+            setAvatarPreview(url);
+            await updateProfile({ avatarUrl: url });
+            toast.success("Profile photo updated!");
+        } catch (err: any) {
+            toast.error(err?.message || "Upload failed. Try again.");
+            setAvatarPreview(user?.avatarUrl || null);
+        } finally {
+            setIsUploadingAvatar(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
+
+    const handleRemoveAvatar = async () => {
+        setAvatarPreview(null);
+        try {
+            await updateProfile({ avatarUrl: "" });
+            toast.success("Profile photo removed.");
+        } catch {
+            setAvatarPreview(user?.avatarUrl || null);
+        }
+    };
 
     const handleSaveProfile = async () => {
         setIsSaving(true);
@@ -139,12 +183,22 @@ export default function SettingsPage() {
                             >
                                 <div className="p-8 space-y-10">
                                     {/* Avatar Upload */}
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/gif,image/webp"
+                                        className="hidden"
+                                        onChange={handleAvatarSelect}
+                                    />
                                     <div className="flex flex-col sm:flex-row items-center gap-8">
-                                        <div className="relative group cursor-pointer">
+                                        <div
+                                            className="relative group cursor-pointer"
+                                            onClick={() => !isUploadingAvatar && fileInputRef.current?.click()}
+                                        >
                                             <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-background shadow-xl">
-                                                {user?.avatarUrl ? (
+                                                {avatarPreview ? (
                                                     <img
-                                                        src={user.avatarUrl}
+                                                        src={avatarPreview}
                                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                                         alt="Avatar"
                                                     />
@@ -157,15 +211,33 @@ export default function SettingsPage() {
                                                 )}
                                             </div>
                                             <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Camera className="w-8 h-8 text-white" />
+                                                {isUploadingAvatar
+                                                    ? <Loader2 className="w-8 h-8 text-white animate-spin" />
+                                                    : <Camera className="w-8 h-8 text-white" />
+                                                }
                                             </div>
                                         </div>
                                         <div className="text-center sm:text-left">
                                             <h3 className="text-xl font-black text-foreground mb-2">Profile Picture</h3>
-                                            <p className="text-[11px] font-black text-foreground/30 uppercase tracking-widest mb-4">JPG, PNG or WEBP. Max 2MB.</p>
+                                            <p className="text-[11px] font-black text-foreground/30 uppercase tracking-widest mb-1">JPEG, PNG, GIF or WebP — max 5 MB</p>
+                                            <p className="text-[10px] text-foreground/25 mb-4">Stored permanently on IPFS via Pinata</p>
                                             <div className="flex gap-3 justify-center sm:justify-start">
-                                                <button className="bg-primary text-background px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary-dark transition-colors">Upload New</button>
-                                                <button className="bg-secondary text-foreground/60 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-border transition-colors">Remove</button>
+                                                <button
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    disabled={isUploadingAvatar}
+                                                    className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    {isUploadingAvatar ? <><Loader2 className="w-3 h-3 animate-spin" /> Uploading…</> : "Upload New"}
+                                                </button>
+                                                {avatarPreview && (
+                                                    <button
+                                                        onClick={handleRemoveAvatar}
+                                                        disabled={isUploadingAvatar}
+                                                        className="flex items-center gap-1.5 bg-secondary text-foreground/60 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 hover:text-red-400 transition-colors disabled:opacity-50"
+                                                    >
+                                                        <X className="w-3 h-3" /> Remove
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

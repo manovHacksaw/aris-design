@@ -18,7 +18,7 @@ export default function ProfilePage() {
     getFollowing(user.id).then(setFollowing).catch(() => {});
   }, [user?.id]);
 
-  if (isLoading) {
+  if (isLoading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />

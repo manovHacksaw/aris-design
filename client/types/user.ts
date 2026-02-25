@@ -14,6 +14,11 @@ export interface User {
   preferredBrands: string[];
   preferredCategories: string[];
   isOnboarded: boolean;
+  web3Level?: string | null;
+  intentGoals?: string[];
+  contentFormat?: string | null;
+  creatorCategories?: string[];
+  onboardingStep?: number;
   xp: number;
   socialLinks?: {
     twitter?: string;
@@ -28,6 +33,7 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   role: "USER" | "BRAND_OWNER" | "ADMIN";
+  referralCode?: string | null;
   currentStreak?: number;
   ownedBrands?: {
     id: string;
@@ -64,6 +70,11 @@ export interface UpdateUserData {
   preferredBrands?: string[];
   preferredCategories?: string[];
   isOnboarded?: boolean;
+  web3Level?: string;
+  intentGoals?: string[];
+  contentFormat?: string;
+  creatorCategories?: string[];
+  onboardingStep?: number;
   socialLinks?: {
     twitter?: string;
     instagram?: string;

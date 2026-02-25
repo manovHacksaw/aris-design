@@ -76,3 +76,48 @@ export async function checkUsernameAvailability(
     `/users/check-username?username=${encodeURIComponent(username)}`
   );
 }
+
+/** GET /api/users/search?q=... (public) */
+export async function searchUsers(
+  query: string,
+  take = 20
+): Promise<{ id: string; username: string | null; displayName: string | null; avatarUrl: string | null; bio: string | null; xp: number; level: number; _count: { followers: number } }[]> {
+  const res = await apiRequest<{ results: any[] }>(
+    `/users/search?q=${encodeURIComponent(query)}&take=${take}`
+  );
+  return res.results;
+}
+
+/** GET /api/users/validate-referral?code=... */
+export async function validateReferralCode(
+  code: string
+): Promise<{ valid: boolean; referrerName?: string; reason?: string }> {
+  return apiRequest<{ valid: boolean; referrerName?: string; reason?: string }>(
+    `/users/validate-referral?code=${encodeURIComponent(code)}`
+  );
+}
+
+/** POST /api/users/apply-referral */
+export async function applyReferralCode(
+  referralCode: string
+): Promise<{ success: boolean; message: string }> {
+  return apiRequest<{ success: boolean; message: string }>("/users/apply-referral", {
+    method: "POST",
+    body: JSON.stringify({ referralCode }),
+  });
+}
+
+/** POST /api/users/onboarding-analytics — analytics-only, not shown in UI */
+export async function saveOnboardingAnalytics(data: {
+  adsSeenDaily?: string;
+  referralSource?: string;
+  joinMotivation?: string[];
+  socialPlatforms?: string[];
+  rewardPreference?: string[];
+  engagementStyle?: string;
+}): Promise<{ success: boolean }> {
+  return apiRequest<{ success: boolean }>("/users/onboarding-analytics", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}

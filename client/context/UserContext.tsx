@@ -60,10 +60,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
         (privyUser?.email as any)?.address ??
         undefined;
 
+      const googlePicture = (privyUser?.google as any)?.picture ?? undefined;
+
       const { user: authUser } = await authenticateWithPrivy(
         privyToken,
         address ?? undefined,
-        email
+        email,
+        googlePicture
       );
 
       setUser(authUser);

@@ -3,7 +3,7 @@
 import SidebarLayout from "@/components/home/SidebarLayout";
 import BottomNav from "@/components/BottomNav";
 import { Grid, ThumbsUp, Award } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
@@ -15,7 +15,8 @@ import ProfileRewards from "./ProfileRewards";
 import ProfileActivity from "./ProfileActivity";
 
 import type { User, UserStats } from "@/types/user";
-import { formatCount } from "@/types/user";
+import { followUser, unfollowUser } from "@/services/user.service";
+import { useUser } from "@/context/UserContext";
 
 interface ProfileViewProps {
   isOwnProfile?: boolean;
@@ -23,6 +24,9 @@ interface ProfileViewProps {
   stats: UserStats | null;
   followers: User[];
   following: User[];
+  isFollowing?: boolean;
+  isFollowLoading?: boolean;
+  onToggleFollow?: () => void;
 }
 
 export default function ProfileView({
@@ -31,12 +35,18 @@ export default function ProfileView({
   stats,
   followers,
   following,
+  isFollowing = false,
+  isFollowLoading = false,
+  onToggleFollow,
 }: ProfileViewProps) {
+  const { user: currentUser } = useUser();
   const [activeTab, setActiveTab] = useState("posts");
   const [showSocialModal, setShowSocialModal] = useState<{
     show: boolean;
     type: "followers" | "following";
   }>({ show: false, type: "followers" });
+  const [modalFollowLoading, setModalFollowLoading] = useState<string | null>(null);
+  const [modalFollowing, setModalFollowing] = useState<Set<string>>(new Set());
 
   const tabs = [
     { id: "posts", label: "Posts", icon: Grid },
@@ -46,6 +56,31 @@ export default function ProfileView({
 
   const socialList =
     showSocialModal.type === "followers" ? followers : following;
+
+  const handleModalFollow = useCallback(async (personId: string) => {
+    if (!currentUser || modalFollowLoading) return;
+    setModalFollowLoading(personId);
+    const alreadyFollowing = modalFollowing.has(personId);
+    // Optimistic
+    setModalFollowing((prev) => {
+      const next = new Set(prev);
+      if (alreadyFollowing) next.delete(personId); else next.add(personId);
+      return next;
+    });
+    try {
+      if (alreadyFollowing) await unfollowUser(personId);
+      else await followUser(personId);
+    } catch {
+      // Revert
+      setModalFollowing((prev) => {
+        const next = new Set(prev);
+        if (alreadyFollowing) next.add(personId); else next.delete(personId);
+        return next;
+      });
+    } finally {
+      setModalFollowLoading(null);
+    }
+  }, [currentUser, modalFollowing, modalFollowLoading]);
 
   const joinedDate = user?.createdAt
     ? new Date(user.createdAt).toLocaleDateString("en-US", {
@@ -86,6 +121,9 @@ export default function ProfileView({
               followers={followers}
               following={following}
               isOwnProfile={isOwnProfile}
+              isFollowing={isFollowing}
+              isFollowLoading={isFollowLoading}
+              onToggleFollow={onToggleFollow}
               onFollowersClick={() => setShowSocialModal({ show: true, type: "followers" })}
               onFollowingClick={() => setShowSocialModal({ show: true, type: "following" })}
             />
@@ -218,40 +256,57 @@ export default function ProfileView({
                   No {showSocialModal.type} yet
                 </p>
               ) : (
-                socialList.map((person) => (
-                  <div
-                    key={person.id}
-                    className="flex items-center justify-between p-3 hover:bg-secondary/50 rounded-[14px] transition-colors group cursor-pointer"
-                  >
-                    <Link
-                      href={`/profile/${person.username || person.id}`}
-                      onClick={() => setShowSocialModal((s) => ({ ...s, show: false }))}
-                      className="flex items-center gap-3 flex-1"
+                socialList.map((person) => {
+                  const isSelf = currentUser?.id === person.id;
+                  const isPersonFollowed = modalFollowing.has(person.id);
+                  return (
+                    <div
+                      key={person.id}
+                      className="flex items-center justify-between p-3 hover:bg-secondary/50 rounded-[14px] transition-colors group"
                     >
-                      {person.avatarUrl ? (
-                        <img
-                          src={person.avatarUrl}
-                          className="w-9 h-9 rounded-xl object-cover border border-border/40"
-                          alt={person.displayName || ""}
-                        />
-                      ) : (
-                        <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                          <span className="text-primary text-sm font-black uppercase">
-                            {(person.displayName || person.username || "?").charAt(0)}
-                          </span>
+                      <Link
+                        href={`/profile/${person.username || person.id}`}
+                        onClick={() => setShowSocialModal((s) => ({ ...s, show: false }))}
+                        className="flex items-center gap-3 flex-1 min-w-0"
+                      >
+                        {person.avatarUrl ? (
+                          <img
+                            src={person.avatarUrl}
+                            className="w-9 h-9 rounded-xl object-cover border border-border/40 shrink-0"
+                            alt={person.displayName || ""}
+                          />
+                        ) : (
+                          <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                            <span className="text-primary text-sm font-black uppercase">
+                              {(person.displayName || person.username || "?").charAt(0)}
+                            </span>
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-xs font-black text-foreground group-hover:text-primary transition-colors truncate">
+                            {person.displayName || person.username || "Unknown"}
+                          </p>
+                          <p className="text-[10px] text-foreground/30 font-bold">
+                            {person.username ? `@${person.username}` : ""}
+                          </p>
                         </div>
+                      </Link>
+                      {!isSelf && currentUser && (
+                        <button
+                          onClick={() => handleModalFollow(person.id)}
+                          disabled={modalFollowLoading === person.id}
+                          className={`ml-3 shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                            isPersonFollowed
+                              ? "bg-secondary border border-border text-foreground/60 hover:border-red-500/40 hover:text-red-400"
+                              : "bg-primary/10 border border-primary/30 text-primary hover:bg-primary hover:text-white"
+                          } disabled:opacity-40`}
+                        >
+                          {modalFollowLoading === person.id ? "..." : isPersonFollowed ? "Unfollow" : "Follow"}
+                        </button>
                       )}
-                      <div>
-                        <p className="text-xs font-black text-foreground group-hover:text-primary transition-colors">
-                          {person.displayName || person.username || "Unknown"}
-                        </p>
-                        <p className="text-[10px] text-foreground/30 font-bold">
-                          {person.username ? `@${person.username}` : ""}
-                        </p>
-                      </div>
-                    </Link>
-                  </div>
-                ))
+                    </div>
+                  );
+                })
               )}
             </div>
           </motion.div>

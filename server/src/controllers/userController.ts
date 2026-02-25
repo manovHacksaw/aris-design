@@ -3,6 +3,22 @@ import { UserService } from '../services/userService';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';
 
 /**
+ * Search users by username or display name
+ * GET /api/users/search?q=...
+ */
+export const searchUsers = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const q = (req.query.q as string) || "";
+    const take = Math.min(Number(req.query.take) || 20, 50);
+    const results = await UserService.searchUsers(q, take);
+    res.json({ results });
+  } catch (error) {
+    console.error('Error searching users:', error);
+    res.status(500).json({ error: 'Search failed' });
+  }
+};
+
+/**
  * Get all users
  */
 export const getUsers = async (_req: Request, res: Response): Promise<void> => {
@@ -141,6 +157,7 @@ export const getCurrentUser = async (req: AuthenticatedRequest, res: Response): 
       gender: user.gender,
       dateOfBirth: user.dateOfBirth,
       role: user.role,
+      referralCode: user.referralCode,
       ownedBrands: user.ownedBrands,
       currentStreak: (user as any).loginStreak?.currentStreak || 0,
     });
@@ -207,6 +224,12 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response): P
         dateOfBirth: updatedUser.dateOfBirth,
         role: updatedUser.role,
         currentStreak: (updatedUser as any).loginStreak?.currentStreak || 0,
+        web3Level: (updatedUser as any).web3Level,
+        intentGoals: (updatedUser as any).intentGoals,
+        contentFormat: (updatedUser as any).contentFormat,
+        creatorCategories: (updatedUser as any).creatorCategories,
+        onboardingStep: (updatedUser as any).onboardingStep,
+        referralCode: updatedUser.referralCode,
       },
     });
   } catch (error: any) {
@@ -510,6 +533,76 @@ export const updateWalletAddress = async (req: AuthenticatedRequest, res: Respon
       success: false,
       error: error.message || 'Failed to update wallet address',
     });
+  }
+};
+
+/**
+ * Save onboarding analytics (analytics-only, not exposed back to user)
+ */
+export const saveOnboardingAnalytics = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: 'Unauthorized' });
+      return;
+    }
+
+    const { adsSeenDaily, referralSource, joinMotivation, socialPlatforms, rewardPreference, engagementStyle } = req.body;
+
+    await UserService.saveOnboardingAnalytics(req.user.id, {
+      adsSeenDaily,
+      referralSource,
+      joinMotivation,
+      socialPlatforms,
+      rewardPreference,
+      engagementStyle,
+    });
+
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Error saving onboarding analytics:', error);
+    res.status(500).json({ success: false, error: error.message || 'Failed to save analytics' });
+  }
+};
+
+/**
+ * Validate a referral code (read-only, no side effects)
+ */
+export const validateReferral = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) { res.status(401).json({ error: 'Unauthorized' }); return; }
+
+    const { code } = req.query;
+    if (!code || typeof code !== 'string') { res.status(400).json({ error: 'code is required' }); return; }
+
+    const result = await UserService.validateReferralCode(code.trim().toUpperCase(), req.user.id);
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Validation failed' });
+  }
+};
+
+/**
+ * Apply a referral code for the authenticated user
+ */
+export const applyReferral = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { referralCode } = req.body;
+    if (!referralCode || typeof referralCode !== 'string') {
+      res.status(400).json({ error: 'referralCode is required' });
+      return;
+    }
+
+    await UserService.applyReferral(req.user.id, referralCode.trim().toUpperCase());
+    res.json({ success: true, message: 'Referral applied! Your referrer earned +5 XP.' });
+  } catch (error: any) {
+    const clientErrors = ['Invalid referral code', 'You cannot use your own referral code', 'You have already used a referral code'];
+    const isClientError = clientErrors.some(msg => error.message?.includes(msg));
+    res.status(isClientError ? 400 : 500).json({ error: error.message || 'Failed to apply referral' });
   }
 };
 

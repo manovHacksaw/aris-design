@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle, Edit2, UserPlus, MessageSquare, Flame, Trophy, Share2, Twitter, Instagram, Globe } from "lucide-react";
+import { CheckCircle, Edit2, UserPlus, UserCheck, UserMinus, MessageSquare, Flame, Trophy, Share2, Twitter, Instagram, Globe, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useState } from "react";
@@ -13,6 +13,9 @@ interface ProfileCardProps {
     followers: User[];
     following: User[];
     isOwnProfile?: boolean;
+    isFollowing?: boolean;
+    isFollowLoading?: boolean;
+    onToggleFollow?: () => void;
     onFollowersClick?: () => void;
     onFollowingClick?: () => void;
 }
@@ -23,6 +26,9 @@ export default function ProfileCard({
     followers,
     following,
     isOwnProfile = false,
+    isFollowing = false,
+    isFollowLoading = false,
+    onToggleFollow,
     onFollowersClick,
     onFollowingClick
 }: ProfileCardProps) {
@@ -143,9 +149,24 @@ export default function ProfileCard({
                                 </Link>
                             ) : (
                                 <div className="flex gap-2">
-                                    <button className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-primary-dark transition-all shadow-lg shadow-primary/20">
-                                        <UserPlus className="w-3 h-3" />
-                                        Follow
+                                    <button
+                                        onClick={onToggleFollow}
+                                        disabled={isFollowLoading}
+                                        className={cn(
+                                            "flex items-center gap-2 px-5 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all active:scale-95 disabled:opacity-60",
+                                            isFollowing
+                                                ? "bg-secondary border border-border text-foreground/70 hover:border-red-500/40 hover:text-red-400"
+                                                : "bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20"
+                                        )}
+                                    >
+                                        {isFollowLoading ? (
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                        ) : isFollowing ? (
+                                            <UserMinus className="w-3 h-3" />
+                                        ) : (
+                                            <UserPlus className="w-3 h-3" />
+                                        )}
+                                        {isFollowing ? "Unfollow" : "Follow"}
                                     </button>
                                     <button className="p-2.5 bg-secondary text-foreground/60 rounded-xl border border-border hover:bg-foreground/10 transition-all">
                                         <MessageSquare className="w-4 h-4" />
@@ -218,9 +239,24 @@ export default function ProfileCard({
                             </Link>
                         ) : (
                             <>
-                                <button className="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20">
-                                    <UserPlus className="w-3 h-3" />
-                                    Follow
+                                <button
+                                    onClick={onToggleFollow}
+                                    disabled={isFollowLoading}
+                                    className={cn(
+                                        "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all active:scale-95 disabled:opacity-60",
+                                        isFollowing
+                                            ? "bg-secondary border border-border text-foreground/70 hover:border-red-500/40 hover:text-red-400"
+                                            : "bg-primary text-white shadow-lg shadow-primary/20"
+                                    )}
+                                >
+                                    {isFollowLoading ? (
+                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : isFollowing ? (
+                                        <UserMinus className="w-3 h-3" />
+                                    ) : (
+                                        <UserPlus className="w-3 h-3" />
+                                    )}
+                                    {isFollowing ? "Unfollow" : "Follow"}
                                 </button>
                                 <button className="flex-1 flex items-center justify-center gap-2 bg-secondary text-foreground py-3 rounded-xl font-black uppercase tracking-widest text-[10px] border border-border">
                                     <MessageSquare className="w-3 h-3" />
