@@ -6,8 +6,7 @@ import { Flame, ThumbsUp, Trophy, Zap, MousePointerClick, Users } from "lucide-r
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import CompactLeaderboardCard from "@/components/leaderboard/CompactLeaderboardCard";
-import { getLeaderboard, getBrandLeaderboard, getEventLeaderboard, getContentLeaderboard } from "@/services/mockUserService";
-import type { LeaderboardEntry, BrandLeaderboardEntry, EventLeaderboardEntry, ContentLeaderboardEntry } from "@/types/api";
+import { getUserLeaderboard, getBrandLeaderboard, getEventLeaderboard } from "@/services/leaderboard.service";
 
 type TabType = 'users' | 'brands' | 'events' | 'content';
 
@@ -43,17 +42,33 @@ export default function LeaderboardTable({ activeTab }: LeaderboardTableProps) {
         const fetchData = async () => {
             try {
                 if (activeTab === 'users') {
-                    const res = await getLeaderboard();
-                    setData(res.data);
+                    const res = await getUserLeaderboard(1, 20);
+                    const mapped = (res.data || []).map((u) => ({
+                        ...u,
+                        userId: u.id,
+                        avatar: u.avatarUrl,
+                        totalVotesReceived: 0,
+                        totalRewardsEarned: 0,
+                        challengesWon: 0,
+                        streak: 0,
+                        badges: u.badges ?? [],
+                        isCurrentUser: false,
+                    }));
+                    setData(mapped);
                 } else if (activeTab === 'brands') {
                     const res = await getBrandLeaderboard();
-                    setData(res);
+                    const mapped = (res.data || []).map((b) => ({
+                        ...b,
+                        campaignsCount: b.artMinted,
+                        totalEngagements: b.participants,
+                        totalPrizePool: 0,
+                    }));
+                    setData(mapped);
                 } else if (activeTab === 'events') {
                     const res = await getEventLeaderboard();
-                    setData(res);
+                    setData(Array.isArray(res?.data) ? res.data : []);
                 } else {
-                    const res = await getContentLeaderboard();
-                    setData(res);
+                    setData([]);
                 }
             } catch (error) {
                 console.error("Failed to fetch leaderboard data", error);

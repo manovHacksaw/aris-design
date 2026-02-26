@@ -50,6 +50,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (syncingRef.current || !isConnected) return;
     syncingRef.current = true;
     setIsLoading(true);
+    // Force clear old state to prevent UI flicker of previous user data
+    setUser(null);
+    setStats(null);
 
     try {
       const privyToken = await getAccessToken();

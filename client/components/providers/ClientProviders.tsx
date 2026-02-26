@@ -4,6 +4,8 @@ import { PrivyProvider } from "@privy-io/react-auth";
 import { WalletProvider, polygonAmoy } from "@/context/WalletContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { UserProvider } from "@/context/UserContext";
+import { SocketProvider } from "@/context/SocketContext";
+import { NotificationProvider } from "@/context/NotificationContext";
 import { SidebarProvider } from "@/context/SidebarContext";
 import { Toaster } from "sonner";
 import { type ReactNode } from "react";
@@ -30,24 +32,28 @@ export function ClientProviders({ children }: { children: ReactNode }) {
     >
       <WalletProvider>
         <UserProvider>
-        <AuthProvider>
-          <SidebarProvider>
-            {children}
-            <Toaster
-              position="top-center"
-              richColors
-              toastOptions={{
-                style: {
-                  background: "rgba(10, 10, 10, 0.95)",
-                  backdropFilter: "blur(20px)",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  borderRadius: "12px",
-                  color: "#fff",
-                },
-              }}
-            />
-          </SidebarProvider>
-        </AuthProvider>
+          <SocketProvider>
+            <NotificationProvider>
+              <AuthProvider>
+                <SidebarProvider>
+                  {children}
+                  <Toaster
+                    position="top-center"
+                    richColors
+                    toastOptions={{
+                      style: {
+                        background: "rgba(10, 10, 10, 0.95)",
+                        backdropFilter: "blur(20px)",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        borderRadius: "12px",
+                        color: "#fff",
+                      },
+                    }}
+                  />
+                </SidebarProvider>
+              </AuthProvider>
+            </NotificationProvider>
+          </SocketProvider>
         </UserProvider>
       </WalletProvider>
     </PrivyProvider>

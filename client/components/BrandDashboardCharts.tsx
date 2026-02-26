@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { getBrandAnalytics } from "@/services/mockBrandService";
+import { getBrandAnalyticsOverview } from "@/services/brand.service";
 import type { BrandAnalytics } from "@/types/api";
 import { ArrowUp, Calendar, Download, TrendingUp, Users, DollarSign, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -56,8 +56,8 @@ export default function BrandDashboardCharts() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        getBrandAnalytics()
-            .then(setAnalytics)
+        getBrandAnalyticsOverview()
+            .then((data) => setAnalytics(data as BrandAnalytics))
             .catch(() => {})
             .finally(() => setLoading(false));
     }, []);
@@ -66,8 +66,9 @@ export default function BrandDashboardCharts() {
     if (!analytics) return null;
 
     const { stats, campaignPerformance, demographics } = analytics;
-    const dailyData = campaignPerformance.slice(0, 7);
-    const maxDaily = Math.max(...dailyData);
+    if (!stats) return null;
+    const dailyData = (campaignPerformance ?? []).slice(0, 7);
+    const maxDaily = dailyData.length > 0 ? Math.max(...dailyData) : 1;
 
     return (
         <div className="space-y-6">

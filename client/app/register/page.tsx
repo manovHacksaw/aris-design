@@ -36,25 +36,21 @@ export default function Register() {
 
   const handleContinue = async () => {
     if (!selectedRole) return;
+
+    // Brands go directly to the application form — no Privy needed upfront
+    if (selectedRole === "brand") {
+      router.push("/register-brand");
+      return;
+    }
+
+    // User flow: trigger Privy login
     setIsConnecting(true);
-
     try {
-      // Save role selection first
       setOnboardingData({ role: selectedRole, isOnboarded: false });
-
       if (!isConnected) {
-        // Trigger Privy login modal
         connect();
-        // After login, Privy will call onComplete and wallet will be ready
-        // We navigate to signup after connection succeeds
-        // The useEffect below will handle the redirect
       } else {
-        // Already connected — go straight to signup flow
-        if (selectedRole === "user") {
-          router.push("/onboard/user");
-        } else {
-          router.push("/onboard/brand");
-        }
+        router.push("/onboard/user");
       }
     } catch (err) {
       console.error("Connection failed:", err);

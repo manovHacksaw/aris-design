@@ -79,7 +79,7 @@ export default function DashboardPage() {
                         {/* Header */}
                         <div className="mb-12 border-b-4 border-foreground pb-8">
                             <h1 className="text-6xl md:text-8xl font-display text-foreground uppercase tracking-tighter leading-none mb-4">
-                                Future Of<br />
+
                                 <span className="text-primary">Dashboard</span>
                             </h1>
                             <p className="text-xl font-bold uppercase tracking-widest border-l-4 border-primary pl-4">Track content performance and audience growth.</p>

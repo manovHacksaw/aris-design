@@ -9,6 +9,7 @@ import {
     IoAddCircleOutline,
     IoWalletOutline,
     IoSettingsOutline,
+    IoNotificationsOutline,
     IoSunnyOutline,
     IoMoonOutline,
     IoChevronBackOutline,
@@ -16,6 +17,7 @@ import {
     IoLogOutOutline,
     IoEyeOutline
 } from "react-icons/io5";
+import { useNotifications } from "@/context/NotificationContext";
 import { useRouter } from "next/navigation";
 import SidebarItem from "@/components/sidebar/SidebarItem";
 import SidebarButton from "@/components/sidebar/SidebarButton";
@@ -31,6 +33,7 @@ export default function BrandSidebar() {
     const { isCollapsed, toggleSidebar } = useSidebar();
     const { theme, setTheme } = useTheme();
     const { disconnect } = useWallet();
+    const { unreadCount } = useNotifications();
     const [mounted, setMounted] = useState(false);
 
     const showExpanded = !isCollapsed;
@@ -44,6 +47,7 @@ export default function BrandSidebar() {
         { label: "Campaigns", href: "/brand/events", icon: IoMegaphoneOutline },
         { label: "Create Campaign", href: "/brand/create-event", icon: IoAddCircleOutline },
         { label: "Financials", href: "/brand/financials", icon: IoWalletOutline },
+        { label: "Notifications", href: "/brand/notifications", icon: IoNotificationsOutline, badge: unreadCount },
         { label: "Settings", href: "/brand/settings", icon: IoSettingsOutline },
     ];
 
@@ -88,13 +92,22 @@ export default function BrandSidebar() {
                     {navItems.map((item) => {
                         const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
                         return (
-                            <SidebarItem
-                                key={item.href}
-                                label={item.label}
-                                href={item.href}
-                                icon={item.icon}
-                                isActive={isActive}
-                            />
+                            <div key={item.href} className="relative">
+                                <SidebarItem
+                                    label={item.label}
+                                    href={item.href}
+                                    icon={item.icon}
+                                    isActive={isActive}
+                                />
+                                {item.badge && item.badge > 0 && (
+                                    <span className={cn(
+                                        "absolute top-2.5 flex items-center justify-center rounded-full bg-primary text-white text-[9px] font-black pointer-events-none",
+                                        showExpanded ? "right-3 min-w-[18px] h-[18px] px-1" : "right-2 w-2 h-2"
+                                    )}>
+                                        {showExpanded ? (item.badge > 99 ? "99+" : item.badge) : ""}
+                                    </span>
+                                )}
+                            </div>
                         );
                     })}
                 </div>
@@ -146,7 +159,10 @@ export default function BrandSidebar() {
                         <SidebarButton
                             label="Sign Out"
                             icon={IoLogOutOutline}
-                            onClick={() => disconnect()}
+                            onClick={async () => {
+                                await disconnect();
+                                router.push("/register-brand");
+                            }}
                         />
 
                         {/* Collapse Toggle - icon only, subtle */}

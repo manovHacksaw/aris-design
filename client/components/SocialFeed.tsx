@@ -2,16 +2,31 @@
 
 import { useEffect, useState } from "react";
 import FeedItem from "./FeedItem";
-import { getSocialFeed } from "@/services/mockEventService";
-import type { SocialPost } from "@/types/api";
+import { getEvents } from "@/services/event.service";
+import type { Event } from "@/services/event.service";
+
+const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
+
+function toFeedPost(e: Event) {
+    return {
+        id: e.id,
+        username: e.brand?.name ?? "Unknown",
+        image: e.imageCid
+            ? `${PINATA_GW}/${e.imageCid}`
+            : "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80",
+        caption: e.description ?? e.title,
+        reward: e.leaderboardPool ?? 0,
+        votes: e._count?.votes ?? 0,
+    };
+}
 
 export default function SocialFeed() {
-    const [posts, setPosts] = useState<SocialPost[]>([]);
+    const [posts, setPosts] = useState<ReturnType<typeof toFeedPost>[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        getSocialFeed()
-            .then((res) => { setPosts(res.data); setLoading(false); })
+        getEvents({ limit: 5 })
+            .then((res) => { setPosts((res.events || []).map(toFeedPost)); setLoading(false); })
             .catch(() => setLoading(false));
     }, []);
 
@@ -45,7 +60,7 @@ export default function SocialFeed() {
                 <FeedItem
                     key={post.id}
                     username={post.username}
-                    image={post.coverImage}
+                    image={post.image}
                     caption={post.caption}
                     reward={post.reward}
                     votes={post.votes}

@@ -12,9 +12,11 @@ import {
   UserPlus, UserMinus, UserCheck,
 } from "lucide-react";
 import { searchUsers, followUser, unfollowUser } from "@/services/user.service";
+import { getFeaturedBrands } from "@/services/search.service";
+import { getEvents } from "@/services/event.service";
 import { useUser } from "@/context/UserContext";
 
-// ─── Static data (events + brands remain mock for now) ───────────────────────
+const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
 const categories = [
   { label: "All", icon: Flame },
@@ -27,17 +29,8 @@ const categories = [
   { label: "Gaming", icon: Gamepad },
 ];
 
-const featuredChallenges = [
-  { id: 1, brand: "Adidas Originals", title: "Street Style Takeover", reward: "$8,000", entries: 2340, image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBLbgT1oExwMAiJyiQGoTmr2_kR2RzwNJYJBtC10wBZMijE3OCEsrPgdSvzCdO5lXHk81lddNFm7XOVW5duvH0UNSvRbqqMfszPAppy5WzzJdxdDJ-W914K5bL2peoY2EZRnCxcTpKN05hnX_Q5trEB_C66YSHiNMx8bouhFfYb9QKO1YlOzCUEsJ-DDg7D9kM6N2quwuaYRXbRgmImK56qxAz4QG-jtC26S1jV-6xiLtbbDDfXGKBwxW4JMERm6bODCcQUE0dsB3ZQ", tag: "FEATURED" },
-  { id: 2, brand: "Red Bull", title: "Extreme Moments", reward: "$12,000", entries: 5120, image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCWXdij1SyjTwEpsDcfi27vNIMR4A5kWzyZfgXSq-mNBctN3XeoBAwyn1g6ybVKUu1YIggx-T1A3GeGdKmM97wDDhhFYUoCTYY9dUfcS2GSxdBLNbM89apBymuKSSUSg9x6IVmEm-rRSAjhvuCnkWTsnIqXACRbYYyEOa7vaIcN5vE9GAK6CqPqxPcvsV_Ftd8pzSynscsHYatTZwiLkpy9MWBHUG8Brz5Xsw_SdbH7CYr-DPyKxsktn0n4qnSaV1vXmE_NlgiqIwbA", tag: "HOT" },
-];
-
-const featuredBrands = [
-  { name: "Adidas", handle: "@adidas", followers: "850k", avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuBLbgT1oExwMAiJyiQGoTmr2_kR2RzwNJYJBtC10wBZMijE3OCEsrPgdSvzCdO5lXHk81lddNFm7XOVW5duvH0UNSvRbqqMfszPAppy5WzzJdxdDJ-W914K5bL2peoY2EZRnCxcTpKN05hnX_Q5trEB_C66YSHiNMx8bouhFfYb9QKO1YlOzCUEsJ-DDg7D9kM6N2quwuaYRXbRgmImK56qxAz4QG-jtC26S1jV-6xiLtbbDDfXGKBwxW4JMERm6bODCcQUE0dsB3ZQ", campaigns: 12 },
-  { name: "Red Bull", handle: "@redbull", followers: "1.2M", avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuCWXdij1SyjTwEpsDcfi27vNIMR4A5kWzyZfgXSq-mNBctN3XeoBAwyn1g6ybVKUu1YIggx-T1A3GeGdKmM97wDDhhFYUoCTYY9dUfcS2GSxdBLNbM89apBymuKSSUSg9x6IVmEm-rRSAjhvuCnkWTsnIqXACRbYYyEOa7vaIcN5vE9GAK6CqPqxPcvsV_Ftd8pzSynscsHYatTZwiLkpy9MWBHUG8Brz5Xsw_SdbH7CYr-DPyKxsktn0n4qnSaV1vXmE_NlgiqIwbA", campaigns: 8 },
-  { name: "Nike", handle: "@nike", followers: "2.1M", avatar: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=150&q=80", campaigns: 15 },
-  { name: "Sony", handle: "@sony", followers: "920k", avatar: "https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=150&q=80", campaigns: 5 },
-];
+type FeaturedChallenge = { id: string; brand: string; title: string; reward: string; entries: number; image: string; tag: string };
+type FeaturedBrand = { id: string; name: string; handle: string; followers: string; avatar: string | null; campaigns: number };
 
 const exploreGrid = [
   { id: 1, image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCYiG-zIhRn_VJ8cj1EL2PwG6YhycgoqKoayLqHvOciU27W6ymsq3dAES2LeCuiYkMC8M0saTD50kGdcOZUXXOET8UNKfxoHKPGqvYUjJ_rM2C5D9MwiPp9i6BXFAlHr34VGtAB6j_nlXnmCLEM_EcQ8inYkiAVQXsLv93k_0vvBbwEVjXn-YDBki0M44ogo_9PpGDrfAZ0eDWVQqenqgTTPHg043QFcZOUPPS3qkEef6k80vOQI_GZNeBTeht1HsvUGDOmy_ZzGOSk", votes: 1200, user: "@david_art", category: "Art & Design" },
@@ -73,6 +66,35 @@ export default function Explore() {
   const { user: currentUser } = useUser();
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [featuredChallenges, setFeaturedChallenges] = useState<FeaturedChallenge[]>([]);
+  const [featuredBrands, setFeaturedBrands] = useState<FeaturedBrand[]>([]);
+
+  useEffect(() => {
+    getEvents({ limit: 6 }).then((res) => {
+      const mapped: FeaturedChallenge[] = (res.events || []).map((ev) => ({
+        id: ev.id,
+        brand: ev.brand?.name || "Unknown",
+        title: ev.title,
+        reward: ev.leaderboardPool ? `$${ev.leaderboardPool.toLocaleString()}` : "TBD",
+        entries: ev._count?.submissions ?? ev.eventAnalytics?.totalSubmissions ?? 0,
+        image: ev.imageCid ? `${PINATA_GW}/${ev.imageCid}` : "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80",
+        tag: ev.status === "voting" ? "VOTING" : ev.status === "posting" ? "LIVE" : "FEATURED",
+      }));
+      setFeaturedChallenges(mapped);
+    }).catch(() => {});
+
+    getFeaturedBrands(8).then((res) => {
+      const mapped: FeaturedBrand[] = (res.data || []).map((b) => ({
+        id: b.id,
+        name: b.name,
+        handle: `@${b.name.toLowerCase().replace(/\s+/g, "")}`,
+        followers: b.participants > 1000 ? `${(b.participants / 1000).toFixed(1)}k` : String(b.participants),
+        avatar: b.avatar,
+        campaigns: b.artMinted,
+      }));
+      setFeaturedBrands(mapped);
+    }).catch(() => {});
+  }, []);
 
   // Real user search state
   const [userResults, setUserResults] = useState<SearchedUser[]>([]);
@@ -140,14 +162,14 @@ export default function Explore() {
   // Filtered static data (only used when not in search mode)
   const filteredChallenges = isSearchActive
     ? featuredChallenges.filter(ch =>
-        ch.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ch.brand.toLowerCase().includes(searchQuery.toLowerCase()))
+      ch.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ch.brand.toLowerCase().includes(searchQuery.toLowerCase()))
     : featuredChallenges;
 
   const filteredBrands = isSearchActive
     ? featuredBrands.filter(b =>
-        b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.handle.toLowerCase().includes(searchQuery.toLowerCase()))
+      b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      b.handle.toLowerCase().includes(searchQuery.toLowerCase()))
     : featuredBrands;
 
   const filteredGrid = exploreGrid.filter(item =>
@@ -412,14 +434,14 @@ export default function Explore() {
                 <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 px-4 md:px-0 md:grid md:grid-cols-4 md:gap-6 pb-4 md:pb-0 scrollbar-hide">
                   {filteredBrands.map((brand, i) => (
                     <motion.div
-                      key={brand.handle}
+                      key={brand.id}
                       initial={{ opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.08 }}
                       whileHover={{ y: -4 }}
                       className="min-w-[140px] md:min-w-0 snap-center bg-card/60 border border-border/60 rounded-2xl p-4 md:p-6 text-center hover:bg-card hover:border-primary/50 transition-all cursor-pointer group flex flex-col items-center"
                     >
-                      <img src={brand.avatar} alt={brand.name} className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-2 border-border group-hover:border-primary transition-colors mb-3 md:mb-4" />
+                      <img src={brand.avatar || "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=150&q=80"} alt={brand.name} className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-2 border-border group-hover:border-primary transition-colors mb-3 md:mb-4" />
                       <h3 className="text-sm md:text-base font-black text-foreground truncate w-full">{brand.name}</h3>
                       <p className="text-[11px] font-bold text-foreground/40 uppercase tracking-widest mb-3 truncate w-full">{brand.handle}</p>
                       <div className="flex items-center justify-center gap-4 text-[10px] font-black uppercase tracking-widest mb-4 w-full">

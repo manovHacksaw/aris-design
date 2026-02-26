@@ -1,17 +1,55 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Clock, CheckCircle2, Mail, LogOut, RefreshCw } from "lucide-react";
+import { motion } from "framer-motion";
+import {
+  Clock, CheckCircle2, Mail, LogOut, RefreshCw,
+  ShieldCheck, ArrowRight, Loader2, Lock,
+} from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
 import { useUser } from "@/context/UserContext";
 
+const TIMELINE = [
+  {
+    icon: CheckCircle2,
+    label: "Application submitted",
+    sublabel: "Your brand details have been received",
+    state: "done" as const,
+  },
+  {
+    icon: Clock,
+    label: "Admin review in progress",
+    sublabel: "Our team is reviewing your application (24–48 hrs)",
+    state: "active" as const,
+  },
+  {
+    icon: Mail,
+    label: "Decision & activation email",
+    sublabel: "You'll receive an approval or follow-up at your contact email",
+    state: "pending" as const,
+  },
+  {
+    icon: Lock,
+    label: "Claim your brand",
+    sublabel: "Use the single-use activation link to connect your wallet",
+    state: "pending" as const,
+  },
+  {
+    icon: ShieldCheck,
+    label: "Brand dashboard unlocked",
+    sublabel: "Create campaigns, set rewards, and grow your audience",
+    state: "pending" as const,
+  },
+];
+
 export default function BrandPendingPage() {
   const router = useRouter();
-  const { disconnect, isConnected } = useWallet();
+  const { disconnect } = useWallet();
   const { user, refreshUser } = useUser();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // If the brand gets approved and claims, redirect them to dashboard
+  // If brand gets approved and claims, redirect
   useEffect(() => {
     if (user?.ownedBrands?.[0]?.isActive === true) {
       router.replace("/brand/dashboard");
@@ -19,7 +57,9 @@ export default function BrandPendingPage() {
   }, [user, router]);
 
   const handleRefresh = async () => {
+    setIsRefreshing(true);
     await refreshUser();
+    setIsRefreshing(false);
   };
 
   const handleLogout = async () => {
@@ -28,81 +68,126 @@ export default function BrandPendingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      <div className="w-full max-w-lg space-y-6">
-        {/* Status card */}
-        <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-8 text-center">
-          <div className="w-16 h-16 bg-orange-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Clock className="w-8 h-8 text-orange-500" />
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
+      <div className="w-full max-w-lg space-y-5">
+
+        {/* Status Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-card border border-border/50 rounded-2xl p-8 text-center space-y-4"
+        >
+          <div className="w-16 h-16 bg-amber-500/10 border-2 border-amber-500/30 rounded-2xl flex items-center justify-center mx-auto">
+            <Clock className="w-8 h-8 text-amber-400" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Application Under Review</h1>
-          <p className="text-zinc-400 leading-relaxed">
-            Your brand application has been submitted and is being reviewed by our team.
-            You'll receive an email with an activation link once approved.
+          <div>
+            <h1 className="text-4xl font-display uppercase tracking-tight text-foreground mb-2">
+              Under <span className="text-amber-400">Review</span>
+            </h1>
+            <p className="text-sm text-foreground/50 leading-relaxed max-w-xs mx-auto">
+              Your brand application has been submitted and is being reviewed by our team.
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Timeline */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-card border border-border/50 rounded-2xl p-6 space-y-1"
+        >
+          <p className="text-[10px] font-black text-foreground/30 uppercase tracking-widest mb-4">
+            What happens next
           </p>
-        </div>
-
-        {/* Steps */}
-        <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-4">
-          <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">What happens next</h2>
-
-          <div className="space-y-4">
-            <div className="flex items-start gap-4">
-              <div className="w-7 h-7 rounded-full bg-green-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-white">Application submitted</p>
-                <p className="text-xs text-zinc-500 mt-0.5">Your brand details have been received</p>
+          {TIMELINE.map(({ icon: Icon, label, sublabel, state }, i) => (
+            <div key={label} className="relative">
+              <div className="flex items-start gap-4">
+                <div className="flex flex-col items-center">
+                  <div className={[
+                    "w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
+                    state === "done" ? "bg-primary border-primary" :
+                    state === "active" ? "border-amber-400 bg-amber-400/10" :
+                    "border-border/30 bg-transparent",
+                  ].join(" ")}>
+                    {state === "done" ? (
+                      <CheckCircle2 className="w-4 h-4 text-white" />
+                    ) : state === "active" ? (
+                      <Icon className="w-4 h-4 text-amber-400" />
+                    ) : (
+                      <Icon className="w-4 h-4 text-foreground/20" />
+                    )}
+                  </div>
+                  {i < TIMELINE.length - 1 && (
+                    <div className={[
+                      "w-px h-6 mt-1 transition-colors",
+                      state === "done" ? "bg-primary/40" : "bg-border/20",
+                    ].join(" ")} />
+                  )}
+                </div>
+                <div className="pb-4">
+                  <p className={[
+                    "text-sm font-bold transition-colors",
+                    state === "done" ? "text-foreground" :
+                    state === "active" ? "text-foreground" :
+                    "text-foreground/30",
+                  ].join(" ")}>{label}</p>
+                  <p className={[
+                    "text-xs mt-0.5 leading-relaxed",
+                    state === "pending" ? "text-foreground/20" : "text-foreground/40",
+                  ].join(" ")}>{sublabel}</p>
+                </div>
               </div>
             </div>
-
-            <div className="flex items-start gap-4">
-              <div className="w-7 h-7 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                <Clock className="w-4 h-4 text-orange-500" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-white">Admin review</p>
-                <p className="text-xs text-zinc-500 mt-0.5">Our team will review your application</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <div className="w-7 h-7 rounded-full bg-zinc-800 flex items-center justify-center shrink-0 mt-0.5">
-                <Mail className="w-4 h-4 text-zinc-500" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-zinc-400">Activation email</p>
-                <p className="text-xs text-zinc-600 mt-0.5">You'll receive a link to activate your brand account</p>
-              </div>
-            </div>
-          </div>
-        </div>
+          ))}
+        </motion.div>
 
         {/* Actions */}
-        <div className="flex gap-3">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="flex gap-3"
+        >
           <button
             onClick={handleRefresh}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800 transition-colors text-sm font-medium"
+            disabled={isRefreshing}
+            className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-[14px] bg-card border border-border/50 text-foreground/60 hover:text-foreground hover:border-border font-bold text-xs uppercase tracking-widest transition-colors disabled:opacity-50"
           >
-            <RefreshCw className="w-4 h-4" />
+            {isRefreshing ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4" />
+            )}
             Check Status
           </button>
           <button
             onClick={handleLogout}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-red-900/50 bg-red-900/10 text-red-400 hover:bg-red-900/20 transition-colors text-sm font-medium"
+            className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-[14px] border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10 font-bold text-xs uppercase tracking-widest transition-colors"
           >
             <LogOut className="w-4 h-4" />
             Sign Out
           </button>
-        </div>
+        </motion.div>
 
-        <p className="text-center text-xs text-zinc-600">
-          Already have an activation link?{" "}
-          <a href="/claim-brand" className="text-orange-500 hover:text-orange-400 transition-colors">
-            Activate your brand
-          </a>
-        </p>
+        {/* Already have a link */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="text-center"
+        >
+          <p className="text-xs text-foreground/30">
+            Already have an activation link?{" "}
+            <a
+              href="/claim-brand"
+              className="text-primary font-bold hover:text-primary/70 transition-colors inline-flex items-center gap-1"
+            >
+              Activate your brand <ArrowRight className="w-3 h-3" />
+            </a>
+          </p>
+        </motion.div>
+
       </div>
     </div>
   );

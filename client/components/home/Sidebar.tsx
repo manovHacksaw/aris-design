@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { IoHomeOutline, IoHome, IoCompassOutline, IoCompass, IoAddCircleOutline, IoAddCircle, IoTrophyOutline, IoTrophy, IoGridOutline, IoGrid, IoWalletOutline, IoWallet, IoNotificationsOutline, IoNotifications, IoSunnyOutline, IoMoonOutline, IoChevronBackOutline, IoChevronForwardOutline } from "react-icons/io5";
+import { IoHomeOutline, IoHome, IoCompassOutline, IoCompass, IoAddCircleOutline, IoAddCircle, IoTrophyOutline, IoTrophy, IoGridOutline, IoGrid, IoWalletOutline, IoWallet, IoNotificationsOutline, IoNotifications, IoSunnyOutline, IoMoonOutline, IoChevronBackOutline, IoChevronForwardOutline, IoPersonOutline, IoPerson } from "react-icons/io5";
+import { useUser } from "@/context/UserContext";
+import { useWallet } from "@/context/WalletContext";
 import SidebarItem from "@/components/sidebar/SidebarItem";
 import SidebarMore from "@/components/sidebar/SidebarMore";
 import { cn } from "@/lib/utils";
@@ -18,6 +20,10 @@ export default function Sidebar() {
     const [mounted, setMounted] = useState(false);
 
     const showExpanded = !isCollapsed;
+
+    const { user } = useUser();
+    const { userInfo } = useWallet();
+    const avatarUrl = user?.avatarUrl || userInfo?.profileImage || undefined;
 
     useEffect(() => {
         setMounted(true);
@@ -37,7 +43,9 @@ export default function Sidebar() {
         {
             label: "Profile",
             href: "/profile",
-            avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuC6sD8shcEbuD1sEWqq_k9nBz6jYqCaILxk058kBiCwlwVdu9qFIfZxlQnh5BDwQhyeNNMD8zPG6w5PZNz5SW2R1GOlu3Zmh6hUYGMxRRQOuSWRiPcTG8n5eOb03VlvlW27x-HnAdO-0MWUmldh-SIDwr6fw_J2CRzUpPr-TtHAl-NTFI7tZEvP_ts4aOpuQKxH92CjPdAXUV8Opd5SOHIXZB8fr-rU9B9-DRUgY51RYxnY0cAyhSkZXheEfrkR4KWzScuV5TQQuA5s"
+            icon: IoPersonOutline,
+            activeIcon: IoPerson,
+            avatar: avatarUrl
         },
     ];
 

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Sparkles, Loader2, Send } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { refineAiPrompt } from "@/services/ai.service";
 
 interface AICreateModalProps {
     isOpen: boolean;
@@ -20,17 +21,22 @@ export default function AICreateModal({ isOpen, onClose, onSubmit, eventTitle }:
     const [generatedText, setGeneratedText] = useState("");
     const [editableText, setEditableText] = useState("");
 
-    const handleGenerate = () => {
+    const handleGenerate = async () => {
         if (!prompt.trim()) return;
         setStep("generating");
-
-        // Simulate AI generation
-        setTimeout(() => {
-            const generated = `AI-generated concept for "${eventTitle}" based on: ${prompt}. This is a creative interpretation that blends the theme with modern aesthetics and bold visual language.`;
+        try {
+            const fullPrompt = `Event: "${eventTitle}". User idea: ${prompt}`;
+            const result = await refineAiPrompt(fullPrompt);
+            const generated = result.refinedPrompt || result.message || `AI concept for "${eventTitle}": ${prompt}`;
             setGeneratedText(generated);
             setEditableText(generated);
-            setStep("preview");
-        }, 2000);
+        } catch {
+            // Fallback to a simple placeholder if API fails
+            const fallback = `Creative concept for "${eventTitle}": ${prompt}`;
+            setGeneratedText(fallback);
+            setEditableText(fallback);
+        }
+        setStep("preview");
     };
 
     const handleSubmit = () => {

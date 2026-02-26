@@ -119,14 +119,14 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
 
   const userInfo = privyUser
     ? {
-        email:
-          privyUser.google?.email ||
-          (privyUser.email as any)?.address,
-        name:
-          privyUser.google?.name ||
-          (privyUser.email as any)?.address?.split("@")[0],
-        profileImage: (privyUser.google as any)?.picture,
-      }
+      email:
+        privyUser.google?.email ||
+        (privyUser.email as any)?.address,
+      name:
+        privyUser.google?.name ||
+        (privyUser.email as any)?.address?.split("@")[0],
+      profileImage: (privyUser.google as any)?.picture,
+    }
     : null;
 
   // Set up EOA walletClient from Privy embedded wallet
@@ -276,8 +276,9 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
     setWalletClient(null);
     setSmartAccountClient(null);
     setSmartAccountAddress(null);
+    // Wipe all app state from localStorage (auth token, onboarding data, etc.)
     if (typeof window !== "undefined") {
-      window.localStorage.removeItem("aris_onboarding");
+      window.localStorage.clear();
     }
     await logout();
   }, [logout]);

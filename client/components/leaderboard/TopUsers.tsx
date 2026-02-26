@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Trophy, Users, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getTopUsers } from "@/services/mockUserService";
+import { getUserLeaderboard } from "@/services/leaderboard.service";
 import type { LeaderboardEntry } from "@/types/api";
 
 const PodiumCard = ({ user, isPrimary }: { user: LeaderboardEntry; isPrimary: boolean }) => {
@@ -102,8 +102,24 @@ export default function TopUsers() {
     const [top3, setTop3] = useState<LeaderboardEntry[]>([]);
 
     useEffect(() => {
-        getTopUsers()
-            .then(setTop3)
+        getUserLeaderboard(1, 3)
+            .then((res) => {
+                const mapped: LeaderboardEntry[] = (res.data || []).map((u) => ({
+                    rank: u.rank,
+                    userId: u.id,
+                    username: u.username,
+                    displayName: u.displayName,
+                    avatar: u.avatarUrl || '',
+                    xp: u.xp,
+                    streak: 0,
+                    totalVotesReceived: 0,
+                    votesCast: u.votesCast ?? 0,
+                    totalRewardsEarned: 0,
+                    challengesWon: 0,
+                    badges: u.badges ?? [],
+                }));
+                setTop3(mapped);
+            })
             .catch(() => {/* fail silently */});
     }, []);
 

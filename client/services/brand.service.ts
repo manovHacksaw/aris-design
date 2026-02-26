@@ -49,3 +49,15 @@ export async function upsertBrandProfile(data: UpsertBrandData): Promise<{ succe
     body: JSON.stringify(data),
   });
 }
+
+export async function getBrandAnalyticsOverview(): Promise<any> {
+  return apiRequest<any>("/analytics/brand/overview");
+}
+
+export async function getAllBrands(params?: { limit?: number; offset?: number }): Promise<{ success: boolean; brands: Brand[]; total: number }> {
+  const searchParams = new URLSearchParams();
+  if (params?.limit) searchParams.set("limit", params.limit.toString());
+  if (params?.offset) searchParams.set("offset", params.offset.toString());
+  const qs = searchParams.toString();
+  return apiRequest<{ success: boolean; brands: Brand[] ; total: number }>(`/brands${qs ? `?${qs}` : ""}`);
+}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { getFriendActivity } from "@/services/mockUserService";
+import { apiRequest } from "@/services/api";
 import type { FriendActivity } from "@/types/api";
 
 function relativeTime(iso: string): string {
@@ -18,8 +18,9 @@ export default function FriendsFeed() {
     const [items, setItems] = useState<FriendActivity[]>([]);
 
     useEffect(() => {
-        getFriendActivity()
-            .then(setItems)
+        // TODO: wire to real /users/me/activity endpoint when available
+        apiRequest<{ activities: FriendActivity[] }>('/users/me/activity')
+            .then((res) => setItems(res.activities || []))
             .catch(() => {/* fail silently – section is hidden when empty */});
     }, []);
 

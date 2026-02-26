@@ -25,6 +25,7 @@ model User {
   preferredCategories     String[]
   xp                      Int       @default(0)
   walletAddress           String?   @unique
+  privyId                 String?   @unique
   isOnboarded             Boolean   @default(false)
   socialLinks             Json?
   lastLoginAt             DateTime?
@@ -33,6 +34,8 @@ model User {
   role                    UserRole  @default(USER)
   level                   Int       @default(1)
   referralCode            String?   @unique
+
+  @@index([email])
 
   // Onboarding & personalization
   web3Level               String?                // beginner | basic | intermediate | advanced

@@ -2,29 +2,29 @@
 
 import { useEffect, useState } from "react";
 import { IoEllipsisHorizontal } from "react-icons/io5";
-import { getBrandEvents } from "@/services/mockBrandService";
-import type { BrandEvent } from "@/types/api";
+import { getBrandEvents } from "@/services/event.service";
+import type { Event } from "@/services/event.service";
 
 const STATUS_STYLES: Record<string, string> = {
-    live:         "bg-green-500/10 text-green-500 border-green-500/20",
-    ending_soon:  "bg-orange-500/10 text-orange-500 border-orange-500/20",
-    scheduled:    "bg-blue-500/10 text-blue-500 border-blue-500/20",
-    draft:        "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-    ended:        "bg-muted text-muted-foreground border-border",
+    posting:   "bg-green-500/10 text-green-500 border-green-500/20",
+    voting:    "bg-purple-500/10 text-purple-500 border-purple-500/20",
+    scheduled: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+    draft:     "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+    completed: "bg-muted text-muted-foreground border-border",
 };
 
 const STATUS_LABELS: Record<string, string> = {
-    live: "Active", ending_soon: "Ending Soon",
-    scheduled: "Scheduled", draft: "Draft", ended: "Ended",
+    posting: "Active", voting: "Voting",
+    scheduled: "Scheduled", draft: "Draft", completed: "Ended",
 };
 
 export default function EventsTable() {
-    const [events, setEvents] = useState<BrandEvent[]>([]);
+    const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         getBrandEvents()
-            .then((res) => { setEvents(res.data); setLoading(false); })
+            .then((evts) => { setEvents(evts); setLoading(false); })
             .catch(() => setLoading(false));
     }, []);
 
@@ -64,7 +64,7 @@ export default function EventsTable() {
                                     </td>
                                     <td className="px-4 py-3 text-muted-foreground capitalize">{event.eventType}</td>
                                     <td className="px-4 py-3 text-right">
-                                        {event.totalSubmissions > 0 ? event.totalSubmissions.toLocaleString() : "—"}
+                                        {(event._count?.submissions ?? 0) > 0 ? (event._count?.submissions ?? 0).toLocaleString() : "—"}
                                     </td>
                                     <td className="px-4 py-3 text-right">
                                         <button className="p-1 hover:bg-secondary rounded-md transition-colors">

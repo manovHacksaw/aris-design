@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import SidebarLayout from "@/components/home/SidebarLayout";
 import BottomNav from "@/components/BottomNav";
 import TopUsers from "@/components/leaderboard/TopUsers";
@@ -8,32 +8,25 @@ import LeaderboardFilters from "@/components/leaderboard/LeaderboardFilters";
 import LeaderboardTable from "@/components/leaderboard/LeaderboardTable";
 import UserStatsCard from "@/components/leaderboard/UserStatsCard";
 import { cn } from "@/lib/utils";
-import { getUserStats } from "@/services/mockUserService";
+import { useUser } from "@/context/UserContext";
 
 type TabType = 'users' | 'brands' | 'events' | 'content';
 
 export default function Leaderboard() {
     const [activeTab, setActiveTab] = useState<TabType>('users');
-    const [userStats, setUserStats] = useState<any>(null);
+    const { user } = useUser();
 
-    useEffect(() => {
-        getLeaderboardData();
-    }, []);
-
-    const getLeaderboardData = async () => {
-        const stats = await getUserStats();
-        setUserStats({
-            rank: 42,
-            username: "You",
-            avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80",
-            xp: stats.totalXp,
-            votesCast: 1420,
-            votesReceived: 850,
-            streak: stats.streak,
-            level: 12,
-            nextLevelXp: 5000
-        });
-    }
+    const userStats = user ? {
+        rank: null,
+        username: user.username || user.displayName || "You",
+        avatar: user.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80",
+        xp: user.xp,
+        votesCast: 0,
+        votesReceived: 0,
+        streak: user.currentStreak ?? 0,
+        level: 1,
+        nextLevelXp: 5000
+    } : null;
 
     const tabs = [
         { id: 'users', label: 'Users' },

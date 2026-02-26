@@ -15,6 +15,11 @@ client/build/
 client/next-env.d.ts
 client/*.tsbuildinfo
 
+# ── Root-level Next.js artifacts (should never be committed) ──
+/.next/
+/next-env.d.ts
+/bun.lockb
+
 # ── Server build ─────────────────────────────
 server/dist/
 server/build/

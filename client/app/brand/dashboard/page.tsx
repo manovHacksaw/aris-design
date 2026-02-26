@@ -5,31 +5,33 @@ import BrandDashboardCharts from "@/components/BrandDashboardCharts";
 import { Plus, ArrowRight, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { getBrandEvents, getBrandNotifications } from "@/services/mockBrandService";
-import type { BrandEvent, BrandNotification } from "@/types/api";
+import { getBrandEvents } from "@/services/event.service";
+import type { Event } from "@/services/event.service";
+import { useNotifications } from "@/context/NotificationContext";
 import { useUser } from "@/context/UserContext";
 import { useAuth } from "@/context/AuthContext";
 
 const CAMPAIGN_STATUS_STYLES: Record<string, string> = {
-    live:        "bg-green-500/10 text-green-500 border-green-500/20",
-    ending_soon: "bg-orange-500/10 text-orange-500 border-orange-500/20",
-    scheduled:   "bg-blue-500/10 text-blue-500 border-blue-500/20",
-    draft:       "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-    ended:       "bg-muted text-muted-foreground border-border",
+    posting:   "bg-green-500/10 text-green-500 border-green-500/20",
+    voting:    "bg-purple-500/10 text-purple-500 border-purple-500/20",
+    scheduled: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+    draft:     "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+    completed: "bg-muted text-muted-foreground border-border",
 };
 
 const CAMPAIGN_STATUS_LABELS: Record<string, string> = {
-    live: "Active", ending_soon: "Ending Soon",
-    scheduled: "Scheduled", draft: "Draft", ended: "Ended",
+    posting: "Active", voting: "Voting",
+    scheduled: "Scheduled", draft: "Draft", completed: "Ended",
 };
 
-function engagementPercent(event: BrandEvent): number {
-    if (!event.totalSubmissions) return 0;
-    return Math.min(100, Math.round((event.totalSubmissions / 100) * 100));
+function engagementPercent(event: Event): number {
+    const submissions = event._count?.submissions ?? 0;
+    if (!submissions) return 0;
+    return Math.min(100, Math.round((submissions / 100) * 100));
 }
 
-function formatPool(pool: number): string {
-    return `$${pool.toLocaleString()}`;
+function formatPool(pool?: number): string {
+    return pool ? `$${pool.toLocaleString()}` : "—";
 }
 
 export default function BrandDashboard() {
@@ -38,18 +40,14 @@ export default function BrandDashboard() {
     // Prefer backend brand name → localStorage brand name → fallback
     const brandName = user?.ownedBrands?.[0]?.name ?? onboardingData?.brandName ?? "Your Brand";
 
-    const [events, setEvents] = useState<BrandEvent[]>([]);
-    const [notifications, setNotifications] = useState<BrandNotification[]>([]);
+    const [events, setEvents] = useState<Event[]>([]);
     const [loadingEvents, setLoadingEvents] = useState(true);
-    const [loadingNotifs, setLoadingNotifs] = useState(true);
+    const { notifications, isLoading: loadingNotifs } = useNotifications();
 
     useEffect(() => {
         getBrandEvents()
-            .then((res) => { setEvents(res.data.slice(0, 5)); setLoadingEvents(false); })
+            .then((evts) => { setEvents(evts.slice(0, 5)); setLoadingEvents(false); })
             .catch(() => setLoadingEvents(false));
-        getBrandNotifications()
-            .then((data) => { setNotifications(data); setLoadingNotifs(false); })
-            .catch(() => setLoadingNotifs(false));
     }, []);
 
     return (
@@ -183,17 +181,17 @@ export default function BrandDashboard() {
                             <p className="text-sm text-muted-foreground text-center py-4">All clear!</p>
                         ) : (
                             <div className="space-y-3">
-                                {notifications.map((item) => (
+                                {notifications.slice(0, 5).map((item) => (
                                     <div key={item.id} className="flex gap-3 items-start p-3 rounded-xl bg-secondary/30 border border-border/50">
                                         <div className={cn(
                                             "w-2 h-2 rounded-full mt-1.5 shrink-0",
-                                            item.type === "warning" ? "bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]" :
-                                                item.type === "alert" ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" :
-                                                    "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"
+                                            item.type === "reward" ? "bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]" :
+                                                item.type === "event" ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" :
+                                                    "bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]"
                                         )} />
                                         <div>
-                                            <p className="text-sm font-bold leading-tight">{item.text}</p>
-                                            <span className="text-[10px] text-muted-foreground mt-1 block font-medium uppercase tracking-wide">{item.createdAt}</span>
+                                            <p className="text-sm font-bold leading-tight">{item.title}</p>
+                                            <p className="text-xs text-muted-foreground">{item.message}</p>
                                         </div>
                                     </div>
                                 ))}

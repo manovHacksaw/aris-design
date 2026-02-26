@@ -339,26 +339,47 @@ export class AuthService {
         avatarUrl?: string
     ): Promise<AuthResponse> {
         const targetWalletAddress = walletAddress?.toLowerCase();
+        const privyId = verifiedClaims.userId;
 
-        // Find user by wallet address first, then by email
-        let user = null;
+        // 1. Find user by Privy ID first (most robust)
+        let user = await prisma.user.findUnique({
+            where: { privyId },
+        });
 
-        if (targetWalletAddress) {
-            user = await prisma.user.findUnique({
-                where: { walletAddress: targetWalletAddress },
-            });
-        }
-
+        // 2. Fallback to Email if provided
         if (!user && email) {
             user = await prisma.user.findUnique({
                 where: { email: email.toLowerCase() },
             });
 
-            // If found by email, link wallet address
-            if (user && targetWalletAddress) {
+            // If found by email, link the privyId for future logins
+            if (user) {
+                console.log(`Linking Privy ID ${privyId} to existing user ${user.email}`);
                 user = await prisma.user.update({
                     where: { id: user.id },
-                    data: { walletAddress: targetWalletAddress, lastLoginAt: new Date() },
+                    data: { privyId },
+                });
+            }
+        }
+
+        // 3. Fallback to Wallet Address
+        if (!user && targetWalletAddress) {
+            user = await prisma.user.findUnique({
+                where: { walletAddress: targetWalletAddress },
+            });
+
+            // If found by wallet but they have a DIFFERENT privyId or email, 
+            // then this wallet belongs to someone else. 
+            // We should NOT blindly log them in as the brand owner.
+            if (user && user.privyId && user.privyId !== privyId) {
+                console.warn(`Wallet ${targetWalletAddress} is already linked to Privy ID ${user.privyId}. This login is for ${privyId}.`);
+                user = null; // Force creation of a NEW user for this Privy account
+            } else if (user) {
+                // Same wallet, link the privyId if missing
+                console.log(`Linking Privy ID ${privyId} to existing user via wallet ${targetWalletAddress}`);
+                user = await prisma.user.update({
+                    where: { id: user.id },
+                    data: { privyId },
                 });
             }
         }
@@ -366,16 +387,29 @@ export class AuthService {
         if (!user) {
             // Create new user
             const isVerificationEnabled = process.env.ENABLE_VERIFICATION === 'true';
-            const placeholderAddress = targetWalletAddress || `privy:${verifiedClaims.userId}`;
+            // If the wallet is already taken, this new user gets NO wallet link initially (or a placeholder)
+            // to avoid unique constraint violations. They can link a wallet later if it's freed.
+            let creationWallet = targetWalletAddress;
+            if (targetWalletAddress) {
+                const existingWalletUser = await prisma.user.findUnique({ where: { walletAddress: targetWalletAddress } });
+                if (existingWalletUser) {
+                    console.warn(`Wallet ${targetWalletAddress} is already in use. Creating user without wallet link.`);
+                    creationWallet = undefined;
+                }
+            }
+
+            const placeholderAddress = creationWallet || `privy:${privyId}`;
             const emailBase = email ? email.split('@')[0] : 'user';
             const username = await generateUniqueUsername(emailBase);
+
             user = await prisma.user.create({
                 data: {
+                    privyId,
                     email: email?.toLowerCase() || `${placeholderAddress}@wallet.local`,
                     username,
                     displayName: email ? email.split('@')[0] : undefined,
                     avatarUrl: avatarUrl || null,
-                    walletAddress: placeholderAddress,
+                    walletAddress: creationWallet || null, // Don't use "privy:..." in walletAddress field anymore
                     lastLoginAt: new Date(),
                     emailVerified: !isVerificationEnabled,
                     phoneVerified: !isVerificationEnabled,
@@ -392,7 +426,7 @@ export class AuthService {
                 }
             })();
         } else {
-            // Backfill avatarUrl from Google if the user has none set yet
+            // Update last login and backfill avatarUrl
             user = await prisma.user.update({
                 where: { id: user.id },
                 data: {

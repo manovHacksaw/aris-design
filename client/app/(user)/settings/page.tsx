@@ -139,8 +139,8 @@ export default function SettingsPage() {
     const walletDisplay = address
         ? `${address.slice(0, 8)}...${address.slice(-6)}`
         : eoaAddress
-        ? `${eoaAddress.slice(0, 8)}...${eoaAddress.slice(-6)}`
-        : "Not connected";
+            ? `${eoaAddress.slice(0, 8)}...${eoaAddress.slice(-6)}`
+            : "Not connected";
 
     return (
         <SidebarLayout>

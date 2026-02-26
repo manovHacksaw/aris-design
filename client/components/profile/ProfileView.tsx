@@ -84,9 +84,9 @@ export default function ProfileView({
 
   const joinedDate = user?.createdAt
     ? new Date(user.createdAt).toLocaleDateString("en-US", {
-        month: "long",
-        year: "numeric",
-      })
+      month: "long",
+      year: "numeric",
+    })
     : "—";
 
   const websiteHandle = user?.username || user?.displayName?.toLowerCase().replace(/\s/g, "") || "";
@@ -295,11 +295,10 @@ export default function ProfileView({
                         <button
                           onClick={() => handleModalFollow(person.id)}
                           disabled={modalFollowLoading === person.id}
-                          className={`ml-3 shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                            isPersonFollowed
+                          className={`ml-3 shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${isPersonFollowed
                               ? "bg-secondary border border-border text-foreground/60 hover:border-red-500/40 hover:text-red-400"
                               : "bg-primary/10 border border-primary/30 text-primary hover:bg-primary hover:text-white"
-                          } disabled:opacity-40`}
+                            } disabled:opacity-40`}
                         >
                           {modalFollowLoading === person.id ? "..." : isPersonFollowed ? "Unfollow" : "Follow"}
                         </button>

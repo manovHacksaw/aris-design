@@ -4,19 +4,72 @@ import { motion } from "framer-motion";
 import { TrendingUp, Trophy, ChevronLeft, ChevronRight, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { getTrendingEvents } from "@/services/mockEventService";
-import type { TrendingEvent } from "@/types/api";
+import { getEvents } from "@/services/event.service";
+import type { Event } from "@/services/event.service";
 import ModeBadge from "@/components/events/ModeBadge";
 import StatusBadge from "@/components/events/StatusBadge";
 import { formatCount } from "@/lib/eventUtils";
 
+const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
+
+function computeTimeRemaining(endTime: string): string {
+    const diff = new Date(endTime).getTime() - Date.now();
+    if (diff <= 0) return "Ended";
+    const h = Math.floor(diff / 3600000);
+    if (h < 24) return `${h}h left`;
+    const d = Math.floor(h / 24);
+    return `${d}d ${h % 24}h`;
+}
+
+// Map real Event to the shape TrendingCarousel needs for rendering
+type CarouselItem = {
+    id: string;
+    title: string;
+    description: string;
+    eventType: "vote" | "post";
+    status: "live" | "ending_soon";
+    leaderboardPool: number;
+    timeRemaining: string;
+    totalParticipants: number;
+    coverImage: string;
+    brand: { name: string; avatar: string; handle: string };
+};
+
+function toCarouselItem(e: Event): CarouselItem {
+    const statusMap: Record<string, "live" | "ending_soon"> = {
+        posting: "live",
+        voting: "live",
+        scheduled: "live",
+        draft: "live",
+        completed: "ending_soon",
+    };
+    return {
+        id: e.id,
+        title: e.title,
+        description: e.description ?? "",
+        eventType: e.eventType === "vote_only" ? "vote" : "post",
+        status: statusMap[e.status] ?? "live",
+        leaderboardPool: e.leaderboardPool ?? 0,
+        timeRemaining: computeTimeRemaining(e.endTime),
+        totalParticipants: e._count?.submissions ?? e._count?.votes ?? e.eventAnalytics?.uniqueParticipants ?? 0,
+        coverImage: e.imageCid
+            ? `${PINATA_GW}/${e.imageCid}`
+            : "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80",
+        brand: {
+            name: e.brand?.name ?? "Unknown",
+            avatar: e.brand?.logoCid ? `${PINATA_GW}/${e.brand.logoCid}` : "",
+            handle: `@${(e.brand?.name ?? "").toLowerCase().replace(/\s+/g, "")}`,
+        },
+    };
+}
+
 export default function TrendingCarousel() {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const [trendingItems, setTrendingItems] = useState<TrendingEvent[]>([]);
+    const [trendingItems, setTrendingItems] = useState<CarouselItem[]>([]);
 
     useEffect(() => {
-        getTrendingEvents()
-            .then((res) => setTrendingItems(res.data))
+        getEvents({ limit: 10 })
+            .then((res) => setTrendingItems((res.events || []).map(toCarouselItem)))
             .catch(() => {/* fail silently – carousel simply stays empty */});
     }, []);
 
