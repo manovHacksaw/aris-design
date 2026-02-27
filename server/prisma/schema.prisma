@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -21,8 +22,8 @@ model User {
   emailVerificationCode   String?
   emailVerificationExpiry DateTime?
   phoneVerified           Boolean   @default(false)
-  preferredBrands         String[]
-  preferredCategories     String[]
+  preferredBrands         String[]  @default([])
+  preferredCategories     String[]  @default([])
   xp                      Int       @default(0)
   walletAddress           String?   @unique
   privyId                 String?   @unique
@@ -39,9 +40,9 @@ model User {
 
   // Onboarding & personalization
   web3Level               String?                // beginner | basic | intermediate | advanced
-  intentGoals             String[]               // multi-select user intent tags
+  intentGoals             String[]  @default([])  // multi-select user intent tags
   contentFormat           String?                // image | video | text | mixed
-  creatorCategories       String[]               // creator types user follows/identifies with
+  creatorCategories       String[]  @default([]) // creator types user follows/identifies with
   onboardingStep          Int       @default(0)  // last completed step (for resume)
 
   // Performance optimization counters (avoid heavy queries)
