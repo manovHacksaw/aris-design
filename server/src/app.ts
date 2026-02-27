@@ -15,6 +15,7 @@ export const createApp = () => {
         origin: [
             'http://localhost:3000',
             'https://aris-demo.vercel.app',
+            'https://arisweb-demo.vercel.app',
             process.env.FRONTEND_URL || ''
         ].filter(Boolean),
         credentials: true
