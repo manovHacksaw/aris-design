@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Check, ArrowRight, ChevronLeft, Building2, Mail, Phone,
@@ -195,7 +194,6 @@ function SelectField({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function BrandApplicationPage() {
-  const router = useRouter();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);

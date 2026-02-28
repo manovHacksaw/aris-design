@@ -2,15 +2,14 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useUser } from "@/context/UserContext";
-import { toast } from "sonner";
+import { useWallet } from "@/context/WalletContext";
 import {
   Megaphone, BarChart3, Users, Trophy, Coins, Target,
   ShieldCheck, TrendingUp, ArrowRight, Check, Zap, Globe,
-  Star, Lock, Rocket, LogIn,
+  Star, Lock, Rocket, LogIn, AlertTriangle, Loader2,
 } from "lucide-react";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
@@ -129,46 +128,97 @@ const accentMap: Record<string, string> = {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function BrandValuePropositionPage() {
-  const { login, authenticated, ready } = usePrivy();
-  const { user, isLoading: userLoading } = useUser();
+  const { user, isLoading: userLoading, syncWithBackend } = useUser();
+  const { connect, isLoading: walletLoading, isConnected } = useWallet();
   const router = useRouter();
-  const loginTriggered = useRef(false);
+  const hasSyncedRef = useRef(false);
+  const [isCheckingUser, setIsCheckingUser] = useState(false);
 
+  // After wallet connects on this page, manually sync once (demo pattern).
+  // UserContext skips auto-sync on /register-brand to avoid creating phantom users.
   useEffect(() => {
-    // Only act when Privy is ready+authenticated and UserContext has finished syncing
-    if (!ready || !authenticated || userLoading) return;
+    if (isConnected && !user && !userLoading && !isCheckingUser && !hasSyncedRef.current) {
+      hasSyncedRef.current = true;
+      setIsCheckingUser(true);
+      syncWithBackend().finally(() => setIsCheckingUser(false));
+    }
+  }, [isConnected, user, userLoading, isCheckingUser, syncWithBackend]);
 
-    // 1. If they are already a brand owner, auto-redirect them to dashboard immediately
+  // Reset sync flag when wallet disconnects (new login attempt)
+  useEffect(() => {
+    if (!isConnected) {
+      hasSyncedRef.current = false;
+    }
+  }, [isConnected]);
+
+  // Redirect brand owners immediately
+  useEffect(() => {
     if (user?.role === "BRAND_OWNER") {
-      router.push("/brand/dashboard");
-      return;
+      router.replace("/brand/dashboard");
     }
+  }, [user, router]);
 
-    // 2. Otherwise, only act if they clicked the "Brand Login" button explicitly
-    if (loginTriggered.current) {
-      loginTriggered.current = false; // reset so re-renders don't retrigger
-
-      if (user) {
-        // Authenticated but registered as a user, not a brand
-        toast.warning("You're registered as a user, not a brand.", {
-          description: "Redirecting you to the user home...",
-          duration: 4000,
-        });
-        router.push("/");
-      } else {
-        // Privy auth succeeded but no backend account associated
-        toast.info("No brand account found.", {
-          description: "Apply to register your brand and get started.",
-          duration: 4000,
-        });
-        router.push("/register-brand/application");
-      }
+  // Auto-redirect regular users to home after 3 s
+  useEffect(() => {
+    if (user?.role === "USER" && user.isOnboarded) {
+      const t = setTimeout(() => router.push("/"), 3000);
+      return () => clearTimeout(t);
     }
-  }, [ready, authenticated, userLoading, user, router]);
+  }, [user, router]);
 
   function handleBrandLogin() {
-    loginTriggered.current = true;
-    login();
+    connect();
+  }
+
+  const isAuthenticating = isConnected && !user && (isCheckingUser || userLoading);
+
+  // ── State: still checking after login ─────────────────────────────────────
+  if (isAuthenticating) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  // ── State: brand owner detected ────────────────────────────────────────────
+  if (user?.role === "BRAND_OWNER") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  // ── State: regular user detected ───────────────────────────────────────────
+  if (user?.role === "USER" && user.isOnboarded) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="max-w-md w-full text-center bg-card border border-amber-500/30 rounded-2xl p-8 space-y-5"
+        >
+          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-7 h-7 text-amber-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-display uppercase tracking-tight text-foreground mb-2">
+              User Account Detected
+            </h2>
+            <p className="text-sm text-foreground/50 leading-relaxed">
+              This area is for Brand Owners only. Redirecting you to the home page in a moment...
+            </p>
+          </div>
+          <button
+            onClick={() => router.push("/")}
+            className="w-full py-3 px-6 rounded-[14px] bg-primary text-white font-black text-xs uppercase tracking-widest hover:bg-primary/90 transition-colors"
+          >
+            Go to Home
+          </button>
+        </motion.div>
+      </div>
+    );
   }
 
   return (
@@ -190,10 +240,15 @@ export default function BrandValuePropositionPage() {
           </Link>
           <button
             onClick={handleBrandLogin}
+            disabled={walletLoading || isCheckingUser}
             aria-label="Log in to your brand dashboard"
-            className="inline-flex items-center gap-2 px-5 py-2.5 border border-border/50 text-foreground/70 hover:text-foreground hover:border-border text-xs font-black uppercase tracking-widest rounded-full transition-colors hidden sm:block cursor-pointer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 border border-border/50 text-foreground/70 hover:text-foreground hover:border-border text-xs font-black uppercase tracking-widest rounded-full transition-colors hidden sm:flex cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <LogIn className="w-3.5 h-3.5" />
+            {walletLoading || isCheckingUser ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <LogIn className="w-3.5 h-3.5" />
+            )}
             Brand Login
           </button>
           <Link

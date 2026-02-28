@@ -11,6 +11,7 @@ import React, {
 } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useWallet } from "./WalletContext";
+import { usePathname } from "next/navigation";
 import {
   getCurrentUser,
   getUserStats,
@@ -26,6 +27,7 @@ type UserContextType = {
   isLoading: boolean;
   isAuthenticated: boolean;
   refreshUser: () => Promise<void>;
+  syncWithBackend: () => Promise<void>;
   updateProfile: (data: UpdateUserData) => Promise<void>;
 };
 
@@ -34,6 +36,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export function UserProvider({ children }: { children: ReactNode }) {
   const { getAccessToken, user: privyUser, authenticated, ready } = usePrivy();
   const { address, isConnected, isInitialized, userInfo } = useWallet();
+  const pathname = usePathname();
 
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -113,9 +116,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setUser(u);
       if (s) setStats(s);
     } catch (err: any) {
-      if (err?.status === 401) await syncWithBackend();
+      // On brand registration pages, skip auto-sync (no user creation).
+      // The page manually calls syncWithBackend after the user clicks "Brand Login".
+      const isOnBrandPage = pathname?.startsWith("/register-brand");
+      if ((err?.status === 401 || err?.status === 404) && !isOnBrandPage) {
+        await syncWithBackend();
+      }
     }
-  }, [syncWithBackend]);
+  }, [syncWithBackend, pathname]);
 
   /** Update profile and refresh local state */
   const updateProfile = useCallback(async (data: UpdateUserData) => {
@@ -138,11 +146,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Only re-sync if address changed
+    // Only re-sync if address changed.
+    // On brand registration pages, refreshUser is used first (non-creating).
+    // The brand page manually calls syncWithBackend after explicit login.
     if (address && address !== syncedAddress) {
-      syncWithBackend();
+      const isOnBrandPage = pathname?.startsWith("/register-brand");
+      if (isOnBrandPage) {
+        refreshUser();
+      } else {
+        syncWithBackend();
+      }
+      setSyncedAddress(address);
     }
-  }, [isConnected, authenticated, isInitialized, ready, address, syncedAddress]);
+  }, [isConnected, authenticated, isInitialized, ready, address, syncedAddress, pathname]);
 
   // On mount, if there's an existing token, try to load user silently
   useEffect(() => {
@@ -166,6 +182,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         isLoading,
         isAuthenticated,
         refreshUser,
+        syncWithBackend,
         updateProfile,
       }}
     >

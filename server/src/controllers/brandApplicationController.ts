@@ -47,20 +47,6 @@ export const submitApplication = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    // Check if a user already exists with this email
-    // This prevents duplicate user accounts, but allows multiple applications from the same email
-    const existingUser = await prisma.user.findUnique({
-      where: { email: contactEmail.toLowerCase() },
-    });
-
-    if (existingUser) {
-      res.status(409).json({
-        success: false,
-        error: 'A user account with this email already exists. Please log in instead.',
-      });
-      return;
-    }
-
     // Create application
     const application = await prisma.brandApplication.create({
       data: {
