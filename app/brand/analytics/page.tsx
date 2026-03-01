@@ -25,7 +25,7 @@ export default function BrandAnalyticsPage() {
         <div className="space-y-8">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-foreground tracking-tight mb-1">Analytics</h1>
+                    <h1 className="text-3xl font-bold text-foreground tracking-tight mb-1">Analytics</h1>
                     <p className="text-muted-foreground">Deep dive into your campaign performance.</p>
                 </div>
 
@@ -46,7 +46,7 @@ export default function BrandAnalyticsPage() {
                     <div key={i} className="bg-card border border-border rounded-[24px] p-5 shadow-sm">
                         <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">{stat.label}</p>
                         <div className="flex items-end justify-between">
-                            <h3 className="text-2xl font-black text-foreground">{stat.value}</h3>
+                            <h3 className="text-2xl font-bold text-foreground">{stat.value}</h3>
                             <div className={cn(
                                 "flex items-center text-xs font-bold px-2 py-0.5 rounded-full",
                                 (stat.trend === "up" && stat.label !== "Cost Per Engagement") || (stat.trend === "down" && stat.label === "Cost Per Engagement")

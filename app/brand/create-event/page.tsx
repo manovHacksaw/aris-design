@@ -3,16 +3,19 @@
 import { useState } from "react";
 import {
     ChevronLeft, Upload, DollarSign, Image as ImageIcon,
-    Layout, Rocket, CalendarDays, ListChecks, Hash, Users, X
+    Rocket, CalendarDays, ListChecks, Hash, Users, X, ChevronDown, Camera
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const STEPS = ["Details", "Schedule", "Requirements", "Rewards"];
+const STEP_TITLES = ["Event Details", "Schedule", "Requirements", "Rewards & Budget"];
+const CONTENT_CATEGORIES = ["Photography", "Art", "Sports", "Fashion", "Food", "Travel", "Music", "Tech"];
 
 interface FormData {
     title: string;
-    type: "post" | "vote";
+    type: "post" | "vote" | "post_and_vote";
+    contentCategory: string;
     description: string;
     startDate: string;
     endDate: string;
@@ -30,11 +33,25 @@ interface FormData {
 const CONTENT_TYPES = ["Photo", "Video", "Reel", "Story", "Text Post"];
 const TIMEZONES = ["UTC", "EST (UTC-5)", "PST (UTC-8)", "IST (UTC+5:30)", "CET (UTC+1)"];
 
-function Row({ label, value }: { label: string; value: string }) {
+/** Input field with label floating on the top border */
+function Field({
+    label,
+    labelPrefix,
+    children,
+    className,
+}: {
+    label: string;
+    labelPrefix?: React.ReactNode;
+    children: React.ReactNode;
+    className?: string;
+}) {
     return (
-        <div className="flex justify-between items-start gap-2 text-sm">
-            <span className="text-muted-foreground shrink-0">{label}</span>
-            <span className="font-bold text-right truncate max-w-[160px]">{value}</span>
+        <div className={cn("relative border border-border rounded-xl px-4 py-3 bg-card", className)}>
+            <div className="absolute -top-[9px] left-3 flex items-center gap-1 bg-card px-1">
+                {labelPrefix}
+                <span className="text-[11px] text-muted-foreground leading-none">{label}</span>
+            </div>
+            {children}
         </div>
     );
 }
@@ -44,6 +61,7 @@ export default function CreateCampaignPage() {
     const [form, setForm] = useState<FormData>({
         title: "",
         type: "post",
+        contentCategory: "Photography",
         description: "",
         startDate: "",
         endDate: "",
@@ -67,7 +85,8 @@ export default function CreateCampaignPage() {
         }
     };
 
-    const removeHashtag = (tag: string) => set({ hashtags: form.hashtags.filter((t) => t !== tag) });
+    const removeHashtag = (tag: string) =>
+        set({ hashtags: form.hashtags.filter((t) => t !== tag) });
 
     const toggleContentType = (ct: string) => {
         const updated = form.contentType.includes(ct)
@@ -76,409 +95,522 @@ export default function CreateCampaignPage() {
         set({ contentType: updated });
     };
 
-    const estimatedReach = form.baseReward ? Math.round((parseFloat(form.baseReward) || 0) * 640) : 0;
+    const estimatedReach = form.baseReward
+        ? Math.round((parseFloat(form.baseReward) || 0) * 640)
+        : 0;
 
     const totalBudget =
         (parseFloat(form.leaderboardPool) || 0) +
         (parseFloat(form.baseReward) || 0) * (parseFloat(form.maxParticipants) || 0);
 
-    const campaignDays = form.startDate && form.endDate
-        ? Math.max(0, Math.round((new Date(form.endDate).getTime() - new Date(form.startDate).getTime()) / (1000 * 60 * 60 * 24)))
-        : null;
+    const campaignDays =
+        form.startDate && form.endDate
+            ? Math.max(
+                  0,
+                  Math.round(
+                      (new Date(form.endDate).getTime() - new Date(form.startDate).getTime()) /
+                          (1000 * 60 * 60 * 24)
+                  )
+              )
+            : null;
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6 pb-32 md:pb-12">
-            {/* Header */}
-            <div className="flex items-center gap-4">
-                <Link href="/brand/dashboard" className="p-2 rounded-full hover:bg-secondary transition-colors shrink-0">
-                    <ChevronLeft className="w-5 h-5" />
-                </Link>
-                <div>
-                    <h1 className="text-2xl font-black tracking-tight">Create Campaign</h1>
-                    <p className="text-sm text-muted-foreground">Launch a new campaign in minutes.</p>
+        <div className="w-full min-h-full flex flex-col">
+
+            {/* ── Header: title left, step bars fill remaining space ── */}
+            <div className="flex items-center gap-4 mb-8">
+                <div className="flex items-center gap-2 shrink-0">
+                    <Link
+                        href="/brand/dashboard"
+                        className="p-1.5 rounded-full hover:bg-secondary transition-colors"
+                    >
+                        <ChevronLeft className="w-5 h-5" />
+                    </Link>
+                    <h1 className="text-lg font-bold whitespace-nowrap">{STEP_TITLES[step]}</h1>
+                </div>
+
+                {/* Step progress bars — fill remaining header width */}
+                <div className="flex flex-1 gap-2">
+                    {STEPS.map((s, i) => (
+                        <button
+                            key={s}
+                            onClick={() => setStep(i)}
+                            className={cn(
+                                "flex-1 h-[3px] rounded-full transition-colors",
+                                i <= step ? "bg-primary" : "bg-border"
+                            )}
+                            aria-label={s}
+                        />
+                    ))}
                 </div>
             </div>
 
-            {/* Step Indicator */}
-            <div className="flex items-center">
-                {STEPS.map((s, i) => (
-                    <div key={s} className="flex items-center flex-1">
-                        <button onClick={() => setStep(i)} className="flex items-center gap-2">
-                            <div className={cn(
-                                "w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-colors shrink-0",
-                                i <= step ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
-                            )}>
-                                {i < step ? "✓" : i + 1}
+            {/* ── Form content — centred, max-w matches the screenshot width ── */}
+            <div className="w-full max-w-xl mx-auto space-y-5 flex-1">
+
+                {/* ═══════════════════════════════════════
+                    Step 0 – Event Details
+                ════════════════════════════════════════ */}
+                {step === 0 && (
+                    <>
+                        {/* Guidelines card with floating label */}
+                        <div className="relative border border-border rounded-xl p-5 bg-card">
+                            <div className="absolute -top-[9px] left-3 bg-card px-1">
+                                <span className="text-[11px] text-muted-foreground leading-none">
+                                    Guidelines
+                                </span>
                             </div>
-                            <span className={cn(
-                                "text-xs font-bold hidden sm:block transition-colors",
-                                i === step ? "text-foreground" : "text-muted-foreground"
-                            )}>{s}</span>
-                        </button>
-                        {i < STEPS.length - 1 && (
-                            <div className={cn("flex-1 h-[2px] mx-3", i < step ? "bg-primary" : "bg-border")} />
-                        )}
-                    </div>
-                ))}
-            </div>
+                            <ul className="space-y-2 text-sm text-muted-foreground pt-1">
+                                <li className="flex items-start gap-2">
+                                    <span className="shrink-0 mt-0.5">•</span>
+                                    <span>Vote counts are revealed at the end of the event</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="shrink-0 mt-0.5">•</span>
+                                    <span>
+                                        <strong className="text-foreground">Vote Event</strong>
+                                        {" – "}Users vote on content that you post
+                                    </span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="shrink-0 mt-0.5">•</span>
+                                    <span>
+                                        <strong className="text-foreground">Post and Vote Event</strong>
+                                        {" – "}Phase 1&nbsp;: Users post content,
+                                        <br />
+                                        Phase 2&nbsp;:{" "}
+                                        <strong className="text-foreground">VOTE EVENT</strong> with user posts
+                                    </span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="shrink-0 mt-0.5">•</span>
+                                    <span>
+                                        Choose a fitting Title and Description to make it interesting for users
+                                    </span>
+                                </li>
+                            </ul>
+                        </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Form */}
-                <div className="lg:col-span-2 space-y-6">
+                        {/* Event Title */}
+                        <Field label="Event Title">
+                            <input
+                                type="text"
+                                placeholder="e.g. Nike Summer Photo Challenge"
+                                className="w-full bg-transparent outline-none font-medium text-foreground placeholder:text-muted-foreground/40 mt-0.5"
+                                value={form.title}
+                                onChange={(e) => set({ title: e.target.value })}
+                            />
+                        </Field>
 
-                    {/* Step 0: Campaign Details */}
-                    {step === 0 && (
-                        <>
-                            <section className="bg-card border border-border rounded-[24px] p-6 md:p-8 shadow-sm space-y-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                                        <Layout className="w-5 h-5" />
-                                    </div>
-                                    <h2 className="text-lg font-bold">Campaign Details</h2>
+                        {/* Event Type  +  Content Category */}
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Event Type */}
+                            <Field
+                                label="Event Type"
+                                labelPrefix={
+                                    <span className="w-3 h-3 rounded-full border border-muted-foreground inline-flex items-center justify-center text-[8px] leading-none text-muted-foreground">
+                                        +
+                                    </span>
+                                }
+                            >
+                                <div className="flex items-center justify-between mt-0.5">
+                                    <select
+                                        className="flex-1 bg-transparent outline-none font-medium appearance-none text-foreground cursor-pointer"
+                                        value={form.type}
+                                        onChange={(e) =>
+                                            set({ type: e.target.value as FormData["type"] })
+                                        }
+                                    >
+                                        <option value="post">Post</option>
+                                        <option value="vote">Vote</option>
+                                        <option value="post_and_vote">Post &amp; Vote</option>
+                                    </select>
+                                    <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 pointer-events-none" />
                                 </div>
+                            </Field>
 
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Campaign Title</label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. Nike Summer Photo Challenge"
-                                        className="w-full p-4 bg-secondary/50 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none font-bold placeholder:font-normal"
-                                        value={form.title}
-                                        onChange={(e) => set({ title: e.target.value })}
-                                    />
+                            {/* Content Category */}
+                            <Field label="Content Category" className="relative overflow-visible">
+                                <div className="flex items-center justify-between mt-0.5">
+                                    <span className="px-2.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-bold flex items-center gap-1.5">
+                                        <Camera className="w-3 h-3" />
+                                        {form.contentCategory}
+                                    </span>
+                                    <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 pointer-events-none" />
                                 </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Campaign Type</label>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {(["post", "vote"] as const).map((t) => (
-                                            <button
-                                                key={t}
-                                                className={cn(
-                                                    "p-4 rounded-xl border-2 text-center transition-all",
-                                                    form.type === t
-                                                        ? "border-primary bg-primary/5 text-primary"
-                                                        : "border-border hover:border-foreground/20"
-                                                )}
-                                                onClick={() => set({ type: t })}
-                                            >
-                                                <span className="block text-base font-black mb-0.5">
-                                                    {t === "post" ? "Social Post" : "Vote Event"}
-                                                </span>
-                                                <span className="text-xs opacity-60">
-                                                    {t === "post" ? "User-created content" : "Community voting"}
-                                                </span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description</label>
-                                    <textarea
-                                        placeholder="Describe your campaign goals, brand story, and what you want to achieve..."
-                                        className="w-full p-4 h-32 bg-secondary/50 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none resize-none"
-                                        value={form.description}
-                                        onChange={(e) => set({ description: e.target.value })}
-                                    />
-                                    <p className="text-xs text-muted-foreground text-right">{form.description.length}/500</p>
-                                </div>
-                            </section>
-
-                            {/* Cover Image */}
-                            <section className="bg-card border border-border rounded-[24px] p-6 md:p-8 shadow-sm">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent shrink-0">
-                                        <ImageIcon className="w-5 h-5" />
-                                    </div>
-                                    <h2 className="text-lg font-bold">Cover Image</h2>
-                                </div>
-                                <div className="border-2 border-dashed border-border rounded-[20px] p-8 md:p-12 hover:bg-secondary/20 hover:border-primary/40 transition-colors cursor-pointer group text-center">
-                                    <div className="w-14 h-14 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/10 group-hover:text-primary transition-colors text-muted-foreground">
-                                        <Upload className="w-7 h-7" />
-                                    </div>
-                                    <h3 className="font-bold mb-1">Upload Campaign Cover</h3>
-                                    <p className="text-muted-foreground text-sm">Drag & drop or click to browse</p>
-                                    <p className="text-xs text-muted-foreground/60 mt-2">PNG, JPG, WebP · Max 5MB · Recommended 1200×630</p>
-                                </div>
-                            </section>
-                        </>
-                    )}
-
-                    {/* Step 1: Schedule */}
-                    {step === 1 && (
-                        <section className="bg-card border border-border rounded-[24px] p-6 md:p-8 shadow-sm space-y-6">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 shrink-0">
-                                    <CalendarDays className="w-5 h-5" />
-                                </div>
-                                <h2 className="text-lg font-bold">Schedule</h2>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Start Date & Time</label>
-                                    <input
-                                        type="datetime-local"
-                                        className="w-full p-4 bg-secondary/50 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none font-medium"
-                                        value={form.startDate}
-                                        onChange={(e) => set({ startDate: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">End Date & Time</label>
-                                    <input
-                                        type="datetime-local"
-                                        className="w-full p-4 bg-secondary/50 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none font-medium"
-                                        value={form.endDate}
-                                        onChange={(e) => set({ endDate: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Timezone</label>
+                                {/* Invisible overlay select */}
                                 <select
-                                    className="w-full p-4 bg-secondary/50 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none font-medium appearance-none"
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    value={form.contentCategory}
+                                    onChange={(e) => set({ contentCategory: e.target.value })}
+                                >
+                                    {CONTENT_CATEGORIES.map((cat) => (
+                                        <option key={cat} value={cat}>
+                                            {cat}
+                                        </option>
+                                    ))}
+                                </select>
+                            </Field>
+                        </div>
+
+                        {/* Description */}
+                        <Field label="Description">
+                            <textarea
+                                placeholder="Describe your campaign goals, brand story, and what you want to achieve..."
+                                className="w-full bg-transparent outline-none resize-none h-28 font-medium text-foreground placeholder:text-muted-foreground/40 mt-0.5"
+                                value={form.description}
+                                onChange={(e) => set({ description: e.target.value })}
+                            />
+                        </Field>
+
+                        {/* Cover Image */}
+                        <Field label="Cover Image" labelPrefix={<ImageIcon className="w-3 h-3 text-muted-foreground" />}>
+                            <div className="border border-dashed border-border rounded-xl p-6 hover:bg-secondary/20 hover:border-primary/40 transition-colors cursor-pointer group text-center mt-1">
+                                <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-primary/10 group-hover:text-primary transition-colors text-muted-foreground">
+                                    <Upload className="w-5 h-5" />
+                                </div>
+                                <p className="text-sm font-medium text-muted-foreground">
+                                    Drag &amp; drop or click to browse
+                                </p>
+                                <p className="text-xs text-muted-foreground/50 mt-1">
+                                    PNG, JPG, WebP · Max 5MB · 1200×630
+                                </p>
+                            </div>
+                        </Field>
+                    </>
+                )}
+
+                {/* ═══════════════════════════════════════
+                    Step 1 – Schedule
+                ════════════════════════════════════════ */}
+                {step === 1 && (
+                    <>
+                        {/* Info card — same floating-label style as Guidelines */}
+                        <div className="relative border border-border rounded-xl p-5 bg-card">
+                            <div className="absolute -top-[9px] left-3 flex items-center gap-1.5 bg-card px-1">
+                                <CalendarDays className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-[11px] text-muted-foreground leading-none">Schedule</span>
+                            </div>
+                            <ul className="space-y-2 text-sm text-muted-foreground pt-1">
+                                <li className="flex items-start gap-2">
+                                    <span className="shrink-0 mt-0.5">•</span>
+                                    <span>Set start and end dates to define the campaign window</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="shrink-0 mt-0.5">•</span>
+                                    <span>Vote counts and results are revealed only after the end date</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="shrink-0 mt-0.5">•</span>
+                                    <span>Capping participants helps control quality and total spend</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        {/* Start + End dates */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <Field label="Start Date &amp; Time">
+                                <input
+                                    type="datetime-local"
+                                    className="w-full bg-transparent outline-none font-medium text-foreground mt-0.5"
+                                    value={form.startDate}
+                                    onChange={(e) => set({ startDate: e.target.value })}
+                                />
+                            </Field>
+                            <Field label="End Date &amp; Time">
+                                <input
+                                    type="datetime-local"
+                                    className="w-full bg-transparent outline-none font-medium text-foreground mt-0.5"
+                                    value={form.endDate}
+                                    onChange={(e) => set({ endDate: e.target.value })}
+                                />
+                            </Field>
+                        </div>
+
+                        {/* Timezone */}
+                        <Field label="Timezone">
+                            <div className="flex items-center justify-between mt-0.5">
+                                <select
+                                    className="flex-1 bg-transparent outline-none font-medium appearance-none text-foreground cursor-pointer"
                                     value={form.timezone}
                                     onChange={(e) => set({ timezone: e.target.value })}
                                 >
-                                    {TIMEZONES.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
+                                    {TIMEZONES.map((tz) => (
+                                        <option key={tz} value={tz}>{tz}</option>
+                                    ))}
                                 </select>
+                                <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 pointer-events-none" />
                             </div>
+                        </Field>
 
-                            {campaignDays !== null && (
-                                <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-center gap-3">
-                                    <CalendarDays className="w-4 h-4 text-primary shrink-0" />
-                                    <p className="text-sm font-bold text-primary">Campaign runs for {campaignDays} day{campaignDays !== 1 ? "s" : ""}</p>
-                                </div>
-                            )}
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Max Participants</label>
-                                <div className="relative">
-                                    <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                    <input
-                                        type="number"
-                                        placeholder="Leave blank for unlimited"
-                                        className="w-full pl-11 pr-4 py-4 bg-secondary/50 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none font-mono font-bold"
-                                        value={form.maxParticipants}
-                                        onChange={(e) => set({ maxParticipants: e.target.value })}
-                                    />
-                                </div>
-                                <p className="text-xs text-muted-foreground">Cap the number of entries to control quality and spend.</p>
+                        {/* Campaign duration pill */}
+                        {campaignDays !== null && (
+                            <div className="flex items-center gap-2 px-4 py-3 bg-primary/5 border border-primary/20 rounded-xl">
+                                <CalendarDays className="w-4 h-4 text-primary shrink-0" />
+                                <p className="text-sm font-bold text-primary">
+                                    Campaign runs for {campaignDays} day{campaignDays !== 1 ? "s" : ""}
+                                </p>
                             </div>
-                        </section>
-                    )}
+                        )}
 
-                    {/* Step 2: Requirements */}
-                    {step === 2 && (
-                        <section className="bg-card border border-border rounded-[24px] p-6 md:p-8 shadow-sm space-y-6">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500 shrink-0">
-                                    <ListChecks className="w-5 h-5" />
-                                </div>
-                                <h2 className="text-lg font-bold">Requirements</h2>
+                        {/* Max Participants */}
+                        <Field
+                            label="Max Participants"
+                            labelPrefix={<Users className="w-3 h-3 text-muted-foreground" />}
+                        >
+                            <input
+                                type="number"
+                                placeholder="Leave blank for unlimited"
+                                className="w-full bg-transparent outline-none font-medium text-foreground placeholder:text-muted-foreground/40 mt-0.5"
+                                value={form.maxParticipants}
+                                onChange={(e) => set({ maxParticipants: e.target.value })}
+                            />
+                        </Field>
+                    </>
+                )}
+
+                {/* ═══════════════════════════════════════
+                    Step 2 – Requirements
+                ════════════════════════════════════════ */}
+                {step === 2 && (
+                    <>
+                        {/* Info card */}
+                        <div className="relative border border-border rounded-xl p-5 bg-card">
+                            <div className="absolute -top-[9px] left-3 flex items-center gap-1.5 bg-card px-1">
+                                <ListChecks className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-[11px] text-muted-foreground leading-none">Requirements</span>
                             </div>
+                            <ul className="space-y-2 text-sm text-muted-foreground pt-1">
+                                <li className="flex items-start gap-2">
+                                    <span className="shrink-0 mt-0.5">•</span>
+                                    <span>Define clear rules so participants know exactly what is expected</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="shrink-0 mt-0.5">•</span>
+                                    <span>Add required hashtags that participants must include in their posts</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="shrink-0 mt-0.5">•</span>
+                                    <span>Select which content formats are accepted for submissions</span>
+                                </li>
+                            </ul>
+                        </div>
 
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Campaign Rules</label>
-                                <textarea
-                                    placeholder="e.g. Must follow @NikeRunning, tag 2 friends, use #JustDoIt, photo must be taken outdoors..."
-                                    className="w-full p-4 h-36 bg-secondary/50 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none resize-none"
-                                    value={form.rules}
-                                    onChange={(e) => set({ rules: e.target.value })}
+                        {/* Campaign Rules */}
+                        <Field label="Campaign Rules">
+                            <textarea
+                                placeholder="e.g. Must follow @NikeRunning, tag 2 friends, use #JustDoIt, photo must be taken outdoors..."
+                                className="w-full bg-transparent outline-none resize-none h-36 font-medium text-foreground placeholder:text-muted-foreground/40 mt-0.5"
+                                value={form.rules}
+                                onChange={(e) => set({ rules: e.target.value })}
+                            />
+                        </Field>
+
+                        {/* Required Hashtags */}
+                        <Field
+                            label="Required Hashtags"
+                            labelPrefix={<Hash className="w-3 h-3 text-muted-foreground" />}
+                        >
+                            <div className="flex items-center gap-2 mt-0.5">
+                                <input
+                                    type="text"
+                                    placeholder="Add hashtag and press Enter"
+                                    className="flex-1 bg-transparent outline-none font-medium text-foreground placeholder:text-muted-foreground/40"
+                                    value={form.hashtagInput}
+                                    onChange={(e) => set({ hashtagInput: e.target.value })}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") { e.preventDefault(); addHashtag(); }
+                                    }}
                                 />
+                                <button
+                                    onClick={addHashtag}
+                                    className="px-3 py-1 bg-primary text-primary-foreground rounded-lg font-bold text-xs hover:opacity-90 transition-opacity shrink-0"
+                                >
+                                    Add
+                                </button>
                             </div>
-
-                            <div className="space-y-3">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Required Hashtags</label>
-                                <div className="flex gap-2">
-                                    <div className="relative flex-1">
-                                        <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                        <input
-                                            type="text"
-                                            placeholder="Add hashtag and press Enter"
-                                            className="w-full pl-9 pr-4 py-3 bg-secondary/50 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none font-medium"
-                                            value={form.hashtagInput}
-                                            onChange={(e) => set({ hashtagInput: e.target.value })}
-                                            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addHashtag(); } }}
-                                        />
-                                    </div>
-                                    <button
-                                        onClick={addHashtag}
-                                        className="px-4 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:opacity-90 transition-opacity"
-                                    >
-                                        Add
-                                    </button>
-                                </div>
-                                {form.hashtags.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                        {form.hashtags.map((tag) => (
-                                            <span key={tag} className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-bold">
-                                                #{tag}
-                                                <button onClick={() => removeHashtag(tag)} className="hover:opacity-70 transition-opacity">
-                                                    <X className="w-3 h-3" />
-                                                </button>
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="space-y-3">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Accepted Content Types</label>
-                                <div className="flex flex-wrap gap-2">
-                                    {CONTENT_TYPES.map((ct) => (
-                                        <button
-                                            key={ct}
-                                            onClick={() => toggleContentType(ct)}
-                                            className={cn(
-                                                "px-4 py-2 rounded-full text-sm font-bold border-2 transition-all",
-                                                form.contentType.includes(ct)
-                                                    ? "border-primary bg-primary/10 text-primary"
-                                                    : "border-border hover:border-foreground/30 text-muted-foreground"
-                                            )}
+                            {form.hashtags.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-3">
+                                    {form.hashtags.map((tag) => (
+                                        <span
+                                            key={tag}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-xs font-bold"
                                         >
-                                            {ct}
-                                        </button>
+                                            #{tag}
+                                            <button
+                                                onClick={() => removeHashtag(tag)}
+                                                className="hover:opacity-70 transition-opacity"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                        </span>
                                     ))}
                                 </div>
-                            </div>
-                        </section>
-                    )}
+                            )}
+                        </Field>
 
-                    {/* Step 3: Rewards */}
-                    {step === 3 && (
-                        <section className="bg-card border border-border rounded-[24px] p-6 md:p-8 shadow-sm space-y-6">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center text-green-500 shrink-0">
-                                    <DollarSign className="w-5 h-5" />
-                                </div>
-                                <h2 className="text-lg font-bold">Rewards & Budget</h2>
+                        {/* Accepted Content Types */}
+                        <Field label="Accepted Content Types">
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {CONTENT_TYPES.map((ct) => (
+                                    <button
+                                        key={ct}
+                                        onClick={() => toggleContentType(ct)}
+                                        className={cn(
+                                            "px-4 py-1.5 rounded-full text-sm font-bold border-2 transition-all",
+                                            form.contentType.includes(ct)
+                                                ? "border-primary bg-primary/10 text-primary"
+                                                : "border-border hover:border-foreground/30 text-muted-foreground"
+                                        )}
+                                    >
+                                        {ct}
+                                    </button>
+                                ))}
                             </div>
+                        </Field>
+                    </>
+                )}
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Base Reward / Participant</label>
-                                    <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-muted-foreground">$</span>
-                                        <input
-                                            type="number"
-                                            placeholder="0.50"
-                                            className="w-full pl-8 pr-4 py-4 bg-secondary/50 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none font-mono font-bold text-lg"
-                                            value={form.baseReward}
-                                            onChange={(e) => set({ baseReward: e.target.value })}
-                                        />
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">Every valid submission earns this amount.</p>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Leaderboard Pool</label>
-                                    <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-muted-foreground">$</span>
-                                        <input
-                                            type="number"
-                                            placeholder="5000"
-                                            className="w-full pl-8 pr-4 py-4 bg-secondary/50 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none font-mono font-bold text-lg"
-                                            value={form.leaderboardPool}
-                                            onChange={(e) => set({ leaderboardPool: e.target.value })}
-                                        />
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">Distributed to top performers on the leaderboard.</p>
-                                </div>
+                {/* ═══════════════════════════════════════
+                    Step 3 – Rewards
+                ════════════════════════════════════════ */}
+                {step === 3 && (
+                    <>
+                        {/* Info card */}
+                        <div className="relative border border-border rounded-xl p-5 bg-card">
+                            <div className="absolute -top-[9px] left-3 flex items-center gap-1.5 bg-card px-1">
+                                <DollarSign className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-[11px] text-muted-foreground leading-none">Rewards &amp; Budget</span>
                             </div>
+                            <ul className="space-y-2 text-sm text-muted-foreground pt-1">
+                                <li className="flex items-start gap-2">
+                                    <span className="shrink-0 mt-0.5">•</span>
+                                    <span>Base reward is paid to every participant with a valid submission</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="shrink-0 mt-0.5">•</span>
+                                    <span>Leaderboard pool is split among top-ranked participants</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="shrink-0 mt-0.5">•</span>
+                                    <span>Top prize is awarded exclusively to the 1st place winner</span>
+                                </li>
+                            </ul>
+                        </div>
 
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Top Prize (1st Place)</label>
-                                <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-muted-foreground">$</span>
+                        {/* Base Reward + Leaderboard Pool */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <Field label="Base Reward / Participant">
+                                <div className="flex items-center gap-1 mt-0.5">
+                                    <span className="text-muted-foreground font-bold">$</span>
                                     <input
                                         type="number"
-                                        placeholder="500"
-                                        className="w-full pl-8 pr-4 py-4 bg-secondary/50 rounded-xl border border-border focus:ring-2 focus:ring-primary/20 outline-none font-mono font-bold text-lg"
-                                        value={form.topPrize}
-                                        onChange={(e) => set({ topPrize: e.target.value })}
+                                        placeholder="0.50"
+                                        className="flex-1 bg-transparent outline-none font-mono font-bold text-foreground placeholder:text-muted-foreground/40"
+                                        value={form.baseReward}
+                                        onChange={(e) => set({ baseReward: e.target.value })}
                                     />
                                 </div>
-                            </div>
+                                <p className="text-xs text-muted-foreground mt-1.5">Every valid submission earns this.</p>
+                            </Field>
 
-                            {(form.baseReward || form.leaderboardPool) && (
-                                <div className="p-5 bg-secondary/30 rounded-xl border border-border space-y-3">
-                                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Budget Breakdown</h4>
+                            <Field label="Leaderboard Pool">
+                                <div className="flex items-center gap-1 mt-0.5">
+                                    <span className="text-muted-foreground font-bold">$</span>
+                                    <input
+                                        type="number"
+                                        placeholder="5000"
+                                        className="flex-1 bg-transparent outline-none font-mono font-bold text-foreground placeholder:text-muted-foreground/40"
+                                        value={form.leaderboardPool}
+                                        onChange={(e) => set({ leaderboardPool: e.target.value })}
+                                    />
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1.5">Split among top performers.</p>
+                            </Field>
+                        </div>
+
+                        {/* Top Prize */}
+                        <Field label="Top Prize (1st Place)">
+                            <div className="flex items-center gap-1 mt-0.5">
+                                <span className="text-muted-foreground font-bold">$</span>
+                                <input
+                                    type="number"
+                                    placeholder="500"
+                                    className="flex-1 bg-transparent outline-none font-mono font-bold text-foreground placeholder:text-muted-foreground/40"
+                                    value={form.topPrize}
+                                    onChange={(e) => set({ topPrize: e.target.value })}
+                                />
+                            </div>
+                        </Field>
+
+                        {/* Budget Breakdown — uses same floating-label card */}
+                        {(form.baseReward || form.leaderboardPool) && (
+                            <div className="relative border border-border rounded-xl p-5 bg-card">
+                                <div className="absolute -top-[9px] left-3 bg-card px-1">
+                                    <span className="text-[11px] text-muted-foreground leading-none">Budget Breakdown</span>
+                                </div>
+                                <div className="space-y-3 pt-1">
                                     <div className="flex justify-between text-sm">
                                         <span className="text-muted-foreground">Participation Rewards</span>
-                                        <span className="font-bold font-mono">${((parseFloat(form.baseReward) || 0) * (parseFloat(form.maxParticipants) || 0)).toLocaleString()}</span>
+                                        <span className="font-bold font-mono">
+                                            ${(
+                                                (parseFloat(form.baseReward) || 0) *
+                                                (parseFloat(form.maxParticipants) || 0)
+                                            ).toLocaleString()}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between text-sm">
                                         <span className="text-muted-foreground">Leaderboard Pool</span>
-                                        <span className="font-bold font-mono">${(parseFloat(form.leaderboardPool) || 0).toLocaleString()}</span>
+                                        <span className="font-bold font-mono">
+                                            ${(parseFloat(form.leaderboardPool) || 0).toLocaleString()}
+                                        </span>
                                     </div>
                                     <div className="h-[1px] bg-border" />
                                     <div className="flex justify-between text-sm">
                                         <span className="font-bold">Total Budget</span>
-                                        <span className="font-black text-primary font-mono">${totalBudget.toLocaleString()}</span>
+                                        <span className="font-black text-primary font-mono">
+                                            ${totalBudget.toLocaleString()}
+                                        </span>
                                     </div>
                                 </div>
-                            )}
-                        </section>
-                    )}
-
-                    {/* Step Navigation */}
-                    <div className="flex justify-between pt-2">
-                        <button
-                            onClick={() => setStep((s) => Math.max(0, s - 1))}
-                            disabled={step === 0}
-                            className="px-6 py-3 rounded-xl border border-border font-bold text-sm hover:bg-secondary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                            Previous
-                        </button>
-                        {step < STEPS.length - 1 && (
-                            <button
-                                onClick={() => setStep((s) => s + 1)}
-                                className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity"
-                            >
-                                Next: {STEPS[step + 1]}
-                            </button>
+                            </div>
                         )}
-                    </div>
-                </div>
 
-                {/* Sticky Sidebar */}
-                <div className="lg:col-span-1">
-                    <div className="sticky top-24 space-y-4">
+                        {/* Estimated Reach */}
                         {estimatedReach > 0 && (
-                            <div className="bg-primary/5 border border-primary/20 rounded-[20px] p-5">
-                                <p className="text-xs font-bold uppercase tracking-wider text-primary mb-1">Estimated Reach</p>
-                                <p className="text-3xl font-black text-primary">~{estimatedReach.toLocaleString()}</p>
-                                <p className="text-xs text-muted-foreground mt-1">Users in your target demographic</p>
+                            <div className="relative border border-primary/30 rounded-xl p-5 bg-primary/5">
+                                <div className="absolute -top-[9px] left-3 bg-card px-1">
+                                    <span className="text-[11px] text-primary leading-none font-bold">Estimated Reach</span>
+                                </div>
+                                <p className="text-3xl font-black text-primary pt-1">
+                                    ~{estimatedReach.toLocaleString()}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Users in your target demographic
+                                </p>
                             </div>
                         )}
+                    </>
+                )}
 
-                        <div className="bg-card border border-border rounded-[20px] p-5 shadow-sm space-y-4">
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Campaign Summary</h3>
-                            <div className="space-y-2.5">
-                                <Row label="Title" value={form.title || "—"} />
-                                <Row label="Type" value={form.type === "post" ? "Social Post" : "Vote Event"} />
-                                <Row label="Start" value={form.startDate ? new Date(form.startDate).toLocaleDateString() : "—"} />
-                                <Row label="End" value={form.endDate ? new Date(form.endDate).toLocaleDateString() : "—"} />
-                                <Row label="Max Participants" value={form.maxParticipants || "Unlimited"} />
-                                <Row label="Base Reward" value={form.baseReward ? `$${form.baseReward}` : "—"} />
-                                <Row label="Leaderboard Pool" value={form.leaderboardPool ? `$${form.leaderboardPool}` : "—"} />
-                                {form.hashtags.length > 0 && (
-                                    <Row label="Hashtags" value={form.hashtags.map((t) => `#${t}`).join(", ")} />
-                                )}
-                            </div>
-                        </div>
-
+                {/* ── Navigation ── */}
+                <div className="flex justify-center pt-4 pb-10">
+                    {step < STEPS.length - 1 ? (
+                        <button
+                            onClick={() => setStep((s) => s + 1)}
+                            className="px-16 py-3 bg-primary text-primary-foreground rounded-full font-bold text-sm hover:opacity-90 transition-opacity"
+                        >
+                            Next
+                        </button>
+                    ) : (
                         <button
                             onClick={() => console.log("Launch", form)}
-                            className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-black uppercase tracking-widest hover:opacity-90 transition-opacity shadow-lg shadow-primary/20 flex items-center justify-center gap-2 group"
+                            className="px-12 py-3 bg-primary text-primary-foreground rounded-full font-black text-sm hover:opacity-90 transition-opacity flex items-center gap-2"
                         >
-                            <Rocket className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />
+                            <Rocket className="w-4 h-4" />
                             Launch Campaign
                         </button>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>

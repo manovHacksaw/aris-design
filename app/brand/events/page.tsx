@@ -18,7 +18,7 @@ export default function BrandCampaignsPage() {
         <div className="space-y-6">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-foreground tracking-tight mb-1">Campaigns</h1>
+                    <h1 className="text-3xl font-bold text-foreground tracking-tight mb-1">Campaigns</h1>
                     <p className="text-muted-foreground">Manage your active and past campaigns.</p>
                 </div>
 
@@ -70,7 +70,7 @@ export default function BrandCampaignsPage() {
                             <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2 mb-1">
                                     <span className={cn(
-                                        "px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border",
+                                        "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border",
                                         campaign.status === "Active" ? "bg-green-500/10 text-green-500 border-green-500/20" :
                                             campaign.status === "Draft" ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" :
                                                 campaign.status === "Ended" ? "bg-muted text-foreground/50 border-border" :
@@ -82,7 +82,7 @@ export default function BrandCampaignsPage() {
                                         <span className="text-[10px] text-muted-foreground font-medium">{campaign.end}</span>
                                     )}
                                 </div>
-                                <h3 className="text-base md:text-lg font-black text-foreground tracking-tight truncate group-hover:text-primary transition-colors">
+                                <h3 className="text-base md:text-lg font-bold text-foreground tracking-tight truncate group-hover:text-primary transition-colors">
                                     {campaign.title}
                                 </h3>
                                 <p className="text-xs text-muted-foreground mt-0.5">Budget: {campaign.pool}</p>
@@ -93,15 +93,15 @@ export default function BrandCampaignsPage() {
                         <div className="hidden md:flex items-center gap-8 px-4 border-l border-border/50">
                             <div className="text-center">
                                 <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Filled</div>
-                                <div className="text-lg font-black text-foreground">{campaign.filled}%</div>
+                                <div className="text-lg font-bold text-foreground">{campaign.filled}%</div>
                             </div>
                             <div className="text-center">
                                 <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Views</div>
-                                <div className="text-lg font-black text-foreground">{campaign.views}</div>
+                                <div className="text-lg font-bold text-foreground">{campaign.views}</div>
                             </div>
                             <div className="text-center">
                                 <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">ROI</div>
-                                <div className="text-lg font-black text-primary">{campaign.roi}</div>
+                                <div className="text-lg font-bold text-primary">{campaign.roi}</div>
                             </div>
                         </div>
 
@@ -126,7 +126,7 @@ export default function BrandCampaignsPage() {
                         {/* Actions */}
                         <div className="flex items-center justify-end gap-2 md:pl-4 md:border-l md:border-border/50">
                             <Link href={`/brand/events/${campaign.id}`} className="flex-1 md:flex-none">
-                                <button className="w-full md:w-auto px-4 py-2 rounded-xl bg-secondary hover:bg-primary hover:text-primary-foreground text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                                <button className="w-full md:w-auto px-4 py-2 rounded-xl bg-secondary hover:bg-primary hover:text-primary-foreground text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2">
                                     Manage <ChevronRight className="w-3.5 h-3.5" />
                                 </button>
                             </Link>

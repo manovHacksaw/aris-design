@@ -37,8 +37,8 @@ export default function BrandEventDetailsPage() {
                     </Link>
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <h1 className="text-xl md:text-2xl font-black text-foreground tracking-tight">{eventData.title}</h1>
-                            <span className="px-2 py-0.5 bg-green-500/10 text-green-500 border border-green-500/20 rounded text-[10px] font-black uppercase tracking-wider">
+                            <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">{eventData.title}</h1>
+                            <span className="px-2 py-0.5 bg-green-500/10 text-green-500 border border-green-500/20 rounded text-[10px] font-bold uppercase tracking-wider">
                                 {eventData.status}
                             </span>
                         </div>
@@ -68,21 +68,21 @@ export default function BrandEventDetailsPage() {
                         <Users className="w-4 h-4 text-primary" />
                     </div>
                     <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Views</span>
-                    <span className="text-lg md:text-2xl font-black">{eventData.views}</span>
+                    <span className="text-lg md:text-2xl font-bold">{eventData.views}</span>
                 </div>
                 <div className="bg-card border border-border rounded-[20px] p-4 flex flex-col items-center text-center md:items-start md:text-left">
                     <div className="bg-primary/10 p-2 rounded-full mb-2">
                         <Trophy className="w-4 h-4 text-primary" />
                     </div>
                     <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Submissions</span>
-                    <span className="text-lg md:text-2xl font-black">{eventData.submissions.length * 12}</span> {/* Mock multiplier */}
+                    <span className="text-lg md:text-2xl font-bold">{eventData.submissions.length * 12}</span> {/* Mock multiplier */}
                 </div>
                 <div className="bg-card border border-border rounded-[20px] p-4 flex flex-col items-center text-center md:items-start md:text-left">
                     <div className="bg-primary/10 p-2 rounded-full mb-2">
                         <Clock className="w-4 h-4 text-primary" />
                     </div>
                     <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Time Left</span>
-                    <span className="text-lg md:text-2xl font-black">2d 4h</span>
+                    <span className="text-lg md:text-2xl font-bold">2d 4h</span>
                 </div>
             </div>
 
@@ -121,7 +121,7 @@ export default function BrandEventDetailsPage() {
                                     <img src={sub.image} className="w-full h-full object-cover" alt="Submission" />
                                     <div className="absolute top-3 right-3">
                                         <span className={cn(
-                                            "px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider border backdrop-blur-md",
+                                            "px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border backdrop-blur-md",
                                             sub.status === "approved" ? "bg-green-500/20 border-green-500/30 text-white" :
                                                 sub.status === "rejected" ? "bg-red-500/20 border-red-500/30 text-white" :
                                                     "bg-black/40 border-white/20 text-white"

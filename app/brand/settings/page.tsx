@@ -6,7 +6,7 @@ export default function BrandSettingsPage() {
     return (
         <div className="max-w-4xl mx-auto space-y-8 pb-32 md:pb-12">
             <header>
-                <h1 className="text-3xl font-black text-foreground tracking-tight mb-1">Settings</h1>
+                <h1 className="text-3xl font-bold text-foreground tracking-tight mb-1">Settings</h1>
                 <p className="text-muted-foreground">Manage your brand profile and security.</p>
             </header>
 
@@ -105,7 +105,7 @@ export default function BrandSettingsPage() {
                         </div>
                     </section>
 
-                    <button className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-black uppercase tracking-widest hover:opacity-90 transition-opacity shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+                    <button className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-bold uppercase tracking-widest hover:opacity-90 transition-opacity shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
                         <Save className="w-4 h-4" />
                         Save Changes
                     </button>
