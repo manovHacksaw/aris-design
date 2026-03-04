@@ -16,7 +16,10 @@ export const ipfsCacheHeaders = (_req: Request, res: Response, next: NextFunctio
  * These can change, so we use shorter cache times
  */
 export const apiCacheHeaders = (req: Request, res: Response, next: NextFunction) => {
-  // If request is authenticated, don't cache publicly
+  // Set Vary header so cache is indexed by Authorization header
+  res.set('Vary', 'Authorization');
+
+  // Check for Authorization header
   const hasAuth = req.headers.authorization;
 
   if (hasAuth) {

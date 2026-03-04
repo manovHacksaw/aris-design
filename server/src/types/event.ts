@@ -74,6 +74,12 @@ export interface CreateEventRequest {
   samples?: string[];
   preferredGender?: string;
   ageGroup?: string;
+  tagline?: string;
+  participantInstructions?: string;
+  submissionGuidelines?: string;
+  moderationRules?: string;
+  hashtags?: string[];
+  regions?: string[];
   proposals?: Array<{
     type: 'IMAGE' | 'TEXT';
     title: string;

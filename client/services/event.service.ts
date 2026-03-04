@@ -115,6 +115,12 @@ export interface CreateEventRequest {
     }>;
     preferredGender?: string;
     ageGroup?: string;
+    tagline?: string;
+    participantInstructions?: string;
+    submissionGuidelines?: string;
+    moderationRules?: string;
+    hashtags?: string[];
+    regions?: string[];
     onChainEventId?: string;
     poolTransactionHash?: string;
     blockchainStatus?: string;
@@ -204,8 +210,8 @@ export async function getEvents(filters?: EventFilters): Promise<EventListRespon
     return apiRequest<EventListResponse>(queryString ? `/events?${queryString}` : '/events');
 }
 
-export async function getEventById(id: string): Promise<Event> {
-    const response = await apiRequest<EventResponse>(`/events/${id}`);
+export async function getEventById(id: string, noCache?: boolean): Promise<Event> {
+    const response = await apiRequest<EventResponse>(`/events/${id}`, { noCache });
     if (!response.success || !response.event) {
         throw new Error(response.error || 'Event not found');
     }
@@ -250,6 +256,17 @@ export async function updateEventStatus(id: string, status: EventStatus): Promis
     });
     if (!response.success || !response.event) {
         throw new Error(response.error || 'Failed to update event status');
+    }
+    return response.event;
+}
+
+export async function updateBlockchainStatus(id: string, txHash: string, onChainEventId: string): Promise<Event> {
+    const response = await apiRequest<EventResponse>(`/events/${id}/blockchain`, {
+        method: 'PATCH',
+        body: JSON.stringify({ txHash, onChainEventId }),
+    });
+    if (!response.success || !response.event) {
+        throw new Error(response.error || 'Failed to update blockchain status');
     }
     return response.event;
 }

@@ -13,29 +13,30 @@ export class ApiError extends Error {
   }
 }
 
-export function getAuthToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("authToken");
+// Global reference for Privy token getter so apiRequest doesn't need it explicitly passed every time
+let privyTokenGetter: (() => Promise<string | null>) | null = null;
+
+export function setPrivyTokenGetter(getter: () => Promise<string | null>) {
+  privyTokenGetter = getter;
 }
 
-export function setAuthToken(token: string): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem("authToken", token);
-}
-
-export function removeAuthToken(): void {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem("authToken");
+export async function getAuthToken(): Promise<string | null> {
+  if (privyTokenGetter) {
+    return await privyTokenGetter();
+  }
+  return null;
 }
 
 export async function apiRequest<T>(
   endpoint: string,
-  options: RequestInit = {},
+  options: RequestInit & { noCache?: boolean } = {},
   timeout = 30000
 ): Promise<T> {
-  const token = getAuthToken();
+  const token = await getAuthToken();
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
+
+  const { noCache, ...fetchOptions } = options;
 
   try {
     const headers = new Headers(options.headers);
@@ -47,9 +48,10 @@ export async function apiRequest<T>(
     }
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
+      ...fetchOptions,
       headers,
       signal: controller.signal,
+      cache: noCache ? 'no-store' : undefined,
     });
 
     clearTimeout(id);
@@ -71,22 +73,22 @@ export async function apiRequest<T>(
   }
 }
 
-/** Authenticate with Privy access token and get a backend JWT */
+/** Authenticate with Privy access token and fetch user object */
 export async function authenticateWithPrivy(
   privyToken: string,
   walletAddress?: string,
   email?: string,
-  avatarUrl?: string
+  avatarUrl?: string,
+  eoaAddress?: string
 ): Promise<{ token: string; user: any }> {
   const data = await apiRequest<{ success: boolean; token: string; user: any }>(
     "/auth/privy-login",
     {
       method: "POST",
-      body: JSON.stringify({ privyToken, walletAddress, email, avatarUrl }),
+      body: JSON.stringify({ privyToken, walletAddress, eoaAddress, email, avatarUrl }),
     }
   );
-  if (data.token) setAuthToken(data.token);
-  return { token: data.token, user: data.user };
+  return { token: privyToken, user: data.user };
 }
 
 /** Invalidate backend session */
@@ -94,8 +96,6 @@ export async function logout(): Promise<void> {
   try {
     await apiRequest("/auth/logout", { method: "POST" }, 5000);
   } catch {
-    // always clear local token even if request fails
-  } finally {
-    removeAuthToken();
+    // Backend logout best effort
   }
 }

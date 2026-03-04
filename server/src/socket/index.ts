@@ -1,9 +1,14 @@
 import { Server as HTTPServer } from 'http';
 import { Server, Socket } from 'socket.io';
-import { verifyToken } from '../utils/jwt';
+import { PrivyClient } from '@privy-io/server-auth';
 import { prisma } from '../lib/prisma';
 import { PresenceService } from '../services/presenceService';
 import { AnalyticsService } from '../services/analyticsService';
+
+const privy = new PrivyClient(
+    process.env.PRIVY_APP_ID || '',
+    process.env.PRIVY_APP_SECRET || ''
+);
 
 /**
  * Extended Socket interface with user data
@@ -47,43 +52,29 @@ const authenticateSocket = async (socket: AuthenticatedSocket, next: (err?: Erro
             return next(new Error('Authentication token required'));
         }
 
-        // Verify JWT token
-        const payload = verifyToken(token);
-        if (!payload) {
+        // Verify Privy access token (matches HTTP authenticateJWT middleware)
+        let verifiedClaims;
+        try {
+            verifiedClaims = await privy.verifyAuthToken(token);
+        } catch {
             return next(new Error('Invalid or expired token'));
         }
 
-        // Verify user exists and session is active
         const user = await prisma.user.findUnique({
-            where: { id: payload.userId },
+            where: { privyId: verifiedClaims.userId },
+            select: { id: true, walletAddress: true, email: true },
         });
 
         if (!user) {
             return next(new Error('User not found'));
         }
 
-        const session = await prisma.userSession.findUnique({
-            where: { id: payload.sessionId },
-        });
-
-        if (!session || !session.isActive) {
-            return next(new Error('Session expired or invalid'));
-        }
-
-        if (new Date() > session.expiredAt) {
-            await prisma.userSession.update({
-                where: { id: session.id },
-                data: { isActive: false },
-            });
-            return next(new Error('Session expired'));
-        }
-
         // Attach user info to socket
         socket.data.user = {
             id: user.id,
             address: user.walletAddress,
-            email: user.email,
-            sessionId: payload.sessionId,
+            email: user.email || '',
+            sessionId: '',
         };
 
         next();

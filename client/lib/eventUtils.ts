@@ -70,3 +70,15 @@ export function formatCount(n: number): string {
     if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
     return n.toString();
 }
+
+/**
+ * Calculates sum of all reward pools for an event
+ */
+export function calculateTotalPool(event: any): number {
+    const baseReward = event.baseReward || 0;
+    const capacity = event.capacity || 0;
+    const topReward = event.topReward || 0;
+    const leaderboardPool = event.leaderboardPool || 0;
+
+    return (baseReward * capacity) + topReward + leaderboardPool;
+}

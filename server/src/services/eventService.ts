@@ -55,21 +55,20 @@ export class EventService {
       if (data.postingEnd === undefined && data.title !== undefined) {
         errors.push('postingEnd is required for post_and_vote events');
       }
+      if (data.leaderboardPool === undefined && data.title !== undefined) {
+        errors.push('leaderboardPool is required for post_and_vote events');
+      } else if (data.leaderboardPool !== undefined && (data.leaderboardPool as any) < 0) {
+        errors.push('leaderboardPool cannot be negative');
+      }
     }
 
     // Samples validation for post_and_vote
     if (eventType === 'post_and_vote') {
-      if (!data.samples || data.samples.length === 0) {
-        // errors.push('At least 1 sample image is required for post_and_vote events');
-        // Commenting out strict requirement for now to allow draft saving/flexibility if needed, 
-        // or user requirement says "Minimum 1 sample post is to be made". 
-        // Let's enforce it if title is present (creation attempt)
-        if (data.title) {
-          errors.push('At least 1 sample image is required for Post and Vote events');
-        }
+      if (data.title !== undefined && (!data.samples || data.samples.length === 0)) {
+        errors.push('At least one sample image is required for post_and_vote events');
       }
-      if (data.samples && data.samples.length > 4) {
-        errors.push('Maximum 4 sample images allowed');
+      if (data.samples && data.samples.length > 10) {
+        errors.push('Maximum 10 sample images allowed');
       }
 
       // Validate sample CIDs
@@ -305,11 +304,16 @@ export class EventService {
     if (data.baseReward && data.baseReward < 0) throw new Error("Base reward cannot be negative");
     if (data.topReward && data.topReward < 0) throw new Error("Top reward cannot be negative");
 
-    // Enforce 1x reward pool calculation
-    if (data.capacity && data.baseReward && data.topReward) {
-      const minTopReward = data.capacity * data.baseReward;
+    // Enforce reward pool minimums:
+    // All event types: topReward >= 1× (baseReward × capacity)
+    if (data.capacity && data.baseReward && data.topReward !== undefined) {
+      const basePool = data.capacity * data.baseReward;
+      const multiplier = 1;
+      const minTopReward = basePool * multiplier;
       if (data.topReward < minTopReward) {
-        throw new Error(`Top reward must be at least 1x the base reward pool (${minTopReward} USDC)`);
+        throw new Error(
+          `Top reward must be at least ${multiplier}× the base reward pool ($${minTopReward.toFixed(2)} USDC)`
+        );
       }
     }
 
@@ -380,6 +384,13 @@ export class EventService {
           // Audience targeting fields
           preferredGender: data.preferredGender || 'All',
           ageGroup: data.ageGroup || 'All Ages',
+          // Content & campaign fields
+          tagline: data.tagline || null,
+          participantInstructions: data.participantInstructions || null,
+          submissionGuidelines: data.submissionGuidelines || null,
+          moderationRules: data.moderationRules || null,
+          hashtags: data.hashtags || [],
+          regions: data.regions || [],
           // Web3 Fields
           blockchainStatus: data.blockchainStatus || 'PENDING_BLOCKCHAIN',
         },
@@ -1116,9 +1127,17 @@ export class EventService {
       throw new Error('Event must have title, type, start time, and end time before publishing');
     }
 
-    // 5. For post_and_vote events, require posting times
-    if (event.eventType === 'post_and_vote' && (!event.postingStart || !event.postingEnd)) {
-      throw new Error('Post and vote events must have posting start and end times before publishing');
+    // 5. For post_and_vote events, require posting times, leaderboard pool, and samples
+    if (event.eventType === 'post_and_vote') {
+      if (!event.postingStart || !event.postingEnd) {
+        throw new Error('Post and vote events must have posting start and end times before publishing');
+      }
+      if (event.leaderboardPool === null || event.leaderboardPool === undefined) {
+        throw new Error('Post and vote events must have a leaderboard pool before publishing');
+      }
+      if (!event.samples || event.samples.length === 0) {
+        throw new Error('Post and vote events must have at least one sample image before publishing');
+      }
     }
 
     // 6. For vote_only events, require at least 2 proposals

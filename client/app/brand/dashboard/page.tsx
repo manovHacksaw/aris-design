@@ -10,12 +10,13 @@ import type { Event } from "@/services/event.service";
 import { useNotifications } from "@/context/NotificationContext";
 import { useUser } from "@/context/UserContext";
 import { useAuth } from "@/context/AuthContext";
+import { calculateTotalPool } from "@/lib/eventUtils";
 
 const CAMPAIGN_STATUS_STYLES: Record<string, string> = {
-    posting:   "bg-green-500/10 text-green-500 border-green-500/20",
-    voting:    "bg-purple-500/10 text-purple-500 border-purple-500/20",
+    posting: "bg-green-500/10 text-green-500 border-green-500/20",
+    voting: "bg-purple-500/10 text-purple-500 border-purple-500/20",
     scheduled: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-    draft:     "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+    draft: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
     completed: "bg-muted text-muted-foreground border-border",
 };
 
@@ -119,7 +120,7 @@ export default function BrandDashboard() {
                                                             {CAMPAIGN_STATUS_LABELS[event.status] ?? event.status}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4 font-mono text-muted-foreground font-bold">{formatPool(event.leaderboardPool)}</td>
+                                                    <td className="px-6 py-4 font-mono text-muted-foreground font-bold">{formatPool(calculateTotalPool(event))}</td>
                                                     <td className="px-6 py-4 text-right">
                                                         <div className="flex items-center justify-end gap-2">
                                                             <span className="text-xs font-bold">{pct}%</span>
@@ -151,7 +152,7 @@ export default function BrandDashboard() {
                                                     </span>
                                                 </div>
                                                 <h4 className="font-bold text-sm text-foreground mb-1">{event.title}</h4>
-                                                <p className="text-xs text-muted-foreground capitalize">{event.eventType} • {formatPool(event.leaderboardPool)}</p>
+                                                <p className="text-xs text-muted-foreground capitalize">{event.eventType} • {formatPool(calculateTotalPool(event))}</p>
                                             </div>
                                             <div className="text-right">
                                                 <div className="w-12 h-12 rounded-full border-4 border-secondary flex items-center justify-center relative">

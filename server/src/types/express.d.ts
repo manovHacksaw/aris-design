@@ -7,12 +7,13 @@ declare global {
         id: string;
         email: string;
         address: string;
-        sessionId: string;
+        sessionId?: string;
         role?: UserRole;
         walletAddress?: string;
+        privyId?: string;
       };
     }
   }
 }
 
-export {};
+export { };

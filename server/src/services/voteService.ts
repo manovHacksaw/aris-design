@@ -77,32 +77,27 @@ export class VoteService {
             throw new Error('You cannot vote for your own submission');
         }
 
-        // 7. Business Rule: Enforce single vote per user
-        const userVoteCount = await prisma.vote.count({
-            where: {
-                eventId,
-                userId,
-            },
-        });
-
-        if (userVoteCount >= 1) {
-            throw new Error('You have already voted in this event. Enforced single vote limit.');
-        }
-
-
-        // Capacity Check for Post and Vote events
-        if (event.capacity) {
-            const uniqueVoters = await prisma.vote.count({
-                where: { eventId }
-            });
-
-            if (uniqueVoters >= event.capacity) {
-                throw new Error('Event has reached its voting capacity');
-            }
-        }
-
         // 8. Create vote and update analytics/stats in transaction
         const { vote, shouldClose } = await prisma.$transaction(async (tx) => {
+            // Lock event row by updating its updatedAt timestamp to serialize votes
+            await tx.event.update({ where: { id: eventId }, data: { updatedAt: new Date() }, select: { id: true } });
+
+            // 7. Atomic check: enforce single vote per user per event
+            const userVoteCount = await tx.vote.count({
+                where: { eventId, userId },
+            });
+            if (userVoteCount >= 1) {
+                throw new Error('You have already voted in this event. Enforced single vote limit.');
+            }
+
+            // Atomic capacity check
+            if (event.capacity) {
+                const uniqueVoters = await tx.vote.count({ where: { eventId } });
+                if (uniqueVoters >= event.capacity) {
+                    throw new Error('Event has reached its voting capacity');
+                }
+            }
+
             // Check for existing vote (idempotency/prevention)
             const existingVote = await tx.vote.findUnique({
                 where: {
@@ -283,33 +278,27 @@ export class VoteService {
             throw new Error('You can only vote for 1 proposal.');
         }
 
-        // 8. Business Rule: Check if user has already voted in this event (vote_only events allow one-time voting)
-        const existingVotes = await prisma.vote.findMany({
-            where: {
-                eventId,
-                userId,
-            },
-        });
-
-        if (existingVotes.length > 0) {
-            throw new Error('You have already voted in this event. Voting is only allowed once per event.');
-        }
-
-        // Capacity Check for Vote Only events
-        if (event.capacity) {
-            const uniqueVoters = await prisma.vote.count({
-                where: { eventId }
-            });
-
-            if (uniqueVoters >= event.capacity) {
-                throw new Error('Event has reached its voting capacity');
-            }
-        }
-
         // 9. Create votes in transaction
         const result = await prisma.$transaction(async (tx) => {
+            // Lock event row by updating its updatedAt timestamp to serialize votes
+            await tx.event.update({ where: { id: eventId }, data: { updatedAt: new Date() }, select: { id: true } });
+
             const createdVotes: Vote[] = [];
             let shouldClose = false;
+
+            // 8. Atomic: enforce single vote per user per event
+            const existingVoteCount = await tx.vote.count({ where: { eventId, userId } });
+            if (existingVoteCount > 0) {
+                throw new Error('You have already voted in this event. Voting is only allowed once per event.');
+            }
+
+            // Atomic capacity check
+            if (event.capacity) {
+                const uniqueVoters = await tx.vote.count({ where: { eventId } });
+                if (uniqueVoters >= event.capacity) {
+                    throw new Error('Event has reached its voting capacity');
+                }
+            }
 
             for (const proposalId of proposalIds) {
                 // Check for existing vote
