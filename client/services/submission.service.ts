@@ -87,9 +87,9 @@ export async function createSubmission(data: CreateSubmissionRequest): Promise<S
         {
             method: 'POST',
             body: JSON.stringify({
-                content: data.content,
                 imageCid: data.imageCid,
                 videoCid: data.videoCid,
+                caption: data.caption ?? data.content,
             }),
         }
     );

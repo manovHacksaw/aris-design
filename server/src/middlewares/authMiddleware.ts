@@ -1,6 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../lib/prisma';
-import { verifyToken, extractTokenFromHeader } from '../utils/jwt';
+import { PrivyClient } from '@privy-io/server-auth';
+
+// Initialize Privy Client
+const privy = new PrivyClient(
+  process.env.PRIVY_APP_ID || '',
+  process.env.PRIVY_APP_SECRET || ''
+);
 
 /**
  * Extended Express Request with authenticated user
@@ -10,17 +16,16 @@ export interface AuthenticatedRequest extends Request {
     id: string;
     address: string;
     email: string;
-    sessionId: string;
+    sessionId?: string; // Optional now, since Privy JWT is stateless
     role?: import('@prisma/client').UserRole;
     walletAddress?: string;
+    privyId?: string;
   };
 }
 
 /**
- * JWT-based authentication middleware for protected routes
- * Expects JWT token in Authorization header: Bearer <token>
- * 
- * This is the recommended middleware for protected routes after initial Web3 authentication
+ * Privy JWT-based authentication middleware for protected routes
+ * Expects Privy JWT token in Authorization header: Bearer <token>
  */
 export const authenticateJWT = async (
   req: Request,
@@ -29,84 +34,61 @@ export const authenticateJWT = async (
 ): Promise<void> => {
   const authReq = req as AuthenticatedRequest;
   try {
-    // Extract token from Authorization header
-    const token = extractTokenFromHeader(authReq.headers.authorization);
-
-    if (!token) {
+    const authHeader = authReq.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
       res.status(401).json({
         error: 'Authentication required',
-        message: 'Please provide a valid JWT token in the Authorization header (Bearer <token>)'
+        message: 'Please provide a valid Privy JWT token in the Authorization header (Bearer <token>)'
       });
       return;
     }
 
-    // Verify token
-    const payload = verifyToken(token);
+    const token = authHeader.split(' ')[1];
 
-    if (!payload) {
+    // Verify token with Privy
+    let verifiedClaims;
+    try {
+      verifiedClaims = await privy.verifyAuthToken(token);
+    } catch (e) {
       res.status(401).json({
         error: 'Invalid or expired token',
-        message: 'Please login again to get a new token'
+        message: 'Please login again via Privy'
       });
       return;
     }
 
-    // Verify user still exists in database
+    const privyId = verifiedClaims.userId;
+
+    // Verify user exists in database
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-      select: { id: true, walletAddress: true, email: true, role: true },
+      where: { privyId },
+      select: { id: true, walletAddress: true, email: true, role: true, privyId: true },
     });
 
     if (!user) {
-      res.status(404).json({ error: 'User not found' });
-      return;
-    }
-
-    // Verify session is active
-    const session = await prisma.userSession.findUnique({
-      where: { id: payload.sessionId },
-    });
-
-    if (!session || !session.isActive) {
-      res.status(401).json({
-        error: 'Session expired or invalid',
-        message: 'Please login again'
-      });
-      return;
-    }
-
-    // Check if session has expired
-    if (new Date() > session.expiredAt) {
-      await prisma.userSession.update({
-        where: { id: session.id },
-        data: { isActive: false },
-      });
-      res.status(401).json({
-        error: 'Session expired',
-        message: 'Please login again'
-      });
+      res.status(404).json({ error: 'User not found in database. Please complete the login flow.' });
       return;
     }
 
     // Attach user to request
     authReq.user = {
       id: user.id,
-      address: user.walletAddress || payload.address,
+      address: user.walletAddress || '',
       email: user.email,
-      sessionId: payload.sessionId,
       role: user.role,
       walletAddress: user.walletAddress || undefined,
+      privyId: user.privyId || undefined,
     };
 
     next();
   } catch (error) {
-    console.error('JWT authentication error:', error);
+    console.error('Privy authentication error:', error);
     res.status(500).json({ error: 'Authentication failed' });
   }
 };
 
 /**
- * Optional JWT authentication middleware
+ * Optional Privy JWT authentication middleware
  * Does not return 401 if authentication fails, just leaves req.user undefined
  */
 export const authenticateOptional = async (
@@ -116,23 +98,27 @@ export const authenticateOptional = async (
 ): Promise<void> => {
   const authReq = req as AuthenticatedRequest;
   try {
-    const token = extractTokenFromHeader(authReq.headers.authorization);
-
-    if (!token) {
+    const authHeader = authReq.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
       next();
       return;
     }
 
-    const payload = verifyToken(token);
+    const token = authHeader.split(' ')[1];
 
-    if (!payload) {
+    let verifiedClaims;
+    try {
+      verifiedClaims = await privy.verifyAuthToken(token);
+    } catch (e) {
       next();
       return;
     }
+
+    const privyId = verifiedClaims.userId;
 
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-      select: { id: true, walletAddress: true, email: true, role: true },
+      where: { privyId },
+      select: { id: true, walletAddress: true, email: true, role: true, privyId: true },
     });
 
     if (!user) {
@@ -140,40 +126,18 @@ export const authenticateOptional = async (
       return;
     }
 
-    const session = await prisma.userSession.findUnique({
-      where: { id: payload.sessionId },
-    });
-
-    if (!session || !session.isActive) {
-      next();
-      return;
-    }
-
-    if (new Date() > session.expiredAt) {
-      // We can optionally deactivate it here, but for "optional" auth we might just ignore it
-      // or we can deactivate it to be helpful.
-      // Let's deactivate it to keep DB clean.
-      await prisma.userSession.update({
-        where: { id: session.id },
-        data: { isActive: false },
-      });
-      next();
-      return;
-    }
-
     authReq.user = {
       id: user.id,
-      address: user.walletAddress || payload.address,
+      address: user.walletAddress || '',
       email: user.email,
-      sessionId: payload.sessionId,
       role: user.role,
       walletAddress: user.walletAddress || undefined,
+      privyId: user.privyId || undefined,
     };
 
     next();
   } catch (error) {
-    // Just proceed without auth on error
-    console.error('Optional JWT auth error:', error);
+    console.error('Optional Privy auth error:', error);
     next();
   }
 };

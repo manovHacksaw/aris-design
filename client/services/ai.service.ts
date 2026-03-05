@@ -37,6 +37,23 @@ export async function refineAiPrompt(prompt: string): Promise<AiResponse> {
     }
 }
 
+export async function generateTagline(title: string, description?: string): Promise<{ success: boolean; tagline?: string; error?: string }> {
+    try {
+        return await apiRequest<{ success: boolean; tagline: string }>(
+            '/ai/generate-tagline',
+            {
+                method: 'POST',
+                body: JSON.stringify({ title, description }),
+            }
+        );
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error?.message || 'Failed to generate tagline',
+        };
+    }
+}
+
 export async function generateAiProposals(params: {
     title: string;
     description: string;

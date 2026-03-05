@@ -18,7 +18,7 @@ import {
   updateProfile as updateProfileAPI,
   updateWalletAddress as updateWalletAPI,
 } from "@/services/user.service";
-import { authenticateWithPrivy, removeAuthToken, getAuthToken } from "@/services/api";
+import { authenticateWithPrivy, setPrivyTokenGetter, getAuthToken } from "@/services/api";
 import type { User, UserStats, UpdateUserData } from "@/types/user";
 
 type UserContextType = {
@@ -35,7 +35,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const { getAccessToken, user: privyUser, authenticated, ready } = usePrivy();
-  const { address, isConnected, isInitialized, userInfo } = useWallet();
+  const { address, eoaAddress, isConnected, isInitialized, userInfo } = useWallet();
   const pathname = usePathname();
 
   const [user, setUser] = useState<User | null>(null);
@@ -72,7 +72,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
         privyToken,
         address ?? undefined,
         email,
-        googlePicture
+        googlePicture,
+        eoaAddress ?? undefined
       );
 
       setUser(authUser);
@@ -84,20 +85,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setStats(s);
       } catch {
         // stats failure is non-critical
-      }
-
-      // Sync smart account address if it changed
-      if (
-        address &&
-        authUser &&
-        authUser.walletAddress?.toLowerCase() !== address.toLowerCase()
-      ) {
-        try {
-          await updateWalletAPI(address);
-          setUser((prev) => prev ? { ...prev, walletAddress: address } : prev);
-        } catch {
-          // non-critical
-        }
       }
     } catch (err) {
       console.error("UserContext: sync failed", err);
@@ -141,7 +128,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setUser(null);
         setStats(null);
         setSyncedAddress(null);
-        removeAuthToken();
       }
       return;
     }
@@ -160,18 +146,24 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [isConnected, authenticated, isInitialized, ready, address, syncedAddress, pathname]);
 
+  // Initialize the singleton Privy token getter needed across global API calls
+  useEffect(() => {
+    setPrivyTokenGetter(getAccessToken);
+  }, [getAccessToken]);
+
   // On mount, if there's an existing token, try to load user silently
   useEffect(() => {
-    const token = getAuthToken();
-    if (token && !user && !isLoading) {
-      getCurrentUser()
-        .then((u) => {
-          setUser(u);
-          return getUserStats().catch(() => null);
-        })
-        .then((s) => { if (s) setStats(s); })
-        .catch(() => removeAuthToken());
-    }
+    getAuthToken().then((token) => {
+      if (token && !user && !isLoading) {
+        getCurrentUser()
+          .then((u) => {
+            setUser(u);
+            return getUserStats().catch(() => null);
+          })
+          .then((s) => { if (s) setStats(s); })
+          .catch(() => { });
+      }
+    });
   }, []);
 
   return (

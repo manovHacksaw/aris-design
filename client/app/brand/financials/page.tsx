@@ -2,6 +2,22 @@
 
 import { Wallet, ArrowDownLeft, ArrowUpRight, Copy, CreditCard, History } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
+import { useReadContract } from "wagmi";
+import { USDC_ADDRESS } from "@/lib/blockchain/contracts";
+import { formatUnits } from "viem";
+import { useState } from "react";
+
+// ERC20 ABI for balance mapping
+const erc20Abi = [
+    {
+        name: "balanceOf",
+        type: "function",
+        stateMutability: "view",
+        inputs: [{ name: "account", type: "address" }],
+        outputs: [{ name: "", type: "uint256" }],
+    },
+] as const;
 
 // Mock Data
 const transactions = [
@@ -12,6 +28,37 @@ const transactions = [
 ];
 
 export default function BrandFinancialsPage() {
+    const { smartAccountAddress } = useAuth();
+    const [copied, setCopied] = useState(false);
+
+    const { data: usdcBalanceRaw } = useReadContract({
+        address: USDC_ADDRESS as `0x${string}`,
+        abi: erc20Abi,
+        functionName: "balanceOf",
+        args: smartAccountAddress ? [smartAccountAddress as `0x${string}`] : undefined,
+        query: {
+            enabled: !!smartAccountAddress,
+            refetchInterval: 10000 // Refetch every 10 seconds
+        }
+    });
+
+    const displayBalance = usdcBalanceRaw !== undefined
+        ? Number(formatUnits(usdcBalanceRaw, 6)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        : "0.00";
+
+    const truncateAddress = (address: string) => {
+        if (!address) return "Not Connected";
+        return `${address.slice(0, 6)}...${address.slice(-4)}`;
+    };
+
+    const handleCopy = () => {
+        if (smartAccountAddress) {
+            navigator.clipboard.writeText(smartAccountAddress);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
+
     return (
         <div className="space-y-8 pb-20 md:pb-0">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -36,7 +83,7 @@ export default function BrandFinancialsPage() {
                         <div className="flex justify-between items-start mb-8">
                             <div>
                                 <p className="text-white/60 text-sm font-bold uppercase tracking-widest mb-1">Total Balance</p>
-                                <h2 className="text-4xl md:text-5xl font-black tracking-tight">$12,450.00</h2>
+                                <h2 className="text-4xl md:text-5xl font-black tracking-tight">${displayBalance}</h2>
                             </div>
                             <div className="p-3 bg-white/10 rounded-2xl border border-white/10">
                                 <Wallet className="w-6 h-6 text-white" />
@@ -46,24 +93,26 @@ export default function BrandFinancialsPage() {
                         <div className="flex gap-4">
                             <div className="flex-1 bg-white/5 border border-white/10 rounded-xl p-4">
                                 <p className="text-xs text-white/50 font-bold uppercase tracking-wider mb-1">Reserved</p>
-                                <p className="text-xl font-bold">$4,250.00</p>
+                                <p className="text-xl font-bold">$0.00</p>
                             </div>
                             <div className="flex-1 bg-white/5 border border-white/10 rounded-xl p-4">
                                 <p className="text-xs text-white/50 font-bold uppercase tracking-wider mb-1">Available</p>
-                                <p className="text-xl font-bold text-green-400">$8,200.00</p>
+                                <p className="text-xl font-bold text-green-400">${displayBalance}</p>
                             </div>
                         </div>
 
                         <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <span className="text-sm font-mono text-white/60">0x71C...9A23</span>
-                                <button className="p-1.5 hover:bg-white/10 rounded-lg transition-colors">
-                                    <Copy className="w-3.5 h-3.5 text-white/60" />
+                                <span className="text-sm font-mono text-white/60">
+                                    {truncateAddress(smartAccountAddress || '')}
+                                </span>
+                                <button className="p-1.5 hover:bg-white/10 rounded-lg transition-colors cursor-pointer" onClick={handleCopy}>
+                                    <Copy className={cn("w-3.5 h-3.5 transition-colors", copied ? "text-green-400" : "text-white/60")} />
                                 </button>
                             </div>
                             <div className="flex items-center gap-2 text-xs font-bold text-white/40 uppercase tracking-widest">
-                                <div className="w-2 h-2 bg-green-500 rounded-full" />
-                                Solana Network
+                                <div className="w-2 h-2 bg-purple-500 rounded-full" />
+                                Polygon Amoy
                             </div>
                         </div>
                     </div>

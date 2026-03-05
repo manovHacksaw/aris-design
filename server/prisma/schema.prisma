@@ -25,7 +25,8 @@ model User {
   preferredBrands         String[]  @default([])
   preferredCategories     String[]  @default([])
   xp                      Int       @default(0)
-  walletAddress           String?   @unique
+  walletAddress           String?   @unique  // ERC-4337 smart account address
+  eoaAddress              String?            // Privy embedded wallet EOA (for reference)
   privyId                 String?   @unique
   isOnboarded             Boolean   @default(false)
   socialLinks             Json?
@@ -160,6 +161,14 @@ model Event {
   samples          String[]
   preferredGender  String?   @default("All")
   ageGroup         String?   @default("All Ages")
+
+  // Content & campaign fields
+  tagline                 String?
+  participantInstructions String?
+  submissionGuidelines    String?
+  moderationRules         String?
+  hashtags                String[]
+  regions                 String[]
 
   // Web3 blockchain fields
   onChainEventId   String? // bytes32 hash of event ID

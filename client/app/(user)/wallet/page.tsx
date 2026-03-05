@@ -1,16 +1,23 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import SidebarLayout from "@/components/home/SidebarLayout";
 import {
   Copy, ArrowUpRight, ArrowDownLeft, Clock,
   History, AlertCircle, RefreshCw, ExternalLink, Wallet,
-  CheckCircle2, Shield, KeyRound, Zap, Info,
+  CheckCircle2, Shield, KeyRound, Zap, Info, Gift, Trophy,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { cn } from "@/lib/utils";
 import { useWallet } from "@/context/WalletContext";
-import { formatUnits } from "viem";
+import { formatUnits } from "@/lib/blockchain/client";
+import {
+  getClaimableRewards,
+  ClaimableRewardsResponse,
+  CLAIM_TYPE_LABEL,
+} from "@/services/reward.service";
+import ClaimModal from "@/components/rewards/ClaimModal";
 
 const EXPLORER_BASE = "https://amoy.polygonscan.com";
 const CHAIN_NAME = "Polygon Amoy";
@@ -44,6 +51,14 @@ export default function WalletPage() {
   const [polBalance, setPolBalance] = useState<string>("0.0000");
   const [isFetchingMatic, setIsFetchingMatic] = useState(false);
 
+  // Rewards state
+  const [rewards, setRewards] = useState<ClaimableRewardsResponse | null>(null);
+  const [rewardsLoading, setRewardsLoading] = useState(false);
+  const [claimModalOpen, setClaimModalOpen] = useState(false);
+  const [allClaimed, setAllClaimed] = useState(false);
+  const [displayUsdc, setDisplayUsdc] = useState<string>("0.00");
+  const countUpRef = useRef<number | null>(null);
+
   const fetchMaticBalance = useCallback(async () => {
     if (!address || !publicClient) return;
     setIsFetchingMatic(true);
@@ -57,11 +72,63 @@ export default function WalletPage() {
     }
   }, [address, publicClient]);
 
+  const fetchRewards = useCallback(async () => {
+    setRewardsLoading(true);
+    try {
+      const data = await getClaimableRewards();
+      setRewards(data);
+      if (data.totalClaimableUsdc === 0 && !allClaimed) {
+        // No claimable = either not earned yet or all claimed
+      }
+    } catch {
+      // Silently fail — rewards section just won't show
+    } finally {
+      setRewardsLoading(false);
+    }
+  }, [allClaimed]);
+
+  /** Animate USDC display value from `from` to `to` over ~1200ms */
+  function animateCountUp(from: number, to: number) {
+    const duration = 1200;
+    const start = performance.now();
+    if (countUpRef.current) cancelAnimationFrame(countUpRef.current);
+    const tick = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplayUsdc((from + (to - from) * eased).toFixed(2));
+      if (progress < 1) countUpRef.current = requestAnimationFrame(tick);
+    };
+    countUpRef.current = requestAnimationFrame(tick);
+  }
+
+  const handleClaimSuccess = useCallback(
+    async (claimedUsdc: number) => {
+      setClaimModalOpen(false);
+      setAllClaimed(true);
+
+      // Count-up animation
+      const prev = parseFloat(usdcBalance) || 0;
+      animateCountUp(prev, prev + claimedUsdc);
+
+      // Confetti
+      try {
+        const confetti = (await import("canvas-confetti")).default;
+        confetti({ particleCount: 120, spread: 80, origin: { y: 0.55 }, colors: ["#3B82F6", "#10B981", "#F59E0B"] });
+      } catch {}
+
+      // Refresh real balance after animation settles
+      setTimeout(() => refreshBalance(), 1400);
+    },
+    [usdcBalance, refreshBalance]
+  );
+
   useEffect(() => {
     if (isConnected && address) {
       fetchMaticBalance();
       refreshBalance();
+      fetchRewards();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address, isConnected]);
 
   const handleCopy = (val: string) => {
@@ -71,7 +138,7 @@ export default function WalletPage() {
   };
 
   const handleRefresh = async () => {
-    await Promise.all([fetchMaticBalance(), refreshBalance()]);
+    await Promise.all([fetchMaticBalance(), refreshBalance(), fetchRewards()]);
   };
 
   const isSmartAccount = !!(address && eoaAddress && address !== eoaAddress);
@@ -141,7 +208,9 @@ export default function WalletPage() {
                         <p className="text-foreground/40 font-bold mb-1 tracking-widest text-[10px] uppercase">USDC Balance</p>
                         <div className="flex items-baseline gap-2">
                           <span className="text-2xl font-bold text-foreground/80">
-                            {parseFloat(usdcBalance) > 0 ? usdcBalance : "0.00"}
+                            {allClaimed && displayUsdc !== "0.00"
+                              ? displayUsdc
+                              : parseFloat(usdcBalance) > 0 ? usdcBalance : "0.00"}
                           </span>
                           <span className="text-sm text-foreground/40 font-bold">USDC</span>
                         </div>
@@ -241,6 +310,84 @@ export default function WalletPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Claimable Rewards */}
+              {(rewardsLoading || (rewards && rewards.totalClaimableUsdc > 0) || allClaimed) && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+                      <Gift className="w-5 h-5 text-primary" />
+                      Claimable Rewards
+                    </h3>
+                    {rewards && rewards.totalClaimableUsdc > 0 && !allClaimed && (
+                      <span className="text-sm font-black text-primary">
+                        ${rewards.totalClaimableUsdc.toFixed(2)} USDC
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="bg-card border border-border rounded-3xl overflow-hidden shadow-sm">
+                    {rewardsLoading ? (
+                      <div className="flex items-center justify-center py-10">
+                        <RefreshCw className="w-5 h-5 animate-spin text-foreground/30" />
+                      </div>
+                    ) : allClaimed ? (
+                      <div className="flex items-center gap-4 p-6">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <CheckCircle2 className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-foreground">All rewards claimed</p>
+                          <p className="text-sm text-foreground/50 mt-0.5">Your USDC has been credited to your wallet.</p>
+                        </div>
+                      </div>
+                    ) : rewards && rewards.events.length > 0 ? (
+                      <div className="divide-y divide-border">
+                        {rewards.events.map((ev) => (
+                          <div key={ev.eventId} className="p-5 space-y-3">
+                            <div className="flex items-center gap-2">
+                              <Trophy className="w-3.5 h-3.5 text-foreground/40" />
+                              <p className="text-xs font-black text-foreground/60 uppercase tracking-widest truncate">
+                                {ev.eventTitle}
+                              </p>
+                              <span className="ml-auto text-xs font-bold text-primary shrink-0">
+                                ${ev.totalClaimableUsdc.toFixed(2)}
+                              </span>
+                            </div>
+                            <div className="space-y-1.5">
+                              {ev.claims.map((claim) => (
+                                <div key={claim.id} className="flex items-center justify-between">
+                                  <span className="text-xs text-foreground/50">
+                                    {CLAIM_TYPE_LABEL[claim.claimType]}
+                                    {claim.multiplier > 1 && (
+                                      <span className="ml-1 text-[10px] text-primary font-bold">×{claim.multiplier}</span>
+                                    )}
+                                  </span>
+                                  <span className="text-xs font-bold text-foreground">
+                                    ${claim.finalAmount.toFixed(2)}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+
+                        {/* Claim button */}
+                        <div className="p-5 pt-4 border-t border-border">
+                          <motion.button
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => setClaimModalOpen(true)}
+                            className="w-full py-3.5 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                          >
+                            <Gift className="w-4 h-4" />
+                            Claim ${rewards.totalClaimableUsdc.toFixed(2)} USDC
+                          </motion.button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              )}
 
               {/* Transaction History */}
               <div className="space-y-4">
@@ -536,6 +683,14 @@ export default function WalletPage() {
           </div>
         </main>
       </SidebarLayout>
+
+      {/* Claim Modal */}
+      <ClaimModal
+        open={claimModalOpen}
+        claimableUsdc={rewards?.totalClaimableUsdc ?? 0}
+        onClose={() => setClaimModalOpen(false)}
+        onSuccess={handleClaimSuccess}
+      />
     </div>
   );
 }

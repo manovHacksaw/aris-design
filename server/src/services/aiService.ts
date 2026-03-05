@@ -82,6 +82,23 @@ export class AiService {
     }
 
     /**
+     * Generate a short marketing tagline for an event
+     */
+    static async generateTagline(title: string, description: string = ''): Promise<string> {
+        try {
+            const model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+            const prompt = `Generate a short, punchy marketing tagline (maximum 12 words) for a brand event titled: "${title}". ${description ? `Event description: "${description}".` : ''} Return only the tagline text with no quotes, no punctuation at the end, and no extra explanation.`;
+
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            return response.text().trim().replace(/^["']|["']$/g, '');
+        } catch (error) {
+            console.error('Error generating tagline:', error);
+            throw new Error('Failed to generate tagline');
+        }
+    }
+
+    /**
      * Generate text proposals based on event details
      */
     static async generateProposals(title: string, description: string, category: string, count: number = 4): Promise<Array<{ title: string, content: string }>> {

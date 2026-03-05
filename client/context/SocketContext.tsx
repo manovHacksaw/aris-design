@@ -26,10 +26,10 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     const [isConnected, setIsConnected] = useState(false);
     const { user, isLoading } = useUser();
 
-    const connect = useCallback(() => {
+    const connect = useCallback(async () => {
         if (socket?.connected) return;
 
-        const token = getAuthToken();
+        const token = await getAuthToken();
         if (!token) return;
 
         const newSocket = io(SOCKET_URL, {

@@ -62,7 +62,10 @@ export function calculateRequiredUsdc(params: {
         leaderboardPool = params.leaderboardPoolUsdc || 0;
     }
 
-    return basePool + params.topPoolUsdc + platformFee + creatorPool + leaderboardPool;
+    const minTopPool = basePool * 2;
+    const effectiveTopPool = params.topPoolUsdc < minTopPool ? minTopPool : params.topPoolUsdc;
+
+    return basePool + effectiveTopPool + platformFee + creatorPool + leaderboardPool;
 }
 
 /**

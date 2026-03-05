@@ -197,7 +197,7 @@ export const searchEvents = async (req: AuthenticatedRequest, res: Response): Pr
 
         const where: any = {
             isDeleted: false,
-            blockchainStatus: 'ACTIVE', // Only show events confirmed on blockchain
+            blockchainStatus: { in: ['ACTIVE', 'PENDING', 'PENDING_BLOCKCHAIN', 'COMPLETED'] }, // Show confirmed, pending, and completed events
             title: { contains: searchTerm, mode: 'insensitive' },
             status: { in: ['posting', 'voting', 'completed'] },
         };
@@ -334,7 +334,7 @@ export const searchAll = async (req: AuthenticatedRequest, res: Response): Promi
         const events = await prisma.event.findMany({
             where: {
                 isDeleted: false,
-                blockchainStatus: 'ACTIVE', // Only show events confirmed on blockchain
+                blockchainStatus: { in: ['ACTIVE', 'PENDING', 'PENDING_BLOCKCHAIN', 'COMPLETED'] }, // Show confirmed, pending, and completed events
                 title: { contains: searchTerm, mode: 'insensitive' },
                 status: { in: ['posting', 'voting', 'completed'] },
             },

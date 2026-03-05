@@ -82,6 +82,33 @@ export const refinePrompt = async (req: Request, res: Response): Promise<Respons
     }
 };
 
+export const generateTagline = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const { title, description } = req.body;
+
+        if (!title) {
+            return res.status(400).json({
+                success: false,
+                error: 'Title is required for generating a tagline'
+            });
+        }
+
+        const tagline = await AiService.generateTagline(title, description);
+
+        return res.json({
+            success: true,
+            tagline
+        });
+    } catch (error: any) {
+        console.error('Error in AI generateTagline:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'AI Tagline Generation failed',
+            message: error.message
+        });
+    }
+};
+
 export const generateProposals = async (req: Request, res: Response): Promise<Response> => {
     try {
         const { title, description, category, count } = req.body;

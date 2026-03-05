@@ -6,50 +6,17 @@ import React, {
   useState,
   useEffect,
   useCallback,
-  useMemo,
   type ReactNode,
 } from "react";
-import {
-  createPublicClient,
-  http,
-  type Address,
-  type PublicClient,
-  custom,
-  createWalletClient,
-  type Hash,
-} from "viem";
-import { defineChain } from "viem";
-import { usePrivy, useWallets } from "@privy-io/react-auth";
+import type { Address, PublicClient, Hash } from "viem";
+import { usePrivy } from "@privy-io/react-auth";
+import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
+import { useBalance } from "wagmi";
+import { polygonAmoy, publicClient as _publicClient } from "@/lib/blockchain/client";
 
-import { createSmartAccountClient } from "permissionless";
-import { toSimpleSmartAccount } from "permissionless/accounts";
-import { createPimlicoClient } from "permissionless/clients/pimlico";
-import { entryPoint07Address } from "viem/account-abstraction";
-
-export const polygonAmoy = defineChain({
-  id: 80002,
-  name: "Polygon Amoy Testnet",
-  nativeCurrency: {
-    decimals: 18,
-    name: "MATIC",
-    symbol: "MATIC",
-  },
-  rpcUrls: {
-    default: { http: ["https://rpc-amoy.polygon.technology"] },
-  },
-  blockExplorers: {
-    default: {
-      name: "Polygon Amoy Explorer",
-      url: "https://amoy.polygonscan.com",
-    },
-  },
-  testnet: true,
-});
+export { polygonAmoy }; // re-export so ClientProviders import stays backward-compatible
 
 const CHAIN = polygonAmoy;
-const PIMLICO_API_KEY =
-  process.env.NEXT_PUBLIC_PIMLICO_API_KEY || "pim_EUHoE84PA87vUFGYGNemv2";
-const PIMLICO_RPC = `https://api.pimlico.io/v2/80002/rpc?apikey=${PIMLICO_API_KEY}`;
 
 type SendTransactionParams = {
   to: Address;
@@ -63,8 +30,7 @@ type WalletContextType = {
   address: Address | null;
   eoaAddress: Address | null;
   balance: string;
-  kernelClient: any | null;
-  walletClient: any | null;
+  smartWalletClient: any | null; // Represents the generic Privy Smart Wallet Provider
   publicClient: PublicClient | null;
   isConnected: boolean;
   isLoading: boolean;
@@ -86,12 +52,9 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 function WalletProviderInner({ children }: { children: ReactNode }) {
   const { ready, authenticated, login, logout, user: privyUser } = usePrivy();
-  const { wallets } = useWallets();
+  const { client: smartWalletClient } = useSmartWallets();
 
   const [balance, setBalance] = useState<string>("0");
-  const [walletClient, setWalletClient] = useState<any | null>(null);
-  const [smartAccountClient, setSmartAccountClient] = useState<any | null>(null);
-  const [smartAccountAddress, setSmartAccountAddress] = useState<Address | null>(null);
   const [timedOut, setTimedOut] = useState(false);
 
   // If Privy never becomes ready (e.g. invalid App ID), unblock the auth guard after 5s
@@ -101,20 +64,16 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
     return () => clearTimeout(id);
   }, [ready]);
 
-  const publicClient = useMemo(
-    () =>
-      createPublicClient({
-        chain: CHAIN,
-        transport: http(),
-      }),
-    []
-  );
+  const publicClient = _publicClient;
 
-  const embeddedWallet = wallets.find((w) => w.walletClientType === "privy");
+  // Derive addresses directly from Privy's Smart Wallet Client and User object
+  const address = (smartWalletClient?.account?.address as Address) || null;
+  const embeddedWallet = privyUser?.linkedAccounts.find(
+    (a) => a.type === "wallet" && a.walletClientType === "privy"
+  ) as any;
   const eoaAddress = (embeddedWallet?.address as Address) || null;
 
-  const address = smartAccountAddress || eoaAddress;
-  const isConnected = ready && authenticated;
+  const isConnected = ready && authenticated && !!address;
   const isInitialized = ready || timedOut;
 
   const userInfo = privyUser
@@ -129,81 +88,11 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
     }
     : null;
 
-  // Set up EOA walletClient from Privy embedded wallet
-  useEffect(() => {
-    if (!embeddedWallet) {
-      setWalletClient(null);
-      return;
-    }
-    embeddedWallet
-      .getEthereumProvider()
-      .then((provider) => {
-        setWalletClient(
-          createWalletClient({ chain: CHAIN, transport: custom(provider) })
-        );
-      })
-      .catch((e) => {
-        console.warn("Failed to get Ethereum provider from embedded wallet:", e);
-      });
-  }, [embeddedWallet?.address]);
-
-  // Build smart account client once the EOA walletClient is ready
-  useEffect(() => {
-    if (!walletClient || !embeddedWallet) {
-      setSmartAccountClient(null);
-      setSmartAccountAddress(null);
-      return;
-    }
-
-    let cancelled = false;
-
-    async function buildSmartAccount() {
-      try {
-        const pimlico = createPimlicoClient({
-          transport: http(PIMLICO_RPC),
-          entryPoint: { address: entryPoint07Address, version: "0.7" },
-        });
-
-        const simpleAccount = await toSimpleSmartAccount({
-          client: publicClient,
-          owner: walletClient,
-          entryPoint: { address: entryPoint07Address, version: "0.7" },
-        });
-
-        if (cancelled) return;
-
-        const saClient = createSmartAccountClient({
-          account: simpleAccount,
-          chain: CHAIN,
-          bundlerTransport: http(PIMLICO_RPC),
-          paymaster: pimlico,
-          userOperation: {
-            estimateFeesPerGas: async () => {
-              return (await pimlico.getUserOperationGasPrice()).fast;
-            },
-          },
-        });
-
-        if (cancelled) return;
-
-        setSmartAccountClient(saClient);
-        setSmartAccountAddress(simpleAccount.address as Address);
-        console.log("✅ WalletContext: Smart account ready at", simpleAccount.address);
-      } catch (err) {
-        console.error("WalletContext: Failed to build smart account client:", err);
-      }
-    }
-
-    buildSmartAccount();
-    return () => {
-      cancelled = true;
-    };
-  }, [walletClient, publicClient]);
-
   const refreshBalance = useCallback(async () => {
-    const addr = smartAccountAddress || eoaAddress;
+    const addr = address || eoaAddress;
     if (!addr) return;
-    // Balance refresh from chain (USDC) - skipped if no contract address
+
+    // Balance refresh from chain (USDC)
     const usdcAddress = process.env.NEXT_PUBLIC_TEST_USDC_ADDRESS;
     if (!usdcAddress || usdcAddress === "0x") return;
     try {
@@ -232,31 +121,34 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
         console.error("Failed to refresh USDC balance:", err);
       }
     }
-  }, [smartAccountAddress, eoaAddress, publicClient]);
+  }, [address, eoaAddress, publicClient]);
 
   useEffect(() => {
-    if (address) {
+    if (address || eoaAddress) {
       refreshBalance();
     } else {
       setBalance("0");
     }
-  }, [address]);
+  }, [address, eoaAddress, refreshBalance]);
 
   const sendTransaction = useCallback(
     async (params: SendTransactionParams): Promise<Hash> => {
-      if (!smartAccountClient) throw new Error("Smart wallet not ready");
-      return smartAccountClient.sendTransaction({
+      if (!smartWalletClient) throw new Error("Smart wallet not ready");
+      return smartWalletClient.sendTransaction({
         to: params.to,
         data: params.data || "0x",
         value: params.value || BigInt(0),
+        // NOTE: Stub for Privy/Biconomy gasless execution
+        // paymasterContext: { mode: "SPONSORED" }
       }) as Promise<Hash>;
     },
-    [smartAccountClient]
+    [smartWalletClient]
   );
 
   const sendBatchTransaction = useCallback(
     async (transactions: SendTransactionParams[]): Promise<Hash> => {
-      if (!smartAccountClient) throw new Error("Smart wallet not ready");
+      // Privy Smart Wallets natively support sendTransaction with an array of calls
+      if (!smartWalletClient) throw new Error("Smart wallet not ready");
       if (transactions.length === 0) throw new Error("No transactions to send");
       if (transactions.length === 1) return sendTransaction(transactions[0]);
 
@@ -266,16 +158,18 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
         value: tx.value || BigInt(0),
       }));
 
-      return smartAccountClient.sendTransaction({ calls }) as Promise<Hash>;
+      // @ts-ignore - Note: Viem extends sendTransaction but Privy Smart Wallet wraps it for batches
+      return smartWalletClient.sendTransaction({
+        calls,
+        // NOTE: Stub for Privy/Biconomy gasless batch execution
+        // paymasterContext: { mode: "SPONSORED" } 
+      }) as Promise<Hash>;
     },
-    [smartAccountClient, sendTransaction]
+    [smartWalletClient, sendTransaction]
   );
 
   const disconnect = useCallback(async () => {
     setBalance("0");
-    setWalletClient(null);
-    setSmartAccountClient(null);
-    setSmartAccountAddress(null);
     // Wipe all app state from localStorage (auth token, onboarding data, etc.)
     if (typeof window !== "undefined") {
       window.localStorage.clear();
@@ -289,8 +183,7 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
         address,
         eoaAddress,
         balance,
-        kernelClient: smartAccountClient || null,
-        walletClient,
+        smartWalletClient,
         publicClient,
         isConnected,
         isLoading: !ready && !timedOut,

@@ -17,7 +17,7 @@ export default function Leaderboard() {
     const { user } = useUser();
 
     const userStats = user ? {
-        rank: null,
+        rank: 0,
         username: user.username || user.displayName || "You",
         avatar: user.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80",
         xp: user.xp,
