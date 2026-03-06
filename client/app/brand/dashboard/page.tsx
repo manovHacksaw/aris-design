@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import BrandDashboardCharts from "@/components/BrandDashboardCharts";
-import { Plus, ArrowRight, ExternalLink } from "lucide-react";
+import { Plus, ArrowRight, ExternalLink, Users, Trophy, XCircle, ChevronRight, Layers } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { getBrandEvents } from "@/services/event.service";
@@ -18,21 +18,89 @@ const CAMPAIGN_STATUS_STYLES: Record<string, string> = {
     scheduled: "bg-blue-500/10 text-blue-500 border-blue-500/20",
     draft: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
     completed: "bg-muted text-muted-foreground border-border",
+    cancelled: "bg-red-500/10 text-red-400 border-red-500/20",
 };
 
 const CAMPAIGN_STATUS_LABELS: Record<string, string> = {
     posting: "Active", voting: "Voting",
-    scheduled: "Scheduled", draft: "Draft", completed: "Ended",
+    scheduled: "Scheduled", draft: "Draft", completed: "Ended", cancelled: "Cancelled",
 };
-
-function engagementPercent(event: Event): number {
-    const submissions = event._count?.submissions ?? 0;
-    if (!submissions) return 0;
-    return Math.min(100, Math.round((submissions / 100) * 100));
-}
 
 function formatPool(pool?: number): string {
     return pool ? `$${pool.toLocaleString()}` : "—";
+}
+
+function CampaignCard({ event }: { event: Event }) {
+    const totalPool = calculateTotalPool(event);
+    const submissions = event._count?.submissions ?? 0;
+    const votes = event._count?.votes ?? 0;
+    const coverUrl = event.imageCid ? `https://gateway.pinata.cloud/ipfs/${event.imageCid}` : null;
+    const isCancelled = event.status === "cancelled";
+
+    return (
+        <Link
+            href={`/brand/events/${event.id}`}
+            className={cn(
+                "group block bg-card border rounded-[20px] overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-primary/30",
+                isCancelled ? "border-red-500/20 opacity-75 hover:opacity-100" : "border-border"
+            )}
+        >
+            {/* Cover */}
+            <div className="relative h-28 bg-secondary/40">
+                {coverUrl ? (
+                    <img src={coverUrl} alt={event.title} className="w-full h-full object-cover" />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <Layers className="w-8 h-8 text-muted-foreground/20" />
+                    </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <span className={cn(
+                    "absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border backdrop-blur-sm",
+                    CAMPAIGN_STATUS_STYLES[event.status] ?? CAMPAIGN_STATUS_STYLES.draft
+                )}>
+                    {CAMPAIGN_STATUS_LABELS[event.status] ?? event.status}
+                </span>
+            </div>
+
+            {/* Body */}
+            <div className="p-4 space-y-3">
+                <div>
+                    <h4 className="font-black text-sm text-foreground leading-tight line-clamp-1 group-hover:text-primary transition-colors">
+                        {event.title}
+                    </h4>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 capitalize">
+                        {event.eventType === "post_and_vote" ? "Post & Vote" : "Vote Only"}
+                    </p>
+                </div>
+
+                {isCancelled && event.cancelReason ? (
+                    <div className="flex items-start gap-1.5 p-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                        <XCircle className="w-3 h-3 text-red-400 shrink-0 mt-0.5" />
+                        <p className="text-[10px] text-red-400 leading-tight line-clamp-2">{event.cancelReason}</p>
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1 font-medium">
+                            <Users className="w-3 h-3" /> {submissions}
+                        </span>
+                        <span className="flex items-center gap-1 font-medium">
+                            <Trophy className="w-3 h-3" /> {votes}
+                        </span>
+                        <span className="font-bold text-foreground">{formatPool(totalPool)}</span>
+                    </div>
+                )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-4 pb-3 flex items-center justify-between">
+                <span className="text-[10px] text-muted-foreground">
+                    {new Date(event.endTime).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                </span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            </div>
+        </Link>
+    );
 }
 
 export default function BrandDashboard() {
@@ -83,88 +151,17 @@ export default function BrandDashboard() {
                     </div>
 
                     {loadingEvents ? (
-                        <div className="p-6 space-y-3 animate-pulse">
+                        <div className="p-6 grid grid-cols-2 md:grid-cols-3 gap-4 animate-pulse">
                             {Array.from({ length: 3 }).map((_, i) => (
-                                <div key={i} className="h-12 bg-secondary/50 rounded-lg" />
+                                <div key={i} className="h-52 bg-secondary/50 rounded-[20px]" />
                             ))}
                         </div>
                     ) : events.length === 0 ? (
                         <div className="p-8 text-center text-sm text-muted-foreground">No campaigns yet.</div>
                     ) : (
-                        <>
-                            {/* Desktop Table */}
-                            <div className="hidden md:block overflow-x-auto">
-                                <table className="w-full text-left text-sm">
-                                    <thead className="bg-secondary/50 text-[10px] uppercase font-bold text-muted-foreground tracking-widest">
-                                        <tr>
-                                            <th className="px-6 py-4">Campaign</th>
-                                            <th className="px-6 py-4">Status</th>
-                                            <th className="px-6 py-4">Pool</th>
-                                            <th className="px-6 py-4 text-right">Engagement</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border">
-                                        {events.map((event) => {
-                                            const pct = engagementPercent(event);
-                                            return (
-                                                <tr key={event.id} className="hover:bg-secondary/30 transition-colors cursor-pointer">
-                                                    <td className="px-6 py-4 font-bold text-foreground">
-                                                        {event.title}
-                                                        <div className="text-xs text-muted-foreground font-medium mt-0.5 capitalize">{event.eventType}</div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <span className={cn(
-                                                            "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border",
-                                                            CAMPAIGN_STATUS_STYLES[event.status] ?? CAMPAIGN_STATUS_STYLES.ended
-                                                        )}>
-                                                            {CAMPAIGN_STATUS_LABELS[event.status] ?? event.status}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 font-mono text-muted-foreground font-bold">{formatPool(calculateTotalPool(event))}</td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <div className="flex items-center justify-end gap-2">
-                                                            <span className="text-xs font-bold">{pct}%</span>
-                                                            <div className="w-16 h-1.5 bg-secondary rounded-full overflow-hidden">
-                                                                <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* Mobile Card List */}
-                            <div className="md:hidden divide-y divide-border">
-                                {events.map((event) => {
-                                    const pct = engagementPercent(event);
-                                    return (
-                                        <div key={event.id} className="p-4 flex items-center justify-between active:bg-secondary/50 transition-colors">
-                                            <div>
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className={cn(
-                                                        "inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border",
-                                                        CAMPAIGN_STATUS_STYLES[event.status] ?? CAMPAIGN_STATUS_STYLES.ended
-                                                    )}>
-                                                        {CAMPAIGN_STATUS_LABELS[event.status] ?? event.status}
-                                                    </span>
-                                                </div>
-                                                <h4 className="font-bold text-sm text-foreground mb-1">{event.title}</h4>
-                                                <p className="text-xs text-muted-foreground capitalize">{event.eventType} • {formatPool(calculateTotalPool(event))}</p>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="w-12 h-12 rounded-full border-4 border-secondary flex items-center justify-center relative">
-                                                    <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent border-l-transparent rotate-45" style={{ opacity: pct / 100 }} />
-                                                    <span className="text-[10px] font-bold">{pct}%</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </>
+                        <div className="p-5 grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {events.map(event => <CampaignCard key={event.id} event={event} />)}
+                        </div>
                     )}
                 </section>
 

@@ -106,10 +106,14 @@ export const REWARD_CONSTANTS = {
     USDC_DECIMALS: 6,
 } as const;
 
-// ==================== BACKEND SIGNER LOGIC ====================
+// ==================== BACKEND SIGNER LOGIC (GASLESS via Pimlico) ====================
 
-import { createWalletClient, http, createPublicClient, encodeFunctionData, defineChain } from 'viem';
+import { http, createPublicClient, encodeFunctionData, defineChain } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
+import { createSmartAccountClient } from 'permissionless';
+import { toSimpleSmartAccount } from 'permissionless/accounts';
+import { createPimlicoClient } from 'permissionless/clients/pimlico';
+import { entryPoint07Address } from 'viem/account-abstraction';
 
 const polygonAmoy = defineChain({
     id: 80002,
@@ -146,40 +150,70 @@ const REWARDS_VAULT_ABI = [
         stateMutability: 'view',
         type: 'function',
     },
+    {
+        inputs: [],
+        name: 'withdrawRefund',
+        outputs: [],
+        stateMutability: 'nonpayable',
+        type: 'function',
+    },
 ] as const;
 
 export class BlockchainService {
-    private static getClient() {
+    private static getPublicClient() {
         const rpcUrl = process.env.RPC_URL || 'https://rpc-amoy.polygon.technology';
-        let privateKey = process.env.BACKEND_SIGNER_PRIVATE_KEY;
-        const vaultAddress = (process.env.REWARDS_VAULT_ADDRESS || '0x7BEbA9297aED5a2c09a05807617318bAA0F561C6') as `0x${string}`;
+        return createPublicClient({ chain: polygonAmoy, transport: http(rpcUrl) });
+    }
 
-        if (!privateKey) {
-            throw new Error('BACKEND_SIGNER_PRIVATE_KEY not configured');
-        }
-
-        if (!privateKey.startsWith('0x')) {
-            privateKey = `0x${privateKey}`;
-        }
-
-        const account = privateKeyToAccount(privateKey as `0x${string}`);
-
-        const client = createWalletClient({
-            account,
-            chain: polygonAmoy,
-            transport: http(rpcUrl),
-        });
-
-        const publicClient = createPublicClient({
-            chain: polygonAmoy,
-            transport: http(rpcUrl),
-        });
-
-        return { client, publicClient, account, vaultAddress };
+    private static getVaultAddress(): `0x${string}` {
+        return (process.env.REWARDS_VAULT_ADDRESS || '0x34C5A617e32c84BC9A54c862723FA5538f42F221') as `0x${string}`;
     }
 
     /**
-     * Distribute rewards on-chain via backend signer
+     * Build a Pimlico-sponsored smart account client for the backend signer.
+     * No POL required — Pimlico paymaster covers gas fees.
+     */
+    private static async getSmartAccountClient() {
+        let privateKey = process.env.BACKEND_SIGNER_PRIVATE_KEY;
+        const pimlicoApiKey = process.env.PIMLICO_API_KEY;
+
+        if (!privateKey) throw new Error('BACKEND_SIGNER_PRIVATE_KEY not configured');
+        if (!pimlicoApiKey) throw new Error('PIMLICO_API_KEY not configured');
+
+        if (!privateKey.startsWith('0x')) privateKey = `0x${privateKey}`;
+
+        const publicClient = this.getPublicClient();
+        const owner = privateKeyToAccount(privateKey as `0x${string}`);
+
+        const pimlicoRpc = `https://api.pimlico.io/v2/80002/rpc?apikey=${pimlicoApiKey}`;
+
+        const pimlico = createPimlicoClient({
+            transport: http(pimlicoRpc),
+            entryPoint: { address: entryPoint07Address, version: '0.7' },
+        });
+
+        const smartAccount = await toSimpleSmartAccount({
+            client: publicClient,
+            owner,
+            entryPoint: { address: entryPoint07Address, version: '0.7' },
+        });
+
+        const smartAccountClient = createSmartAccountClient({
+            account: smartAccount,
+            chain: polygonAmoy,
+            bundlerTransport: http(pimlicoRpc),
+            paymaster: pimlico,
+            userOperation: {
+                estimateFeesPerGas: async () => (await pimlico.getUserOperationGasPrice()).fast,
+            },
+        });
+
+        return { smartAccountClient, smartAccount, publicClient };
+    }
+
+    /**
+     * Distribute rewards on-chain via Pimlico-sponsored smart account.
+     * No POL needed — gas is sponsored by Pimlico paymaster.
      */
     static async distributeRewardsBatch(
         eventId: string,
@@ -187,36 +221,32 @@ export class BlockchainService {
         amounts: bigint[],
         actualParticipants: number
     ): Promise<string> {
-        const { client, publicClient, account, vaultAddress } = this.getClient();
         const eventIdBytes32 = eventIdToBytes32(eventId) as `0x${string}`;
+        const vaultAddress = this.getVaultAddress();
 
         console.log(`🔗 Blockchain: Distributing rewards for event ${eventId}`);
         console.log(`   - Users: ${users.length}`);
         console.log(`   - Total Participants: ${actualParticipants}`);
 
         try {
-            // 1. Simulate transaction to check for errors
-            const { request } = await publicClient.simulateContract({
+            const { smartAccountClient, publicClient } = await this.getSmartAccountClient();
+
+            const hash = await smartAccountClient.writeContract({
                 address: vaultAddress,
                 abi: REWARDS_VAULT_ABI,
                 functionName: 'creditRewardsBatch',
                 args: [eventIdBytes32, users as `0x${string}`[], amounts, BigInt(actualParticipants)],
-                account,
             });
 
-            // 2. Execute transaction
-            const hash = await client.writeContract(request);
+            console.log(`✅ Blockchain: Distribution UserOp sent: ${hash}`);
 
-            console.log(`✅ Blockchain: Distribution Tx Sent: ${hash}`);
-
-            // 3. Wait for receipt
-            const receipt = await publicClient.waitForTransactionReceipt({ hash });
+            const receipt = await publicClient.waitForTransactionReceipt({ hash, timeout: 120_000 });
 
             if (receipt.status !== 'success') {
                 throw new Error('Transaction reverted on-chain');
             }
 
-            console.log(`✅ Blockchain: Transaction Confirmed in block ${receipt.blockNumber}`);
+            console.log(`✅ Blockchain: Confirmed in block ${receipt.blockNumber}`);
             return hash;
 
         } catch (error: any) {
@@ -226,32 +256,27 @@ export class BlockchainService {
     }
 
     /**
-     * Cancel an event on-chain and trigger refund to brand
-     * Called when post_and_vote event doesn't get enough submissions
+     * Cancel an event on-chain via Pimlico-sponsored smart account.
      */
     static async cancelEventOnChain(eventId: string): Promise<string> {
-        const { client, publicClient, account, vaultAddress } = this.getClient();
         const eventIdBytes32 = eventIdToBytes32(eventId) as `0x${string}`;
+        const vaultAddress = this.getVaultAddress();
 
         console.log(`🔗 Blockchain: Cancelling event ${eventId}`);
 
         try {
-            // 1. Simulate transaction to check for errors
-            const { request } = await publicClient.simulateContract({
+            const { smartAccountClient, publicClient } = await this.getSmartAccountClient();
+
+            const hash = await smartAccountClient.writeContract({
                 address: vaultAddress,
                 abi: REWARDS_VAULT_ABI,
                 functionName: 'cancelEvent',
                 args: [eventIdBytes32],
-                account,
             });
 
-            // 2. Execute transaction
-            const hash = await client.writeContract(request);
+            console.log(`✅ Blockchain: Cancel Event UserOp sent: ${hash}`);
 
-            console.log(`✅ Blockchain: Cancel Event Tx Sent: ${hash}`);
-
-            // 3. Wait for receipt
-            const receipt = await publicClient.waitForTransactionReceipt({ hash });
+            const receipt = await publicClient.waitForTransactionReceipt({ hash, timeout: 120_000 });
 
             if (receipt.status !== 'success') {
                 throw new Error('Transaction reverted on-chain');
@@ -267,10 +292,11 @@ export class BlockchainService {
     }
 
     /**
-     * Get brand's refund balance from smart contract (source of truth)
+     * Get brand's refund balance from smart contract.
      */
     static async getBrandRefundBalance(brandAddress: string): Promise<number> {
-        const { publicClient, vaultAddress } = this.getClient();
+        const publicClient = this.getPublicClient();
+        const vaultAddress = this.getVaultAddress();
 
         try {
             const balance = await publicClient.readContract({
@@ -280,7 +306,6 @@ export class BlockchainService {
                 args: [brandAddress as `0x${string}`],
             });
 
-            // Convert from 6 decimals to USDC
             return Number(balance) / 1_000_000;
         } catch (error: any) {
             console.error('❌ Blockchain: Failed to fetch brand refund balance:', error);

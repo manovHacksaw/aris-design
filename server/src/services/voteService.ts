@@ -366,13 +366,6 @@ export class VoteService {
                     });
 
                     if (currentVoters >= event.capacity) {
-                        await tx.event.update({
-                            where: { id: eventId },
-                            data: {
-                                status: EventStatus.COMPLETED,
-                                endTime: new Date(),
-                            }
-                        });
                         shouldClose = true;
                     }
                 }

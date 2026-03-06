@@ -121,3 +121,9 @@ export async function saveOnboardingAnalytics(data: {
     body: JSON.stringify(data),
   });
 }
+
+/** GET /api/users/:userId/submissions */
+export async function getUserSubmissions(userId: string): Promise<any[]> {
+  const res = await apiRequest<{ success: boolean; submissions: any[] }>(`/users/${userId}/submissions`);
+  return res.submissions;
+}

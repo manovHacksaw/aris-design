@@ -397,6 +397,23 @@ export default function BrandEventDetailPage() {
     return (
         <>
             <div className="space-y-6 pb-20 md:pb-0">
+                {/* Cancellation banner */}
+                {event.status === "cancelled" && (
+                    <div className="flex items-start gap-3 p-4 rounded-[16px] bg-red-500/10 border border-red-500/20">
+                        <XCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                        <div>
+                            <p className="text-sm font-black text-red-400">Campaign Cancelled</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                {event.cancelReason
+                                    ? event.cancelReason
+                                    : event.cancelledAt
+                                        ? `Cancelled on ${new Date(event.cancelledAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`
+                                        : "This campaign was cancelled and is no longer active."}
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div className="flex items-start gap-4">

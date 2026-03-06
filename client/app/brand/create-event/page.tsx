@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import {
     ChevronLeft, ChevronRight, Sparkles, Loader2, X, Plus, Minus,
     Upload, Users, DollarSign, Globe, FileText, Shield, Hash,
-    CheckCircle2, ImageIcon, RefreshCw, Zap,
+    CheckCircle2, ImageIcon, RefreshCw, Zap, Copy, Check,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,9 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import LaunchStepModal, { type LaunchFormData } from "@/components/brand/LaunchStepModal";
 import { generateTagline, generateAiProposals } from "@/services/ai.service";
+import { readBrandRefundBalance } from "@/lib/blockchain/contracts";
+import { useWallet } from "@/context/WalletContext";
+import { useEffect } from "react";
 
 // ── Constants (mirror contracts.ts) ──────────────────────────────────────────
 const BASE_RATE = 0.030;   // $0.030/participant — base voter reward
@@ -63,6 +66,8 @@ interface FormData extends Omit<LaunchFormData, "type"> {
     // scheduling
     startImmediately: boolean;
     postingEndDate: string;  // post_and_vote only — when posting phase ends / voting begins
+    useRefundCredit: boolean;
+    refundCreditAmount: number;
 }
 
 // ── Small utility components ──────────────────────────────────────────────────
@@ -149,6 +154,7 @@ function RewardRow({ label, rate, count, note, highlight }: { label: string; rat
 
 export default function CreateEventPage() {
     const router = useRouter();
+    const { address, balance, refreshBalance } = useWallet();
     const [currentStep, setCurrentStep] = useState(0);
     const [modalOpen, setModalOpen] = useState(false);
     const [taglineLoading, setTaglineLoading] = useState(false);
@@ -184,7 +190,30 @@ export default function CreateEventPage() {
         sampleImages: [],
         proposals: [{ title: "", order: 0 }, { title: "", order: 1 }],
         moderationRules: "",
+        useRefundCredit: false,
+        refundCreditAmount: 0,
     });
+
+    const [availableCredit, setAvailableCredit] = useState<number>(0);
+    const [addressCopied, setAddressCopied] = useState(false);
+
+    const copyAddress = useCallback(() => {
+        if (!address) return;
+        navigator.clipboard.writeText(address);
+        setAddressCopied(true);
+        setTimeout(() => setAddressCopied(false), 2000);
+    }, [address]);
+
+    useEffect(() => {
+        if (!address) return;
+        readBrandRefundBalance(address)
+            .then((raw) => {
+                const amount = Number(raw) / 1e6;
+                setAvailableCredit(amount);
+                if (amount > 0) set({ refundCreditAmount: amount, useRefundCredit: true });
+            })
+            .catch(() => {});
+    }, [address]);
 
     const set = useCallback((patch: Partial<FormData>) => setForm((f) => ({ ...f, ...patch })), []);
 
@@ -204,16 +233,20 @@ export default function CreateEventPage() {
     const durationMs = resolvedStartMs && form.endDate
         ? new Date(form.endDate).getTime() - resolvedStartMs
         : 0;
-    const durationHours = Math.round(durationMs / (1000 * 60 * 60));
+
+    const fmtDuration = (ms: number) => {
+        if (ms <= 0) return "—";
+        const totalMinutes = Math.floor(ms / (1000 * 60));
+        const h = Math.floor(totalMinutes / 60);
+        const m = totalMinutes % 60;
+        if (h > 0) return m > 0 ? `${h}h ${m}m` : `${h}h`;
+        return `${m}m`;
+    };
 
     const postingDurationMs = isPost && resolvedStartMs && form.postingEndDate
         ? new Date(form.postingEndDate).getTime() - resolvedStartMs : 0;
     const votingDurationMs = isPost && form.postingEndDate && form.endDate
         ? new Date(form.endDate).getTime() - new Date(form.postingEndDate).getTime() : 0;
-    const fmtHours = (ms: number) => {
-        const h = Math.round(ms / (1000 * 60 * 60));
-        return h < 1 ? "< 1h" : `${h}h`;
-    };
 
     // ── AI helpers ─────────────────────────────────────────────────────────
     const handleGenerateTagline = async () => {
@@ -304,7 +337,7 @@ export default function CreateEventPage() {
                 if (!form.startImmediately && !form.startDate) return "Start date is required (or enable Start Immediately).";
                 if (!form.endDate) return "End date is required.";
                 if (isPost && !form.postingEndDate) return "Posting end / voting start date is required.";
-                if (durationMs < 2 * 60 * 60 * 1000) return "Event must run for at least 2 hours total.";
+                if (durationMs < 10 * 60 * 1000) return "Event must run for at least 10 minutes total.";
                 if (isPost && form.postingEndDate) {
                     const pEndMs = new Date(form.postingEndDate).getTime();
                     if (pEndMs <= resolvedStartMs) return "Posting end must be after start.";
@@ -480,7 +513,7 @@ export default function CreateEventPage() {
                                                 "flex items-center h-[46px] px-4 rounded-xl border text-sm font-mono",
                                                 postingDurationMs > 0 ? "border-primary/30 bg-primary/5 text-primary" : "border-border bg-secondary/20 text-muted-foreground"
                                             )}>
-                                                {postingDurationMs > 0 ? fmtHours(postingDurationMs) : "—"}
+                                                {fmtDuration(postingDurationMs)}
                                             </div>
                                         </div>
                                     </div>
@@ -512,13 +545,13 @@ export default function CreateEventPage() {
                                                 "flex items-center h-[46px] px-4 rounded-xl border text-sm font-mono",
                                                 votingDurationMs > 0 ? "border-primary/30 bg-primary/5 text-primary" : "border-border bg-secondary/20 text-muted-foreground"
                                             )}>
-                                                {votingDurationMs > 0 ? fmtHours(votingDurationMs) : "—"}
+                                                {fmtDuration(votingDurationMs)}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                {durationMs >= 2 * 60 * 60 * 1000 && (
-                                    <p className="text-xs text-primary font-medium">Total campaign: {durationHours}h</p>
+                                {durationMs >= 10 * 60 * 1000 && (
+                                    <p className="text-xs text-primary font-medium">Total campaign: {fmtDuration(durationMs)}</p>
                                 )}
                             </div>
                         ) : (
@@ -550,7 +583,7 @@ export default function CreateEventPage() {
                                         "flex items-center h-[46px] px-4 rounded-xl border text-sm font-mono",
                                         durationMs > 0 ? "border-primary/30 bg-primary/5 text-primary" : "border-border bg-secondary/20 text-muted-foreground"
                                     )}>
-                                        {durationMs > 0 ? fmtHours(durationMs) : "—"}
+                                        {fmtDuration(durationMs)}
                                     </div>
                                 </div>
                             </div>
@@ -642,6 +675,47 @@ export default function CreateEventPage() {
                                 <p className="text-xs text-muted-foreground mt-1">Distributed 50/35/15% to top 3 creators</p>
                             </div>
                         )}
+
+                        {/* Refund Credit Integration */}
+                        {availableCredit > 0 && (
+                            <div className={cn(
+                                "p-4 rounded-xl border transition-all",
+                                form.useRefundCredit ? "bg-primary/5 border-primary/30" : "bg-secondary/20 border-border"
+                            )}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                                            <RefreshCw className="w-4 h-4 text-primary" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-foreground">Event Credit Available</p>
+                                            <p className="text-[10px] text-muted-foreground font-medium">From previously ended campaigns</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => set({ useRefundCredit: !form.useRefundCredit })}
+                                        className={cn(
+                                            "relative w-10 h-5 rounded-full transition-colors duration-200",
+                                            form.useRefundCredit ? "bg-primary" : "bg-foreground/20"
+                                        )}
+                                    >
+                                        <div className={cn(
+                                            "absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform duration-200",
+                                            form.useRefundCredit ? "translate-x-5.5" : "translate-x-0.5"
+                                        )} />
+                                    </button>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs text-muted-foreground font-medium">Current Balance</span>
+                                    <span className="text-sm font-black text-primary font-mono">${availableCredit.toFixed(2)}</span>
+                                </div>
+                                {form.useRefundCredit && (
+                                    <p className="text-[10px] text-primary/70 font-medium mt-2 leading-tight italic">
+                                        This credit will be applied directly from the Rewards Vault. You only need to fund the remaining amount.
+                                    </p>
+                                )}
+                            </div>
+                        )}
                     </SectionCard>
 
                     {/* Reward Breakdown */}
@@ -659,10 +733,20 @@ export default function CreateEventPage() {
                             )}
                             <RewardRow label="Platform Fee" rate={isPost ? FEE_POST : FEE_VOTE} count={pCount} note={isPost ? "$0.020/participant" : "$0.015/participant"} />
                         </div>
-                        <div className="pt-3 mt-1 border-t border-border flex justify-between items-center">
-                            <span className="text-sm font-bold">Total Locked</span>
+                        <div className="pt-3 mt-1 border-t border-border flex justify-between items-center text-xs text-muted-foreground mb-1">
+                            <span>Total Rewards Budget</span>
+                            <span className="font-mono font-medium">${totalLocked.toFixed(2)}</span>
+                        </div>
+                        {form.useRefundCredit && (
+                            <div className="flex justify-between items-center text-xs text-primary mb-2">
+                                <span>Applied Credit</span>
+                                <span className="font-mono font-bold">-${form.refundCreditAmount.toFixed(2)}</span>
+                            </div>
+                        )}
+                        <div className="pt-1 flex justify-between items-center">
+                            <span className="text-sm font-bold">Net Deposit Required</span>
                             <span className="text-lg font-black font-mono text-primary">
-                                {pCount > 0 ? `$${totalLocked.toFixed(2)}` : "$—"}
+                                {pCount > 0 ? `$${Math.max(0, totalLocked - (form.useRefundCredit ? form.refundCreditAmount : 0)).toFixed(2)}` : "$—"}
                             </span>
                         </div>
                         <p className="text-xs text-muted-foreground mt-2">Locked in RewardsVaultV3 on Polygon Amoy</p>
@@ -1003,7 +1087,7 @@ export default function CreateEventPage() {
                                 ["Type", form.type === "post" ? "Social Post Campaign" : "Vote Campaign"],
                                 ["Title", form.title],
                                 form.tagline ? ["Tagline", form.tagline] : null,
-                                ["Duration", durationHours > 0 ? `${durationHours}h` : "—"],
+                                ["Duration", fmtDuration(durationMs)],
                                 ["Participants", form.maxParticipants || "—"],
                                 form.preferredGender !== "All" ? ["Audience", `${form.preferredGender}, ${form.ageGroup}`] : null,
                                 form.regions.length > 0 ? ["Regions", form.regions.join(", ")] : null,
@@ -1071,13 +1155,55 @@ export default function CreateEventPage() {
     // ── Sticky Summary Sidebar ─────────────────────────────────────────────
     const SummarySidebar = () => (
         <div className="space-y-4">
+            {/* Wallet info */}
+            <div className="bg-card border border-border rounded-2xl p-5">
+                <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Wallet</p>
+                    <button
+                        onClick={refreshBalance}
+                        className="p-1 hover:bg-secondary rounded-lg transition-colors"
+                        title="Refresh balance"
+                    >
+                        <RefreshCw className="w-3 h-3 text-muted-foreground" />
+                    </button>
+                </div>
+                <div className="space-y-2.5">
+                    <div className="flex justify-between items-center text-xs">
+                        <span className="text-muted-foreground">Smart Account</span>
+                        <button
+                            onClick={copyAddress}
+                            disabled={!address}
+                            className="flex items-center gap-1.5 font-mono font-medium text-foreground hover:text-primary transition-colors disabled:cursor-default group"
+                            title={address ?? undefined}
+                        >
+                            {address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "—"}
+                            {address && (
+                                addressCopied
+                                    ? <Check className="w-3 h-3 text-green-500" />
+                                    : <Copy className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-colors" />
+                            )}
+                        </button>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">USDC Balance</span>
+                        <span className="font-mono font-bold text-primary">${balance}</span>
+                    </div>
+                    {availableCredit > 0 && (
+                        <div className="flex justify-between text-xs pt-1 border-t border-border">
+                            <span className="text-muted-foreground">Refund Credit</span>
+                            <span className="font-mono font-bold text-green-500">+${availableCredit.toFixed(2)}</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+
             <div className="bg-card border border-border rounded-2xl p-5">
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Campaign Summary</p>
                 <div className="space-y-2.5">
                     {[
                         ["Type", form.type === "post" ? "Social Post" : "Vote"],
                         ["Participants", form.maxParticipants || "—"],
-                        ["Duration", durationHours > 0 ? `${durationHours}h` : "—"],
+                        ["Duration", fmtDuration(durationMs)],
                         ["Total Locked", pCount > 0 ? `$${totalLocked.toFixed(2)}` : "—"],
                         ["Network", "Polygon Amoy"],
                     ].map(([k, v]) => (

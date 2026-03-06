@@ -322,10 +322,10 @@ export class EventService {
       throw new Error("Capacity is required and must be at least 5");
     }
 
-    // Minimum duration check: 2 hours
+    // Minimum duration check: 10 minutes
     const durationMs = endTime.getTime() - startTime.getTime();
-    if (durationMs < 2 * 60 * 60 * 1000) {
-      throw new Error("Event duration must be at least 2 hours");
+    if (durationMs < 10 * 60 * 1000) {
+      throw new Error("Event duration must be at least 10 minutes");
     }
 
     // 7. Validate proposals for VOTE_ONLY events
@@ -1342,7 +1342,7 @@ export class EventService {
     // Process USDC rewards (async, don't block completion)
     // Creates claim records for all eligible participants
     RewardsService.processEventRewards(eventId).catch((error) => {
-      console.error('Failed to process event rewards:', error);
+      console.error(`🚨 REWARDS FAILED for event ${eventId}: ${error.message}`, error);
     });
 
     return completedEvent;

@@ -4,7 +4,7 @@ import SidebarLayout from "@/components/home/SidebarLayout";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Clock, Trophy, Users, ChevronLeft, Share2, ImageIcon, CheckCircle2, Loader2, AlertCircle,
-    Trash2, Crown, Medal, ExternalLink, Calendar, DollarSign, Info, Layers
+    Trash2, Crown, Medal, ExternalLink, Calendar, DollarSign, Info, Layers, Eye
 } from "lucide-react";
 import { calculateTotalPool } from "@/lib/eventUtils";
 import Link from "next/link";
@@ -26,7 +26,9 @@ import {
 } from "@/services/submission.service";
 import { uploadToPinata, validateImageFile } from "@/lib/pinata-upload";
 import { useUser } from "@/context/UserContext";
+import { useSocket } from "@/context/SocketContext";
 import { toast } from "sonner";
+import Countdown from "@/components/events/Countdown";
 
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
@@ -34,18 +36,18 @@ function imgUrl(cid?: string | null): string | undefined {
     return cid ? `${PINATA_GW}/${cid}` : undefined;
 }
 
-function avatarUrl(profilePicCid?: string | null, name?: string | null): string {
-    if (profilePicCid) return `${PINATA_GW}/${profilePicCid}`;
+function avatarUrl(_: unknown, name?: string | null): string {
     const n = encodeURIComponent(name || "User");
     return `https://ui-avatars.com/api/?name=${n}&background=2F6AFF&color=fff`;
 }
 
 function toVoteSubmission(sub: Submission): VoteSubmission {
+    const displayName = sub.user?.displayName || sub.user?.username || "Creator";
     return {
         id: sub.id,
         creator: {
-            name: sub.user?.name || sub.user?.username || "Creator",
-            avatar: avatarUrl(sub.user?.profilePicCid, sub.user?.name || sub.user?.username),
+            name: displayName,
+            avatar: sub.user?.avatarUrl || avatarUrl(undefined, displayName),
             handle: sub.user?.username || "user",
         },
         media: sub.imageCid ? `${PINATA_GW}/${sub.imageCid}` : "",
@@ -60,11 +62,12 @@ function toPostSubmission(sub: Submission, currentUserId?: string | null): PostS
     const votes = sub._count?.votes ?? 0;
     const status: SubmissionStatus =
         sub.rank === 1 ? "winning" : sub.rank && sub.rank <= 3 ? "ranked" : "eligible";
+    const displayName = sub.user?.displayName || sub.user?.username || "Creator";
     return {
         id: sub.id,
         creator: {
-            name: sub.user?.name || sub.user?.username || "Creator",
-            avatar: avatarUrl(sub.user?.profilePicCid, sub.user?.name || sub.user?.username),
+            name: displayName,
+            avatar: sub.user?.avatarUrl || avatarUrl(undefined, displayName),
             handle: sub.user?.username || "user",
         },
         media: sub.imageCid ? `${PINATA_GW}/${sub.imageCid}` : "",
@@ -85,6 +88,8 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     const id = (resolvedParams as { id: string }).id;
     const { user } = useUser();
 
+    const { socket } = useSocket();
+
     const [event, setEvent] = useState<Event | null>(null);
     const [submissions, setSubmissions] = useState<Submission[]>([]);
     const [loading, setLoading] = useState(true);
@@ -97,6 +102,39 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     // Submission state
     const [hasSubmitted, setHasSubmitted] = useState(false);
     const [mySubmission, setMySubmission] = useState<Submission | null>(null);
+
+    // Live presence
+    const [activeViewers, setActiveViewers] = useState<number>(0);
+
+    // Join event socket room and listen for live updates
+    useEffect(() => {
+        if (!socket || !id) return;
+        socket.emit("join-event", id);
+
+        const handleVoteUpdate = ({ submissionId, delta }: { submissionId: string; delta: number }) => {
+            setSubmissions((prev) =>
+                prev.map((s) =>
+                    s.id === submissionId
+                        ? { ...s, _count: { votes: (s._count?.votes ?? 0) + delta } }
+                        : s
+                )
+            );
+            setOptimisticVoteDelta((prev) => (prev === submissionId ? null : prev));
+        };
+
+        const handlePresenceUpdate = ({ activeCount }: { activeCount: number }) => {
+            setActiveViewers(activeCount);
+        };
+
+        socket.on("vote-update", handleVoteUpdate);
+        socket.on("presence-update", handlePresenceUpdate);
+
+        return () => {
+            socket.emit("leave-event", id);
+            socket.off("vote-update", handleVoteUpdate);
+            socket.off("presence-update", handlePresenceUpdate);
+        };
+    }, [socket, id]);
 
     useEffect(() => {
         async function load() {
@@ -294,19 +332,41 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                         </span>
                                     </div>
                                 )}
-                                <div className="bg-white/10 backdrop-blur-xl border border-white/15 px-4 py-2 rounded-xl flex items-center gap-2">
-                                    <Clock className="text-white/70 w-3.5 h-3.5" />
-                                    <span className="text-xs font-black text-white">
-                                        {new Date(event.endTime) > new Date()
-                                            ? `Ends ${new Date(event.endTime).toLocaleDateString()}`
-                                            : "Ended"}
-                                    </span>
-                                </div>
+
+                                {event.status !== "completed" && (
+                                    <Countdown
+                                        targetDate={
+                                            event.status === "posting"
+                                                ? event.postingEnd!
+                                                : event.endTime
+                                        }
+                                        label={event.status === "posting" ? "Posting Ends" : "Voting Ends"}
+                                    />
+                                )}
+                                {event.status === "completed" && (
+                                    <div className="bg-white/10 backdrop-blur-xl border border-white/15 px-4 py-2 rounded-xl flex items-center gap-2">
+                                        <Clock className="text-white/40 w-3.5 h-3.5" />
+                                        <span className="text-xs font-black text-white/40 uppercase tracking-wider">Ended</span>
+                                    </div>
+                                )}
+
                                 {event._count && (
                                     <div className="bg-white/10 backdrop-blur-xl border border-white/15 px-4 py-2 rounded-xl flex items-center gap-2">
                                         <Users className="text-white/70 w-3.5 h-3.5" />
                                         <span className="text-xs font-black text-white">
                                             {formatCount(event._count.submissions)} submissions
+                                        </span>
+                                    </div>
+                                )}
+                                {activeViewers > 0 && (
+                                    <div className="bg-white/10 backdrop-blur-xl border border-white/15 px-4 py-2 rounded-xl flex items-center gap-2">
+                                        <span className="relative flex h-2 w-2">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
+                                        </span>
+                                        <Eye className="text-white/70 w-3.5 h-3.5" />
+                                        <span className="text-xs font-black text-white">
+                                            {activeViewers} watching
                                         </span>
                                     </div>
                                 )}
@@ -567,126 +627,82 @@ function VotingView({
     submissions: Submission[];
     votedSubmissionId: string | null;
     currentUserId?: string | null;
-    onVote: (submissionId: string) => void;
+    onVote: (id: string) => void;
 }) {
-    const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [isConfirming, setIsConfirming] = useState(false);
+    const [activeTab, setActiveTab] = useState<"top" | "latest">("top");
 
-    const isLocked = !!votedSubmissionId;
-    const confirmedSub = submissions.find((s) => s.id === votedSubmissionId);
-    const selectedSub = submissions.find((s) => s.id === selectedId);
-
-    const handleSelect = (id: string) => {
-        if (isLocked) return;
-        setSelectedId(id);
-    };
-
-    const handleConfirm = async () => {
-        if (!selectedId || isLocked || isConfirming) return;
-        setIsConfirming(true);
-        await onVote(selectedId);
-        setIsConfirming(false);
-    };
-
-    const voteSubmissions = submissions.map(toVoteSubmission);
+    const sortedSubmissions = [...submissions].sort((a, b) => {
+        if (activeTab === "top") return (b._count?.votes || 0) - (a._count?.votes || 0);
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
 
     return (
         <div className="px-4 md:px-0 space-y-8">
-            {/* Reward + description */}
+            {/* Brief + Reward */}
             <div className="grid md:grid-cols-[1fr_340px] gap-6">
+                <div className="bg-card border border-border/40 rounded-[28px] p-6">
+                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40 mb-4">Challenge Brief</h3>
+                    <p className="text-sm font-medium text-foreground/70 leading-relaxed">{event.description}</p>
+                </div>
                 <RewardBlock
                     rewardPool={`$${calculateTotalPool(event).toLocaleString()}`}
                     baseReward={event.baseReward ? `$${event.baseReward}` : "$0"}
+                    topReward={event.topReward ? `$${event.topReward}` : undefined}
                     mode="vote"
                     variant="full"
                 />
-                <div className="bg-card border border-border/40 rounded-[28px] p-6 flex flex-col justify-center">
-                    <p className="text-xs font-bold text-foreground/50 leading-relaxed mb-4">{event.description}</p>
-                    {!isLocked && (
-                        <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4">
-                            <p className="text-[10px] font-black text-primary/80 uppercase tracking-widest">
-                                Select one submission to cast your vote
-                            </p>
-                        </div>
-                    )}
+            </div>
+
+            {/* Stats bar */}
+            <div className="flex items-center justify-between">
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40">
+                    Leaderboard ({submissions.length})
+                </h3>
+                <div className="flex bg-secondary rounded-xl p-1 border border-border/40">
+                    {(["top", "latest"] as const).map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={cn(
+                                "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                                activeTab === tab ? "bg-foreground text-background" : "text-foreground/40 hover:text-foreground"
+                            )}
+                        >
+                            {tab}
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            {/* Confirm bar */}
-            <AnimatePresence>
-                {selectedId && !isLocked && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="bg-card border border-primary/30 rounded-[20px] p-4 flex items-center justify-between"
-                    >
-                        <div className="flex items-center gap-3">
-                            <img
-                                src={selectedSub ? avatarUrl(selectedSub.user?.profilePicCid, selectedSub.user?.name) : ""}
-                                className="w-8 h-8 rounded-full border border-primary/30"
-                                alt=""
-                            />
-                            <div>
-                                <p className="text-xs font-black text-foreground">
-                                    Vote for @{selectedSub?.user?.username ?? "user"}?
-                                </p>
-                                {event.baseReward && (
-                                    <p className="text-[10px] text-foreground/40 font-bold">
-                                        You&apos;ll earn ${event.baseReward} for this vote
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                        <button
-                            onClick={handleConfirm}
-                            disabled={isConfirming}
-                            className="bg-primary text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary-dark active:scale-[0.98] transition-all disabled:opacity-60 flex items-center gap-2"
-                        >
-                            {isConfirming && <Loader2 className="w-3 h-3 animate-spin" />}
-                            Confirm Vote
-                        </button>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Voted confirmation */}
-            <AnimatePresence>
-                {isLocked && confirmedSub && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-primary/5 border border-primary/20 rounded-[20px] p-5 flex items-center gap-3"
-                    >
-                        <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
-                        <div>
-                            <p className="text-xs font-black text-foreground">
-                                You voted for @{confirmedSub.user?.username ?? "user"}
-                            </p>
-                            {event.baseReward && (
-                                <p className="text-[10px] text-primary font-bold">+${event.baseReward} earned</p>
-                            )}
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Submissions grid */}
-            <div>
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40 mb-6">
-                    Submissions ({submissions.length})
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {voteSubmissions.map((sub) => (
-                        <VoteSubmissionCard
+            {/* Voting Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <AnimatePresence>
+                    {sortedSubmissions.map((sub, idx) => (
+                        <motion.div
                             key={sub.id}
-                            submission={sub}
-                            isSelected={selectedId === sub.id || votedSubmissionId === sub.id}
-                            isLocked={isLocked}
-                            onSelect={handleSelect}
-                        />
+                            layout
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.3, delay: idx * 0.05 }}
+                        >
+                            {event.eventType === "vote_only" ? (
+                                <VoteSubmissionCard
+                                    submission={toVoteSubmission(sub)}
+                                    isVoted={votedSubmissionId === sub.id}
+                                    onVote={() => onVote(sub.id)}
+                                    disabled={!!votedSubmissionId}
+                                />
+                            ) : (
+                                <VoteSubmissionCard
+                                    submission={toVoteSubmission(sub)}
+                                    isVoted={votedSubmissionId === sub.id}
+                                    onVote={() => onVote(sub.id)}
+                                    disabled={!!votedSubmissionId || sub.userId === currentUserId}
+                                />
+                            )}
+                        </motion.div>
                     ))}
-                </div>
+                </AnimatePresence>
             </div>
         </div>
     );
@@ -703,29 +719,45 @@ function CompletedView({
     submissions: Submission[];
     currentUserId?: string | null;
 }) {
-    const sorted = [...submissions].sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999));
+    const winners = submissions.filter((s) => s.rank && s.rank <= 3).sort((a, b) => (a.rank || 0) - (b.rank || 0));
+    const others = submissions.filter((s) => !s.rank || s.rank > 3).sort((a, b) => (b._count?.votes || 0) - (a._count?.votes || 0));
 
     return (
-        <div className="px-4 md:px-0 space-y-8">
-            <div className="bg-card border border-border/40 rounded-[28px] p-6 flex items-center gap-4">
-                <Trophy className="w-8 h-8 text-primary shrink-0" />
-                <div>
-                    <p className="text-sm font-black text-foreground">Event Completed</p>
-                    <p className="text-xs text-foreground/50 mt-0.5">Final rankings below. Rewards will be distributed on-chain.</p>
+        <div className="px-4 md:px-0 space-y-12">
+            {/* Podium */}
+            <div>
+                <div className="text-center mb-10">
+                    <Trophy className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+                    <h2 className="text-3xl font-black text-foreground tracking-tighter">Hall of Fame</h2>
+                    <p className="text-sm text-foreground/40 font-bold mt-1 uppercase tracking-widest">The winners have been decided</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-[1000px] mx-auto">
+                    {winners.map((sub) => (
+                        <PostSubmissionCard
+                            key={sub.id}
+                            submission={toPostSubmission(sub, currentUserId)}
+                            variant="compact"
+                        />
+                    ))}
                 </div>
             </div>
-            {sorted.length > 0 && (
-                <div>
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40 mb-6">
-                        Final Leaderboard
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {sorted.map((sub) => (
-                            <PostSubmissionCard key={sub.id} submission={toPostSubmission(sub, currentUserId)} />
-                        ))}
-                    </div>
+
+            {/* All entries */}
+            <div>
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40 mb-6 px-1">
+                    Other Participants ({others.length})
+                </h3>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    {others.map((sub) => (
+                        <PostSubmissionCard
+                            key={sub.id}
+                            submission={toPostSubmission(sub, currentUserId)}
+                            variant="compact"
+                        />
+                    ))}
                 </div>
-            )}
+            </div>
         </div>
     );
 }
@@ -734,20 +766,19 @@ function CompletedView({
 
 function UpcomingView({ event }: { event: Event }) {
     return (
-        <div className="px-4 md:px-0">
-            <div className="bg-card border border-border/40 rounded-[28px] p-8 flex flex-col items-center text-center gap-4">
-                <Clock className="w-10 h-10 text-foreground/20" />
-                <div>
-                    <p className="text-base font-black text-foreground">Coming Soon</p>
-                    <p className="text-xs text-foreground/50 mt-1">
-                        This event starts on {new Date(event.startTime).toLocaleDateString(undefined, {
-                            month: "long", day: "numeric", year: "numeric"
-                        })}.
-                    </p>
-                </div>
-                {event.description && (
-                    <p className="text-sm text-foreground/50 leading-relaxed max-w-md">{event.description}</p>
-                )}
+        <div className="px-4 md:px-0 py-24 flex flex-col items-center text-center gap-6">
+            <div className="w-16 h-16 rounded-3xl bg-primary/10 flex items-center justify-center">
+                <Clock className="w-8 h-8 text-primary" />
+            </div>
+            <div>
+                <h2 className="text-2xl font-black text-foreground tracking-tighter mb-2">Coming Soon</h2>
+                <p className="text-sm text-foreground/50 font-medium max-w-[400px]">
+                    This campaign hasn&apos;t started yet. It will go live on <strong>{new Date(event.startTime).toLocaleString()}</strong>.
+                </p>
+            </div>
+            <div className="bg-card border border-border/40 rounded-2xl p-4 flex items-center gap-3">
+                <Info className="w-4 h-4 text-primary" />
+                <p className="text-xs font-bold text-foreground/60">{event.description}</p>
             </div>
         </div>
     );

@@ -15,7 +15,9 @@
     "clean:events": "bun run src/scripts/cleanEvents.ts",
     "clean:all": "bun run src/scripts/cleanAllContent.ts",
     "test:auth": "bun test-auth.ts",
-    "test:unauth": "bun test-unauthenticated.ts"
+    "test:unauth": "bun test-unauthenticated.ts",
+    "test:cycle": "bun run src/scripts/testEventCycle.ts",
+    "inspect:event": "bun run src/scripts/inspectEvent.ts"
   },
   "keywords": [],
   "author": "",
@@ -36,6 +38,7 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "nodemailer": "^7.0.11",
+    "permissionless": "^0.3.4",
     "react-datetime-picker": "^7.0.1",
     "socket.io": "^4.8.3",
     "viem": "^2.44.4"

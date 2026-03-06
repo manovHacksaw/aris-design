@@ -75,6 +75,20 @@ export const VAULT_ABI = [
     stateMutability: "nonpayable",
     type: "function",
   },
+  {
+    inputs: [],
+    name: "withdrawRefund",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "brand", type: "address" }],
+    name: "getBrandRefundBalance",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
 ] as const;
 
 export function encodeUsdcApprove(spender: Address, amount: bigint): `0x${string}` {
@@ -149,6 +163,19 @@ export function minTopPoolUsdc(maxParticipants: bigint): bigint {
 
 export function encodeClaimRewards(): `0x${string}` {
   return encodeFunctionData({ abi: VAULT_ABI, functionName: "claimRewards", args: [] });
+}
+
+export function encodeWithdrawRefund(): `0x${string}` {
+  return encodeFunctionData({ abi: VAULT_ABI, functionName: "withdrawRefund", args: [] });
+}
+
+export async function readBrandRefundBalance(account: Address): Promise<bigint> {
+  return publicClient.readContract({
+    address: REWARDS_VAULT_ADDRESS,
+    abi: VAULT_ABI,
+    functionName: "getBrandRefundBalance",
+    args: [account],
+  }) as Promise<bigint>;
 }
 
 export async function readRequiredUsdc(

@@ -4,7 +4,7 @@ import { apiRequest } from './api';
 
 export type EventType = 'post_and_vote' | 'vote_only';
 
-export type EventStatus = 'draft' | 'scheduled' | 'posting' | 'voting' | 'completed';
+export type EventStatus = 'draft' | 'scheduled' | 'posting' | 'voting' | 'completed' | 'cancelled';
 
 export interface Event {
     id: string;
@@ -13,6 +13,8 @@ export interface Event {
     category?: string;
     eventType: EventType;
     status: EventStatus;
+    cancelReason?: string;
+    cancelledAt?: string;
     startTime: string;
     endTime: string;
     postingStart?: string;

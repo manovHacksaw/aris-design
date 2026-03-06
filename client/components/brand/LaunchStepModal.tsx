@@ -19,6 +19,7 @@ import { publicClient } from "@/lib/blockchain/client";
 import { keccak256, stringToHex } from "viem";
 import { createEvent, updateBlockchainStatus } from "@/services/event.service";
 import { uploadToPinata } from "@/lib/pinata-upload";
+import { clearRefundCredit } from "@/services/brand-refunds.service";
 
 export interface LaunchFormData {
   title: string;
@@ -43,6 +44,8 @@ export interface LaunchFormData {
   submissionGuidelines?: string;
   moderationRules?: string;
   proposals?: Array<{ type?: string; title: string; imageCid?: string; order: number; media?: File; mediaPreview?: string }>;
+  useRefundCredit?: boolean;
+  refundCreditAmount?: number;
 }
 
 interface LaunchStepModalProps {
@@ -141,7 +144,7 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
       if (!cap || cap < 5) preflightErrors.push("Capacity must be at least 5 participants.");
       const resolvedStartMs = form.startImmediately ? Date.now() : new Date(form.startDate).getTime();
       const endMs = new Date(form.endDate).getTime();
-      if (endMs - resolvedStartMs < 2 * 60 * 60 * 1000) preflightErrors.push("Event must run for at least 2 hours.");
+      if (endMs - resolvedStartMs < 10 * 60 * 1000) preflightErrors.push("Event must run for at least 10 minutes.");
       if (form.type === "post" && form.postingEndDate) {
         const pEndMs = new Date(form.postingEndDate).getTime();
         if (pEndMs <= resolvedStartMs) preflightErrors.push("Posting end must be after start.");
@@ -207,6 +210,14 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
       // Compute required deposit client-side (on-chain view reverts on testnet)
       const requiredDeposit = computeRequiredUsdc(eventTypeInt, maxParticipants, topPoolAlloc, leaderboardAlloc);
 
+      // Refund credit amount (in USDC units)
+      const creditToUse = form.useRefundCredit && form.refundCreditAmount
+        ? parseUsdc(form.refundCreditAmount)
+        : BigInt(0);
+
+      // Final net deposit needed from wallet
+      const netDepositFromWallet = requiredDeposit > creditToUse ? requiredDeposit - creditToUse : BigInt(0);
+
       console.log("[LaunchStepModal] Computed required USDC deposit:", {
         eventTypeInt,
         maxParticipants: maxParticipants.toString(),
@@ -223,13 +234,13 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
         account: smartAccountAddress,
         balance: balance.toString(),
         balanceUsd: (Number(balance) / 1_000_000).toFixed(6),
-        required: requiredDeposit.toString(),
-        sufficient: balance >= requiredDeposit,
+        required: netDepositFromWallet.toString(),
+        sufficient: balance >= netDepositFromWallet,
       });
 
-      if (balance < requiredDeposit) {
+      if (balance < netDepositFromWallet) {
         const have = (Number(balance) / 1_000_000).toFixed(2);
-        const need = (Number(requiredDeposit) / 1_000_000).toFixed(2);
+        const need = (Number(netDepositFromWallet) / 1_000_000).toFixed(2);
         throw new Error(
           `Insufficient USDC. Your smart account (${smartAccountAddress.slice(0, 8)}…) ` +
           `needs $${need} but only has $${have} on Polygon Amoy. ` +
@@ -290,13 +301,13 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
       setStep(1);
 
       console.log("[LaunchStepModal] Sending batch UserOp:", {
-        approve: { to: USDC_ADDRESS, amount: requiredDeposit.toString() },
-        createEvent: { to: REWARDS_VAULT_ADDRESS, eventId: eventIdBytes32, eventTypeInt, maxParticipants: maxParticipants.toString(), topPoolAlloc: topPoolAlloc.toString() },
+        approve: { to: USDC_ADDRESS, amount: netDepositFromWallet.toString() },
+        createEvent: { to: REWARDS_VAULT_ADDRESS, eventId: eventIdBytes32, eventTypeInt, maxParticipants: maxParticipants.toString(), topPoolAlloc: topPoolAlloc.toString(), useRefundBalance: creditToUse.toString() },
       });
 
       const hash = await sendBatchTransaction([
-        { to: USDC_ADDRESS, data: encodeUsdcApprove(REWARDS_VAULT_ADDRESS, requiredDeposit) },
-        { to: REWARDS_VAULT_ADDRESS, data: encodeCreateEvent(eventIdBytes32, eventTypeInt, maxParticipants, topPoolAlloc, leaderboardAlloc) },
+        { to: USDC_ADDRESS, data: encodeUsdcApprove(REWARDS_VAULT_ADDRESS, netDepositFromWallet) },
+        { to: REWARDS_VAULT_ADDRESS, data: encodeCreateEvent(eventIdBytes32, eventTypeInt, maxParticipants, topPoolAlloc, leaderboardAlloc, creditToUse) },
       ]);
 
       // ── Step 2: Waiting for on-chain confirmation ──────────────────────────
@@ -314,6 +325,11 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
       setStep(3);
       console.log("[LaunchStepModal] Updating event blockchain status to ACTIVE...");
       await updateBlockchainStatus(dbEvent.id, hash, eventIdBytes32);
+
+      // ── Step 4: Cleanup credit ───────────
+      if (form.useRefundCredit) {
+        clearRefundCredit();
+      }
 
     } catch (err: any) {
       const msg = err?.message ?? "Something went wrong. Please try again.";
@@ -375,6 +391,14 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
                   : "—"}
               </span>
             </div>
+            {form.useRefundCredit && form.refundCreditAmount && (
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-primary font-bold italic">Applied credit</span>
+                <span className="text-xs font-mono font-bold text-primary italic">
+                  -${form.refundCreditAmount.toFixed(2)}
+                </span>
+              </div>
+            )}
           </div>
         )}
 

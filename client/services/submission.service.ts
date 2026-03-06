@@ -12,8 +12,8 @@ export interface Submission {
     user?: {
         id: string;
         username?: string;
-        name?: string;
-        profilePicCid?: string;
+        displayName?: string;
+        avatarUrl?: string;
     };
     _count?: { votes: number };
     votes?: Array<{ id: string; userId: string }>;

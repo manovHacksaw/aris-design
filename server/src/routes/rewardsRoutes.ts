@@ -56,6 +56,9 @@ router.post('/sync-claims', authenticateJWT, RewardsController.syncClaims);
 // Get brand's refundable balance and pool details
 router.get('/brand/refunds', authenticateJWT, RewardsController.getBrandRefunds);
 
+// Prepare refund claim for a specific event
+router.post('/brand/refunds/prepare', authenticateJWT, RewardsController.prepareRefundClaim);
+
 // Get all claimable rewards for participants in brand's events
 router.get('/brand/claimable', authenticateJWT, RewardsController.getBrandClaimableRewards);
 

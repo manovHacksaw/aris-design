@@ -15,7 +15,8 @@ import {
     IoChevronBackOutline,
     IoChevronForwardOutline,
     IoLogOutOutline,
-    IoEyeOutline
+    IoEyeOutline,
+    IoRefreshOutline
 } from "react-icons/io5";
 import { useNotifications } from "@/context/NotificationContext";
 import { useRouter } from "next/navigation";
@@ -46,7 +47,7 @@ export default function BrandSidebar() {
         { label: "Dashboard", href: "/brand/dashboard", icon: IoGridOutline },
         { label: "Campaigns", href: "/brand/events", icon: IoMegaphoneOutline },
         { label: "Create Campaign", href: "/brand/create-event", icon: IoAddCircleOutline },
-        { label: "Financials", href: "/brand/financials", icon: IoWalletOutline },
+        { label: "Refunds", href: "/brand/refunds", icon: IoRefreshOutline },
         { label: "Notifications", href: "/brand/notifications", icon: IoNotificationsOutline, badge: unreadCount },
         { label: "Settings", href: "/brand/settings", icon: IoSettingsOutline },
     ];

@@ -8,35 +8,33 @@ import { formatCount } from "@/lib/eventUtils";
 
 interface VoteSubmissionCardProps {
     submission: VoteSubmission;
-    isSelected: boolean;
-    isLocked: boolean;
-    onSelect: (id: string) => void;
+    isVoted: boolean;
+    disabled: boolean;
+    onVote: () => void;
 }
 
 export default function VoteSubmissionCard({
     submission,
-    isSelected,
-    isLocked,
-    onSelect,
+    isVoted,
+    disabled,
+    onVote,
 }: VoteSubmissionCardProps) {
     const handleClick = () => {
-        if (!isLocked) {
-            onSelect(submission.id);
-        }
+        if (!disabled) onVote();
     };
 
     return (
         <motion.div
-            whileHover={!isLocked ? { y: -2 } : undefined}
-            whileTap={!isLocked ? { scale: 0.98 } : undefined}
+            whileHover={!disabled ? { y: -2 } : undefined}
+            whileTap={!disabled ? { scale: 0.98 } : undefined}
             onClick={handleClick}
             className={cn(
                 "relative rounded-[20px] overflow-hidden cursor-pointer transition-all border-2",
-                isSelected
+                isVoted
                     ? "border-primary ring-2 ring-primary/20"
                     : "border-transparent hover:border-border",
-                isLocked && !isSelected && "opacity-50",
-                !isLocked && "hover:shadow-lg"
+                disabled && !isVoted && "opacity-50",
+                !disabled && "hover:shadow-lg"
             )}
         >
             {/* Media */}
@@ -56,7 +54,7 @@ export default function VoteSubmissionCard({
                 )}
 
                 {/* Selection overlay */}
-                {isSelected && (
+                {isVoted && (
                     <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
                         <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-lg">
                             <Check className="w-6 h-6 text-white" />
@@ -91,9 +89,9 @@ export default function VoteSubmissionCard({
                     </div>
                 </div>
 
-                {isSelected && isLocked && (
+                {isVoted && (
                     <div className="mt-3 text-[10px] font-black text-primary uppercase tracking-widest text-center">
-                        Your Selection
+                        Your Vote
                     </div>
                 )}
             </div>
