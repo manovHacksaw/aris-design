@@ -32,7 +32,14 @@
       "Bash(find:*)",
       "Bash(bun add:*)",
       "Bash(npx ts-node:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Skill(gsd:progress)",
+      "Bash(bun run:*)",
+      "Bash(bun:*)",
+      "Bash(EVENT_ID=128d25c8-35c4-429d-a0e8-39159d718c8a bun run:*)",
+      "WebFetch(domain:amoy.polygonscan.com)",
+      "Bash(PGPASSWORD=arisdemo123 psql:*)",
+      "Bash(git add:*)"
     ]
   }
 }
