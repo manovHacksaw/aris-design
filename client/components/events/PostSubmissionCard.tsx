@@ -30,11 +30,13 @@ export default function PostSubmissionCard({ submission }: PostSubmissionCardPro
         >
             {/* Media */}
             <div className="relative aspect-[4/3] bg-secondary overflow-hidden">
-                <img
-                    src={submission.media}
-                    alt="Post"
-                    className="w-full h-full object-cover"
-                />
+                {submission.media && (
+                    <img
+                        src={submission.media}
+                        alt="Post"
+                        className="w-full h-full object-cover"
+                    />
+                )}
 
                 {/* Status badge */}
                 <div className={cn("absolute top-3 right-3 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.15em]", status.className)}>
@@ -63,7 +65,7 @@ export default function PostSubmissionCard({ submission }: PostSubmissionCardPro
                 <div className="flex items-center gap-2 mb-3">
                     <img
                         className="w-5 h-5 rounded-full border border-border"
-                        src={submission.creator.avatar}
+                        src={submission.creator.avatar || undefined}
                         alt={submission.creator.name}
                     />
                     <span className="text-[11px] font-bold text-foreground/60 tracking-tight">

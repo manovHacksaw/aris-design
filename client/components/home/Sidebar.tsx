@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { IoHomeOutline, IoHome, IoCompassOutline, IoCompass, IoAddCircleOutline, IoAddCircle, IoTrophyOutline, IoTrophy, IoGridOutline, IoGrid, IoWalletOutline, IoWallet, IoNotificationsOutline, IoNotifications, IoSunnyOutline, IoMoonOutline, IoChevronBackOutline, IoChevronForwardOutline, IoPersonOutline, IoPerson } from "react-icons/io5";
+import { IoHomeOutline, IoHome, IoCompassOutline, IoCompass, IoAddCircleOutline, IoAddCircle, IoTrophyOutline, IoTrophy, IoGridOutline, IoGrid, IoWalletOutline, IoWallet, IoNotificationsOutline, IoNotifications, IoSunnyOutline, IoMoonOutline, IoChevronBackOutline, IoChevronForwardOutline, IoPersonOutline, IoPerson, IoLogOutOutline } from "react-icons/io5";
+import { usePrivy } from "@privy-io/react-auth";
 import { useUser } from "@/context/UserContext";
 import { useWallet } from "@/context/WalletContext";
 import SidebarItem from "@/components/sidebar/SidebarItem";
@@ -17,6 +18,7 @@ export default function Sidebar() {
     const pathname = usePathname();
     const { isCollapsed, toggleSidebar, isMobileOpen, setMobileOpen } = useSidebar();
     const { theme, setTheme } = useTheme();
+    const { logout } = usePrivy();
     const [mounted, setMounted] = useState(false);
 
     const showExpanded = !isCollapsed;
@@ -129,7 +131,7 @@ export default function Sidebar() {
                             <button
                                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                                 className={cn(
-                                    "group flex items-center w-full pl-3 py-3 rounded-xl",
+                                    "group flex items-center w-full pl-3 py-2 rounded-xl",
                                     "text-foreground/60 hover:bg-secondary hover:text-foreground",
                                     "transition-colors duration-150 ease-out"
                                 )}
@@ -155,6 +157,31 @@ export default function Sidebar() {
                                 )}
                             </button>
 
+                            {/* Logout */}
+                            <button
+                                onClick={() => logout()}
+                                className={cn(
+                                    "group relative flex items-center w-full pl-3 py-2 rounded-xl",
+                                    "text-foreground/60 hover:bg-secondary hover:text-red-400",
+                                    "transition-colors duration-150 ease-out"
+                                )}
+                            >
+                                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8">
+                                    <IoLogOutOutline size={20} className="transition-colors duration-150" />
+                                </div>
+                                <span className={cn(
+                                    "whitespace-nowrap overflow-hidden transition-all duration-150 ease-out ml-3 text-[14px] font-medium",
+                                    showExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
+                                )}>
+                                    Logout
+                                </span>
+                                {isCollapsed && (
+                                    <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 px-3 py-1.5 bg-card text-foreground text-xs rounded-[8px] shadow-spotify opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 whitespace-nowrap z-50 pointer-events-none font-bold">
+                                        Logout
+                                    </div>
+                                )}
+                            </button>
+
                             {/* More Menu */}
                             <SidebarMore />
 
@@ -162,7 +189,7 @@ export default function Sidebar() {
                             <button
                                 onClick={toggleSidebar}
                                 className={cn(
-                                    "group flex items-center w-full pl-3 py-3 rounded-xl",
+                                    "group flex items-center w-full pl-3 py-2 rounded-xl",
                                     "text-foreground/60 hover:bg-secondary hover:text-foreground",
                                     "transition-colors duration-150 ease-out"
                                 )}

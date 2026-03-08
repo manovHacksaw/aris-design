@@ -15,6 +15,8 @@ import { generateTagline, generateAiProposals } from "@/services/ai.service";
 import { readBrandRefundBalance } from "@/lib/blockchain/contracts";
 import { useWallet } from "@/context/WalletContext";
 import { useEffect } from "react";
+import { BrandImageGeneratorModal } from "@/components/create/BrandImageGeneratorModal";
+import { useUser } from "@/context/UserContext";
 
 // ── Constants (mirror contracts.ts) ──────────────────────────────────────────
 const BASE_RATE = 0.030;   // $0.030/participant — base voter reward
@@ -155,12 +157,19 @@ function RewardRow({ label, rate, count, note, highlight }: { label: string; rat
 export default function CreateEventPage() {
     const router = useRouter();
     const { address, balance, refreshBalance } = useWallet();
+    const { user } = useUser();
     const [currentStep, setCurrentStep] = useState(0);
     const [modalOpen, setModalOpen] = useState(false);
     const [taglineLoading, setTaglineLoading] = useState(false);
     const [proposalAiLoading, setProposalAiLoading] = useState(false);
     const coverInputRef = useRef<HTMLInputElement>(null);
     const [coverPreview, setCoverPreview] = useState<string | null>(null);
+    // AI image generator for voting options
+    const [aiGeneratorProposalIdx, setAiGeneratorProposalIdx] = useState<number | null>(null);
+    // AI image generator for sample images
+    const [aiGeneratorSampleOpen, setAiGeneratorSampleOpen] = useState(false);
+    // Track which "Add Sample" slot is in two-button mode (null = none expanded)
+    const [sampleAddMode, setSampleAddMode] = useState(false);
 
     const [form, setForm] = useState<FormData>({
         title: "",
@@ -895,26 +904,53 @@ export default function CreateEventPage() {
                                 </div>
                             ))}
                             {form.sampleImages.length < 10 && (
-                                <label className="flex flex-col items-center justify-center aspect-square rounded-xl border-2 border-dashed border-border hover:border-primary/40 hover:bg-primary/5 cursor-pointer transition-all">
-                                    <Plus className="w-5 h-5 text-muted-foreground" />
-                                    <span className="text-[10px] text-muted-foreground mt-1">Add Sample</span>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        multiple
-                                        onChange={(e) => {
-                                            const files = Array.from(e.target.files || []);
-                                            const total = form.sampleImages.length + files.length;
-                                            if (total > 10) {
-                                                toast.error("Maximum 10 samples allowed");
-                                                set({ sampleImages: [...form.sampleImages, ...files.slice(0, 10 - form.sampleImages.length)] });
-                                            } else {
-                                                set({ sampleImages: [...form.sampleImages, ...files] });
-                                            }
-                                        }}
-                                    />
-                                </label>
+                                sampleAddMode ? (
+                                    <div className="flex flex-col gap-2 aspect-square rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-3 items-center justify-center">
+                                        <span className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">Add Sample</span>
+                                        <button
+                                            onClick={() => { setSampleAddMode(false); setAiGeneratorSampleOpen(true); }}
+                                            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-primary/15 border border-primary/30 text-[10px] font-black text-primary uppercase tracking-widest hover:bg-primary/25 transition-all"
+                                        >
+                                            <Sparkles className="w-3 h-3" />
+                                            Generate
+                                        </button>
+                                        <label className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-white/5 border border-white/10 text-[10px] font-black text-white/40 uppercase tracking-widest hover:bg-white/8 hover:text-white/60 transition-all cursor-pointer">
+                                            <Upload className="w-3 h-3" />
+                                            Upload
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                multiple
+                                                onChange={(e) => {
+                                                    setSampleAddMode(false);
+                                                    const files = Array.from(e.target.files || []);
+                                                    const total = form.sampleImages.length + files.length;
+                                                    if (total > 10) {
+                                                        toast.error("Maximum 10 samples allowed");
+                                                        set({ sampleImages: [...form.sampleImages, ...files.slice(0, 10 - form.sampleImages.length)] });
+                                                    } else {
+                                                        set({ sampleImages: [...form.sampleImages, ...files] });
+                                                    }
+                                                }}
+                                            />
+                                        </label>
+                                        <button
+                                            onClick={() => setSampleAddMode(false)}
+                                            className="text-[9px] text-white/20 hover:text-white/40 transition-colors mt-0.5"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => setSampleAddMode(true)}
+                                        className="flex flex-col items-center justify-center aspect-square rounded-xl border-2 border-dashed border-border hover:border-primary/40 hover:bg-primary/5 cursor-pointer transition-all w-full"
+                                    >
+                                        <Plus className="w-5 h-5 text-muted-foreground" />
+                                        <span className="text-[10px] text-muted-foreground mt-1">Add Sample</span>
+                                    </button>
+                                )
                             )}
                         </div>
                         <p className="text-[10px] text-muted-foreground">Minimum 1 · Maximum 10 images</p>
@@ -971,16 +1007,28 @@ export default function CreateEventPage() {
                                             </button>
                                         </div>
                                     ) : (
-                                        <label className="inline-flex items-center gap-2 mt-2 px-3 py-1.5 bg-secondary/40 hover:bg-secondary border border-border rounded-lg text-xs font-medium cursor-pointer transition-colors text-muted-foreground hover:text-foreground">
-                                            <Upload className="w-3.5 h-3.5" />
-                                            <span>Add Photo / Video</span>
-                                            <input
-                                                type="file"
-                                                accept="image/*,video/*"
-                                                className="hidden"
-                                                onChange={(e) => updateProposalMedia(idx, e.target.files?.[0])}
-                                            />
-                                        </label>
+                                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                            {/* Generate with AI */}
+                                            <button
+                                                type="button"
+                                                onClick={() => setAiGeneratorProposalIdx(idx)}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-lg text-xs font-semibold text-primary transition-colors"
+                                            >
+                                                <Sparkles className="w-3.5 h-3.5" />
+                                                Generate
+                                            </button>
+                                            {/* Upload photo/video */}
+                                            <label className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary/40 hover:bg-secondary border border-border rounded-lg text-xs font-medium cursor-pointer transition-colors text-muted-foreground hover:text-foreground">
+                                                <Upload className="w-3.5 h-3.5" />
+                                                <span>Upload</span>
+                                                <input
+                                                    type="file"
+                                                    accept="image/*,video/*"
+                                                    className="hidden"
+                                                    onChange={(e) => updateProposalMedia(idx, e.target.files?.[0])}
+                                                />
+                                            </label>
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -1330,6 +1378,45 @@ export default function CreateEventPage() {
                 form={launchData}
                 onClose={() => setModalOpen(false)}
                 onSuccess={() => router.push("/brand/dashboard")}
+            />
+
+            {/* Brand AI Image Generator for voting options */}
+            <BrandImageGeneratorModal
+                isOpen={aiGeneratorProposalIdx !== null}
+                onClose={() => setAiGeneratorProposalIdx(null)}
+                onAddToOption={(file, preview) => {
+                    if (aiGeneratorProposalIdx === null) return;
+                    set({
+                        proposals: form.proposals.map((p, i) =>
+                            i === aiGeneratorProposalIdx
+                                ? { ...p, media: file, mediaPreview: preview }
+                                : p
+                        ),
+                    });
+                    setAiGeneratorProposalIdx(null);
+                }}
+                brandId={user?.id ?? ""}
+                eventTitle={form.title}
+                eventDescription={form.description}
+                optionLabel={aiGeneratorProposalIdx !== null ? `Option ${aiGeneratorProposalIdx + 1}` : undefined}
+            />
+
+            {/* Brand AI Image Generator for sample images */}
+            <BrandImageGeneratorModal
+                isOpen={aiGeneratorSampleOpen}
+                onClose={() => setAiGeneratorSampleOpen(false)}
+                onAddToOption={(file) => {
+                    if (form.sampleImages.length >= 10) {
+                        toast.error("Maximum 10 samples allowed");
+                        return;
+                    }
+                    set({ sampleImages: [...form.sampleImages, file] });
+                    setAiGeneratorSampleOpen(false);
+                }}
+                brandId={user?.id ?? ""}
+                eventTitle={form.title}
+                eventDescription={form.description}
+                optionLabel="Sample Image"
             />
         </div>
     );

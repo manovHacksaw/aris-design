@@ -48,3 +48,5 @@ server/reward_logs.txt
 coverage
 
 oldFrontend/
+
+client/service-account.json
