@@ -1,0 +1,1053 @@
+import { Request, Response } from 'express';
+import { RewardsService } from '../services/rewardsService.js';
+import { prisma } from '../lib/prisma.js';
+import { ClaimType, RewardsPoolStatus } from '@prisma/client';
+import { EventType, REWARDS_CONSTANTS } from '../types/rewards.js';
+
+/**
+ * Rewards Controller
+ * Handles all reward pool and claim-related endpoints
+ */
+export class RewardsController {
+  // ==================== POOL ENDPOINTS ====================
+
+  /**
+   * POST /api/rewards/pools
+   * Create a rewards pool for an event (Brand only)
+   */
+  static async createPool(req: Request, res: Response): Promise<void> {
+    try {
+      const { eventId, maxParticipants, topPoolAmount, transactionHash } = req.body;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Unauthorized' });
+        return;
+      }
+
+      // Validate required fields
+      if (!eventId || !maxParticipants || !topPoolAmount) {
+        res.status(400).json({
+          success: false,
+          error: 'Missing required fields: eventId, maxParticipants, topPoolAmount',
+        });
+        return;
+      }
+
+      // Get event and verify brand ownership
+      const event = await prisma.event.findUnique({
+        where: { id: eventId },
+        include: { brand: true },
+      });
+
+      if (!event) {
+        res.status(404).json({ success: false, error: 'Event not found' });
+        return;
+      }
+
+      if (event.brand.ownerId !== userId) {
+        res.status(403).json({ success: false, error: 'Not authorized to create pool for this event' });
+        return;
+      }
+
+      // Create pool record
+      const pool = await RewardsService.createPoolRecord(
+        eventId,
+        maxParticipants,
+        topPoolAmount,
+        transactionHash
+      );
+
+      res.status(201).json({
+        success: true,
+        data: pool,
+      });
+    } catch (error: any) {
+      console.error('Error creating pool:', error);
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to create pool',
+      });
+    }
+  }
+
+  /**
+   * GET /api/rewards/pools/:eventId
+   * Get pool status for an event
+   */
+  static async getPool(req: Request, res: Response): Promise<void> {
+    try {
+      const { eventId } = req.params;
+
+      const pool = await RewardsService.getPoolInfo(eventId);
+
+      if (!pool) {
+        res.status(404).json({ success: false, error: 'Pool not found' });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: pool,
+      });
+    } catch (error: any) {
+      console.error('Error getting pool:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to get pool',
+      });
+    }
+  }
+
+  /**
+   * POST /api/rewards/pools/:eventId/activate
+   * Activate a pool after on-chain creation (Brand only)
+   */
+  static async activatePool(req: Request, res: Response): Promise<void> {
+    try {
+      const { eventId } = req.params;
+      const { transactionHash } = req.body;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Unauthorized' });
+        return;
+      }
+
+      if (!transactionHash) {
+        res.status(400).json({ success: false, error: 'Transaction hash required' });
+        return;
+      }
+
+      // Get event and verify brand ownership
+      const event = await prisma.event.findUnique({
+        where: { id: eventId },
+        include: { brand: true },
+      });
+
+      if (!event) {
+        res.status(404).json({ success: false, error: 'Event not found' });
+        return;
+      }
+
+      if (event.brand.ownerId !== userId) {
+        res.status(403).json({ success: false, error: 'Not authorized' });
+        return;
+      }
+
+      const pool = await RewardsService.activatePool(eventId, transactionHash);
+
+      res.json({
+        success: true,
+        data: pool,
+      });
+    } catch (error: any) {
+      console.error('Error activating pool:', error);
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to activate pool',
+      });
+    }
+  }
+
+  /**
+   * POST /api/rewards/pools/:eventId/finalize
+   * Finalize a pool after event completion (Admin only)
+   */
+  static async finalizePool(req: Request, res: Response): Promise<void> {
+    try {
+      const { eventId } = req.params;
+      const { actualParticipants, refundAmount, transactionHash } = req.body;
+      const userId = req.user?.id;
+      const userRole = req.user?.role;
+
+      if (!userId || userRole !== 'ADMIN') {
+        res.status(403).json({ success: false, error: 'Admin access required' });
+        return;
+      }
+
+      if (actualParticipants === undefined) {
+        res.status(400).json({ success: false, error: 'actualParticipants required' });
+        return;
+      }
+
+      const pool = await RewardsService.finalizePool(
+        eventId,
+        actualParticipants,
+        refundAmount || 0,
+        transactionHash
+      );
+
+      res.json({
+        success: true,
+        data: pool,
+      });
+    } catch (error: any) {
+      console.error('Error finalizing pool:', error);
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to finalize pool',
+      });
+    }
+  }
+
+  /**
+   * POST /api/events/:id/rewards/finalize
+   * Finalize event, execute on-chain transaction, and calculate rewards
+   */
+  static async finalizeEvent(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params; // Event ID from route
+      const userId = req.user?.id;
+      const userRole = req.user?.role;
+
+      // Allow Admin or Brand Owner (if we assume Brand can trigger it via backend proxy)
+      // Requirements say "Admin/Brand owner", but contract is onlyOwner.
+      // Since backend signs it, backend acts as owner.
+      // We check if user is authorized for the EVENT.
+
+      const event = await prisma.event.findUnique({
+        where: { id },
+        include: { brand: true }
+      });
+
+      if (!event) {
+        res.status(404).json({ success: false, error: 'Event not found' });
+        return;
+      }
+
+      const isBrandOwner = event.brand.ownerId === userId;
+      const isAdmin = userRole === 'ADMIN';
+
+      if (!isBrandOwner && !isAdmin) {
+        res.status(403).json({ success: false, error: 'Unauthorized' });
+        return;
+      }
+
+      // Execute Finalization
+      const pool = await RewardsService.executeFinalization(id);
+
+      // Trigger reward processing (generation of claims)
+      const processResult = await RewardsService.processEventRewards(id);
+
+      res.json({
+        success: true,
+        data: {
+          pool,
+          rewards: processResult
+        },
+      });
+    } catch (error: any) {
+      console.error('Error finalizing event:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to finalize event',
+      });
+    }
+  }
+
+  /**
+   * POST /api/rewards/pools/:eventId/cancel
+   * Cancel a pool (Brand or Admin)
+   */
+  static async cancelPool(req: Request, res: Response): Promise<void> {
+    try {
+      const { eventId } = req.params;
+      const { transactionHash } = req.body;
+      const userId = req.user?.id;
+      const userRole = req.user?.role;
+
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Unauthorized' });
+        return;
+      }
+
+      // Get event and verify ownership or admin
+      const event = await prisma.event.findUnique({
+        where: { id: eventId },
+        include: { brand: true },
+      });
+
+      if (!event) {
+        res.status(404).json({ success: false, error: 'Event not found' });
+        return;
+      }
+
+      if (event.brand.ownerId !== userId && userRole !== 'ADMIN') {
+        res.status(403).json({ success: false, error: 'Not authorized' });
+        return;
+      }
+
+      const pool = await RewardsService.cancelPool(eventId, transactionHash);
+
+      res.json({
+        success: true,
+        data: pool,
+      });
+    } catch (error: any) {
+      console.error('Error cancelling pool:', error);
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to cancel pool',
+      });
+    }
+  }
+
+  /**
+   * GET /api/rewards/pools/:eventId/calculate
+   * Calculate pool requirements for an event
+   */
+  static async calculatePoolRequirements(req: Request, res: Response): Promise<void> {
+    try {
+      const { eventId } = req.params;
+      const { maxParticipants, topPoolAmount } = req.query;
+
+      // Get event to determine type
+      const event = await prisma.event.findUnique({
+        where: { id: eventId },
+      });
+
+      if (!event) {
+        res.status(404).json({ success: false, error: 'Event not found' });
+        return;
+      }
+
+      if (!maxParticipants || !topPoolAmount) {
+        res.status(400).json({
+          success: false,
+          error: 'maxParticipants and topPoolAmount query params required',
+        });
+        return;
+      }
+
+      const eventType = event.eventType === 'post_and_vote' ? EventType.PostAndVote : EventType.VoteOnly;
+
+      const requirements = RewardsService.calculatePoolRequirements({
+        eventType,
+        maxParticipants: parseInt(maxParticipants as string),
+        topPoolAmount: parseFloat(topPoolAmount as string),
+      });
+
+      res.json({
+        success: true,
+        data: {
+          eventType: event.eventType,
+          ...requirements,
+        },
+      });
+    } catch (error: any) {
+      console.error('Error calculating requirements:', error);
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to calculate requirements',
+      });
+    }
+  }
+
+  // ==================== CLAIM ENDPOINTS ====================
+
+  /**
+   * GET /api/rewards/claims/:eventId
+   * Get user's claims for an event
+   */
+  static async getUserClaims(req: Request, res: Response): Promise<void> {
+    try {
+      const { eventId } = req.params;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Unauthorized' });
+        return;
+      }
+
+      const claims = await RewardsService.getUserClaims(eventId, userId);
+
+      res.json({
+        success: true,
+        data: claims,
+      });
+    } catch (error: any) {
+      console.error('Error getting claims:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to get claims',
+      });
+    }
+  }
+
+  /**
+   * POST /api/rewards/claims/:eventId/sign
+   * Request signature for a claim
+   */
+  static async signClaim(req: Request, res: Response): Promise<void> {
+    try {
+      const { eventId } = req.params;
+      const { claimType, userAddress, nonceOffset } = req.body;
+      const userId = req.user?.id;
+
+      // Use provided address (Smart Account) or fallback to DB address
+      const targetAddress = userAddress || req.user?.walletAddress;
+
+      if (!userId || !targetAddress) {
+        res.status(401).json({ success: false, error: 'Unauthorized or wallet not connected' });
+        return;
+      }
+
+      if (!claimType) {
+        res.status(400).json({ success: false, error: 'claimType required' });
+        return;
+      }
+
+      // Validate claim type
+      if (!Object.values(ClaimType).includes(claimType as ClaimType)) {
+        res.status(400).json({ success: false, error: 'Invalid claim type' });
+        return;
+      }
+
+      const result = await RewardsService.signClaim(
+        eventId,
+        userId,
+        claimType as ClaimType,
+        targetAddress,
+        nonceOffset
+      );
+
+      if (!result.success) {
+        res.status(400).json(result);
+        return;
+      }
+
+      res.json(result);
+    } catch (error: any) {
+      console.error('Error signing claim:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to sign claim',
+      });
+    }
+  }
+
+  /**
+   * POST /api/rewards/claims/:eventId/confirm
+   * Confirm on-chain claim
+   */
+  static async confirmClaim(req: Request, res: Response): Promise<void> {
+    try {
+      const { eventId } = req.params;
+      const { claimType, transactionHash } = req.body;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Unauthorized' });
+        return;
+      }
+
+      if (!claimType || !transactionHash) {
+        res.status(400).json({ success: false, error: 'claimType and transactionHash required' });
+        return;
+      }
+
+      const claim = await RewardsService.confirmClaim(
+        eventId,
+        userId,
+        claimType as ClaimType,
+        transactionHash
+      );
+
+      if (!claim) {
+        res.status(404).json({ success: false, error: 'Claim not found' });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: claim,
+      });
+    } catch (error: any) {
+      console.error('Error confirming claim:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to confirm claim',
+      });
+    }
+  }
+
+  // ==================== USER ENDPOINTS ====================
+
+  /**
+   * GET /api/rewards/me
+   * Get user's rewards summary (simplified endpoint as requested)
+   */
+  static async getMyRewards(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Unauthorized' });
+        return;
+      }
+
+      const rewards = await RewardsService.getUserClaimableRewards(userId);
+
+      // Calculate total
+      const totalClaimable = rewards.reduce((sum, r) => sum + r.totalClaimableUsdc, 0).toFixed(2);
+
+      // Format response as requested
+      const events = rewards.map(r => ({
+        eventId: r.eventId,
+        title: r.eventTitle,
+        onChainEventId: r.onChainEventId,
+        claimableAmount: r.totalClaimableUsdc.toFixed(2),
+        alreadyClaimed: false,
+        claimStatus: r.claims.length > 0 ? 'CLAIMABLE' : 'NO_REWARDS',
+        claims: r.claims,
+      }));
+
+      res.json({
+        success: true,
+        totalClaimable,
+        events,
+      });
+    } catch (error: any) {
+      console.error('Error getting my rewards:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to get rewards',
+      });
+    }
+  }
+
+  /**
+   * POST /api/rewards/claim
+   * Claim a single reward (simplified endpoint)
+   */
+  static async claimReward(req: Request, res: Response): Promise<void> {
+    try {
+      const { eventId, claimType } = req.body;
+      const userId = req.user?.id;
+      const walletAddress = req.user?.walletAddress;
+
+      if (!userId || !walletAddress) {
+        res.status(401).json({ success: false, error: 'Unauthorized or wallet not connected' });
+        return;
+      }
+
+      if (!eventId) {
+        res.status(400).json({ success: false, error: 'eventId required' });
+        return;
+      }
+
+      // If claimType not specified, get all pending claims for this event
+      if (!claimType) {
+        // Get all claims for user in this event
+        const claims = await RewardsService.getUserClaims(eventId, userId);
+        const pendingClaims = claims.filter(c => c.status === 'PENDING' || c.status === 'SIGNED');
+
+        if (pendingClaims.length === 0) {
+          res.status(400).json({ success: false, error: 'No pending claims for this event' });
+          return;
+        }
+
+        // Sign and return all pending claims
+        const signedClaims = [];
+        for (const claim of pendingClaims) {
+          const result = await RewardsService.signClaim(
+            eventId,
+            userId,
+            claim.claimType,
+            walletAddress
+          );
+          if (result.success && result.claim) {
+            signedClaims.push(result.claim);
+          }
+        }
+
+        res.json({
+          success: true,
+          data: {
+            claims: signedClaims,
+            totalClaims: signedClaims.length,
+          },
+        });
+        return;
+      }
+
+      // Validate claim type
+      if (!Object.values(ClaimType).includes(claimType as ClaimType)) {
+        res.status(400).json({ success: false, error: 'Invalid claim type' });
+        return;
+      }
+
+      const result = await RewardsService.signClaim(
+        eventId,
+        userId,
+        claimType as ClaimType,
+        walletAddress
+      );
+
+      if (!result.success) {
+        res.status(400).json(result);
+        return;
+      }
+
+      res.json(result);
+    } catch (error: any) {
+      console.error('Error claiming reward:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to claim reward',
+      });
+    }
+  }
+
+  /**
+   * GET /api/rewards/user/claimable
+   * Get all claimable rewards for the user
+   */
+  static async getClaimableRewards(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Unauthorized' });
+        return;
+      }
+
+      const rewards = await RewardsService.getUserClaimableRewards(userId);
+
+      // Calculate total
+      const totalClaimableUsdc = rewards.reduce((sum, r) => sum + r.totalClaimableUsdc, 0);
+
+      res.json({
+        success: true,
+        data: {
+          events: rewards,
+          totalClaimableUsdc,
+        },
+      });
+    } catch (error: any) {
+      console.error('Error getting claimable rewards:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to get claimable rewards',
+      });
+    }
+  }
+
+  /**
+   * GET /api/rewards/user/history
+   * Get user's claim history
+   */
+  static async getClaimHistory(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Unauthorized' });
+        return;
+      }
+
+      const history = await RewardsService.getUserClaimHistory(userId);
+
+      res.json({
+        success: true,
+        data: history,
+      });
+    } catch (error: any) {
+      console.error('Error getting claim history:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to get claim history',
+      });
+    }
+  }
+
+  // ==================== UTILITY ENDPOINTS ====================
+
+  /**
+   * GET /api/rewards/constants
+   * Get reward system constants
+   */
+  static async getConstants(_req: Request, res: Response): Promise<void> {
+    res.json({
+      success: true,
+      data: {
+        baseRewardVoteOnly: REWARDS_CONSTANTS.BASE_REWARD_VOTE_ONLY / Math.pow(10, REWARDS_CONSTANTS.USDC_DECIMALS),
+        baseRewardPostVote: REWARDS_CONSTANTS.BASE_REWARD_POST_VOTE / Math.pow(10, REWARDS_CONSTANTS.USDC_DECIMALS),
+        platformFeePerParticipant: REWARDS_CONSTANTS.PLATFORM_FEE_PER_PARTICIPANT / Math.pow(10, REWARDS_CONSTANTS.USDC_DECIMALS),
+        minTopRewardMultiplier: REWARDS_CONSTANTS.MIN_TOP_REWARD_MULTIPLIER,
+        leaderboardDistribution: {
+          firstPlace: REWARDS_CONSTANTS.FIRST_PLACE_BPS / 100,
+          secondPlace: REWARDS_CONSTANTS.SECOND_PLACE_BPS / 100,
+          thirdPlace: REWARDS_CONSTANTS.THIRD_PLACE_BPS / 100,
+        },
+        usdcDecimals: REWARDS_CONSTANTS.USDC_DECIMALS,
+      },
+    });
+  }
+
+  /**
+   * GET /api/rewards/contract-info
+   * Get smart contract addresses
+   */
+  static async getContractInfo(_req: Request, res: Response): Promise<void> {
+    res.json({
+      success: true,
+      data: {
+        rewardsVaultAddress: process.env.REWARDS_VAULT_ADDRESS || null,
+        testUsdcAddress: process.env.TEST_USDC_ADDRESS || null,
+        chainId: parseInt(process.env.CHAIN_ID || '5003'),
+        chainName: 'Mantle Sepolia',
+      },
+    });
+  }
+
+  // ==================== BRAND REFUND ENDPOINTS ====================
+
+  /**
+   * GET /api/rewards/brand/refunds
+   * Get brand's refundable balance and pool details
+   */
+  static async getBrandRefunds(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Unauthorized' });
+        return;
+      }
+
+      // Get user's brand
+      const brand = await prisma.brand.findFirst({
+        where: { ownerId: userId },
+      });
+
+      if (!brand) {
+        res.status(404).json({ success: false, error: 'Brand not found' });
+        return;
+      }
+
+      const refundData = await RewardsService.getBrandRefundableBalance(brand.id);
+
+      res.json({
+        success: true,
+        data: {
+          brandId: brand.id,
+          brandName: brand.name,
+          ...refundData,
+        },
+      });
+    } catch (error: any) {
+      console.error('Error getting brand refunds:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to get refund data',
+      });
+    }
+  }
+
+  /**
+   * GET /api/rewards/brand/claimable
+   * Get all claimable rewards for participants in brand's events
+   */
+  static async getBrandClaimableRewards(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Unauthorized' });
+        return;
+      }
+
+      // Get user's brand
+      const brand = await prisma.brand.findFirst({
+        where: { ownerId: userId },
+      });
+
+      if (!brand) {
+        res.status(404).json({ success: false, error: 'Brand not found' });
+        return;
+      }
+
+      // Get all events for this brand with their pools and claims
+      const events = await prisma.event.findMany({
+        where: { brandId: brand.id },
+        include: {
+          rewardsPool: {
+            include: {
+              claims: {
+                where: {
+                  status: { in: ['PENDING', 'SIGNED'] }
+                },
+                include: {
+                  user: {
+                    select: { id: true, username: true, walletAddress: true, avatarUrl: true }
+                  }
+                }
+              }
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      // Format the response
+      const eventsWithClaims = events
+        .filter(event => event.rewardsPool && event.rewardsPool.claims.length > 0)
+        .map(event => {
+          const pool = event.rewardsPool!;
+          const claims = pool.claims.map(claim => ({
+            id: claim.id,
+            claimType: claim.claimType,
+            baseAmount: claim.baseAmount,
+            multiplier: claim.multiplier,
+            finalAmount: claim.finalAmount,
+            status: claim.status,
+            user: {
+              id: claim.user?.id,
+              username: claim.user?.username || 'Unknown',
+              walletAddress: claim.user?.walletAddress,
+              avatarUrl: claim.user?.avatarUrl
+            }
+          }));
+
+          const totalClaimable = claims.reduce((sum, c) => sum + c.finalAmount, 0);
+
+          return {
+            eventId: event.id,
+            eventTitle: event.title,
+            onChainEventId: pool.onChainEventId,
+            poolStatus: pool.status,
+            claims,
+            totalClaimable,
+            claimCount: claims.length
+          };
+        });
+
+      const totalClaimableAll = eventsWithClaims.reduce((sum, e) => sum + e.totalClaimable, 0);
+      const totalClaimCount = eventsWithClaims.reduce((sum, e) => sum + e.claimCount, 0);
+
+      res.json({
+        success: true,
+        data: {
+          brandId: brand.id,
+          brandName: brand.name,
+          events: eventsWithClaims,
+          totalClaimable: totalClaimableAll,
+          totalClaimCount
+        }
+      });
+    } catch (error: any) {
+      console.error('Error getting brand claimable rewards:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to get claimable rewards',
+      });
+    }
+  }
+
+  /**
+   * POST /api/rewards/brand/refunds/prepare
+   * Prepare refund claim data for a specific event
+   */
+  static async prepareRefundClaim(req: Request, res: Response): Promise<void> {
+    try {
+      const { eventId } = req.body;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Unauthorized' });
+        return;
+      }
+
+      if (!eventId) {
+        res.status(400).json({ success: false, error: 'eventId required' });
+        return;
+      }
+
+      // Get user's brand
+      const brand = await prisma.brand.findFirst({
+        where: { ownerId: userId },
+      });
+
+      if (!brand) {
+        res.status(404).json({ success: false, error: 'Brand not found' });
+        return;
+      }
+
+      const result = await RewardsService.prepareRefundClaim(eventId, brand.id);
+
+      if (!result.success) {
+        res.status(400).json(result);
+        return;
+      }
+
+      res.json(result);
+    } catch (error: any) {
+      console.error('Error preparing refund claim:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to prepare refund',
+      });
+    }
+  }
+
+  /**
+   * POST /api/rewards/brand/refunds/confirm
+   * Confirm on-chain refund claim
+   */
+  static async confirmRefundClaim(req: Request, res: Response): Promise<void> {
+    try {
+      const { eventId, transactionHash } = req.body;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Unauthorized' });
+        return;
+      }
+
+      if (!eventId || !transactionHash) {
+        res.status(400).json({ success: false, error: 'eventId and transactionHash required' });
+        return;
+      }
+
+      // Get user's brand
+      const brand = await prisma.brand.findFirst({
+        where: { ownerId: userId },
+      });
+
+      if (!brand) {
+        res.status(404).json({ success: false, error: 'Brand not found' });
+        return;
+      }
+
+      // Verify brand owns this event
+      const event = await prisma.event.findUnique({
+        where: { id: eventId },
+      });
+
+      if (!event || event.brandId !== brand.id) {
+        res.status(403).json({ success: false, error: 'Not authorized' });
+        return;
+      }
+
+      const pool = await RewardsService.markRefundClaimed(eventId, transactionHash);
+
+      if (!pool) {
+        res.status(404).json({ success: false, error: 'Pool not found' });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: pool,
+      });
+    } catch (error: any) {
+      console.error('Error confirming refund claim:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to confirm refund',
+      });
+    }
+  }
+
+  /**
+   * POST /api/rewards/pools/:eventId/finalize-and-refund
+   * Trigger on-chain finalization (Admin only, or automated)
+   * This creates the refund transaction
+   */
+  static async finalizeAndRefund(req: Request, res: Response): Promise<void> {
+    try {
+      const { eventId } = req.params;
+      const userId = req.user?.id;
+      const userRole = req.user?.role;
+
+      // Must be admin or brand owner
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Unauthorized' });
+        return;
+      }
+
+      // Get event
+      const event = await prisma.event.findUnique({
+        where: { id: eventId },
+        include: { brand: true },
+      });
+
+      if (!event) {
+        res.status(404).json({ success: false, error: 'Event not found' });
+        return;
+      }
+
+      // Check authorization (admin or brand owner)
+      if (userRole !== 'ADMIN' && event.brand.ownerId !== userId) {
+        res.status(403).json({ success: false, error: 'Not authorized' });
+        return;
+      }
+
+      // Get pool
+      const pool = await prisma.eventRewardsPool.findUnique({
+        where: { eventId },
+      });
+
+      if (!pool) {
+        res.status(404).json({ success: false, error: 'Pool not found' });
+        return;
+      }
+
+      if (pool.status !== RewardsPoolStatus.ACTIVE) {
+        res.status(400).json({ success: false, error: 'Pool is not active' });
+        return;
+      }
+
+      // Count actual participants
+      const participantCount = await prisma.vote.groupBy({
+        by: ['userId'],
+        where: { eventId },
+      });
+
+      const actualParticipants = participantCount.length;
+
+      // Calculate refund
+      const unusedSlots = Math.max(0, pool.maxParticipants - actualParticipants);
+      const baseRefund = (REWARDS_CONSTANTS.BASE_REWARD_VOTE_ONLY / Math.pow(10, REWARDS_CONSTANTS.USDC_DECIMALS)) * unusedSlots;
+      const platformRefund = (REWARDS_CONSTANTS.PLATFORM_FEE_PER_PARTICIPANT / Math.pow(10, REWARDS_CONSTANTS.USDC_DECIMALS)) * unusedSlots;
+
+      let creatorRefund = 0;
+      if (event.eventType === 'post_and_vote') {
+        creatorRefund = (REWARDS_CONSTANTS.BASE_REWARD_POST_VOTE / Math.pow(10, REWARDS_CONSTANTS.USDC_DECIMALS)) * unusedSlots;
+      }
+
+      const totalRefund = baseRefund + platformRefund + creatorRefund;
+
+      // Finalize in database
+      const finalizedPool = await RewardsService.finalizePool(
+        eventId,
+        actualParticipants,
+        totalRefund
+      );
+
+      res.json({
+        success: true,
+        data: {
+          pool: finalizedPool,
+          refundBreakdown: {
+            baseRefund,
+            platformRefund,
+            creatorRefund,
+            totalRefund,
+            unusedSlots,
+            actualParticipants,
+          },
+          message: 'Pool finalized. Brand can now claim refund via smart contract.',
+        },
+      });
+    } catch (error: any) {
+      console.error('Error finalizing pool:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to finalize pool',
+      });
+    }
+  }
+}
