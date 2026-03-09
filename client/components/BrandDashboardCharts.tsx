@@ -46,40 +46,32 @@ function formatValue(key: string, raw: number): string {
     return raw.toLocaleString();
 }
 
-function Skeleton() {
-    return (
-        <div className="space-y-6 animate-pulse">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="bg-card border border-border rounded-2xl p-5 space-y-3">
-                        <div className="h-3 bg-secondary/60 rounded w-1/2" />
-                        <div className="h-8 bg-secondary/60 rounded w-3/4" />
-                        <div className="h-3 bg-secondary/60 rounded w-1/3" />
-                    </div>
-                ))}
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-card border border-border rounded-3xl h-[300px]" />
-                <div className="bg-card border border-border rounded-3xl h-[300px]" />
-            </div>
-            <div className="bg-card border border-border rounded-3xl h-[220px]" />
-        </div>
-    );
-}
+
+const FALLBACK: BrandAnalytics = {
+    brandId: "", period: "7d",
+    stats: {
+        totalViews: 1200000, viewsChange: 12,
+        engagementRate: 8.5, engagementChange: 2.1,
+        totalSpend: 4200, spendChange: 5,
+        conversions: 850, conversionsChange: 15,
+    },
+    campaignPerformance: [40, 55, 35, 70, 60, 80, 45, 65, 50, 75, 85, 90],
+    demographics: [
+        { label: "18-24", value: 45 },
+        { label: "25-34", value: 30 },
+        { label: "35-44", value: 15 },
+        { label: "45+",   value: 10 },
+    ],
+};
 
 export default function BrandDashboardCharts() {
-    const [analytics, setAnalytics] = useState<BrandAnalytics | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [analytics, setAnalytics] = useState<BrandAnalytics>(FALLBACK);
 
     useEffect(() => {
         getBrandAnalyticsOverview()
-            .then((data) => setAnalytics(data as BrandAnalytics))
-            .catch(() => {})
-            .finally(() => setLoading(false));
+            .then((data) => { if (data) setAnalytics(data as BrandAnalytics); })
+            .catch(() => {});
     }, []);
-
-    if (loading) return <Skeleton />;
-    if (!analytics) return null;
 
     const { stats, campaignPerformance, demographics } = analytics;
     if (!stats) return null;
@@ -87,27 +79,27 @@ export default function BrandDashboardCharts() {
     const maxDaily = dailyData.length > 0 ? Math.max(...dailyData) : 1;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
 
             {/* ── Section Header ── */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-primary" />
+                <h2 className="text-4xl md:text-5xl font-display uppercase tracking-tight text-foreground flex items-center gap-3 border-l-8 border-accent pl-4">
+                    <TrendingUp className="w-8 h-8 text-foreground hidden sm:block" />
                     Analytics
                 </h2>
                 <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-full hover:bg-secondary transition-colors text-sm font-medium">
-                        <Calendar className="w-4 h-4 text-gray-400" />
+                    <button className="flex items-center gap-2 px-4 py-2 bg-card border-[3px] border-foreground rounded-xl hover:bg-secondary transition-colors text-sm font-black uppercase tracking-widest shadow-[3px_3px_0px_#1A1A1A] dark:shadow-[3px_3px_0px_#FDF6E3]">
+                        <Calendar className="w-4 h-4" />
                         Last 7 Days
                     </button>
-                    <button className="p-2.5 bg-card border border-border rounded-full hover:bg-secondary transition-colors text-foreground">
+                    <button className="p-2.5 bg-card border-[3px] border-foreground rounded-xl hover:bg-secondary transition-colors text-foreground shadow-[3px_3px_0px_#1A1A1A] dark:shadow-[3px_3px_0px_#FDF6E3]">
                         <Download className="w-4 h-4" />
                     </button>
                 </div>
             </div>
 
             {/* ── KPI Cards ── */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
                 {STAT_META.map(({ icon: Icon, label, key, changeKey, color, bg }, i) => {
                     const raw = stats[key];
                     const change = stats[changeKey];
@@ -117,24 +109,22 @@ export default function BrandDashboardCharts() {
                             initial={{ opacity: 0, y: 16 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.07 }}
-                            className="bg-card border border-border rounded-2xl p-5 flex items-center justify-between shadow-sm hover:shadow-md hover:shadow-black/20 hover:border-gray-800 transition-all group"
+                            className="bg-card border-[3px] border-foreground rounded-2xl p-6 flex items-center justify-between hover:-translate-y-1 hover:translate-x-1 transition-transform shadow-[6px_6px_0px_#1A1A1A] dark:shadow-[6px_6px_0px_#FDF6E3] group"
                         >
                             <div>
-                                <p className="text-gray-400 text-sm font-medium mb-1 group-hover:text-gray-300 transition-colors">
-                                    {label}
-                                </p>
-                                <h2 className="text-3xl font-bold text-foreground tracking-tight">
+                                <p className="text-sm font-bold uppercase tracking-widest mb-2 opacity-80">{label}</p>
+                                <h2 className="text-4xl md:text-5xl font-display text-foreground tracking-tighter">
                                     {formatValue(key, raw)}
                                 </h2>
-                                <span className="text-xs font-medium text-green-400 mt-2 inline-flex items-center gap-1 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/10">
-                                    <ArrowUpRight className="w-3 h-3" /> +{change}%
+                                <span className="font-bold text-xs mt-3 inline-flex items-center gap-1 bg-[#1A1A1A] text-[#FDF6E3] dark:bg-[#FDF6E3] dark:text-[#1A1A1A] px-3 py-1 rounded-full border-2 border-transparent">
+                                    <ArrowUpRight className="w-4 h-4" /> +{change}%
                                 </span>
                             </div>
                             <div className={cn(
-                                "w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-black/10 border border-white/5 group-hover:scale-105 transition-transform duration-300",
+                                "w-16 h-16 rounded-xl flex items-center justify-center bg-secondary border-[3px] border-foreground shadow-[4px_4px_0px_#1A1A1A] dark:shadow-[4px_4px_0px_#FDF6E3] group-hover:rotate-6 transition-transform duration-300 shrink-0",
                                 bg
                             )}>
-                                <Icon className={cn("w-7 h-7", color)} />
+                                <Icon className={cn("w-8 h-8", color)} />
                             </div>
                         </motion.div>
                     );
@@ -149,25 +139,25 @@ export default function BrandDashboardCharts() {
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.32 }}
-                    className="lg:col-span-2 bg-card border border-border rounded-3xl p-6 shadow-lg shadow-black/20"
+                    className="lg:col-span-2 bg-card border-[3px] border-foreground rounded-2xl p-6 shadow-[6px_6px_0px_#1A1A1A] dark:shadow-[6px_6px_0px_#FDF6E3]"
                 >
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h3 className="font-bold text-lg">Daily Engagement</h3>
-                            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mt-0.5">Weekly Progress Update</p>
+                            <h3 className="font-black text-lg uppercase tracking-widest">Daily Engagement</h3>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5 border-l-4 border-primary pl-2">Weekly Progress Update</p>
                         </div>
                         <div className="flex items-center gap-3">
                             <div className="flex items-center gap-1.5">
-                                <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-                                <span className="text-xs font-medium text-gray-400">Today</span>
+                                <div className="w-3 h-3 rounded-full bg-primary border-2 border-foreground" />
+                                <span className="text-xs font-bold uppercase tracking-wide text-foreground">Today</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <div className="w-2.5 h-2.5 rounded-full bg-primary/15" />
-                                <span className="text-xs font-medium text-gray-400">Other</span>
+                                <div className="w-3 h-3 rounded-full bg-primary/15 border-2 border-foreground/30" />
+                                <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Other</span>
                             </div>
                         </div>
                     </div>
-                    {/* XP-Analysis style arch-top bars */}
+                    {/* Arch-top bars */}
                     <div className="flex items-end gap-2 md:gap-3 px-1" style={{ height: 200 }}>
                         {dailyData.map((value, i) => {
                             const pct = maxDaily > 0 ? (value / maxDaily) * 100 : value;
@@ -177,14 +167,14 @@ export default function BrandDashboardCharts() {
                                 <div key={i} className="flex-1 flex flex-col items-center justify-end gap-3 h-full group cursor-pointer">
                                     <div className="relative flex-1 w-full flex items-end">
                                         {/* Tooltip */}
-                                        <div className="absolute left-1/2 -translate-x-1/2 bg-foreground text-background text-[10px] font-bold px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10"
+                                        <div className="absolute left-1/2 -translate-x-1/2 bg-foreground text-background text-[10px] font-black px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10 border-2 border-foreground"
                                             style={{ bottom: barH + 8 }}>
                                             {(value * 800).toLocaleString()}
                                         </div>
                                         {/* Arch-top bar */}
                                         <motion.div
                                             className={cn(
-                                                "w-full rounded-t-full transition-colors duration-200",
+                                                "w-full rounded-t-full transition-colors duration-200 border-x-2 border-t-2 border-foreground",
                                                 isToday
                                                     ? "bg-primary group-hover:bg-primary/85"
                                                     : "bg-primary/[0.13] group-hover:bg-primary/25"
@@ -194,7 +184,7 @@ export default function BrandDashboardCharts() {
                                             transition={{ duration: 0.55, delay: i * 0.06, ease: "easeOut" }}
                                         />
                                     </div>
-                                    <span className="text-[10px] text-gray-400 font-bold uppercase shrink-0">{DAYS[i]}</span>
+                                    <span className="text-[10px] text-muted-foreground font-black uppercase shrink-0">{DAYS[i]}</span>
                                 </div>
                             );
                         })}
@@ -206,21 +196,21 @@ export default function BrandDashboardCharts() {
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.42 }}
-                    className="bg-card border border-border rounded-3xl p-6 shadow-lg shadow-black/20 space-y-5"
+                    className="bg-card border-[3px] border-foreground rounded-2xl p-6 shadow-[6px_6px_0px_#1A1A1A] dark:shadow-[6px_6px_0px_#FDF6E3] space-y-5"
                 >
-                    <h3 className="font-bold text-lg">Audience Insights</h3>
+                    <h3 className="font-black text-lg uppercase tracking-widest">Audience Insights</h3>
 
                     {/* Age */}
                     <div>
-                        <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400 mb-3">Age Group</p>
-                        <div className="space-y-2.5">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 border-l-4 border-primary pl-2">Age Group</p>
+                        <div className="space-y-3">
                             {demographics.map((item, i) => (
                                 <div key={item.label}>
-                                    <div className="flex justify-between text-xs font-medium mb-1">
-                                        <span className="text-gray-400">{item.label}</span>
-                                        <span>{item.value}%</span>
+                                    <div className="flex justify-between text-xs font-black mb-1 uppercase tracking-wide">
+                                        <span className="text-muted-foreground">{item.label}</span>
+                                        <span className="text-foreground">{item.value}%</span>
                                     </div>
-                                    <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                                    <div className="h-2.5 w-full bg-secondary border border-foreground rounded-full overflow-hidden">
                                         <motion.div
                                             className="h-full bg-primary rounded-full"
                                             style={{ opacity: 1 - i * 0.18 }}
@@ -236,8 +226,8 @@ export default function BrandDashboardCharts() {
 
                     {/* Gender Split */}
                     <div>
-                        <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400 mb-3">Gender Split</p>
-                        <div className="h-3 w-full rounded-full overflow-hidden flex">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 border-l-4 border-primary pl-2">Gender Split</p>
+                        <div className="h-3 w-full border-[2px] border-foreground rounded-full overflow-hidden flex">
                             {GENDER.map((g) => (
                                 <div key={g.label} className={cn("h-full", g.color)} style={{ width: `${g.value}%` }} />
                             ))}
@@ -245,8 +235,8 @@ export default function BrandDashboardCharts() {
                         <div className="flex flex-wrap gap-3 mt-2.5">
                             {GENDER.map((g) => (
                                 <div key={g.label} className="flex items-center gap-1.5">
-                                    <div className={cn("w-2 h-2 rounded-full", g.color)} />
-                                    <span className="text-xs text-gray-400 font-medium">{g.label} {g.value}%</span>
+                                    <div className={cn("w-2.5 h-2.5 rounded-full border-2 border-foreground", g.color)} />
+                                    <span className="text-xs text-muted-foreground font-black uppercase tracking-wide">{g.label} {g.value}%</span>
                                 </div>
                             ))}
                         </div>
@@ -254,10 +244,10 @@ export default function BrandDashboardCharts() {
 
                     {/* Top Interests */}
                     <div>
-                        <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400 mb-3">Top Interests</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 border-l-4 border-primary pl-2">Top Interests</p>
                         <div className="flex flex-wrap gap-2">
                             {INTERESTS.map((tag) => (
-                                <span key={tag} className="px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
+                                <span key={tag} className="px-3 py-1 bg-secondary border-2 border-foreground text-foreground rounded-xl text-xs font-black uppercase tracking-wide">
                                     {tag}
                                 </span>
                             ))}
@@ -271,25 +261,25 @@ export default function BrandDashboardCharts() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.52 }}
-                className="bg-card border border-border rounded-3xl p-6 shadow-lg shadow-black/20"
+                className="bg-card border-[3px] border-foreground rounded-2xl p-6 shadow-[6px_6px_0px_#1A1A1A] dark:shadow-[6px_6px_0px_#FDF6E3]"
             >
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h3 className="font-bold text-lg">Campaign Performance</h3>
-                        <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mt-0.5">Monthly Progress Update</p>
+                        <h3 className="font-black text-lg uppercase tracking-widest">Campaign Performance</h3>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5 border-l-4 border-primary pl-2">Monthly Progress Update</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-1.5">
-                            <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-                            <span className="text-xs font-medium text-gray-400">This Month</span>
+                            <div className="w-3 h-3 rounded-full bg-primary border-2 border-foreground" />
+                            <span className="text-xs font-black uppercase tracking-wide text-foreground">This Month</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                            <div className="w-2.5 h-2.5 rounded-full bg-primary/15" />
-                            <span className="text-xs font-medium text-gray-400">Past</span>
+                            <div className="w-3 h-3 rounded-full bg-primary/15 border-2 border-foreground/30" />
+                            <span className="text-xs font-black uppercase tracking-wide text-muted-foreground">Past</span>
                         </div>
                     </div>
                 </div>
-                {/* XP-Analysis style arch-top bars */}
+                {/* Arch-top bars */}
                 <div className="flex items-end gap-1.5 md:gap-2" style={{ height: 160 }}>
                     {campaignPerformance.map((h, i) => {
                         const barH = Math.max(Math.round((h / 100) * 120), 6);
@@ -297,17 +287,15 @@ export default function BrandDashboardCharts() {
                         return (
                             <div key={i} className="flex-1 flex flex-col items-center justify-end gap-2 h-full group cursor-pointer">
                                 <div className="relative flex-1 w-full flex items-end">
-                                    {/* Tooltip */}
                                     <div
-                                        className="absolute left-1/2 -translate-x-1/2 bg-foreground text-background text-[10px] font-bold px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10"
+                                        className="absolute left-1/2 -translate-x-1/2 bg-foreground text-background text-[10px] font-black px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10 border-2 border-foreground"
                                         style={{ bottom: barH + 6 }}
                                     >
                                         {h}%
                                     </div>
-                                    {/* Arch-top bar */}
                                     <motion.div
                                         className={cn(
-                                            "w-full rounded-t-full transition-colors duration-200",
+                                            "w-full rounded-t-full transition-colors duration-200 border-x-2 border-t-2 border-foreground",
                                             isCurrent
                                                 ? "bg-primary group-hover:bg-primary/85"
                                                 : "bg-primary/[0.13] group-hover:bg-primary/25"
@@ -317,7 +305,7 @@ export default function BrandDashboardCharts() {
                                         transition={{ duration: 0.65, delay: 0.6 + i * 0.04, ease: "easeOut" }}
                                     />
                                 </div>
-                                <span className="text-[9px] text-gray-400 font-bold uppercase shrink-0">{MONTHS[i]}</span>
+                                <span className="text-[9px] text-muted-foreground font-black uppercase shrink-0">{MONTHS[i]}</span>
                             </div>
                         );
                     })}

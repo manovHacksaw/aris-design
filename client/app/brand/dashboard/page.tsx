@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import BrandDashboardCharts from "@/components/BrandDashboardCharts";
-import { Plus, ArrowRight, ExternalLink, Users, Trophy, XCircle, ChevronRight, Layers } from "lucide-react";
+import { Plus, ArrowRight, ExternalLink, Bell, ArrowUpRight, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { getBrandEvents } from "@/services/event.service";
@@ -13,12 +13,12 @@ import { useAuth } from "@/context/AuthContext";
 import { calculateTotalPool } from "@/lib/eventUtils";
 
 const CAMPAIGN_STATUS_STYLES: Record<string, string> = {
-    posting: "bg-green-500/10 text-green-500 border-green-500/20",
-    voting: "bg-purple-500/10 text-purple-500 border-purple-500/20",
-    scheduled: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-    draft: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-    completed: "bg-muted text-muted-foreground border-border",
-    cancelled: "bg-red-500/10 text-red-400 border-red-500/20",
+    posting:   "bg-[#00C853] text-white border-foreground",
+    voting:    "bg-primary text-primary-foreground border-foreground",
+    scheduled: "bg-foreground text-background border-foreground",
+    draft:     "bg-secondary text-foreground border-foreground",
+    completed: "bg-secondary text-muted-foreground border-foreground",
+    cancelled: "bg-red-500 text-white border-foreground",
 };
 
 const CAMPAIGN_STATUS_LABELS: Record<string, string> = {
@@ -30,74 +30,54 @@ function formatPool(pool?: number): string {
     return pool ? `$${pool.toLocaleString()}` : "—";
 }
 
-function CampaignCard({ event }: { event: Event }) {
-    const totalPool = calculateTotalPool(event);
+function engagementPercent(event: Event): number {
     const submissions = event._count?.submissions ?? 0;
-    const votes = event._count?.votes ?? 0;
-    const coverUrl = event.imageCid ? `https://gateway.pinata.cloud/ipfs/${event.imageCid}` : null;
-    const isCancelled = event.status === "cancelled";
+    if (!submissions) return 0;
+    return Math.min(100, Math.round((submissions / 100) * 100));
+}
+
+function CampaignRow({ event }: { event: Event }) {
+    const totalPool = calculateTotalPool(event);
+    const engagement = engagementPercent(event);
+    const eventTypeLabel = event.eventType === "post_and_vote" ? "Post & Vote" : "Vote";
 
     return (
         <Link
             href={`/brand/events/${event.id}`}
-            className={cn(
-                "group block bg-card border rounded-[20px] overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-primary/30",
-                isCancelled ? "border-red-500/20 opacity-75 hover:opacity-100" : "border-border"
-            )}
+            className="grid grid-cols-[2fr_1fr_1fr_1.5fr] items-center px-6 py-5 border-b-[3px] border-foreground last:border-0 hover:bg-secondary transition-colors group"
         >
-            {/* Cover */}
-            <div className="relative h-28 bg-secondary/40">
-                {coverUrl ? (
-                    <img src={coverUrl} alt={event.title} className="w-full h-full object-cover" />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <Layers className="w-8 h-8 text-muted-foreground/20" />
-                    </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            {/* Campaign name + type */}
+            <div>
+                <p className="font-bold text-sm text-foreground group-hover:text-primary transition-colors leading-snug uppercase tracking-wide">
+                    {event.title}
+                </p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-0.5">{eventTypeLabel}</p>
+            </div>
+
+            {/* Status badge */}
+            <div>
                 <span className={cn(
-                    "absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border backdrop-blur-sm",
+                    "inline-flex px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-widest border-2",
                     CAMPAIGN_STATUS_STYLES[event.status] ?? CAMPAIGN_STATUS_STYLES.draft
                 )}>
                     {CAMPAIGN_STATUS_LABELS[event.status] ?? event.status}
                 </span>
             </div>
 
-            {/* Body */}
-            <div className="p-4 space-y-3">
-                <div>
-                    <h4 className="font-black text-sm text-foreground leading-tight line-clamp-1 group-hover:text-primary transition-colors">
-                        {event.title}
-                    </h4>
-                    <p className="text-[11px] text-muted-foreground mt-0.5 capitalize">
-                        {event.eventType === "post_and_vote" ? "Post & Vote" : "Vote Only"}
-                    </p>
-                </div>
-
-                {isCancelled && event.cancelReason ? (
-                    <div className="flex items-start gap-1.5 p-2 rounded-lg bg-red-500/10 border border-red-500/20">
-                        <XCircle className="w-3 h-3 text-red-400 shrink-0 mt-0.5" />
-                        <p className="text-[10px] text-red-400 leading-tight line-clamp-2">{event.cancelReason}</p>
-                    </div>
-                ) : (
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1 font-medium">
-                            <Users className="w-3 h-3" /> {submissions}
-                        </span>
-                        <span className="flex items-center gap-1 font-medium">
-                            <Trophy className="w-3 h-3" /> {votes}
-                        </span>
-                        <span className="font-bold text-foreground">{formatPool(totalPool)}</span>
-                    </div>
-                )}
+            {/* Pool */}
+            <div className="font-display text-2xl text-foreground tracking-tighter">
+                {formatPool(totalPool)}
             </div>
 
-            {/* Footer */}
-            <div className="px-4 pb-3 flex items-center justify-between">
-                <span className="text-[10px] text-muted-foreground">
-                    {new Date(event.endTime).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                </span>
-                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            {/* Engagement with progress bar */}
+            <div className="flex items-center gap-3 pr-2">
+                <span className="font-bold text-sm text-foreground w-10 shrink-0 uppercase">{engagement}%</span>
+                <div className="flex-1 h-2.5 bg-secondary border border-foreground rounded-full overflow-hidden">
+                    <div
+                        className="h-full bg-primary rounded-full transition-all duration-500"
+                        style={{ width: `${engagement}%` }}
+                    />
+                </div>
             </div>
         </Link>
     );
@@ -106,7 +86,6 @@ function CampaignCard({ event }: { event: Event }) {
 export default function BrandDashboard() {
     const { user } = useUser();
     const { onboardingData } = useAuth();
-    // Prefer backend brand name → localStorage brand name → fallback
     const brandName = user?.ownedBrands?.[0]?.name ?? onboardingData?.brandName ?? "Your Brand";
 
     const [events, setEvents] = useState<Event[]>([]);
@@ -120,76 +99,112 @@ export default function BrandDashboard() {
     }, []);
 
     return (
-        <div className="space-y-8 pb-32 md:pb-12">
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-black text-foreground tracking-tight mb-1">Overview</h1>
-                    <p className="text-muted-foreground">Welcome back, {brandName}</p>
+        <div className="space-y-10 pb-32 md:pb-12 font-sans selection:bg-primary/30">
+
+            {/* Header */}
+            <header className="border-b-4 border-foreground pb-8">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                        <h1 className="text-6xl md:text-8xl font-display text-foreground uppercase tracking-tighter leading-none mb-4">
+                            <span className="text-primary">Overview</span>
+                        </h1>
+                        <p className="text-xl font-bold uppercase tracking-widest border-l-4 border-primary pl-4">
+                            Welcome back, {brandName}
+                        </p>
+                    </div>
+                    <Link
+                        href="/brand/create-event"
+                        className="flex items-center gap-2 px-6 py-3 bg-foreground text-background font-black rounded-xl border-[3px] border-foreground hover:-translate-y-1 hover:translate-x-1 transition-transform shadow-[4px_4px_0px_hsl(var(--foreground)/0.3)] whitespace-nowrap self-start md:self-end uppercase tracking-widest text-sm"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Create Campaign
+                    </Link>
                 </div>
-                <Link
-                    href="/brand/create-event"
-                    className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground font-bold rounded-full hover:opacity-90 transition-opacity whitespace-nowrap self-start md:self-auto"
-                >
-                    <Plus className="w-4 h-4" />
-                    <span className="hidden md:inline">Create Campaign</span>
-                    <span className="md:hidden">New</span>
-                </Link>
             </header>
 
-            {/* Detailed Analytics */}
+            {/* Analytics section (KPI cards + charts) */}
             <BrandDashboardCharts />
 
-            {/* Campaigns + Notifications */}
+            {/* Campaigns table + right sidebar */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Active Campaigns */}
-                <section className="lg:col-span-2 bg-card border border-border rounded-[24px] overflow-hidden shadow-sm">
-                    <div className="p-6 border-b border-border flex justify-between items-center">
-                        <h3 className="font-bold text-lg">Active Campaigns</h3>
-                        <Link href="/brand/events" className="text-sm text-primary font-bold hover:underline flex items-center gap-1">
+
+                {/* Active Campaigns — table layout */}
+                <section className="lg:col-span-2 bg-card border-[3px] border-foreground rounded-2xl overflow-hidden shadow-[6px_6px_0px_#1A1A1A] dark:shadow-[6px_6px_0px_#FDF6E3]">
+
+                    {/* Section header */}
+                    <div className="flex justify-between items-center px-6 py-5 border-b-[3px] border-foreground bg-primary text-primary-foreground">
+                        <h3 className="font-black text-lg uppercase tracking-widest flex items-center gap-2">
+                            <TrendingUp className="w-5 h-5" />
+                            Active Campaigns
+                        </h3>
+                        <Link href="/brand/events" className="text-xs font-black hover:opacity-70 flex items-center gap-1 uppercase tracking-widest transition-opacity">
                             View All <ArrowRight className="w-3 h-3" />
                         </Link>
                     </div>
 
+                    {/* Column headers */}
+                    <div className="grid grid-cols-[2fr_1fr_1fr_1.5fr] px-6 py-4 border-b-[3px] border-foreground bg-secondary">
+                        {["Campaign", "Status", "Pool", "Engagement"].map((col) => (
+                            <span key={col} className="text-[10px] font-black uppercase tracking-widest text-foreground">
+                                {col}
+                            </span>
+                        ))}
+                    </div>
+
+                    {/* Rows */}
                     {loadingEvents ? (
-                        <div className="p-6 grid grid-cols-2 md:grid-cols-3 gap-4 animate-pulse">
-                            {Array.from({ length: 3 }).map((_, i) => (
-                                <div key={i} className="h-52 bg-secondary/50 rounded-[20px]" />
+                        <div className="p-6 space-y-3 animate-pulse">
+                            {Array.from({ length: 4 }).map((_, i) => (
+                                <div key={i} className="h-14 bg-secondary/40 rounded-xl border-[3px] border-foreground/20" />
                             ))}
                         </div>
                     ) : events.length === 0 ? (
-                        <div className="p-8 text-center text-sm text-muted-foreground">No campaigns yet.</div>
+                        <div className="p-8 text-center text-sm font-bold uppercase tracking-widest text-muted-foreground">No campaigns yet.</div>
                     ) : (
-                        <div className="p-5 grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {events.map(event => <CampaignCard key={event.id} event={event} />)}
+                        <div>
+                            {events.map(event => <CampaignRow key={event.id} event={event} />)}
                         </div>
                     )}
+
+                    {/* Footer */}
+                    <div className="p-5 bg-foreground text-background border-t-[3px] border-foreground flex justify-center hover:bg-primary transition-colors cursor-pointer group">
+                        <Link href="/brand/events" className="font-black text-sm uppercase tracking-widest flex items-center gap-2">
+                            View All Campaigns <ArrowUpRight className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                        </Link>
+                    </div>
                 </section>
 
-                {/* Notifications + Pro Tip */}
+                {/* Right sidebar */}
                 <aside className="space-y-6">
-                    <div className="bg-card border border-border rounded-[24px] p-6 shadow-sm">
-                        <h3 className="font-bold text-lg mb-4">Needs Attention</h3>
+
+                    {/* Needs Attention */}
+                    <div className="bg-card border-[3px] border-foreground rounded-2xl p-6 shadow-[6px_6px_0px_#1A1A1A] dark:shadow-[6px_6px_0px_#FDF6E3]">
+                        <h3 className="font-black text-lg mb-4 flex items-center gap-2 uppercase tracking-widest">
+                            <Bell className="w-5 h-5" />
+                            Needs Attention
+                        </h3>
                         {loadingNotifs ? (
                             <div className="space-y-3 animate-pulse">
                                 {Array.from({ length: 3 }).map((_, i) => (
-                                    <div key={i} className="h-12 bg-secondary/50 rounded-xl" />
+                                    <div key={i} className="h-14 bg-secondary/50 rounded-xl border-[3px] border-foreground/20" />
                                 ))}
                             </div>
                         ) : notifications.length === 0 ? (
-                            <p className="text-sm text-muted-foreground text-center py-4">All clear!</p>
+                            <div className="bg-secondary border-[3px] border-foreground rounded-xl p-4 text-center">
+                                <p className="text-sm font-black uppercase tracking-widest text-foreground">All clear!</p>
+                            </div>
                         ) : (
-                            <div className="space-y-3">
+                            <div className="divide-y-[3px] divide-foreground">
                                 {notifications.slice(0, 5).map((item) => (
-                                    <div key={item.id} className="flex gap-3 items-start p-3 rounded-xl bg-secondary/30 border border-border/50">
+                                    <div key={item.id} className="flex gap-3 items-start py-3 first:pt-0 last:pb-0">
                                         <div className={cn(
-                                            "w-2 h-2 rounded-full mt-1.5 shrink-0",
-                                            item.type === "reward" ? "bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]" :
-                                                item.type === "event" ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" :
-                                                    "bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]"
+                                            "w-3 h-3 rounded-full mt-1.5 shrink-0 border-2 border-foreground",
+                                            item.type === "reward"  ? "bg-[#00C853]" :
+                                            item.type === "event"   ? "bg-primary"   : "bg-red-500"
                                         )} />
-                                        <div>
-                                            <p className="text-sm font-bold leading-tight">{item.title}</p>
-                                            <p className="text-xs text-muted-foreground">{item.message}</p>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-black leading-snug text-foreground uppercase tracking-wide">{item.title}</p>
+                                            <p className="text-xs font-medium text-muted-foreground mt-0.5 line-clamp-1">{item.message}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -197,12 +212,13 @@ export default function BrandDashboard() {
                         )}
                     </div>
 
-                    <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-[24px] p-6">
-                        <h3 className="font-bold text-primary mb-2">Pro Tip</h3>
-                        <p className="text-sm text-muted-foreground mb-4 font-medium">
+                    {/* Pro Tip */}
+                    <div className="bg-primary border-[3px] border-foreground rounded-2xl p-6 shadow-[6px_6px_0px_#1A1A1A] dark:shadow-[6px_6px_0px_#FDF6E3]">
+                        <h3 className="font-black text-primary-foreground mb-2 uppercase tracking-widest text-lg">Pro Tip</h3>
+                        <p className="text-sm text-primary-foreground/80 mb-4 leading-relaxed font-medium">
                             Campaigns with video requirements get 40% higher engagement on average.
                         </p>
-                        <Link href="#" className="text-xs font-black text-primary flex items-center gap-1 hover:underline uppercase tracking-wide">
+                        <Link href="#" className="text-xs font-black text-primary-foreground flex items-center gap-1 hover:opacity-70 uppercase tracking-widest transition-opacity">
                             Read Case Study <ExternalLink className="w-3 h-3" />
                         </Link>
                     </div>
