@@ -1,84 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SidebarLayout from "@/components/home/SidebarLayout";
 import BottomNav from "@/components/BottomNav";
-import { Clock, Users, ArrowRight, Sparkles, Wand2, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Clock, Users, ArrowRight, Sparkles, Wand2, Search, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { AIGeneratorWindow } from "@/components/create/AIGeneratorWindow";
 import { useUser } from "@/context/UserContext";
+import { getEvents } from "@/services/event.service";
+import EventCard, { EventCardSkeleton } from "@/components/events/EventCard";
 
 const STYLES = ["Cinematic", "Cyberpunk", "Minimalist", "Anime", "Photorealistic", "Abstract", "Vintage", "Neon"];
 const RATIOS = ["1:1", "4:5", "16:9 4K", "9:16", "3:2", "2:3"];
 
-const OPEN_EVENTS = [
-    {
-        id: 1,
-        title: "Neon Nights Photography",
-        brand: "Sony Alpha",
-        type: "Post Only",
-        reward: "$2,500 Pool",
-        participants: "1.2k",
-        timeLeft: "2 days",
-        image: "https://images.unsplash.com/photo-1555685812-4b943f3e9942?w=800&q=80",
-        color: "from-blue-600 to-purple-600"
-    },
-    {
-        id: 2,
-        title: "Future of Fitness",
-        brand: "Gymshark",
-        type: "Post Only",
-        reward: "$5,000 Pool",
-        participants: "850",
-        timeLeft: "5 days",
-        image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80",
-        color: "from-emerald-500 to-teal-500"
-    },
-    {
-        id: 3,
-        title: "Sustainable Fashion",
-        brand: "H&M Conscious",
-        type: "Post Only",
-        reward: "$3,000 Pool",
-        participants: "2.1k",
-        timeLeft: "12 hours",
-        image: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&q=80",
-        color: "from-orange-500 to-red-500"
-    },
-    {
-        id: 4,
-        title: "Indie Game Devs",
-        brand: "Unity",
-        type: "Post Only",
-        reward: "$10,000 Grant",
-        participants: "500",
-        timeLeft: "1 week",
-        image: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=800&q=80",
-        color: "from-indigo-600 to-blue-600"
-    },
-    {
-        id: 5,
-        title: "Healthy Eats",
-        brand: "Whole Foods",
-        type: "Post Only",
-        reward: "$1,000 Pool",
-        participants: "3.4k",
-        timeLeft: "3 days",
-        image: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&q=80",
-        color: "from-green-500 to-emerald-600"
-    },
-    {
-        id: 6,
-        title: "Abstract Art",
-        brand: "Adobe",
-        type: "Post Only",
-        reward: "$1,500 Software",
-        participants: "900",
-        timeLeft: "4 days",
-        image: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=800&q=80",
-        color: "from-pink-500 to-rose-500"
-    }
-];
 
 export default function Create() {
     const { user } = useUser();
@@ -88,6 +22,15 @@ export default function Create() {
     const [selectedRatio, setSelectedRatio] = useState("16:9 4K");
     const [styleIndex, setStyleIndex] = useState(STYLES.indexOf("Cyberpunk"));
     const [ratioIndex, setRatioIndex] = useState(RATIOS.indexOf("16:9 4K"));
+
+    const [openEvents, setOpenEvents] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        getEvents({ status: "posting", limit: 12 }).then((res) => {
+            setOpenEvents(res.events || []);
+        }).catch(() => { }).finally(() => setLoading(false));
+    }, []);
 
     const handleHeroGenerate = () => setGeneratorOpen(true);
 
@@ -261,61 +204,33 @@ export default function Create() {
                             <p className="text-xs font-bold text-foreground/30 uppercase tracking-widest mt-1">Manual Creation for Open Events</p>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">{OPEN_EVENTS.length} Events Live</span>
+                            {loading ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                            ) : (
+                                <>
+                                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">{openEvents.length} Events Live</span>
+                                </>
+                            )}
                         </div>
                     </div>
 
                     {/* Events Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {OPEN_EVENTS.map((event) => (
-                            <div
-                                key={event.id}
-                                className="group relative bg-card/50 backdrop-blur-xl border border-card-border rounded-[24px] overflow-hidden hover:border-primary/50 transition-all duration-300 hover:shadow-spotify cursor-pointer flex flex-col"
-                            >
-                                {/* Image Container */}
-                                <div className="h-48 relative overflow-hidden">
-                                    <div className={`absolute inset-0 bg-gradient-to-t ${event.color} opacity-20 mix-blend-overlay z-10`} />
-                                    <img
-                                        src={event.image}
-                                        alt={event.title}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                                    />
-                                </div>
-
-                                {/* Content */}
-                                <div className="p-6 flex-1 flex flex-col">
-                                    <div className="mb-4">
-                                        <div className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest mb-1">{event.brand}</div>
-                                        <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">{event.title}</h3>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4 mb-6">
-                                        <div className="bg-secondary rounded-xl p-3 border border-border">
-                                            <div className="text-foreground/40 text-[10px] uppercase font-bold tracking-widest mb-1">Prize Pool</div>
-                                            <div className="text-primary font-bold text-sm tracking-tight">{event.reward}</div>
-                                        </div>
-                                        <div className="bg-secondary rounded-xl p-3 border border-border">
-                                            <div className="text-foreground/40 text-[10px] uppercase font-bold tracking-widest mb-1">Ending In</div>
-                                            <div className="text-foreground font-bold text-sm flex items-center gap-1">
-                                                <Clock className="w-3 h-3 text-accent" />
-                                                {event.timeLeft}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-auto pt-4 border-t border-border flex items-center justify-between text-xs text-foreground/40">
-                                        <span className="flex items-center gap-1.5 font-bold">
-                                            <Users className="w-3.5 h-3.5" />
-                                            {event.participants} joined
-                                        </span>
-                                        <span className="group-hover:translate-x-1 transition-transform duration-300 text-foreground font-bold flex items-center gap-1">
-                                            Join Now <ArrowRight className="w-3.5 h-3.5" />
-                                        </span>
-                                    </div>
-                                </div>
+                        {loading ? (
+                            [...Array(6)].map((_, i) => (
+                                <EventCardSkeleton key={i} />
+                            ))
+                        ) : openEvents.length > 0 ? (
+                            openEvents.map((event) => (
+                                <EventCard key={event.id} event={event} />
+                            ))
+                        ) : (
+                            <div className="col-span-full py-20 text-center">
+                                <Sparkles className="w-12 h-12 text-foreground/10 mx-auto mb-4" />
+                                <p className="text-foreground/40 font-black uppercase tracking-widest text-sm">No Active Opportunities</p>
                             </div>
-                        ))}
+                        )}
                     </div>
                 </main>
 

@@ -39,7 +39,8 @@
       "Bash(EVENT_ID=128d25c8-35c4-429d-a0e8-39159d718c8a bun run:*)",
       "WebFetch(domain:amoy.polygonscan.com)",
       "Bash(PGPASSWORD=arisdemo123 psql:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }
