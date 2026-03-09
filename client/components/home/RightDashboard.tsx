@@ -38,40 +38,38 @@ export default function RightDashboard() {
   ].filter(Boolean) as { type: string; title: string; status: string; points: string }[];
 
   return (
-    <div className="flex flex-col gap-6 sticky top-6">
+    <div className="flex flex-col gap-5 sticky top-6">
       {/* 1. Streak & Rank Card */}
-      <div className="bg-card backdrop-blur-xl rounded-[32px] p-6 border border-card-border shadow-spotify overflow-hidden relative group h-[200px] flex flex-col justify-center">
-        <div className="absolute -top-12 -right-12 w-32 h-32 bg-orange-500/10 rounded-full blur-3xl group-hover:bg-orange-500/20 transition-all duration-500" />
+      <div className="bg-card rounded-3xl p-6 border border-border shadow-card overflow-hidden relative group flex flex-col justify-center">
+        <div className="absolute -top-10 -right-10 w-28 h-28 bg-orange-300/20 rounded-full blur-3xl group-hover:bg-orange-300/30 transition-all duration-500" />
         <div className="relative z-10">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <p className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] mb-1">Current Streak</p>
+              <p className="text-xs text-foreground/40 mb-1 font-medium">Current Streak</p>
               <div className="flex items-baseline gap-2">
-                <h3 className="text-4xl font-black text-foreground tabular-nums drop-shadow-sm">
+                <h3 className="text-4xl font-display text-foreground tabular-nums">
                   {streak || "—"}
                 </h3>
-                <span className="text-sm font-black text-orange-500 uppercase tracking-widest">
+                <span className="text-sm font-semibold text-orange-500">
                   {streak > 0 ? "Days" : ""}
                 </span>
               </div>
             </div>
-            <div className="w-14 h-14 bg-gradient-to-br from-orange-500 via-red-500 to-yellow-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/30 rotate-3 group-hover:rotate-0 transition-transform duration-300">
-              <Flame className="w-7 h-7 text-white fill-current animate-bounce" />
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-amber-400 rounded-2xl flex items-center justify-center shadow-soft">
+              <Flame className="w-6 h-6 text-white fill-current" />
             </div>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-black text-foreground/60 uppercase">{rank}</span>
-              <span className="text-[11px] font-black text-orange-500">
-                {progress}% to {nextRank}
-              </span>
+              <span className="text-xs font-medium text-foreground/50">{rank}</span>
+              <span className="text-xs text-orange-500 font-medium">{progress}% to {nextRank}</span>
             </div>
-            <div className="w-full bg-secondary h-2.5 rounded-full overflow-hidden border border-border/50">
+            <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 1.5, ease: "easeOut" }}
-                className="h-full bg-gradient-to-r from-orange-500 via-red-500 to-yellow-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]"
+                className="h-full bg-gradient-to-r from-orange-400 to-amber-400"
               />
             </div>
           </div>
@@ -79,16 +77,16 @@ export default function RightDashboard() {
       </div>
 
       {/* 2. XP Analysis Card */}
-      <div className="bg-card backdrop-blur-xl rounded-[32px] p-6 border border-card-border shadow-spotify">
-        <div className="flex items-center justify-between mb-8">
+      <div className="bg-card rounded-3xl p-6 border border-border shadow-card">
+        <div className="flex items-center justify-between mb-7">
           <div>
-            <h3 className="text-xl font-black text-foreground tracking-tight">XP Analysis</h3>
-            <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest mt-1">
-              Level {level} · {xp.toLocaleString()} XP total
+            <h3 className="text-base font-display text-foreground">XP Analysis</h3>
+            <p className="text-xs text-foreground/40 mt-0.5">
+              Level {level} · {xp.toLocaleString()} XP
             </p>
           </div>
-          <div className="w-10 h-10 bg-secondary rounded-xl flex items-center justify-center border border-border">
-            <TrendingUp className="w-5 h-5 text-primary" />
+          <div className="w-9 h-9 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
+            <TrendingUp className="w-4 h-4 text-primary" />
           </div>
         </div>
         <div className="h-32 flex items-end justify-between gap-1.5 mb-6">
@@ -120,37 +118,36 @@ export default function RightDashboard() {
 
       {/* 3. Recent Activity */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between px-2">
-          <h3 className="text-[13px] font-black text-foreground uppercase tracking-widest">Recent Activity</h3>
-          <Link href="/activity" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-1 transition-colors">
-            View All <ChevronRight className="w-3 h-3" />
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-display text-foreground">Recent Activity</h3>
+          <Link href="/activity" className="text-xs text-primary hover:underline flex items-center gap-0.5 transition-colors font-medium">
+            View All <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         <div className="space-y-3">
           {recentActivity.length > 0 ? (
             recentActivity.map((item, idx) => (
-              <Link href="/activity" key={idx} className="block bg-card/50 hover:bg-card hover:-translate-y-1 transition-all border border-border rounded-[24px] p-5 group cursor-pointer shadow-sm hover:shadow-md">
-                <div className="flex justify-between items-start mb-1">
+              <Link href="/activity" key={idx} className="block bg-card hover:-translate-y-0.5 transition-all border border-border rounded-2xl p-4 group cursor-pointer shadow-soft hover:shadow-card">
+                <div className="flex justify-between items-start mb-2">
                   <span className={cn(
-                    "text-[10px] font-black uppercase tracking-widest",
+                    "text-[10px] font-semibold",
                     item.type === "Votes Cast" ? "text-accent" : "text-primary"
                   )}>
                     {item.type}
                   </span>
-                  <span className="text-[10px] font-black text-foreground/40 bg-secondary px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] text-foreground/40 bg-secondary px-2 py-0.5 rounded-full font-medium">
                     {item.status}
                   </span>
                 </div>
-                <h4 className="text-sm font-black text-foreground mb-3 tracking-tight">{item.title}</h4>
-                <div className="flex items-center gap-1 text-primary font-black text-xs">
+                <h4 className="text-sm font-medium text-foreground mb-2.5">{item.title}</h4>
+                <div className="flex items-center gap-1 text-primary text-xs font-semibold">
                   <Zap className="w-3 h-3 fill-current" />
                   {item.points}
                 </div>
               </Link>
             ))
           ) : (
-            /* Placeholder cards when no real data yet */
             [{
               type: "Post Event",
               title: "Complete your first submission",
@@ -162,20 +159,20 @@ export default function RightDashboard() {
               status: "Pending",
               points: "+50 XP"
             }].map((item, idx) => (
-              <Link href="/explore" key={idx} className="block bg-card/50 hover:bg-card hover:-translate-y-1 transition-all border border-border rounded-[24px] p-5 group cursor-pointer shadow-sm hover:shadow-md opacity-60">
-                <div className="flex justify-between items-start mb-1">
+              <Link href="/explore" key={idx} className="block bg-card hover:-translate-y-0.5 transition-all border border-border rounded-2xl p-4 group cursor-pointer shadow-soft hover:shadow-card opacity-60">
+                <div className="flex justify-between items-start mb-2">
                   <span className={cn(
-                    "text-[10px] font-black uppercase tracking-widest",
+                    "text-[10px] font-semibold",
                     item.type === "Vote Event" ? "text-accent" : "text-primary"
                   )}>
                     {item.type}
                   </span>
-                  <span className="text-[10px] font-black text-foreground/40 bg-secondary px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] text-foreground/40 bg-secondary px-2 py-0.5 rounded-full font-medium">
                     {item.status}
                   </span>
                 </div>
-                <h4 className="text-sm font-black text-foreground mb-3 tracking-tight">{item.title}</h4>
-                <div className="flex items-center gap-1 text-primary font-black text-xs">
+                <h4 className="text-sm font-medium text-foreground mb-2.5">{item.title}</h4>
+                <div className="flex items-center gap-1 text-primary text-xs font-semibold">
                   <Zap className="w-3 h-3 fill-current" />
                   {item.points}
                 </div>

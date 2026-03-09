@@ -86,22 +86,22 @@ export default function TrendingCarousel() {
     return (
         <section className="relative">
             <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-black flex items-center gap-2 text-foreground tracking-tight uppercase">
-                    <TrendingUp className="text-accent w-6 h-6" />
+                <h2 className="text-2xl font-display flex items-center gap-2.5 text-foreground">
+                    <TrendingUp className="text-primary w-5 h-5" />
                     Trending Challenges
                 </h2>
-                <div className="flex gap-3 relative z-20">
+                <div className="flex gap-2 relative z-20">
                     <button
                         onClick={() => scroll('left')}
-                        className="w-11 h-11 flex items-center justify-center rounded-full bg-secondary hover:bg-foreground hover:text-background text-foreground/40 transition-all border border-border shadow-md hover:scale-110"
+                        className="w-10 h-10 flex items-center justify-center rounded-full bg-card hover:bg-primary hover:text-white text-foreground/40 transition-all border border-border shadow-soft hover:border-primary"
                     >
-                        <ChevronLeft className="w-6 h-6" />
+                        <ChevronLeft className="w-5 h-5" />
                     </button>
                     <button
                         onClick={() => scroll('right')}
-                        className="w-11 h-11 flex items-center justify-center rounded-full bg-secondary hover:bg-foreground hover:text-background text-foreground/40 transition-all border border-border shadow-md hover:scale-110"
+                        className="w-10 h-10 flex items-center justify-center rounded-full bg-card hover:bg-primary hover:text-white text-foreground/40 transition-all border border-border shadow-soft hover:border-primary"
                     >
-                        <ChevronRight className="w-6 h-6" />
+                        <ChevronRight className="w-5 h-5" />
                     </button>
                 </div>
             </div>
@@ -109,62 +109,56 @@ export default function TrendingCarousel() {
             <div className="relative">
                 <div
                     ref={scrollContainerRef}
-                    className="flex gap-4 md:gap-6 overflow-x-auto pb-8 -mx-4 px-4 scrollbar-hide snap-x relative z-0"
+                    className="flex gap-5 md:gap-6 overflow-x-auto pb-6 -mx-4 px-4 scrollbar-hide snap-x relative z-0"
                 >
                     {trendingItems.map((item) => (
                         <Link key={item.id} href={`/events/${item.id}`} className="block">
                             <motion.div
-                                whileHover={{ y: -4 }}
-                                className="min-w-[320px] md:min-w-[420px] snap-center rounded-[28px] bg-card overflow-hidden group cursor-pointer relative transition-all border border-border/60 shadow-lg"
+                                whileHover={{ y: -8, scale: 1.02 }}
+                                transition={{ duration: 0.25, ease: "easeOut" }}
+                                className="min-w-[230px] md:min-w-[270px] snap-center rounded-3xl bg-card overflow-hidden group cursor-pointer relative transition-all shadow-card hover:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.15)]"
                             >
-                                {/* Image Section */}
-                                <div className="h-44 md:h-52 relative overflow-hidden">
+                                {/* Portrait image */}
+                                <div className="relative w-full aspect-[3/4] overflow-hidden">
                                     <img
                                         src={item.coverImage}
                                         alt={item.title}
-                                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                                     />
-                                    {/* Badges */}
-                                    <div className="absolute top-4 left-4 flex items-center gap-2">
-                                        <ModeBadge mode={item.eventType} />
-                                        <StatusBadge status={item.status} />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+                                    {/* Pool badge top right */}
+                                    <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full flex items-center gap-1 border border-white/20">
+                                        <Trophy className="w-3 h-3 text-yellow-300 fill-yellow-300/30" />
+                                        <span className="text-[9px] font-semibold text-white">${item.leaderboardPool.toLocaleString()}</span>
                                     </div>
-                                    <div className="absolute bottom-4 left-4 bg-background/80 backdrop-blur-xl px-4 py-2 rounded-2xl flex items-center gap-2 border border-border/50 shadow-sm">
-                                        <Trophy className="text-primary w-3.5 h-3.5" />
-                                        <span className="text-xs font-black text-foreground">${item.leaderboardPool.toLocaleString()} Pool</span>
+
+                                    {/* Bottom text overlay */}
+                                    <div className="absolute inset-x-0 bottom-0 p-4">
+                                        <h3 className="font-semibold text-base text-white leading-snug line-clamp-2 mb-1">
+                                            {item.title}
+                                        </h3>
+                                        <p className="text-[11px] text-white/50">{item.brand.name}</p>
                                     </div>
                                 </div>
 
-                                {/* Content Section */}
-                                <div className="p-6 md:p-8">
-                                    <div className="flex justify-between items-start gap-4">
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-black text-lg md:text-xl text-foreground mb-1 tracking-tighter truncate">{item.title}</h3>
-                                            <p className="text-xs md:text-sm text-foreground/40 font-bold">{item.description}</p>
-                                        </div>
-                                        <div className="text-right shrink-0">
-                                            <p className="text-[9px] font-black text-foreground/20 uppercase tracking-[0.2em] mb-1">Time Left</p>
-                                            <p className="text-xs md:text-sm font-black text-foreground tracking-tight">{item.timeRemaining}</p>
-                                        </div>
+                                {/* Footer */}
+                                <div className="flex items-center justify-between px-4 py-3.5">
+                                    <div className="flex items-center gap-1.5 text-foreground/40">
+                                        <Users className="w-3.5 h-3.5" />
+                                        <span className="text-[10px] font-medium">{formatCount(item.totalParticipants)}</span>
                                     </div>
-
-                                    <div className="mt-6 flex items-center justify-between pt-5 border-t border-border/40">
-                                        <div className="flex items-center gap-2 text-foreground/40">
-                                            <Users className="w-3.5 h-3.5" />
-                                            <span className="text-xs font-bold">{formatCount(item.totalParticipants)} joined</span>
-                                        </div>
-                                        <button className="text-[10px] font-black uppercase tracking-widest text-primary hover:text-foreground transition-colors">
-                                            {item.eventType === "vote" ? "Vote Now" : "Participate"}
-                                        </button>
-                                    </div>
+                                    <button className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white px-4 py-1.5 rounded-full text-[10px] font-semibold transition-all">
+                                        {item.eventType === "vote" ? "Vote" : "Join"}
+                                    </button>
                                 </div>
                             </motion.div>
                         </Link>
                     ))}
                 </div>
 
-                {/* Smooth Gradient Fade on Right */}
-                <div className="absolute top-0 right-0 bottom-8 w-32 bg-gradient-to-l from-background via-background/20 to-transparent pointer-events-none z-10 hidden md:block" />
+                {/* Gradient fade right */}
+                <div className="absolute top-0 right-0 bottom-6 w-16 md:w-24 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
             </div>
         </section>
     );
