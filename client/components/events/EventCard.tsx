@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Trophy, Users, Clock } from "lucide-react";
+import { Trophy, Users, Clock, Zap } from "lucide-react";
 import Countdown from "./Countdown";
 import { formatCount } from "@/lib/eventUtils";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,12 @@ export default function EventCard({ event, className, isJoined }: EventCardProps
     const brandName = event.brand?.name || "Aris Brand";
     const participants =
         event._count?.submissions || event._count?.votes || event.eventAnalytics?.uniqueParticipants || 0;
-    const pool = event.leaderboardPool ? `$${event.leaderboardPool.toLocaleString()}` : "TBD";
+    const basePool = event.baseReward ? `$${event.baseReward}` : null;
+    const topPool = event.leaderboardPool
+        ? `$${event.leaderboardPool.toLocaleString()}`
+        : event.topReward
+        ? `$${event.topReward.toLocaleString()}`
+        : null;
     const image = event.imageCid
         ? `${PINATA_GW}/${event.imageCid}`
         : "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80";
@@ -51,11 +56,21 @@ export default function EventCard({ event, className, isJoined }: EventCardProps
                         </div>
                     )}
 
-                    {/* Pool badge — top right */}
-                    {pool !== "TBD" && (
-                        <div className="absolute top-3.5 right-3.5 bg-black/30 backdrop-blur-sm px-2.5 py-1 rounded-full flex items-center gap-1 border border-white/10">
-                            <Trophy className="w-3 h-3 text-yellow-400 fill-yellow-400/30" />
-                            <span className="text-[9px] font-bold text-yellow-300">{pool}</span>
+                    {/* Reward badges — top right, stacked */}
+                    {(basePool || topPool) && (
+                        <div className="absolute top-3.5 right-3.5 flex flex-col gap-1 items-end">
+                            {basePool && (
+                                <div className="bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/10">
+                                    <Zap className="w-2.5 h-2.5 text-blue-400" />
+                                    <span className="text-[9px] font-bold text-blue-300">{basePool}/vote</span>
+                                </div>
+                            )}
+                            {topPool && (
+                                <div className="bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/10">
+                                    <Trophy className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400/30" />
+                                    <span className="text-[9px] font-bold text-yellow-300">{topPool} Top</span>
+                                </div>
+                            )}
                         </div>
                     )}
 

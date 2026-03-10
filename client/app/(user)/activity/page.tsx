@@ -49,7 +49,8 @@ export default function YourActivityPage() {
 
     const activityStats = [
         { label: "Total Submissions", value: stats?.posts?.toString() || "0", icon: Layout, color: "text-primary" },
-        { label: "Votes Cast", value: stats?.votes?.toString() || "0", icon: ThumbsUp, color: "text-accent" },
+        { label: "Votes Cast", value: stats?.votesCast?.toString() || "0", icon: ThumbsUp, color: "text-accent" },
+        { label: "Votes Received", value: stats?.votesReceived?.toString() || "0", icon: ThumbsUp, color: "text-primary" },
         { label: "Events Joined", value: stats?.events?.toString() || "0", icon: Zap, color: "text-accent" },
         { label: "Total Earnings", value: stats?.earnings ? `$${stats.earnings.toFixed(2)}` : "$0", icon: Zap, color: "text-primary" },
     ];
@@ -84,7 +85,7 @@ export default function YourActivityPage() {
                 ) : (
                     <>
                         {/* Stats Grid */}
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-4 md:px-0">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 px-4 md:px-0">
                             {activityStats.map((stat, i) => (
                                 <motion.div
                                     key={i}

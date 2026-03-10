@@ -322,6 +322,7 @@ export class UserService {
                 brandSubscriptionsCount,
                 submissionsCount,
                 votesCount,
+                submissionsVotes,
                 eventsParticipated,
                 rewardClaims,
                 otherEarnings,
@@ -342,9 +343,14 @@ export class UserService {
                 prisma.submission.count({
                     where: { userId },
                 }),
-                // 5. Votes
+                // 5. Votes Cast
                 prisma.vote.count({
                     where: { userId },
+                }),
+                // 5b. Votes Received (total votes on user's content)
+                prisma.submission.aggregate({
+                    where: { userId },
+                    _sum: { voteCount: true },
                 }),
                 // 6. Events Participated
                 prisma.vote.findMany({
@@ -371,12 +377,15 @@ export class UserService {
             ]);
 
             const totalEarnings = (rewardClaims._sum.finalAmount || 0) + (otherEarnings._sum.amount || 0);
+            const votesReceived = (submissionsVotes._sum.voteCount || 0);
 
             const stats = {
                 subscribers: followersCount,
                 subscriptions: followingCount + brandSubscriptionsCount,
                 posts: submissionsCount,
-                votes: votesCount,
+                votes: votesCount, // Legacy compat
+                votesCast: votesCount,
+                votesReceived: votesReceived,
                 events: eventsParticipated.length,
                 earnings: totalEarnings,
             };

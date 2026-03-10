@@ -3,8 +3,9 @@
 import SidebarLayout from "@/components/home/SidebarLayout";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-    Clock, Trophy, Users, ChevronLeft, Share2, ImageIcon, CheckCircle2, Loader2, AlertCircle,
-    Trash2, Crown, Medal, ExternalLink, Calendar, DollarSign, Info, Layers, Eye
+    Clock, Trophy, Users, ChevronLeft, Share2, CheckCircle2, Loader2,
+    AlertCircle, Crown, Medal, Info, Eye,
+    ChevronDown, ChevronUp, Vote, Upload, PlusCircle
 } from "lucide-react";
 import { calculateTotalPool } from "@/lib/eventUtils";
 import Link from "next/link";
@@ -79,15 +80,12 @@ function toPostSubmission(sub: Submission, currentUserId?: string | null): PostS
     };
 }
 
-// ─── Main Page ─────────────────────────────────────────────
-
 import { use } from "react";
 
 export default function EventDetailPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
     const resolvedParams = use(params as any);
     const id = (resolvedParams as { id: string }).id;
     const { user } = useUser();
-
     const { socket } = useSocket();
 
     const [event, setEvent] = useState<Event | null>(null);
@@ -95,18 +93,13 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState<string | null>(null);
 
-    // Voting state
     const [votedSubmissionId, setVotedSubmissionId] = useState<string | null>(null);
-    const [optimisticVoteDelta, setOptimisticVoteDelta] = useState<string | null>(null); // submissionId with +1
+    const [optimisticVoteDelta, setOptimisticVoteDelta] = useState<string | null>(null);
 
-    // Submission state
     const [hasSubmitted, setHasSubmitted] = useState(false);
     const [mySubmission, setMySubmission] = useState<Submission | null>(null);
-
-    // Live presence
     const [activeViewers, setActiveViewers] = useState<number>(0);
 
-    // Join event socket room and listen for live updates
     useEffect(() => {
         if (!socket || !id) return;
         socket.emit("join-event", id);
@@ -140,11 +133,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         async function load() {
             try {
                 setLoading(true);
-                // When user is authenticated, force-refresh to bypass cached guest responses
                 const ev = await getEventById(id, !!user?.id);
                 setEvent(ev);
 
-                // Seed voted state from backend
                 if (ev.hasVoted && ev.userVotes && ev.userVotes.length > 0) {
                     const vote = ev.userVotes[0];
                     setVotedSubmissionId(vote.submissionId || vote.proposalId || null);
@@ -152,7 +143,6 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                     setVotedSubmissionId(null);
                 }
 
-                // Seed submission state from backend
                 if (ev.hasSubmitted) {
                     setHasSubmitted(true);
                     if (ev.userSubmission) setMySubmission(ev.userSubmission as Submission);
@@ -161,7 +151,6 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                     setMySubmission(null);
                 }
 
-                // Fetch submissions for posting or voting phases
                 if (ev.status === "posting" || ev.status === "voting" || ev.status === "completed") {
                     if (ev.eventType === "post_and_vote") {
                         const res = await getEventSubmissions(id, { sortBy: "votes", limit: 50 });
@@ -195,22 +184,18 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         load();
     }, [id, user?.id]);
 
-    // ── Voting handler ─────────────────────────────────────
     const handleVote = useCallback(
         async (submissionId: string) => {
             if (!event) return;
-            if (votedSubmissionId) return; // already voted
+            if (votedSubmissionId) return;
             const sub = submissions.find((s) => s.id === submissionId);
             if (!sub) return;
             if (sub.userId === user?.id && event.eventType !== "vote_only") {
                 toast.error("You can't vote for your own submission.");
                 return;
             }
-
-            // Optimistic update
             setOptimisticVoteDelta(submissionId);
             setVotedSubmissionId(submissionId);
-
             try {
                 if (event.eventType === "vote_only") {
                     await voteForProposals(event.id, [submissionId]);
@@ -218,7 +203,6 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                     await voteOnSubmission(event.id, submissionId);
                 }
             } catch (err: any) {
-                // Revert
                 setOptimisticVoteDelta(null);
                 setVotedSubmissionId(null);
                 toast.error(err?.message ?? "Failed to record vote. Please try again.");
@@ -227,34 +211,25 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         [event, submissions, user?.id, votedSubmissionId]
     );
 
-    // ── Submission handler ─────────────────────────────────
     const handleNewSubmission = useCallback((sub: Submission) => {
         setHasSubmitted(true);
         setMySubmission(sub);
         setSubmissions((prev) => [sub, ...prev]);
     }, []);
 
-    // ─── Render ────────────────────────────────────────────
-
     const coverUrl =
         imgUrl(event?.imageCid) ??
         "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop";
 
-    const brandLogoUrl = event?.brand?.logoCid
-        ? imgUrl(event.brand.logoCid)
-        : undefined;
+    const brandLogoUrl = event?.brand?.logoCid ? imgUrl(event.brand.logoCid) : undefined;
 
-    // Compute enriched submissions with optimistic vote delta
     const enrichedSubmissions = submissions.map((sub) => ({
         ...sub,
         _count: {
-            votes:
-                (sub._count?.votes ?? 0) +
-                (optimisticVoteDelta === sub.id ? 1 : 0),
+            votes: (sub._count?.votes ?? 0) + (optimisticVoteDelta === sub.id ? 1 : 0),
         },
     }));
 
-    // Derive display mode from real event status
     const displayMode =
         event?.eventType === "vote_only"
             ? "vote"
@@ -265,20 +240,20 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     return (
         <SidebarLayout>
             <main className="max-w-[1200px] mx-auto pb-24">
-                {/* Hero */}
-                <div className="relative w-full h-[85vh] md:h-[500px] mb-8 md:rounded-[32px] overflow-hidden group shadow-2xl -mx-4 md:mx-0 w-[calc(100%+32px)] md:w-full">
+                {/* ── Hero ── */}
+                <div className="relative w-full h-[280px] md:h-[360px] mb-0 md:rounded-[32px] overflow-hidden -mx-4 md:mx-0 w-[calc(100%+32px)] md:w-full">
                     <img
                         src={coverUrl}
-                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                        className="w-full h-full object-cover"
                         alt="Event Cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
 
                     {/* Nav */}
                     <div className="absolute top-0 left-0 right-0 p-4 md:p-6 flex items-center justify-between z-20">
                         <Link
                             href="/home"
-                            className="bg-background/20 backdrop-blur-md border border-white/10 text-white px-4 py-2 rounded-full flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-background/40 transition-all"
+                            className="bg-black/30 backdrop-blur-md border border-white/10 text-white px-4 py-2 rounded-full flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-black/50 transition-all"
                         >
                             <ChevronLeft className="w-4 h-4" />
                             Back
@@ -288,24 +263,22 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         </button>
                     </div>
 
-                    {/* Hero overlay */}
+                    {/* Hero content */}
                     {!loading && event && (
-                        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 z-20">
-                            <div className="flex items-start gap-4 mb-4">
-                                <div className="w-12 h-12 rounded-2xl bg-white p-1.5 shadow-xl overflow-hidden shrink-0">
+                        <div className="absolute bottom-0 left-0 right-0 p-5 md:p-8 z-20">
+                            <div className="flex items-start gap-3 mb-3">
+                                <div className="w-10 h-10 rounded-xl bg-white p-1 shadow-xl overflow-hidden shrink-0">
                                     {brandLogoUrl ? (
                                         <img src={brandLogoUrl} alt="Logo" className="w-full h-full object-cover rounded-lg" />
                                     ) : (
                                         <div className="w-full h-full bg-primary/10 rounded-lg flex items-center justify-center">
-                                            <span className="text-[10px] font-black text-primary">
-                                                {event.brand?.name?.[0] ?? "B"}
-                                            </span>
+                                            <span className="text-[9px] font-black text-primary">{event.brand?.name?.[0] ?? "B"}</span>
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex-1">
+                                <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                        <p className="text-white/70 text-[10px] font-black uppercase tracking-[0.15em] drop-shadow-md">
+                                        <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.15em]">
                                             {event.brand?.name}
                                         </p>
                                         <ModeBadge mode={displayMode} />
@@ -313,60 +286,45 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                             event.status === "posting" ? "live"
                                                 : event.status === "voting" ? "live"
                                                     : event.status === "completed" ? "ended"
-                                                        : event.status === "scheduled" ? "upcoming"
-                                                            : "upcoming"
+                                                        : "upcoming"
                                         } />
                                     </div>
-                                    <h1 className="text-3xl md:text-5xl font-black text-white tracking-tighter leading-tight drop-shadow-lg mb-2">
+                                    <h1 className="text-2xl md:text-4xl font-black text-white tracking-tighter leading-tight">
                                         {event.title}
                                     </h1>
                                 </div>
                             </div>
 
-                            <div className="flex flex-wrap gap-3">
-                                {(event.leaderboardPool || event.topReward) && (
-                                    <div className="bg-white/10 backdrop-blur-xl border border-white/15 px-4 py-2 rounded-xl flex items-center gap-2">
-                                        <Trophy className="text-primary w-3.5 h-3.5" />
-                                        <span className="text-xs font-black text-white">
-                                            ${(event.leaderboardPool || event.topReward || 0).toLocaleString()} pool
-                                        </span>
-                                    </div>
-                                )}
-
+                            {/* Meta chips */}
+                            <div className="flex flex-wrap gap-2">
                                 {event.status !== "completed" && (
                                     <Countdown
-                                        targetDate={
-                                            event.status === "posting"
-                                                ? event.postingEnd!
-                                                : event.endTime
-                                        }
+                                        targetDate={event.status === "posting" ? event.postingEnd! : event.endTime}
                                         label={event.status === "posting" ? "Posting Ends" : "Voting Ends"}
                                     />
                                 )}
-                                {event.status === "completed" && (
-                                    <div className="bg-white/10 backdrop-blur-xl border border-white/15 px-4 py-2 rounded-xl flex items-center gap-2">
-                                        <Clock className="text-white/40 w-3.5 h-3.5" />
-                                        <span className="text-xs font-black text-white/40 uppercase tracking-wider">Ended</span>
-                                    </div>
-                                )}
-
                                 {event._count && (
-                                    <div className="bg-white/10 backdrop-blur-xl border border-white/15 px-4 py-2 rounded-xl flex items-center gap-2">
-                                        <Users className="text-white/70 w-3.5 h-3.5" />
-                                        <span className="text-xs font-black text-white">
-                                            {formatCount(event._count.submissions)} submissions
+                                    <div className="bg-white/10 backdrop-blur-xl border border-white/15 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                                        <Users className="text-white/60 w-3 h-3" />
+                                        <span className="text-[10px] font-black text-white">
+                                            {formatCount(event._count.submissions)}
                                         </span>
                                     </div>
                                 )}
                                 {activeViewers > 0 && (
-                                    <div className="bg-white/10 backdrop-blur-xl border border-white/15 px-4 py-2 rounded-xl flex items-center gap-2">
-                                        <span className="relative flex h-2 w-2">
+                                    <div className="bg-white/10 backdrop-blur-xl border border-white/15 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                                        <span className="relative flex h-1.5 w-1.5">
                                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
+                                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
                                         </span>
-                                        <Eye className="text-white/70 w-3.5 h-3.5" />
-                                        <span className="text-xs font-black text-white">
-                                            {activeViewers} watching
+                                        <span className="text-[10px] font-black text-white">{activeViewers} watching</span>
+                                    </div>
+                                )}
+                                {(event.leaderboardPool || event.topReward) && (
+                                    <div className="bg-yellow-500/15 backdrop-blur-xl border border-yellow-500/20 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                                        <Trophy className="text-yellow-400 w-3 h-3" />
+                                        <span className="text-[10px] font-black text-yellow-300">
+                                            ${(event.leaderboardPool || event.topReward || 0).toLocaleString()} Pool
                                         </span>
                                     </div>
                                 )}
@@ -375,18 +333,16 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                     )}
                 </div>
 
-                {/* Body */}
+                {/* ── Body ── */}
                 {loading ? (
-                    <div className="flex items-center justify-center py-24">
+                    <div className="flex items-center justify-center py-24 px-4">
                         <Loader2 className="w-8 h-8 animate-spin text-primary/50" />
                     </div>
                 ) : fetchError ? (
-                    <div className="flex flex-col items-center justify-center py-24 gap-3 text-center">
+                    <div className="flex flex-col items-center justify-center py-24 gap-3 text-center px-4">
                         <AlertCircle className="w-8 h-8 text-red-400" />
                         <p className="text-sm font-bold text-foreground/60">{fetchError}</p>
-                        <Link href="/home" className="text-xs font-black text-primary hover:underline">
-                            Back to home
-                        </Link>
+                        <Link href="/home" className="text-xs font-black text-primary hover:underline">Back to home</Link>
                     </div>
                 ) : event ? (
                     <AnimatePresence mode="wait">
@@ -427,7 +383,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     );
 }
 
-// ─── Posting View ──────────────────────────────────────────
+// ─── Posting View ───────────────────────────────────────────────────────────
 
 function PostingView({
     event,
@@ -449,6 +405,7 @@ function PostingView({
     const [preview, setPreview] = useState<string | null>(null);
     const [caption, setCaption] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    const [briefOpen, setBriefOpen] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -488,100 +445,156 @@ function PostingView({
             : sortedSubmissions;
 
     return (
-        <div className="px-4 md:px-0 space-y-8">
-            {/* Brief + Reward */}
-            <div className="grid md:grid-cols-[1fr_340px] gap-6">
-                <div className="bg-card border border-border/40 rounded-[28px] p-6">
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40 mb-4">Challenge Brief</h3>
-                    <p className="text-sm font-medium text-foreground/70 leading-relaxed">{event.description}</p>
-                </div>
-                <RewardBlock
-                    rewardPool={`$${((event.leaderboardPool ?? 0) + (event.baseReward ?? 0)).toLocaleString()}`}
-                    baseReward={event.baseReward ? `$${event.baseReward}` : "$0"}
-                    topReward={event.topReward ? `$${event.topReward}` : undefined}
-                    mode="post"
-                    variant="full"
-                />
+        <div className="px-4 md:px-0">
+            {/* ── Main CTA: Post / Already submitted ── */}
+            <div className="mt-5 mb-5">
+                {hasSubmitted ? (
+                    /* Already submitted state */
+                    <div className="bg-primary/8 border border-primary/25 rounded-[28px] p-6 flex items-center gap-5">
+                        <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0">
+                            <CheckCircle2 className="w-7 h-7 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-black text-foreground">Entry submitted!</p>
+                            <p className="text-xs text-foreground/50 mt-0.5">
+                                Your post is live. Voting starts when the posting phase ends.
+                            </p>
+                        </div>
+                        {mySubmission?.imageCid && (
+                            <img
+                                src={`${PINATA_GW}/${mySubmission.imageCid}`}
+                                alt="Your submission"
+                                className="w-16 h-16 rounded-xl object-cover shrink-0 border border-primary/30"
+                            />
+                        )}
+                    </div>
+                ) : (
+                    /* Submission form */
+                    <div className="bg-card border border-border/40 rounded-[28px] overflow-hidden">
+                        {/* Header */}
+                        <div className="px-6 pt-6 pb-4 border-b border-border/30 flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+                                <PlusCircle className="w-4 h-4 text-primary" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-black text-foreground">Post Your Entry</h3>
+                                <p className="text-[11px] text-foreground/40 font-medium">Upload your image to enter the challenge</p>
+                            </div>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            {/* Image drop zone */}
+                            <div
+                                onClick={() => fileRef.current?.click()}
+                                className={cn(
+                                    "relative border-2 border-dashed rounded-[20px] flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden",
+                                    preview
+                                        ? "border-primary/30 h-[320px]"
+                                        : "border-border/40 hover:border-primary/40 hover:bg-primary/3 h-[200px]"
+                                )}
+                            >
+                                {preview ? (
+                                    <>
+                                        <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                            <div className="bg-black/60 backdrop-blur-md px-4 py-2 rounded-full">
+                                                <span className="text-xs font-black text-white">Change Image</span>
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="flex flex-col items-center gap-3 p-8">
+                                        <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center">
+                                            <Upload className="w-6 h-6 text-foreground/30" />
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-sm font-black text-foreground/60">Drop your image here</p>
+                                            <p className="text-xs text-foreground/30 mt-1">or click to browse</p>
+                                        </div>
+                                        <p className="text-[10px] text-foreground/20 uppercase tracking-widest font-bold">
+                                            JPEG · PNG · GIF · WebP · max 5 MB
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                            <input
+                                ref={fileRef}
+                                type="file"
+                                accept="image/jpeg,image/png,image/gif,image/webp"
+                                className="hidden"
+                                onChange={handleFileChange}
+                            />
+
+                            {/* Caption */}
+                            <textarea
+                                value={caption}
+                                onChange={(e) => setCaption(e.target.value)}
+                                placeholder="Write a caption… (optional)"
+                                rows={2}
+                                maxLength={280}
+                                className="w-full bg-secondary/40 border border-border/40 rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-foreground/30 resize-none focus:outline-none focus:border-primary/50 transition-colors"
+                            />
+
+                            <button
+                                onClick={handleSubmit}
+                                disabled={!file || submitting}
+                                className="w-full py-4 bg-foreground text-background rounded-[18px] text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2.5 hover:bg-foreground/90 active:scale-[0.98] transition-all disabled:opacity-30"
+                            >
+                                {submitting ? (
+                                    <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</>
+                                ) : (
+                                    <><Upload className="w-4 h-4" /> Submit Entry</>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {/* Submission form or already-submitted state */}
-            {hasSubmitted ? (
-                <div className="bg-primary/5 border border-primary/20 rounded-[24px] p-6 flex items-center gap-4">
-                    <CheckCircle2 className="w-8 h-8 text-primary shrink-0" />
-                    <div>
-                        <p className="text-sm font-black text-foreground">Submission uploaded</p>
-                        <p className="text-xs text-foreground/50 mt-0.5">
-                            Your entry is live. Voting starts when the posting phase ends.
-                        </p>
+            {/* ── Collapsible Brief + Rewards ── */}
+            <div className="mb-6">
+                <button
+                    onClick={() => setBriefOpen((v) => !v)}
+                    className="w-full flex items-center justify-between bg-card border border-border/40 rounded-[20px] px-5 py-4 hover:border-border/60 transition-colors"
+                >
+                    <div className="flex items-center gap-3">
+                        <Info className="w-4 h-4 text-foreground/40" />
+                        <span className="text-xs font-black uppercase tracking-[0.15em] text-foreground/50">Challenge Brief & Rewards</span>
                     </div>
-                    {mySubmission?.imageCid && (
-                        <img
-                            src={`${PINATA_GW}/${mySubmission.imageCid}`}
-                            alt="Your submission"
-                            className="ml-auto w-16 h-16 rounded-xl object-cover shrink-0"
-                        />
+                    {briefOpen ? <ChevronUp className="w-4 h-4 text-foreground/30" /> : <ChevronDown className="w-4 h-4 text-foreground/30" />}
+                </button>
+
+                <AnimatePresence>
+                    {briefOpen && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="overflow-hidden"
+                        >
+                            <div className="grid md:grid-cols-[1fr_300px] gap-4 pt-3">
+                                <div className="bg-card border border-border/40 rounded-[20px] p-5">
+                                    <p className="text-sm font-medium text-foreground/70 leading-relaxed">{event.description}</p>
+                                </div>
+                                <RewardBlock
+                                    rewardPool={`$${((event.leaderboardPool ?? 0) + (event.baseReward ?? 0)).toLocaleString()}`}
+                                    baseReward={event.baseReward ? `$${event.baseReward}` : "$0"}
+                                    topReward={event.topReward ? `$${event.topReward}` : undefined}
+                                    mode="post"
+                                    variant="full"
+                                />
+                            </div>
+                        </motion.div>
                     )}
-                </div>
-            ) : (
-                <div className="bg-card border border-border/40 rounded-[28px] p-6 space-y-4">
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40">Your Submission</h3>
+                </AnimatePresence>
+            </div>
 
-                    {/* Image pick */}
-                    <div
-                        onClick={() => fileRef.current?.click()}
-                        className={cn(
-                            "relative border-2 border-dashed rounded-[20px] flex flex-col items-center justify-center cursor-pointer transition-colors",
-                            preview ? "border-primary/30 h-56" : "border-border/40 hover:border-primary/40 h-40"
-                        )}
-                    >
-                        {preview ? (
-                            <img src={preview} alt="Preview" className="w-full h-full object-cover rounded-[18px]" />
-                        ) : (
-                            <>
-                                <ImageIcon className="w-8 h-8 text-foreground/20 mb-2" />
-                                <p className="text-xs text-foreground/40 font-bold">Click to upload image</p>
-                                <p className="text-[10px] text-foreground/25 mt-1">JPEG, PNG, GIF or WebP · max 5 MB</p>
-                            </>
-                        )}
-                    </div>
-                    <input
-                        ref={fileRef}
-                        type="file"
-                        accept="image/jpeg,image/png,image/gif,image/webp"
-                        className="hidden"
-                        onChange={handleFileChange}
-                    />
-
-                    {/* Caption */}
-                    <textarea
-                        value={caption}
-                        onChange={(e) => setCaption(e.target.value)}
-                        placeholder="Add a caption (optional)"
-                        rows={2}
-                        maxLength={280}
-                        className="w-full bg-secondary/40 border border-border/40 rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-foreground/30 resize-none focus:outline-none focus:border-primary/50 transition-colors"
-                    />
-
-                    <button
-                        onClick={handleSubmit}
-                        disabled={!file || submitting}
-                        className="w-full py-3.5 bg-foreground text-background rounded-[18px] text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2.5 hover:bg-foreground/90 active:scale-[0.98] transition-all disabled:opacity-40"
-                    >
-                        {submitting ? (
-                            <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</>
-                        ) : (
-                            "Submit Entry"
-                        )}
-                    </button>
-                </div>
-            )}
-
-            {/* Submissions feed */}
+            {/* ── Submissions Feed ── */}
             {submissions.length > 0 && (
                 <div>
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center justify-between mb-5">
                         <h3 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40">
-                            Submissions ({submissions.length})
+                            Community Posts ({submissions.length})
                         </h3>
                         <div className="flex bg-secondary rounded-xl p-1 border border-border/40">
                             {(["latest", "top", "yours"] as const).map((tab) => (
@@ -589,11 +602,11 @@ function PostingView({
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
                                     className={cn(
-                                        "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                                        "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
                                         activeTab === tab ? "bg-foreground text-background" : "text-foreground/40 hover:text-foreground"
                                     )}
                                 >
-                                    {tab === "yours" ? "Your Post" : tab}
+                                    {tab === "yours" ? "Mine" : tab}
                                 </button>
                             ))}
                         </div>
@@ -614,7 +627,7 @@ function PostingView({
     );
 }
 
-// ─── Voting View ───────────────────────────────────────────
+// ─── Voting View ────────────────────────────────────────────────────────────
 
 function VotingView({
     event,
@@ -630,33 +643,99 @@ function VotingView({
     onVote: (id: string) => void;
 }) {
     const [activeTab, setActiveTab] = useState<"top" | "latest">("top");
+    const [briefOpen, setBriefOpen] = useState(false);
 
     const sortedSubmissions = [...submissions].sort((a, b) => {
         if (activeTab === "top") return (b._count?.votes || 0) - (a._count?.votes || 0);
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
+    const votedSub = votedSubmissionId
+        ? submissions.find((s) => s.id === votedSubmissionId)
+        : null;
+
     return (
-        <div className="px-4 md:px-0 space-y-8">
-            {/* Brief + Reward */}
-            <div className="grid md:grid-cols-[1fr_340px] gap-6">
-                <div className="bg-card border border-border/40 rounded-[28px] p-6">
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40 mb-4">Challenge Brief</h3>
-                    <p className="text-sm font-medium text-foreground/70 leading-relaxed">{event.description}</p>
-                </div>
-                <RewardBlock
-                    rewardPool={`$${calculateTotalPool(event).toLocaleString()}`}
-                    baseReward={event.baseReward ? `$${event.baseReward}` : "$0"}
-                    topReward={event.topReward ? `$${event.topReward}` : undefined}
-                    mode="vote"
-                    variant="full"
-                />
+        <div className="px-4 md:px-0">
+            {/* ── Vote status banner ── */}
+            <div className="mt-5 mb-5">
+                {votedSubmissionId ? (
+                    <div className="bg-primary/8 border border-primary/25 rounded-[24px] p-4 flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                            <CheckCircle2 className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-black text-foreground">Vote cast!</p>
+                            <p className="text-xs text-foreground/40 mt-0.5">
+                                You voted for <span className="text-foreground/70 font-bold">
+                                    @{votedSub?.user?.username || "this entry"}
+                                </span>
+                            </p>
+                        </div>
+                        {votedSub?.imageCid && (
+                            <img
+                                src={`${PINATA_GW}/${votedSub.imageCid}`}
+                                alt="Voted for"
+                                className="w-12 h-12 rounded-xl object-cover shrink-0 border-2 border-primary/40"
+                            />
+                        )}
+                    </div>
+                ) : (
+                    <div className="bg-card border border-border/40 rounded-[24px] p-4 flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center shrink-0">
+                            <Vote className="w-5 h-5 text-foreground/30" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-black text-foreground">Cast your vote</p>
+                            <p className="text-xs text-foreground/40 mt-0.5">
+                                Pick your favorite entry below — you get one vote
+                            </p>
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {/* Stats bar */}
-            <div className="flex items-center justify-between">
+            {/* ── Collapsible Brief + Rewards ── */}
+            <div className="mb-6">
+                <button
+                    onClick={() => setBriefOpen((v) => !v)}
+                    className="w-full flex items-center justify-between bg-card border border-border/40 rounded-[20px] px-5 py-4 hover:border-border/60 transition-colors"
+                >
+                    <div className="flex items-center gap-3">
+                        <Info className="w-4 h-4 text-foreground/40" />
+                        <span className="text-xs font-black uppercase tracking-[0.15em] text-foreground/50">About this challenge</span>
+                    </div>
+                    {briefOpen ? <ChevronUp className="w-4 h-4 text-foreground/30" /> : <ChevronDown className="w-4 h-4 text-foreground/30" />}
+                </button>
+
+                <AnimatePresence>
+                    {briefOpen && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="overflow-hidden"
+                        >
+                            <div className="grid md:grid-cols-[1fr_300px] gap-4 pt-3">
+                                <div className="bg-card border border-border/40 rounded-[20px] p-5">
+                                    <p className="text-sm font-medium text-foreground/70 leading-relaxed">{event.description}</p>
+                                </div>
+                                <RewardBlock
+                                    rewardPool={`$${calculateTotalPool(event).toLocaleString()}`}
+                                    baseReward={event.baseReward ? `$${event.baseReward}` : "$0"}
+                                    topReward={event.topReward ? `$${event.topReward}` : undefined}
+                                    mode="vote"
+                                    variant="full"
+                                />
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+
+            {/* ── Sort tabs + count ── */}
+            <div className="flex items-center justify-between mb-5">
                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40">
-                    Leaderboard ({submissions.length})
+                    {submissions.length} {submissions.length === 1 ? "Entry" : "Entries"}
                 </h3>
                 <div className="flex bg-secondary rounded-xl p-1 border border-border/40">
                     {(["top", "latest"] as const).map((tab) => (
@@ -664,7 +743,7 @@ function VotingView({
                             key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={cn(
-                                "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                                "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
                                 activeTab === tab ? "bg-foreground text-background" : "text-foreground/40 hover:text-foreground"
                             )}
                         >
@@ -674,41 +753,38 @@ function VotingView({
                 </div>
             </div>
 
-            {/* Voting Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* ── Voting Grid ── */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 <AnimatePresence>
                     {sortedSubmissions.map((sub, idx) => (
                         <motion.div
                             key={sub.id}
                             layout
-                            initial={{ opacity: 0, scale: 0.9 }}
+                            initial={{ opacity: 0, scale: 0.92 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.3, delay: idx * 0.05 }}
+                            transition={{ duration: 0.25, delay: idx * 0.04 }}
                         >
-                            {event.eventType === "vote_only" ? (
-                                <VoteSubmissionCard
-                                    submission={toVoteSubmission(sub)}
-                                    isVoted={votedSubmissionId === sub.id}
-                                    onVote={() => onVote(sub.id)}
-                                    disabled={!!votedSubmissionId}
-                                />
-                            ) : (
-                                <VoteSubmissionCard
-                                    submission={toVoteSubmission(sub)}
-                                    isVoted={votedSubmissionId === sub.id}
-                                    onVote={() => onVote(sub.id)}
-                                    disabled={!!votedSubmissionId || sub.userId === currentUserId}
-                                />
-                            )}
+                            <VoteSubmissionCard
+                                submission={toVoteSubmission(sub)}
+                                isVoted={votedSubmissionId === sub.id}
+                                onVote={() => onVote(sub.id)}
+                                disabled={!!votedSubmissionId || (event.eventType !== "vote_only" && sub.userId === currentUserId)}
+                            />
                         </motion.div>
                     ))}
                 </AnimatePresence>
             </div>
+
+            {submissions.length === 0 && (
+                <div className="text-center py-24">
+                    <p className="text-sm text-foreground/30 font-bold">No entries yet</p>
+                </div>
+            )}
         </div>
     );
 }
 
-// ─── Completed View ────────────────────────────────────────
+// ─── Completed View ─────────────────────────────────────────────────────────
 
 function CompletedView({
     event,
@@ -722,47 +798,60 @@ function CompletedView({
     const winners = submissions.filter((s) => s.rank && s.rank <= 3).sort((a, b) => (a.rank || 0) - (b.rank || 0));
     const others = submissions.filter((s) => !s.rank || s.rank > 3).sort((a, b) => (b._count?.votes || 0) - (a._count?.votes || 0));
 
+    const medalColors = ["text-yellow-400", "text-slate-400", "text-amber-600"];
+    const medalIcons = [Crown, Medal, Medal];
+
     return (
-        <div className="px-4 md:px-0 space-y-12">
-            {/* Podium */}
+        <div className="px-4 md:px-0 space-y-12 mt-6">
+            {/* Winners podium */}
             <div>
-                <div className="text-center mb-10">
-                    <Trophy className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-                    <h2 className="text-3xl font-black text-foreground tracking-tighter">Hall of Fame</h2>
-                    <p className="text-sm text-foreground/40 font-bold mt-1 uppercase tracking-widest">The winners have been decided</p>
+                <div className="flex items-center gap-3 mb-6">
+                    <Trophy className="w-5 h-5 text-yellow-500" />
+                    <h2 className="text-lg font-black text-foreground tracking-tighter">Hall of Fame</h2>
+                    <p className="text-xs text-foreground/30 font-bold uppercase tracking-widest">Final results</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-[1000px] mx-auto">
-                    {winners.map((sub) => (
-                        <PostSubmissionCard
-                            key={sub.id}
-                            submission={toPostSubmission(sub, currentUserId)}
-                            variant="compact"
-                        />
-                    ))}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+                    {winners.map((sub, i) => {
+                        const Icon = medalIcons[i] || Medal;
+                        return (
+                            <div key={sub.id} className="relative">
+                                <div className={cn(
+                                    "absolute -top-3 left-4 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
+                                    i === 0 ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" :
+                                        i === 1 ? "bg-slate-500/20 text-slate-300 border border-slate-500/30" :
+                                            "bg-amber-700/20 text-amber-500 border border-amber-700/30"
+                                )}>
+                                    <Icon className={cn("w-3 h-3", medalColors[i])} />
+                                    {i === 0 ? "Winner" : `#${i + 1}`}
+                                </div>
+                                <PostSubmissionCard
+                                    submission={toPostSubmission(sub, currentUserId)}
+                                />
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
 
-            {/* All entries */}
-            <div>
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40 mb-6 px-1">
-                    Other Participants ({others.length})
-                </h3>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    {others.map((sub) => (
-                        <PostSubmissionCard
-                            key={sub.id}
-                            submission={toPostSubmission(sub, currentUserId)}
-                            variant="compact"
-                        />
-                    ))}
+            {/* Other participants */}
+            {others.length > 0 && (
+                <div>
+                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40 mb-5">
+                        All Participants ({others.length})
+                    </h3>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        {others.map((sub) => (
+                            <PostSubmissionCard key={sub.id} submission={toPostSubmission(sub, currentUserId)} />
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }
 
-// ─── Upcoming View ─────────────────────────────────────────
+// ─── Upcoming View ──────────────────────────────────────────────────────────
 
 function UpcomingView({ event }: { event: Event }) {
     return (
@@ -773,12 +862,13 @@ function UpcomingView({ event }: { event: Event }) {
             <div>
                 <h2 className="text-2xl font-black text-foreground tracking-tighter mb-2">Coming Soon</h2>
                 <p className="text-sm text-foreground/50 font-medium max-w-[400px]">
-                    This campaign hasn&apos;t started yet. It will go live on <strong>{new Date(event.startTime).toLocaleString()}</strong>.
+                    This campaign hasn&apos;t started yet. It will go live on{" "}
+                    <strong>{new Date(event.startTime).toLocaleString()}</strong>.
                 </p>
             </div>
-            <div className="bg-card border border-border/40 rounded-2xl p-4 flex items-center gap-3">
-                <Info className="w-4 h-4 text-primary" />
-                <p className="text-xs font-bold text-foreground/60">{event.description}</p>
+            <div className="bg-card border border-border/40 rounded-2xl p-4 flex items-start gap-3 max-w-[480px] text-left">
+                <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                <p className="text-xs font-bold text-foreground/60 leading-relaxed">{event.description}</p>
             </div>
         </div>
     );

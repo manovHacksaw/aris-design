@@ -8,6 +8,11 @@ export async function getCurrentUser(): Promise<User> {
   return apiRequest<User>("/users/me");
 }
 
+/** GET /api/users — public users (recommendations) */
+export async function getUsers(take = 5): Promise<User[]> {
+  return apiRequest<User[]>(`/users?take=${take}`);
+}
+
 /** GET /api/users/me/stats */
 export async function getUserStats(): Promise<UserStats> {
   const res = await apiRequest<{ success: boolean; stats: UserStats }>("/users/me/stats");

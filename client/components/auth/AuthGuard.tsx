@@ -147,7 +147,9 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     }
 
     // Brand owner trying to access user-only routes → redirect to brand dashboard (or pending)
-    if (isOnboarded && isBrand && !pathname.startsWith("/brand/")) {
+    // Skip if brand preview mode is active (brand owner viewing user experience)
+    const isBrandPreview = typeof window !== "undefined" && sessionStorage.getItem("brand_preview_mode") === "true";
+    if (isOnboarded && isBrand && !pathname.startsWith("/brand/") && !isBrandPreview) {
       router.replace(brandIsActive ? "/brand/dashboard" : "/brand/pending");
       return;
     }

@@ -39,6 +39,9 @@ export interface Event {
     poolTxHash?: string;
     preferredGender?: string;
     ageGroup?: string;
+    tagline?: string;
+    hashtags?: string[];
+    regions?: string[];
     brand?: {
         id: string;
         name: string;
@@ -304,6 +307,10 @@ export async function stopEvent(id: string): Promise<Event> {
     return response.event;
 }
 
+export async function getDetailedEventAnalytics(id: string): Promise<any> {
+    return apiRequest<any>(`/analytics/events/${id}/detailed`);
+}
+
 export async function getMyVotes(eventId: string): Promise<any[]> {
     const response = await apiRequest<{ success: boolean; votes: any[] }>(
         `/events/${eventId}/my-votes`
@@ -356,14 +363,15 @@ export function calculateBrandStats(events: Event[]): BrandStats {
 }
 
 export function getEventStatusDisplay(status: EventStatus): { label: string; color: string; icon: string } {
-    const statusMap = {
+    const statusMap: Record<string, { label: string; color: string; icon: string }> = {
         draft: { label: 'Draft', color: 'gray', icon: '📝' },
         scheduled: { label: 'Scheduled', color: 'yellow', icon: '📅' },
         posting: { label: 'Posting', color: 'blue', icon: '📸' },
         voting: { label: 'Voting', color: 'purple', icon: '🗳️' },
         completed: { label: 'Completed', color: 'green', icon: '✅' },
+        cancelled: { label: 'Cancelled', color: 'red', icon: '❌' },
     };
-    return statusMap[status] || statusMap.draft;
+    return (statusMap as any)[status] || statusMap.draft;
 }
 
 export function isEventActive(event: Event): boolean {
