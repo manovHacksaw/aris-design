@@ -40,10 +40,14 @@
       "WebFetch(domain:amoy.polygonscan.com)",
       "Bash(PGPASSWORD=arisdemo123 psql:*)",
       "Bash(git add:*)",
+<<<<<<< HEAD
       "Bash(ls -la /d/freel/newAris/aris-design/oldfrontend/app/\\\\\\(creation\\\\\\)/editor/)",
       "Bash(find \"d:\\\\freel\\\\newAris\\\\aris-design\\\\client\\\\app\\\\\\(user\\)\\\\create\" -type f -name \"*.ts\" -o -name \"*.tsx\" -o -name \"*.js\" -o -name \"*.jsx\")",
       "Bash(ls -la \"d:\\\\freel\\\\newAris\\\\aris-design\\\\client\\\\app\\\\\\(user\\)\\\\create\")",
       "Bash(npm pkg set dependencies[\"@pqina/pintura\"]=\"^8.95.6\" dependencies[\"@pqina/react-pintura\"]=\"^9.0.4\")"
+=======
+      "Bash(git checkout:*)"
+>>>>>>> 45351bcf49a5ed1e69c126a3ed39008636d7a294
     ]
   }
 }

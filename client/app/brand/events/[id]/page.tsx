@@ -8,10 +8,12 @@ import {
     ChevronLeft, Users, Trophy, Clock, BarChart2, ImageIcon, Vote,
     Loader2, AlertTriangle, ExternalLink, Hash, Globe, Target,
     CheckCircle2, XCircle, StopCircle, Trash2, RefreshCw,
+    Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
     getEventById, cancelEvent, stopEvent, publishEvent, deleteEvent,
+    getDetailedEventAnalytics,
 } from "@/services/event.service";
 import type { Event, EventStatus } from "@/services/event.service";
 import { getEventSubmissions } from "@/services/submission.service";
@@ -20,10 +22,10 @@ import type { Submission } from "@/services/submission.service";
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const STATUS_STYLES: Record<string, string> = {
-    posting:   "bg-green-500/10 text-green-500 border-green-500/20",
-    voting:    "bg-purple-500/10 text-purple-500 border-purple-500/20",
+    posting: "bg-green-500/10 text-green-500 border-green-500/20",
+    voting: "bg-purple-500/10 text-purple-500 border-purple-500/20",
     scheduled: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-    draft:     "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+    draft: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
     completed: "bg-muted text-muted-foreground border-border",
     cancelled: "bg-red-500/10 text-red-400 border-red-500/20",
 };
@@ -127,7 +129,7 @@ function StatCard({ icon: Icon, label, value, sub, color = "text-primary" }: {
 
 function SubmissionCard({ sub }: { sub: Submission }) {
     const imgUrl = ipfs(sub.imageCid);
-    const username = sub.user?.username || sub.user?.name || sub.userId.slice(0, 8);
+    const username = sub.user?.username || sub.user?.displayName || sub.userId.slice(0, 8);
     const votes = sub._count?.votes ?? 0;
     const rank = sub.rank;
 
@@ -253,6 +255,7 @@ export default function BrandEventDetailPage() {
     const router = useRouter();
 
     const [event, setEvent] = useState<Event | null>(null);
+    const [eventAnalyticsData, setEventAnalyticsData] = useState<any>(null);
     const [submissions, setSubmissions] = useState<Submission[]>([]);
     const [loading, setLoading] = useState(true);
     const [subLoading, setSubLoading] = useState(false);
@@ -263,8 +266,14 @@ export default function BrandEventDetailPage() {
     useEffect(() => {
         if (!id) return;
         setLoading(true);
-        getEventById(id)
-            .then(setEvent)
+        Promise.all([
+            getEventById(id),
+            getDetailedEventAnalytics(id).catch(() => null)
+        ])
+            .then(([evt, analyticData]) => {
+                setEvent(evt);
+                setEventAnalyticsData(analyticData);
+            })
             .catch(() => toast.error("Failed to load event"))
             .finally(() => setLoading(false));
     }, [id]);
@@ -370,11 +379,11 @@ export default function BrandEventDetailPage() {
     // ── Derived data ───────────────────────────────────────────────────────
 
     const isPost = event.eventType === "post_and_vote";
-    const analytics = event.eventAnalytics;
-    const totalSubs = analytics?.totalSubmissions ?? event._count?.submissions ?? 0;
-    const totalVotes = analytics?.totalVotes ?? event._count?.votes ?? 0;
-    const totalViews = analytics?.totalViews ?? 0;
-    const participants = analytics?.uniqueParticipants ?? 0;
+    const eventStats = event.eventAnalytics;
+    const totalSubs = eventStats?.totalSubmissions ?? event._count?.submissions ?? 0;
+    const totalVotes = eventStats?.totalVotes ?? event._count?.votes ?? 0;
+    const totalViews = eventStats?.totalViews ?? 0;
+    const participants = eventStats?.uniqueParticipants ?? 0;
     const totalPool = (event.baseReward ?? 0) + (event.topReward ?? 0) + (event.leaderboardPool ?? 0);
     const maxProposalVotes = event.proposals?.reduce((m, p) => Math.max(m, p.voteCount), 0) ?? 0;
     const coverUrl = ipfs(event.imageCid);
@@ -598,6 +607,62 @@ export default function BrandEventDetailPage() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Detailed Metrics (Entropy, Margin, etc) */}
+                        {eventAnalyticsData && (
+                            <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-sm font-black uppercase tracking-widest text-foreground/70 flex items-center gap-2">
+                                        <Activity className="w-4 h-4 text-primary" />
+                                        Advanced Insights
+                                    </h3>
+                                    <div className="px-2.5 py-1 bg-primary/10 rounded-full text-[10px] font-black text-primary uppercase">
+                                        Computed Live
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Entropy</span>
+                                            <span className="text-xs font-black text-foreground">{eventAnalyticsData.entropy?.toFixed(2) || "0.00"}</span>
+                                        </div>
+                                        <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                                            <div className="h-full bg-orange-400 rounded-full" style={{ width: `${Math.min(100, (eventAnalyticsData.entropy || 0) * 20)}%` }} />
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground leading-relaxed">
+                                            Measures vote distribution diversity. Higher values indicate more competition.
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Winning Margin</span>
+                                            <span className="text-xs font-black text-foreground">{eventAnalyticsData.winningMargin?.toFixed(1) || "0.0"}%</span>
+                                        </div>
+                                        <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                                            <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${eventAnalyticsData.winningMargin || 0}%` }} />
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground leading-relaxed">
+                                            Distance between the winner and runner-up.
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Historical Alignment</span>
+                                            <span className="text-xs font-black text-foreground">{eventAnalyticsData.historicalAlignment?.toFixed(1) || "0.0"}%</span>
+                                        </div>
+                                        <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                                            <div className="h-full bg-blue-400 rounded-full" style={{ width: `${eventAnalyticsData.historicalAlignment || 0}%` }} />
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground leading-relaxed">
+                                            How well this result aligns with previous community preference.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Targeting */}
                         <div className="grid md:grid-cols-2 gap-5">

@@ -16,7 +16,8 @@ import {
     IoChevronForwardOutline,
     IoLogOutOutline,
     IoEyeOutline,
-    IoRefreshOutline
+    IoRefreshOutline,
+    IoStatsChartOutline
 } from "react-icons/io5";
 import { useNotifications } from "@/context/NotificationContext";
 import { useRouter } from "next/navigation";
@@ -47,6 +48,7 @@ export default function BrandSidebar() {
         { label: "Dashboard", href: "/brand/dashboard", icon: IoGridOutline },
         { label: "Campaigns", href: "/brand/events", icon: IoMegaphoneOutline },
         { label: "Create Campaign", href: "/brand/create-event", icon: IoAddCircleOutline },
+        { label: "Insights", href: "/brand/insights", icon: IoStatsChartOutline },
         { label: "Refunds", href: "/brand/refunds", icon: IoRefreshOutline },
         { label: "Notifications", href: "/brand/notifications", icon: IoNotificationsOutline, badge: unreadCount },
         { label: "Settings", href: "/brand/settings", icon: IoSettingsOutline },
@@ -123,7 +125,10 @@ export default function BrandSidebar() {
                         <SidebarButton
                             label="View as User"
                             icon={IoEyeOutline}
-                            onClick={() => router.push("/home?preview=brand")}
+                            onClick={() => {
+                                sessionStorage.setItem("brand_preview_mode", "true");
+                                router.push("/");
+                            }}
                         />
 
                         {/* Theme Toggle */}

@@ -24,89 +24,86 @@ export default function RewardBlock({
     className,
 }: RewardBlockProps) {
     if (variant === "compact") {
-        if (mode === "vote") {
-            return (
-                <div className={cn("flex items-center justify-between", className)}>
-                    <div className="flex items-center gap-1.5 min-w-0">
-                        <Zap className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                        <span className="text-sm font-black text-foreground truncate">{baseReward}</span>
-                        <span className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest hidden sm:inline-block">/ Vote</span>
-                    </div>
-
-                    {topReward ? (
-                        <div className="flex items-center gap-1.5 min-w-0">
-                            <Trophy className="w-3.5 h-3.5 text-accent flex-shrink-0" />
-                            <span className="text-sm font-black text-foreground truncate">{topReward}</span>
-                            <span className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest hidden sm:inline-block">Top</span>
-                        </div>
-                    ) : (
-                        /* Fallback if no top reward, show pool? User said Base, Top. If no top, maybe just Base? Or Pool? I'll show Pool as fallback or nothing? 
-                           Let's show Pool as fallback to avoid emptiness */
-                        <div className="flex items-center gap-1.5 min-w-0">
-                            <Trophy className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                            <span className="text-sm font-black text-foreground truncate">{rewardPool}</span>
-                        </div>
-                    )}
-                </div>
-            );
-        }
-
-        // Post Mode
         return (
             <div className={cn("flex items-center justify-between", className)}>
                 <div className="flex items-center gap-1.5 min-w-0">
+                    <Zap className="w-3.5 h-3.5 text-primary flex-shrink-0" />
                     <span className="text-sm font-black text-foreground truncate">{baseReward}</span>
-                    <span className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest hidden sm:inline-block">Base</span>
+                    <span className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest hidden sm:inline-block">Base Pool</span>
                 </div>
-                <div className="flex items-center gap-1.5 min-w-0">
-                    <Trophy className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                    <span className="text-sm font-black text-foreground truncate">{rewardPool}</span>
-                    <span className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest hidden sm:inline-block">Pool</span>
-                </div>
+
+                {topReward ? (
+                    <div className="flex items-center gap-1.5 min-w-0">
+                        <Trophy className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0" />
+                        <span className="text-sm font-black text-foreground truncate">{topReward}</span>
+                        <span className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest hidden sm:inline-block">Top Pool</span>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-1.5 min-w-0">
+                        <Trophy className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                        <span className="text-sm font-black text-foreground truncate">{rewardPool}</span>
+                        <span className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest hidden sm:inline-block">Top Pool</span>
+                    </div>
+                )}
             </div>
         );
     }
 
+    // Full variant — two prominent blocks + breakdown
     return (
         <div className={cn("bg-card border border-border/40 rounded-[28px] p-6 space-y-4", className)}>
-            <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-                    <Trophy className="w-5 h-5 text-primary" />
+            {/* Two pool blocks side-by-side */}
+            <div className="grid grid-cols-2 gap-3">
+                <div className="bg-primary/8 border border-primary/20 rounded-[16px] p-4 flex flex-col gap-1">
+                    <div className="flex items-center gap-1.5 mb-1">
+                        <Zap className="w-3.5 h-3.5 text-primary" />
+                        <span className="text-[10px] font-black text-primary/70 uppercase tracking-[0.12em]">Base Pool</span>
+                    </div>
+                    <p className="text-xl font-black text-foreground tracking-tight">{baseReward}</p>
+                    <p className="text-[10px] text-foreground/40 font-medium">
+                        {mode === "vote" ? "Guaranteed per vote" : "Per submission"}
+                    </p>
                 </div>
-                <div>
-                    <p className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.15em]">Total Reward Pool</p>
-                    <p className="text-2xl font-black text-foreground tracking-tighter">{rewardPool}</p>
+
+                <div className="bg-yellow-500/8 border border-yellow-500/20 rounded-[16px] p-4 flex flex-col gap-1">
+                    <div className="flex items-center gap-1.5 mb-1">
+                        <Trophy className="w-3.5 h-3.5 text-yellow-400" />
+                        <span className="text-[10px] font-black text-yellow-400/70 uppercase tracking-[0.12em]">Top Pool</span>
+                    </div>
+                    <p className="text-xl font-black text-foreground tracking-tight">
+                        {topReward || rewardPool}
+                    </p>
+                    <p className="text-[10px] text-foreground/40 font-medium">For voters of #1 content</p>
                 </div>
             </div>
 
             <div className="h-px bg-border/40" />
 
+            {/* Breakdown */}
             <div className="space-y-3">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <Zap className="w-3.5 h-3.5 text-primary" />
                         <span className="text-xs font-bold text-foreground/60">
-                            {mode === "vote" ? "Per Vote" : "Base Reward"}
+                            {mode === "vote" ? "Base Pool — Per Vote" : "Base Reward"}
                         </span>
                     </div>
                     <span className="text-sm font-black text-foreground">{baseReward}</span>
                 </div>
 
-                {topReward && (
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Trophy className="w-3.5 h-3.5 text-accent" />
-                            <span className="text-xs font-bold text-foreground/60">Top Prize</span>
-                        </div>
-                        <span className="text-sm font-black text-accent">{topReward}</span>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Trophy className="w-3.5 h-3.5 text-yellow-400" />
+                        <span className="text-xs font-bold text-foreground/60">Top Pool — Voters of #1</span>
                     </div>
-                )}
+                    <span className="text-sm font-black text-yellow-400">{topReward || rewardPool}</span>
+                </div>
 
                 {participationReward && (
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Zap className="w-3.5 h-3.5 text-foreground/30" />
-                            <span className="text-xs font-bold text-foreground/60">Participation</span>
+                            <span className="text-xs font-bold text-foreground/60">Participation Bonus</span>
                         </div>
                         <span className="text-sm font-black text-foreground/60">{participationReward}</span>
                     </div>

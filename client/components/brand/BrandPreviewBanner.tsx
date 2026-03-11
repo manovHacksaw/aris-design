@@ -1,35 +1,58 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useUser } from "@/context/UserContext";
 import { IoEyeOutline, IoArrowBackOutline } from "react-icons/io5";
 
 export default function BrandPreviewBanner() {
-    const searchParams = useSearchParams();
+    const { user } = useUser();
     const router = useRouter();
+    const [visible, setVisible] = useState(false);
 
-    if (searchParams.get("preview") !== "brand") return null;
+    useEffect(() => {
+        setVisible(sessionStorage.getItem("brand_preview_mode") === "true");
+    }, []);
+
+    const isBrand = user?.role === "BRAND_OWNER";
+    if (!visible || !isBrand) return null;
+
+    function exitPreview() {
+        sessionStorage.removeItem("brand_preview_mode");
+        router.push("/brand/dashboard");
+    }
 
     return (
-        <div className="sticky top-0 z-[60] w-full bg-amber-500/95 backdrop-blur-sm border-b border-amber-600/30 shadow-sm">
-            <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-2 flex items-center justify-between gap-4">
+        <>
+            {/* Transparent intercept layer — blocks all pointer events on page content */}
+            <div
+                className="fixed inset-0 z-40"
+                style={{ cursor: "not-allowed" }}
+                onClickCapture={(e) => e.stopPropagation()}
+                onPointerDownCapture={(e) => e.stopPropagation()}
+            />
+
+            {/* Banner */}
+            <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-3 px-4 py-2.5 bg-amber-500 shadow-lg">
                 <div className="flex items-center gap-2 text-amber-950">
                     <IoEyeOutline size={16} className="shrink-0" />
-                    <span className="text-xs font-bold uppercase tracking-wide">
-                        Brand Preview — View Only
-                    </span>
-                    <span className="hidden sm:inline text-xs text-amber-800/80 font-medium">
-                        · You are viewing the user experience. No actions will be saved.
+                    <span className="text-xs font-bold uppercase tracking-wide">Brand Preview</span>
+                    <span className="hidden sm:inline text-xs text-amber-900/70 font-medium">
+                        · Viewing as user — all actions are disabled
                     </span>
                 </div>
-
                 <button
-                    onClick={() => router.push("/brand/dashboard")}
-                    className="flex items-center gap-1.5 px-3 py-1 bg-amber-950/10 hover:bg-amber-950/20 text-amber-950 rounded-full text-xs font-bold transition-colors whitespace-nowrap"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-950/15 hover:bg-amber-950/25 text-amber-950 text-xs font-black transition-colors shrink-0"
+                    style={{ pointerEvents: "all" }}
+                    onClickCapture={(e) => { e.stopPropagation(); exitPreview(); }}
                 >
                     <IoArrowBackOutline size={13} />
-                    Back to Brand Portal
+                    Back to Dashboard
                 </button>
             </div>
-        </div>
+
+            {/* Spacer so page content isn't hidden under the banner */}
+            <div className="h-10 shrink-0" />
+        </>
     );
 }

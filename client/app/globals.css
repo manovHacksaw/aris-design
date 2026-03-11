@@ -1,69 +1,65 @@
 @import "tailwindcss";
 
 :root {
-  /* Vibrant Neo-Brutalist Light Theme */
-  --color-background: #FDF6E3;
-  /* Pale cream/yellow from the image */
-  --color-foreground: #1A1A1A;
-  /* Stark dark grey/black for text */
+  /* Soft Pastel Light Theme — Pinterest-inspired */
+  --color-background: #FAF7F5;
+  --color-foreground: #2C2420;
 
-  /* Primary: Vibrant Orange */
-  --color-primary: #FF5722;
+  /* Primary: Soft Turquoise */
+  --color-primary: #45B8C2;
   --color-primary-foreground: #FFFFFF;
-  --color-primary-dark: #E64A19;
-  --color-primary-light: #FF8A65;
+  --color-primary-dark: #339AA4;
+  --color-primary-light: #86D4DB;
 
-  /* Secondary: Pale cream darker shade or stark white */
-  --color-secondary: #F3E8CE;
-  --color-secondary-foreground: #1A1A1A;
+  /* Secondary: Warm cream */
+  --color-secondary: #F0EAE4;
+  --color-secondary-foreground: #2C2420;
 
-  /* Accent: Yellow/Amber from the smaller elements */
-  --color-accent: #FFC107;
-  --color-accent-foreground: #1A1A1A;
+  /* Accent: Soft peach/amber */
+  --color-accent: #F0A857;
+  --color-accent-foreground: #FFFFFF;
 
   /* UI Surfaces */
   --color-card: #FFFFFF;
-  --color-card-border: rgba(26, 26, 26, 0.1);
+  --color-card-border: rgba(44, 36, 32, 0.07);
   --color-input: #FFFFFF;
-  --color-folder: #F3E8CE;
+  --color-folder: #F5EFE9;
 
-  /* Radius System: Keep some rounds, but often sharper in this aesthetic */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  /* Radius System */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
   --radius-full: 9999px;
 
-  /* Premium Shadows: Make them harsher/offset for that flat neo-brutalist feel */
-  --shadow-soft: 0 4px 0px rgba(0, 0, 0, 0.1);
-  --shadow-card: 4px 4px 0px rgba(0, 0, 0, 0.9);
-  --shadow-spotify: 0 8px 0px rgba(0, 0, 0, 0.85);
+  /* Soft diffuse shadows */
+  --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.08);
+  --shadow-spotify: 0 8px 32px rgba(0, 0, 0, 0.1);
 
-  /* Soft Border Override */
-  --border-soft: 2px solid #1A1A1A;
+  --border-soft: 1px solid rgba(44, 36, 32, 0.1);
 }
 
 .dark {
-  /* Dark Theme — Adapted to keep the vibrant orange pop */
-  --color-background: #111111;
-  --color-foreground: #FDF6E3;
-  --color-primary: #FF5722;
+  /* Soft dark — warm deep charcoal */
+  --color-background: #1C1917;
+  --color-foreground: #F5EFE9;
+  --color-primary: #45B8C2;
   --color-primary-foreground: #FFFFFF;
-  --color-primary-dark: #E64A19;
-  --color-primary-light: #FF8A65;
-  --color-secondary: #222222;
-  --color-secondary-foreground: #FDF6E3;
-  --color-accent: #FFC107;
-  --color-accent-foreground: #111111;
-  --color-card: #1A1A1A;
-  --color-card-border: rgba(253, 246, 227, 0.1);
-  --color-input: #222222;
-  --color-folder: #222222;
+  --color-primary-dark: #339AA4;
+  --color-primary-light: #86D4DB;
+  --color-secondary: #2C2420;
+  --color-secondary-foreground: #F5EFE9;
+  --color-accent: #F0A857;
+  --color-accent-foreground: #1C1917;
+  --color-card: #262220;
+  --color-card-border: rgba(245, 239, 233, 0.08);
+  --color-input: #2C2420;
+  --color-folder: #2C2420;
 
-  /* Shadows for Dark Mode */
-  --shadow-soft: 0 4px 0px rgba(255, 255, 255, 0.1);
-  --shadow-card: 4px 4px 0px rgba(255, 255, 255, 0.2);
-  --shadow-spotify: 0 8px 0px rgba(255, 255, 255, 0.3);
+  --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-spotify: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 @theme inline {
@@ -82,11 +78,11 @@
   --color-accent-foreground: var(--color-accent-foreground);
 
   /* Semantic design tokens */
-  --color-emerald: #00C853;
-  --color-aris-bg: #111111;
-  --color-aris-card: #1A1A1A;
-  --color-aris-border: rgba(253, 246, 227, 0.1);
-  --color-amber: #FFC107;
+  --color-emerald: #5CC9A7;
+  --color-aris-bg: #FAF7F5;
+  --color-aris-card: #FFFFFF;
+  --color-aris-border: rgba(44, 36, 32, 0.07);
+  --color-amber: #F0A857;
 
   --color-card: var(--color-card);
   --color-card-border: var(--color-card-border);
@@ -154,16 +150,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #090B10;
+  background: #F0EAE4;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1C2230;
+  background: #B8DDE0;
   border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #00C853;
+  background: #45B8C2;
 }
 
 /* Utility to hide scrollbar but keep functionality */

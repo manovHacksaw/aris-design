@@ -53,7 +53,9 @@ export interface UserStats {
   subscribers: number;   // followers
   subscriptions: number; // following
   posts: number;
-  votes: number;
+  votes: number; // Legacy, keep for compatibility if needed
+  votesCast: number;
+  votesReceived: number;
   events: number;
   earnings: number;
 }
@@ -98,9 +100,9 @@ export function levelToRank(level: number): string {
   if (level >= 20) return "Silver III";
   if (level >= 15) return "Silver II";
   if (level >= 10) return "Silver I";
-  if (level >= 7)  return "Bronze IV";
-  if (level >= 4)  return "Bronze III";
-  if (level >= 2)  return "Bronze II";
+  if (level >= 7) return "Bronze IV";
+  if (level >= 4) return "Bronze III";
+  if (level >= 2) return "Bronze II";
   return "Bronze I";
 }
 
