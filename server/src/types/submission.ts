@@ -3,12 +3,14 @@ import { Submission } from '@prisma/client';
 // ==================== REQUEST INTERFACES ====================
 
 export interface CreateSubmissionRequest {
-  imageCid: string;
+  imageCid?: string;
+  imageUrl?: string;
   caption?: string;
 }
 
 export interface UpdateSubmissionRequest {
   imageCid?: string;
+  imageUrl?: string;
   caption?: string;
 }
 

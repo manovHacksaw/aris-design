@@ -28,8 +28,15 @@ export class SubmissionService {
 
     const transformed = { ...submission };
 
-    // Add submission image URLs
-    if (submission.imageCid) {
+    // Prefer Cloudinary imageUrl; fall back to IPFS CID
+    if (submission.imageUrl) {
+      transformed.imageUrls = {
+        thumbnail: submission.imageUrl,
+        medium: submission.imageUrl,
+        large: submission.imageUrl,
+        full: submission.imageUrl,
+      };
+    } else if (submission.imageCid) {
       transformed.imageUrls = {
         thumbnail: getIPFSUrl(submission.imageCid, 'thumbnail'),
         medium: getIPFSUrl(submission.imageCid, 'medium'),
@@ -42,7 +49,7 @@ export class SubmissionService {
     if (submission.user?.avatarUrl) {
       transformed.user = {
         ...submission.user,
-        avatarUrlFull: getIPFSUrl(submission.user.avatarUrl, 'medium'),
+        avatarUrlFull: submission.user.avatarUrl,
       };
     }
 
@@ -101,11 +108,13 @@ export class SubmissionService {
       throw new Error('You have already submitted to this event');
     }
 
-    // 7. Validate imageCid
-    if (!data.imageCid) {
-      throw new Error('imageCid is required');
+    // 7. Require either imageCid or imageUrl
+    if (!data.imageCid && !data.imageUrl) {
+      throw new Error('An image is required (imageCid or imageUrl)');
     }
-    this.validateImageCid(data.imageCid);
+    if (data.imageCid) {
+      this.validateImageCid(data.imageCid);
+    }
 
 
 
@@ -115,7 +124,8 @@ export class SubmissionService {
         data: {
           eventId,
           userId,
-          imageCid: data.imageCid,
+          imageCid: data.imageCid || null,
+          imageUrl: data.imageUrl || null,
           caption: data.caption || null,
           status: 'active',
         },
@@ -206,6 +216,9 @@ export class SubmissionService {
     const updateData: any = {};
     if (data.imageCid !== undefined) {
       updateData.imageCid = data.imageCid;
+    }
+    if (data.imageUrl !== undefined) {
+      updateData.imageUrl = data.imageUrl;
     }
     if (data.caption !== undefined) {
       updateData.caption = data.caption;

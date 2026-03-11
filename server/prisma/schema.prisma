@@ -192,6 +192,7 @@ model Submission {
   id              String           @id @default(uuid())
   eventId         String
   imageCid        String?
+  imageUrl        String?
   caption         String?
   status          String
   metadata        Json?
