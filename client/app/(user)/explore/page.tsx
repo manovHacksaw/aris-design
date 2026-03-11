@@ -77,7 +77,7 @@ export default function Explore() {
         title: ev.title,
         reward: ev.leaderboardPool ? `$${ev.leaderboardPool.toLocaleString()}` : "TBD",
         entries: ev._count?.submissions ?? ev.eventAnalytics?.totalSubmissions ?? 0,
-        image: ev.imageCid ? `${PINATA_GW}/${ev.imageCid}` : "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80",
+        image: ev.imageUrl || (ev.imageCid ? `${PINATA_GW}/${ev.imageCid}` : "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80"),
         tag: ev.status === "voting" ? "VOTING" : ev.status === "posting" ? "LIVE" : "FEATURED",
       }));
       setFeaturedChallenges(mapped);

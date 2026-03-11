@@ -11,9 +11,7 @@ function toFeedPost(e: Event) {
     return {
         id: e.id,
         username: e.brand?.name ?? "Unknown",
-        image: e.imageCid
-            ? `${PINATA_GW}/${e.imageCid}`
-            : "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80",
+        image: e.imageUrl || (e.imageCid ? `${PINATA_GW}/${e.imageCid}` : "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80"),
         caption: e.description ?? e.title,
         reward: e.leaderboardPool ?? 0,
         votes: e._count?.votes ?? 0,

@@ -85,9 +85,9 @@ export default function SettingsPage() {
         setIsUploadingAvatar(true);
 
         try {
-            const { url } = await uploadToPinata(file);
-            setAvatarPreview(url);
-            await updateProfile({ avatarUrl: url });
+            const { imageUrl } = await uploadToPinata(file);
+            setAvatarPreview(imageUrl);
+            await updateProfile({ avatarUrl: imageUrl });
             toast.success("Profile photo updated!");
         } catch (err: any) {
             toast.error(err?.message || "Upload failed. Try again.");

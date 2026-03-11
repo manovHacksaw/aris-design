@@ -3,6 +3,7 @@ import path from "path";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["pino", "pino-pretty"],
+  transpilePackages: ["@pqina/pintura", "@pqina/react-pintura"],
   async redirects() {
     return [
       {

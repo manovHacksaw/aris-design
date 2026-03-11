@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import {
     ChevronLeft, ChevronRight, Sparkles, Loader2, X, Plus, Minus,
     Upload, Users, DollarSign, Globe, FileText, Shield, Hash,
-    CheckCircle2, ImageIcon, RefreshCw, Zap, Copy, Check,
+    CheckCircle2, ImageIcon, RefreshCw, Zap, Copy, Check, Pencil,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,8 @@ import { readBrandRefundBalance } from "@/lib/blockchain/contracts";
 import { useWallet } from "@/context/WalletContext";
 import { useEffect } from "react";
 import { BrandImageGeneratorModal } from "@/components/create/BrandImageGeneratorModal";
+import { PinturaImageEditor } from "@/components/create/PinturaImageEditor";
+import { uploadToPinata } from "@/lib/pinata-upload";
 import { useUser } from "@/context/UserContext";
 
 // ── Constants (mirror contracts.ts) ──────────────────────────────────────────
@@ -61,7 +63,7 @@ interface FormData extends Omit<LaunchFormData, "type"> {
     participantInstructions: string;
     submissionGuidelines: string;
     contentType: string[];
-    sampleImages: File[];
+    sampleImages: { file: File; preview: string }[];
     proposals: Proposal[];
     moderationRules: string;
     hashtagInput: string;
@@ -170,6 +172,10 @@ export default function CreateEventPage() {
     const [aiGeneratorSampleOpen, setAiGeneratorSampleOpen] = useState(false);
     // Track which "Add Sample" slot is in two-button mode (null = none expanded)
     const [sampleAddMode, setSampleAddMode] = useState(false);
+    // Pintura editor state
+    const [pinturaOpen, setPinturaOpen] = useState(false);
+    const [pinturaImageSrc, setPinturaImageSrc] = useState<string | null>(null);
+    const [pinturaEditTarget, setPinturaEditTarget] = useState<{ type: 'proposal' | 'sample'; idx: number } | null>(null);
 
     const [form, setForm] = useState<FormData>({
         title: "",
@@ -313,6 +319,52 @@ export default function CreateEventPage() {
     };
     const removeProposalMedia = (idx: number) => {
         set({ proposals: form.proposals.map((p, i) => i === idx ? { ...p, media: undefined, mediaPreview: undefined } : p) });
+    };
+
+    // ── Pintura handlers ───────────────────────────────────────────────────
+    const handleEditSample = (idx: number) => {
+        const sample = form.sampleImages[idx];
+        if (!sample) return;
+        setPinturaImageSrc(sample.preview);
+        setPinturaEditTarget({ type: 'sample', idx });
+        setPinturaOpen(true);
+    };
+
+    const handleEditProposal = (idx: number) => {
+        const proposal = form.proposals[idx];
+        if (!proposal?.mediaPreview || proposal.media?.type.startsWith('video/')) return;
+        setPinturaImageSrc(proposal.mediaPreview);
+        setPinturaEditTarget({ type: 'proposal', idx });
+        setPinturaOpen(true);
+    };
+
+    const handlePinturaDone = async (editedFile: File, editedPreview: string) => {
+        setPinturaOpen(false);
+        if (!pinturaEditTarget) return;
+        const { type, idx } = pinturaEditTarget;
+        setPinturaImageSrc(null);
+        setPinturaEditTarget(null);
+
+        if (type === 'sample') {
+            // Immediately update preview; re-upload in background
+            set({ sampleImages: form.sampleImages.map((s, i) => i === idx ? { file: editedFile, preview: editedPreview } : s) });
+            try {
+                await uploadToPinata(editedFile);
+                toast.success('Sample image updated');
+            } catch (err: any) {
+                toast.error(err?.message || 'Failed to upload edited sample');
+            }
+        } else {
+            // Update proposal mediaPreview + media immediately
+            set({ proposals: form.proposals.map((p, i) => i === idx ? { ...p, media: editedFile, mediaPreview: editedPreview } : p) });
+            toast.success('Option image updated');
+        }
+    };
+
+    const handlePinturaClose = () => {
+        setPinturaOpen(false);
+        setPinturaImageSrc(null);
+        setPinturaEditTarget(null);
     };
 
     // ── Tag helpers ────────────────────────────────────────────────────────
@@ -888,19 +940,32 @@ export default function CreateEventPage() {
 
                     <SectionCard title="Sample Images" subtitle="Provide 1-10 samples to guide creators">
                         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                            {form.sampleImages.map((file, idx) => (
+                            {form.sampleImages.map((sample, idx) => (
                                 <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-border group">
                                     <img
-                                        src={URL.createObjectURL(file)}
+                                        src={sample.preview}
                                         alt={`Sample ${idx + 1}`}
                                         className="w-full h-full object-cover"
                                     />
-                                    <button
-                                        onClick={() => set({ sampleImages: form.sampleImages.filter((_, i) => i !== idx) })}
-                                        className="absolute top-1 right-1 p-1 bg-background/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                        <X className="w-3 h-3 text-red-500" />
-                                    </button>
+                                    {/* Hover overlay: Edit + Remove */}
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleEditSample(idx)}
+                                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-black/70 border border-white/20 text-[10px] font-black text-white uppercase tracking-widest hover:bg-primary/20 hover:border-primary/50 transition-all backdrop-blur-sm"
+                                        >
+                                            <Pencil className="w-2.5 h-2.5" />
+                                            Edit
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => set({ sampleImages: form.sampleImages.filter((_, i) => i !== idx) })}
+                                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-black/70 border border-white/20 text-[10px] font-black text-white/60 uppercase tracking-widest hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-400 transition-all backdrop-blur-sm"
+                                        >
+                                            <X className="w-2.5 h-2.5" />
+                                            Remove
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                             {form.sampleImages.length < 10 && (
@@ -925,12 +990,13 @@ export default function CreateEventPage() {
                                                 onChange={(e) => {
                                                     setSampleAddMode(false);
                                                     const files = Array.from(e.target.files || []);
-                                                    const total = form.sampleImages.length + files.length;
+                                                    const newSamples = files.map(f => ({ file: f, preview: URL.createObjectURL(f) }));
+                                                    const total = form.sampleImages.length + newSamples.length;
                                                     if (total > 10) {
                                                         toast.error("Maximum 10 samples allowed");
-                                                        set({ sampleImages: [...form.sampleImages, ...files.slice(0, 10 - form.sampleImages.length)] });
+                                                        set({ sampleImages: [...form.sampleImages, ...newSamples.slice(0, 10 - form.sampleImages.length)] });
                                                     } else {
-                                                        set({ sampleImages: [...form.sampleImages, ...files] });
+                                                        set({ sampleImages: [...form.sampleImages, ...newSamples] });
                                                     }
                                                 }}
                                             />
@@ -997,7 +1063,20 @@ export default function CreateEventPage() {
                                             {p.media?.type.startsWith('video/') ? (
                                                 <video src={p.mediaPreview} className="h-20 max-w-[12rem] rounded-md object-cover border border-border" controls />
                                             ) : (
-                                                <img src={p.mediaPreview} alt={`Option ${idx + 1} preview`} className="h-20 max-w-[12rem] rounded-md object-cover border border-border" />
+                                                <>
+                                                    <img src={p.mediaPreview} alt={`Option ${idx + 1} preview`} className="h-20 max-w-[12rem] rounded-md object-cover border border-border" />
+                                                    {/* Edit overlay for images */}
+                                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center gap-1.5">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleEditProposal(idx)}
+                                                            className="flex items-center gap-1 px-2 py-1 rounded-md bg-black/70 border border-white/20 text-[10px] font-black text-white uppercase tracking-widest hover:bg-primary/20 hover:border-primary/50 transition-all"
+                                                        >
+                                                            <Pencil className="w-2.5 h-2.5" />
+                                                            Edit
+                                                        </button>
+                                                    </div>
+                                                </>
                                             )}
                                             <button
                                                 onClick={() => removeProposalMedia(idx)}
@@ -1405,12 +1484,12 @@ export default function CreateEventPage() {
             <BrandImageGeneratorModal
                 isOpen={aiGeneratorSampleOpen}
                 onClose={() => setAiGeneratorSampleOpen(false)}
-                onAddToOption={(file) => {
+                onAddToOption={(file, preview) => {
                     if (form.sampleImages.length >= 10) {
                         toast.error("Maximum 10 samples allowed");
                         return;
                     }
-                    set({ sampleImages: [...form.sampleImages, file] });
+                    set({ sampleImages: [...form.sampleImages, { file, preview: preview ?? URL.createObjectURL(file) }] });
                     setAiGeneratorSampleOpen(false);
                 }}
                 brandId={user?.id ?? ""}
@@ -1418,6 +1497,16 @@ export default function CreateEventPage() {
                 eventDescription={form.description}
                 optionLabel="Sample Image"
             />
+
+            {/* Pintura image editor — for editing sample and proposal images */}
+            {pinturaImageSrc && (
+                <PinturaImageEditor
+                    isOpen={pinturaOpen}
+                    imageSrc={pinturaImageSrc}
+                    onDone={handlePinturaDone}
+                    onClose={handlePinturaClose}
+                />
+            )}
         </div>
     );
 }

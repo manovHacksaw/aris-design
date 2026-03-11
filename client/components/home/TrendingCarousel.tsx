@@ -52,12 +52,10 @@ function toCarouselItem(e: Event): CarouselItem {
         leaderboardPool: e.leaderboardPool ?? 0,
         timeRemaining: computeTimeRemaining(e.endTime),
         totalParticipants: e._count?.submissions ?? e._count?.votes ?? e.eventAnalytics?.uniqueParticipants ?? 0,
-        coverImage: e.imageCid
-            ? `${PINATA_GW}/${e.imageCid}`
-            : "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80",
+        coverImage: e.imageUrl || (e.imageCid ? `${PINATA_GW}/${e.imageCid}` : "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80"),
         brand: {
             name: e.brand?.name ?? "Unknown",
-            avatar: e.brand?.logoCid ? `${PINATA_GW}/${e.brand.logoCid}` : "",
+            avatar: e.brand?.logoUrl || (e.brand?.logoCid ? `${PINATA_GW}/${e.brand.logoCid}` : ""),
             handle: `@${(e.brand?.name ?? "").toLowerCase().replace(/\s+/g, "")}`,
         },
     };

@@ -1,4 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,41 +16,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const pinataFormData = new FormData();
-    pinataFormData.append("file", file);
-    pinataFormData.append("pinataMetadata", JSON.stringify({ name: file.name }));
-    pinataFormData.append(
-      "pinataOptions",
-      JSON.stringify({ cidVersion: 0 }) // CIDv0 (Qm...) for backend compatibility
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    const result = await new Promise<{ secure_url: string; public_id: string }>(
+      (resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "aris/submissions", resource_type: "image" },
+          (err, res) => {
+            if (err || !res) return reject(err ?? new Error("Upload failed"));
+            resolve(res as { secure_url: string; public_id: string });
+          }
+        );
+        stream.end(buffer);
+      }
     );
 
-    const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.PINATA_JWT}`,
-      },
-      body: pinataFormData,
+    return NextResponse.json({
+      success: true,
+      imageUrl: result.secure_url,
+      publicId: result.public_id,
     });
-
-    if (!res.ok) {
-      const errorData = await res.json();
-      console.error("Pinata upload error:", errorData);
-      return NextResponse.json(
-        { error: "Failed to upload to Pinata" },
-        { status: 500 }
-      );
-    }
-
-    const data = await res.json();
-    const ipfsHash = data.IpfsHash;
-    const url = `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
-
-    return NextResponse.json({ success: true, cid: ipfsHash, url });
   } catch (error) {
     console.error("Upload handler error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

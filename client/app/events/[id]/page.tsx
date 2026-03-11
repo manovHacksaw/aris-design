@@ -4,7 +4,7 @@ import SidebarLayout from "@/components/home/SidebarLayout";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Clock, Trophy, Users, ChevronLeft, Share2, ImageIcon, CheckCircle2, Loader2, AlertCircle,
-    Trash2, Crown, Medal, ExternalLink, Calendar, DollarSign, Info, Layers, Eye
+    Trash2, Crown, Medal, ExternalLink, Calendar, DollarSign, Info, Layers, Eye, Pencil
 } from "lucide-react";
 import { calculateTotalPool } from "@/lib/eventUtils";
 import Link from "next/link";
@@ -25,6 +25,7 @@ import {
     Submission,
 } from "@/services/submission.service";
 import { uploadToPinata, validateImageFile } from "@/lib/pinata-upload";
+import { PinturaImageEditor } from "@/components/create/PinturaImageEditor";
 import { useUser } from "@/context/UserContext";
 import { useSocket } from "@/context/SocketContext";
 import { toast } from "sonner";
@@ -32,8 +33,10 @@ import Countdown from "@/components/events/Countdown";
 
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
-function imgUrl(cid?: string | null): string | undefined {
-    return cid ? `${PINATA_GW}/${cid}` : undefined;
+function imgUrl(imageUrl?: string | null, cid?: string | null): string | undefined {
+    if (imageUrl) return imageUrl;
+    if (cid) return `${PINATA_GW}/${cid}`;
+    return undefined;
 }
 
 function avatarUrl(_: unknown, name?: string | null): string {
@@ -50,7 +53,7 @@ function toVoteSubmission(sub: Submission): VoteSubmission {
             avatar: sub.user?.avatarUrl || avatarUrl(undefined, displayName),
             handle: sub.user?.username || "user",
         },
-        media: sub.imageCid ? `${PINATA_GW}/${sub.imageCid}` : "",
+        media: sub.imageUrl || (sub.imageCid ? `${PINATA_GW}/${sub.imageCid}` : ""),
         mediaType: "image",
         textContent: sub.content,
         voteCount: sub._count?.votes ?? 0,
@@ -70,7 +73,7 @@ function toPostSubmission(sub: Submission, currentUserId?: string | null): PostS
             avatar: sub.user?.avatarUrl || avatarUrl(undefined, displayName),
             handle: sub.user?.username || "user",
         },
-        media: sub.imageCid ? `${PINATA_GW}/${sub.imageCid}` : "",
+        media: sub.imageUrl || (sub.imageCid ? `${PINATA_GW}/${sub.imageCid}` : ""),
         textContent: sub.content,
         voteCount: votes,
         status,
@@ -237,11 +240,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     // ─── Render ────────────────────────────────────────────
 
     const coverUrl =
-        imgUrl(event?.imageCid) ??
+        imgUrl(event?.imageUrl, event?.imageCid) ??
         "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop";
 
     const brandLogoUrl = event?.brand?.logoCid
-        ? imgUrl(event.brand.logoCid)
+        ? imgUrl(undefined, event.brand.logoCid)
         : undefined;
 
     // Compute enriched submissions with optimistic vote delta
@@ -449,6 +452,7 @@ function PostingView({
     const [preview, setPreview] = useState<string | null>(null);
     const [caption, setCaption] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    const [pinturaOpen, setPinturaOpen] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -456,18 +460,34 @@ function PostingView({
         if (!f) return;
         const validation = validateImageFile(f);
         if (!validation.valid) { toast.error(validation.error); return; }
+        if (preview) URL.revokeObjectURL(preview);
         setFile(f);
         setPreview(URL.createObjectURL(f));
+    };
+
+    const handlePinturaDone = (editedFile: File, editedPreview: string) => {
+        if (preview) URL.revokeObjectURL(preview);
+        setFile(editedFile);
+        setPreview(editedPreview);
+        setPinturaOpen(false);
+    };
+
+    const handleDiscard = () => {
+        if (preview) URL.revokeObjectURL(preview);
+        setFile(null);
+        setPreview(null);
+        // Reset file input so same file can be re-selected
+        if (fileRef.current) fileRef.current.value = "";
     };
 
     const handleSubmit = async () => {
         if (!file) { toast.error("Please select an image."); return; }
         setSubmitting(true);
         try {
-            const { cid } = await uploadToPinata(file);
+            const { imageUrl } = await uploadToPinata(file);
             const sub = await createSubmission({
                 eventId: event.id,
-                imageCid: cid,
+                imageUrl,
                 caption: caption.trim() || undefined,
             });
             toast.success("Submission uploaded!");
@@ -514,9 +534,9 @@ function PostingView({
                             Your entry is live. Voting starts when the posting phase ends.
                         </p>
                     </div>
-                    {mySubmission?.imageCid && (
+                    {(mySubmission?.imageUrl || mySubmission?.imageCid) && (
                         <img
-                            src={`${PINATA_GW}/${mySubmission.imageCid}`}
+                            src={mySubmission.imageUrl || `${PINATA_GW}/${mySubmission.imageCid}`}
                             alt="Your submission"
                             className="ml-auto w-16 h-16 rounded-xl object-cover shrink-0"
                         />
@@ -526,24 +546,39 @@ function PostingView({
                 <div className="bg-card border border-border/40 rounded-[28px] p-6 space-y-4">
                     <h3 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40">Your Submission</h3>
 
-                    {/* Image pick */}
-                    <div
-                        onClick={() => fileRef.current?.click()}
-                        className={cn(
-                            "relative border-2 border-dashed rounded-[20px] flex flex-col items-center justify-center cursor-pointer transition-colors",
-                            preview ? "border-primary/30 h-56" : "border-border/40 hover:border-primary/40 h-40"
-                        )}
-                    >
-                        {preview ? (
-                            <img src={preview} alt="Preview" className="w-full h-full object-cover rounded-[18px]" />
-                        ) : (
-                            <>
-                                <ImageIcon className="w-8 h-8 text-foreground/20 mb-2" />
-                                <p className="text-xs text-foreground/40 font-bold">Click to upload image</p>
-                                <p className="text-[10px] text-foreground/25 mt-1">JPEG, PNG, GIF or WebP · max 5 MB</p>
-                            </>
-                        )}
-                    </div>
+                    {/* Image pick / preview */}
+                    {preview ? (
+                        <div className="relative rounded-[20px] overflow-hidden h-56 border border-primary/20">
+                            <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                            {/* Action overlay */}
+                            <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                                <button
+                                    type="button"
+                                    onClick={handleDiscard}
+                                    className="px-4 py-2 rounded-xl bg-black/70 border border-white/20 text-[11px] font-black text-white/70 uppercase tracking-widest hover:text-white transition-colors backdrop-blur-md"
+                                >
+                                    Discard
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setPinturaOpen(true)}
+                                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-black/70 border border-white/20 text-[11px] font-black text-white uppercase tracking-widest hover:bg-primary/20 hover:border-primary/50 transition-all backdrop-blur-md"
+                                >
+                                    <Pencil className="w-3 h-3" />
+                                    Edit
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div
+                            onClick={() => fileRef.current?.click()}
+                            className="relative border-2 border-dashed border-border/40 hover:border-primary/40 rounded-[20px] h-40 flex flex-col items-center justify-center cursor-pointer transition-colors"
+                        >
+                            <ImageIcon className="w-8 h-8 text-foreground/20 mb-2" />
+                            <p className="text-xs text-foreground/40 font-bold">Click to upload image</p>
+                            <p className="text-[10px] text-foreground/25 mt-1">JPEG, PNG, GIF or WebP · max 5 MB</p>
+                        </div>
+                    )}
                     <input
                         ref={fileRef}
                         type="file"
@@ -609,6 +644,16 @@ function PostingView({
                         </div>
                     )}
                 </div>
+            )}
+
+            {/* Pintura editor — opened when user clicks Edit on uploaded image */}
+            {preview && (
+                <PinturaImageEditor
+                    isOpen={pinturaOpen}
+                    imageSrc={preview}
+                    onDone={handlePinturaDone}
+                    onClose={() => setPinturaOpen(false)}
+                />
             )}
         </div>
     );

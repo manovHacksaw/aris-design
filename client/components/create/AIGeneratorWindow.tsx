@@ -17,6 +17,7 @@ import {
   AlertCircle,
   Clock,
   Users,
+  Pencil,
 } from "lucide-react";
 import { getEvents, type Event } from "@/services/event.service";
 import { createSubmission } from "@/services/submission.service";
@@ -27,6 +28,7 @@ import {
   base64ToFile,
   base64ToObjectUrl,
 } from "@/services/image-generation.service";
+import { PinturaImageEditor } from "@/components/create/PinturaImageEditor";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -135,6 +137,10 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
   const [postSuccess, setPostSuccess] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
 
+  // Pintura editor state
+  const [pinturaOpen, setPinturaOpen] = useState(false);
+  const [editedImageFile, setEditedImageFile] = useState<File | null>(null);
+
   const isGeneratingRef = useRef(false);
   const limitCheckedRef = useRef(false);
 
@@ -177,6 +183,8 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
       setPostSuccess(false);
       setPostError(null);
       setRemainingGenerations(null);
+      setPinturaOpen(false);
+      setEditedImageFile(null);
       limitCheckedRef.current = false;
       isGeneratingRef.current = false;
     }
@@ -257,9 +265,10 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
     setStep("posting");
 
     try {
-      const file = base64ToFile(generatedImage.data, generatedImage.mimeType, "ai-generated.png");
-      const { cid } = await uploadToPinata(file);
-      await createSubmission({ eventId: selectedEvent.id, imageCid: cid });
+      // Use the Pintura-edited file if available, otherwise convert from base64
+      const file = editedImageFile ?? base64ToFile(generatedImage.data, generatedImage.mimeType, "ai-generated.png");
+      const { imageUrl } = await uploadToPinata(file);
+      await createSubmission({ eventId: selectedEvent.id, imageUrl });
       setPostSuccess(true);
       setTimeout(() => {
         onClose();
@@ -277,7 +286,18 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
     setGeneratedImage(null);
     setCurrentPrompt("");
     setSelectedEvent(null);
+    setEditedImageFile(null);
     setStep("prompt");
+  };
+
+  const handlePinturaDone = (editedFile: File, editedPreview: string) => {
+    // Revoke the old preview URL and replace with the Pintura-edited one
+    if (generatedImage?.objectUrl) URL.revokeObjectURL(generatedImage.objectUrl);
+    setGeneratedImage((prev) =>
+      prev ? { ...prev, objectUrl: editedPreview } : prev
+    );
+    setEditedImageFile(editedFile);
+    setPinturaOpen(false);
   };
 
   if (!mounted) return null;
@@ -545,13 +565,20 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                       </div>
                     )}
 
-                    {/* Actions */}
-                    <div className="flex gap-3">
+                    {/* Actions — Discard | Edit | Post */}
+                    <div className="flex gap-2">
                       <button
                         onClick={handleDiscard}
                         className="flex-1 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-xs font-black text-white/50 uppercase tracking-widest hover:bg-white/8 hover:text-white/70 transition-all active:scale-95"
                       >
                         Discard
+                      </button>
+                      <button
+                        onClick={() => setPinturaOpen(true)}
+                        className="flex items-center justify-center gap-1.5 px-4 py-3.5 rounded-2xl bg-white/5 border border-white/15 text-xs font-black text-white/60 uppercase tracking-widest hover:bg-white/10 hover:text-white/80 transition-all active:scale-95"
+                      >
+                        <Pencil className="w-3 h-3" />
+                        Edit
                       </button>
                       <button
                         onClick={() => {
@@ -560,7 +587,7 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                         }}
                         className="flex-1 py-3.5 rounded-2xl bg-primary text-white text-xs font-black uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95 shadow-lg shadow-primary/20"
                       >
-                        Post to Event
+                        Post
                       </button>
                     </div>
 
@@ -764,5 +791,17 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
     </AnimatePresence>
   );
 
-  return createPortal(content, document.body);
+  return (
+    <>
+      {createPortal(content, document.body)}
+      {generatedImage && (
+        <PinturaImageEditor
+          isOpen={pinturaOpen}
+          imageSrc={generatedImage.objectUrl}
+          onDone={handlePinturaDone}
+          onClose={() => setPinturaOpen(false)}
+        />
+      )}
+    </>
+  );
 }

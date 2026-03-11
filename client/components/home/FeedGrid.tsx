@@ -34,7 +34,7 @@ function toEventData(e: Event): EventData {
         title: e.title,
         creator: {
             name: e.brand?.name ?? "Unknown",
-            avatar: e.brand?.logoCid ? `${PINATA_GW}/${e.brand.logoCid}` : "",
+            avatar: e.brand?.logoUrl || (e.brand?.logoCid ? `${PINATA_GW}/${e.brand.logoCid}` : ""),
             handle: `@${(e.brand?.name ?? "").toLowerCase().replace(/\s+/g, "")}`,
         },
         rewardPool: `$${(e.leaderboardPool ?? 0).toLocaleString()}`,
@@ -42,9 +42,7 @@ function toEventData(e: Event): EventData {
         topReward: e.topReward ? `$${e.topReward.toLocaleString()}` : undefined,
         participationCount: e._count?.submissions ?? e._count?.votes ?? 0,
         timeRemaining: computeTimeRemaining(e.endTime),
-        image: e.imageCid
-            ? `${PINATA_GW}/${e.imageCid}`
-            : "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80",
+        image: e.imageUrl || (e.imageCid ? `${PINATA_GW}/${e.imageCid}` : "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80"),
         description: e.description ?? "",
         progress: undefined,
         userState: undefined,

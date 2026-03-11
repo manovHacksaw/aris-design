@@ -4,6 +4,7 @@ export interface Submission {
     id: string;
     content?: string;
     imageCid?: string;
+    imageUrl?: string;
     videoCid?: string;
     eventId: string;
     userId: string;
@@ -24,6 +25,7 @@ export interface CreateSubmissionRequest {
     eventId: string;
     content?: string;
     imageCid?: string;
+    imageUrl?: string;
     videoCid?: string;
     caption?: string;
 }
@@ -31,6 +33,7 @@ export interface CreateSubmissionRequest {
 export interface UpdateSubmissionRequest {
     content?: string;
     imageCid?: string;
+    imageUrl?: string;
     videoCid?: string;
     caption?: string;
 }
@@ -88,6 +91,7 @@ export async function createSubmission(data: CreateSubmissionRequest): Promise<S
             method: 'POST',
             body: JSON.stringify({
                 imageCid: data.imageCid,
+                imageUrl: data.imageUrl,
                 videoCid: data.videoCid,
                 caption: data.caption ?? data.content,
             }),
