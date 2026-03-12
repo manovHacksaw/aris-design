@@ -1,19 +1,15 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Check, Loader2 } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 
-// Pintura imports
-import { PinturaEditor } from "@pqina/react-pintura";
-import "@pqina/pintura/pintura.css";
-import { getEditorDefaults } from "@pqina/pintura";
-
-const editorDefaults = getEditorDefaults({
-  // @ts-ignore
-  license: process.env.NEXT_PUBLIC_PINTURA_LICENSE,
-});
+declare global {
+  interface Window {
+    cloudinary?: any;
+  }
+}
 
 interface PinturaImageEditorProps {
   isOpen: boolean;
@@ -22,113 +18,181 @@ interface PinturaImageEditorProps {
   onClose: () => void;
 }
 
+type Stage = "uploading" | "editing" | "exporting" | "error";
+
 export function PinturaImageEditor({
   isOpen,
   imageSrc,
   onDone,
   onClose,
 }: PinturaImageEditorProps) {
-  const [isProcessing, setIsProcessing] = useState(false);
-  const editorRef = useRef<any>(null);
+  const [stage, setStage] = useState<Stage>("uploading");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const widgetRef = useRef<any>(null);
 
-  const handleProcess = (imageState: any) => {
-    setIsProcessing(false);
-    const { dest } = imageState;
-    const editedFile = new File([dest], "edited-image.png", {
-      type: dest.type || "image/png",
-    });
-    const editedPreview = URL.createObjectURL(dest);
-    onDone(editedFile, editedPreview);
-  };
+  // When the modal opens, pre-upload the local blob to Cloudinary then open the widget
+  useEffect(() => {
+    if (!isOpen || !imageSrc) return;
 
-  const handleDoneClick = () => {
-    if (editorRef.current?.editor) {
-      setIsProcessing(true);
-      editorRef.current.editor.processImage();
+    let cancelled = false;
+
+    async function run() {
+      setStage("uploading");
+      setErrorMsg(null);
+
+      try {
+        // Convert imageSrc (object URL or base64 data URL) to a File
+        let blob: Blob;
+        if (imageSrc.startsWith("data:")) {
+          // base64 data URL — decode directly without fetch
+          const [header, b64] = imageSrc.split(",");
+          const mime = header.match(/:(.*?);/)?.[1] ?? "image/png";
+          const binary = atob(b64);
+          const arr = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+          blob = new Blob([arr], { type: mime });
+        } else {
+          // blob: object URL
+          const res = await fetch(imageSrc);
+          if (!res.ok) throw new Error(`Could not read image (${res.status})`);
+          blob = await res.blob();
+        }
+
+        const file = new File([blob], "image-to-edit.png", { type: blob.type || "image/png" });
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+        if (!uploadRes.ok) {
+          const errBody = await uploadRes.json().catch(() => ({}));
+          throw new Error(errBody?.error ?? `Upload failed (${uploadRes.status})`);
+        }
+
+        const { publicId } = await uploadRes.json();
+        if (cancelled) return;
+
+        setStage("editing");
+
+        // Wait for the Cloudinary script to be available
+        let attempts = 0;
+        while (!window.cloudinary && attempts < 40) {
+          await new Promise((r) => setTimeout(r, 250));
+          attempts++;
+        }
+        if (!window.cloudinary) throw new Error("Cloudinary editor failed to load");
+        if (cancelled) return;
+
+        const widget = window.cloudinary.mediaEditor();
+        widget.update({
+          cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+          publicIds: [publicId],
+        });
+        widgetRef.current = widget;
+
+        widget.on("export", async (data: any) => {
+          if (cancelled) return;
+          setStage("exporting");
+
+          try {
+            const exportedUrl: string =
+              data?.assets?.[0]?.secureUrl ??
+              data?.assets?.[0]?.secure_url ??
+              data?.assets?.[0]?.url;
+
+            if (!exportedUrl) throw new Error("No export URL returned");
+
+            const imgRes = await fetch(exportedUrl);
+            const imgBlob = await imgRes.blob();
+            const editedFile = new File([imgBlob], "edited-image.png", {
+              type: imgBlob.type || "image/png",
+            });
+            const editedPreview = URL.createObjectURL(imgBlob);
+
+            widgetRef.current = null;
+            onDone(editedFile, editedPreview);
+          } catch (err: any) {
+            setStage("error");
+            setErrorMsg(err?.message || "Failed to save edited image");
+          }
+        });
+
+        widget.on("close", () => {
+          if (!cancelled) onClose();
+          widgetRef.current = null;
+        });
+
+        widget.show();
+      } catch (err: any) {
+        if (!cancelled) {
+          setStage("error");
+          setErrorMsg(err?.message || "Something went wrong");
+        }
+      }
     }
-  };
+
+    run();
+
+    return () => {
+      cancelled = true;
+      if (widgetRef.current) {
+        try { widgetRef.current.destroy?.(); } catch {}
+        widgetRef.current = null;
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, imageSrc]);
 
   if (!isOpen) return null;
+
+  // Only show our overlay for uploading/exporting/error states.
+  // While "editing", the Cloudinary widget renders its own full-screen UI.
+  if (stage === "editing") return null;
 
   const content = (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center">
-          {/* Backdrop */}
+        <div className="fixed inset-0 z-300 flex items-center justify-center">
           <motion.div
             className="absolute inset-0 bg-black/85 backdrop-blur-md"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            onClick={() => !isProcessing && onClose()}
           />
-
-          {/* Editor Panel */}
           <motion.div
-            className="relative w-[95%] sm:w-[85%] md:w-[75%] lg:w-[65%] h-[90vh] overflow-hidden rounded-[28px] flex flex-col"
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="relative flex flex-col items-center justify-center gap-4 rounded-3xl px-10 py-10"
+            initial={{ opacity: 0, scale: 0.95, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            exit={{ opacity: 0, scale: 0.95, y: 16 }}
             transition={{ type: "spring", damping: 26, stiffness: 320 }}
             style={{
               background: "rgba(10, 10, 12, 0.96)",
-              backdropFilter: "blur(32px)",
               border: "1px solid rgba(255,255,255,0.08)",
-              boxShadow: "0 32px 80px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06)",
+              boxShadow: "0 32px 80px rgba(0,0,0,0.7)",
             }}
           >
-            {/* Header */}
-            <div
-              className="flex items-center justify-between px-5 py-3.5 shrink-0"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
-            >
-              <h3 className="text-[11px] font-black text-white uppercase tracking-widest">
-                Edit Image
-              </h3>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleDoneClick}
-                  disabled={isProcessing}
-                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
-                  style={{
-                    background: "rgba(var(--primary-rgb, 47,106,255), 0.15)",
-                    border: "1px solid rgba(var(--primary-rgb, 47,106,255), 0.4)",
-                  }}
-                >
-                  {isProcessing ? (
-                    <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
-                  ) : (
-                    <Check className="w-3.5 h-3.5 text-primary" />
-                  )}
-                  <span className="text-white">
-                    {isProcessing ? "Processing…" : "Done"}
-                  </span>
-                </button>
-
+            {stage === "error" ? (
+              <>
+                <p className="text-sm text-red-400 font-medium max-w-xs text-center">
+                  {errorMsg}
+                </p>
                 <button
                   onClick={onClose}
-                  disabled={isProcessing}
-                  className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors disabled:opacity-40"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest bg-white/10 hover:bg-white/15 text-white transition-colors"
                 >
-                  <X className="w-4 h-4 text-white/50" />
+                  <X className="w-3.5 h-3.5" />
+                  Close
                 </button>
-              </div>
-            </div>
-
-            {/* Pintura Editor */}
-            <div className="flex-1 relative bg-[#0a0a0c] w-full overflow-hidden">
-              <PinturaEditor
-                ref={editorRef}
-                {...editorDefaults}
-                src={imageSrc}
-                onProcess={handleProcess}
-                onLoaderror={(err: any) =>
-                  console.error("Pintura load error:", err)
-                }
-                className="pintura-editor h-full w-full"
-              />
-            </div>
+              </>
+            ) : (
+              <>
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                <p className="text-[11px] font-black uppercase tracking-widest text-white/60">
+                  {stage === "uploading" ? "Uploading image…" : "Saving edits…"}
+                </p>
+              </>
+            )}
           </motion.div>
         </div>
       )}

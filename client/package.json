@@ -9,8 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@pqina/pintura": "^8.95.6",
-    "@pqina/react-pintura": "^9.0.4",
     "@privy-io/react-auth": "^3.14.1",
     "@privy-io/wagmi": "^4.0.2",
     "@tanstack/react-query": "^5.90.21",

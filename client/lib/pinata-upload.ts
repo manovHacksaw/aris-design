@@ -1,6 +1,6 @@
 export async function uploadToPinata(
   file: File
-): Promise<{ imageUrl: string }> {
+): Promise<{ imageUrl: string; publicId: string }> {
   const formData = new FormData();
   formData.append("file", file);
 
@@ -15,7 +15,7 @@ export async function uploadToPinata(
   }
 
   const data = await response.json();
-  return { imageUrl: data.imageUrl };
+  return { imageUrl: data.imageUrl, publicId: data.publicId };
 }
 
 export function validateImageFile(
