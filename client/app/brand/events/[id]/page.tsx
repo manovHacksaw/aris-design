@@ -35,8 +35,10 @@ const STATUS_LABELS: Record<string, string> = {
     draft: "Draft", completed: "Completed", cancelled: "Cancelled",
 };
 
-function ipfs(cid?: string) {
-    return cid ? `https://gateway.pinata.cloud/ipfs/${cid}` : null;
+function resolveImg(imageUrl?: string | null, cid?: string | null): string | null {
+    if (imageUrl) return imageUrl;
+    if (cid) return `https://gateway.pinata.cloud/ipfs/${cid}`;
+    return null;
 }
 
 function fmt(iso?: string, opts?: Intl.DateTimeFormatOptions) {
@@ -128,7 +130,7 @@ function StatCard({ icon: Icon, label, value, sub, color = "text-primary" }: {
 // ── Submission card ───────────────────────────────────────────────────────────
 
 function SubmissionCard({ sub }: { sub: Submission }) {
-    const imgUrl = ipfs(sub.imageCid);
+    const imgUrl = resolveImg(sub.imageUrl, sub.imageCid);
     const username = sub.user?.username || sub.user?.displayName || sub.userId.slice(0, 8);
     const votes = sub._count?.votes ?? 0;
     const rank = sub.rank;
@@ -171,7 +173,7 @@ function ProposalRow({ proposal, maxVotes }: {
     maxVotes: number;
 }) {
     const pct = maxVotes > 0 ? Math.round((proposal.voteCount / maxVotes) * 100) : 0;
-    const imgUrl = ipfs(proposal.imageCid);
+    const imgUrl = resolveImg(proposal.imageUrl, proposal.imageCid);
 
     return (
         <div className="flex items-center gap-4 p-4 bg-secondary/20 rounded-xl border border-border/50">
@@ -386,7 +388,7 @@ export default function BrandEventDetailPage() {
     const participants = eventStats?.uniqueParticipants ?? 0;
     const totalPool = (event.baseReward ?? 0) + (event.topReward ?? 0) + (event.leaderboardPool ?? 0);
     const maxProposalVotes = event.proposals?.reduce((m, p) => Math.max(m, p.voteCount), 0) ?? 0;
-    const coverUrl = ipfs(event.imageCid);
+    const coverUrl = resolveImg(event.imageUrl, event.imageCid);
 
     // Which tabs to show
     const tabs: { key: Tab; label: string }[] = [

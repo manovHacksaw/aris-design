@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Lock, Globe, Save, Loader2, CheckCircle, AlertCircle, X, Camera } from "lucide-react";
+import { Lock, Globe, Save, Loader2, CheckCircle, AlertCircle, X, Camera, Copy, Check } from "lucide-react";
 import { useUser } from "@/context/UserContext";
 import { useAuth } from "@/context/AuthContext";
 import { upsertBrandProfile } from "@/services/brand.service";
@@ -27,6 +27,7 @@ export default function BrandSettingsPage() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [walletCopied, setWalletCopied] = useState(false);
 
   // Brand data lives on the User record (saved via updateProfile during onboarding)
   // socialLinks JSON contains: website, instagram, twitter, linkedin, tagline, companySize
@@ -39,7 +40,7 @@ export default function BrandSettingsPage() {
   const [socialLinks, setSocialLinks] = useState<Record<string, string>>({});
 
   // Logo upload
-  const [logoCid, setLogoCid] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -64,9 +65,10 @@ export default function BrandSettingsPage() {
       instagram: obSocials.instagram ?? sl.instagram ?? onboardingData?.brandInstagram ?? "",
       linkedin: obSocials.linkedin ?? sl.linkedin ?? onboardingData?.brandLinkedin ?? "",
     });
-    if (ob?.logoCid) {
-      setLogoCid(ob.logoCid);
-      setLogoPreview(`https://gateway.pinata.cloud/ipfs/${ob.logoCid}`);
+    if (ob?.logoUrl || ob?.logoCid) {
+      const resolvedLogo = ob.logoUrl || (ob.logoCid ? `https://gateway.pinata.cloud/ipfs/${ob.logoCid}` : null);
+      setLogoUrl(resolvedLogo);
+      setLogoPreview(resolvedLogo);
     } else if (user.avatarUrl) {
       setLogoPreview(user.avatarUrl);
     }
@@ -81,9 +83,9 @@ export default function BrandSettingsPage() {
     setLogoPreview(URL.createObjectURL(file));
     setIsUploadingLogo(true);
     try {
-      const { cid, url } = await uploadToPinata(file);
-      setLogoCid(cid);
-      setLogoPreview(url);
+      const { imageUrl: uploadedLogoUrl } = await uploadToPinata(file);
+      setLogoUrl(uploadedLogoUrl);
+      setLogoPreview(uploadedLogoUrl);
     } catch {
       showToast("error", "Logo upload failed. Try again.");
       setLogoPreview(null);
@@ -91,6 +93,13 @@ export default function BrandSettingsPage() {
       setIsUploadingLogo(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  }
+
+  function copyWallet() {
+    if (!user?.walletAddress) return;
+    navigator.clipboard.writeText(user.walletAddress);
+    setWalletCopied(true);
+    setTimeout(() => setWalletCopied(false), 2000);
   }
 
   function showToast(type: "success" | "error", message: string) {
@@ -113,7 +122,7 @@ export default function BrandSettingsPage() {
         tagline,
         description,
         categories,
-        ...(logoCid ? { logoCid } : {}),
+        ...(logoUrl ? { logoUrl } : {}),
         socialLinks: {
           website: socialLinks.website,
           twitter: socialLinks.twitter,
@@ -339,7 +348,6 @@ export default function BrandSettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[
                   { label: "Email", value: user.email },
-                  { label: "Wallet", value: user.walletAddress ? `${user.walletAddress.slice(0, 8)}…${user.walletAddress.slice(-6)}` : "—" },
                   { label: "Company Size", value: userSocialLinks.companySize ?? "—" },
                   { label: "Monthly Budget", value: userSocialLinks.monthlyBudget ?? "—" },
                 ].map(({ label, value }) => (
@@ -350,6 +358,25 @@ export default function BrandSettingsPage() {
                     </p>
                   </div>
                 ))}
+                {/* Wallet — read-only with copy button */}
+                <div className="space-y-1">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Wallet</p>
+                  <div className="flex items-center gap-2 bg-secondary/30 rounded-xl px-3 py-2">
+                    <span className="text-sm font-medium text-foreground/70 break-all flex-1">
+                      {user.walletAddress ? `${user.walletAddress.slice(0, 8)}…${user.walletAddress.slice(-6)}` : "—"}
+                    </span>
+                    {user.walletAddress && (
+                      <button
+                        type="button"
+                        onClick={copyWallet}
+                        className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                        title="Copy wallet address"
+                      >
+                        {walletCopied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </section>
           )}

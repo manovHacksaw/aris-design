@@ -51,7 +51,7 @@ const MODERATION_CHIPS = [
     "One submission per user",
 ];
 
-interface Proposal { title: string; imageCid?: string; order: number; media?: File; mediaPreview?: string; }
+interface Proposal { title: string; imageUrl?: string; order: number; media?: File; mediaPreview?: string; }
 
 interface FormData extends Omit<LaunchFormData, "type"> {
     type: "post" | "vote";
@@ -349,7 +349,8 @@ export default function CreateEventPage() {
             // Immediately update preview; re-upload in background
             set({ sampleImages: form.sampleImages.map((s, i) => i === idx ? { file: editedFile, preview: editedPreview } : s) });
             try {
-                await uploadToPinata(editedFile);
+                const { imageUrl: editedUrl } = await uploadToPinata(editedFile);
+                void editedUrl; // captured for future use
                 toast.success('Sample image updated');
             } catch (err: any) {
                 toast.error(err?.message || 'Failed to upload edited sample');

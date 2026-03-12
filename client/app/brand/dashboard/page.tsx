@@ -34,7 +34,7 @@ function CampaignCard({ event }: { event: Event }) {
     const totalPool = calculateTotalPool(event);
     const submissions = event._count?.submissions ?? 0;
     const votes = event._count?.votes ?? 0;
-    const coverUrl = event.imageCid ? `https://gateway.pinata.cloud/ipfs/${event.imageCid}` : null;
+    const coverUrl = event.imageUrl || (event.imageCid ? `https://gateway.pinata.cloud/ipfs/${event.imageCid}` : null);
     const isCancelled = event.status === "cancelled";
 
     return (

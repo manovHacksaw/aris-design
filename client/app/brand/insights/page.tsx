@@ -390,7 +390,7 @@ function EventInsightCard({ event, summary }: { event: Event; summary?: EventSum
     const [expanded, setExpanded] = useState(false);
     const [note, setNote] = useState(() => loadInsights()[event.id] ?? "");
     const [saved, setSaved] = useState(false);
-    const coverUrl = event.imageCid ? `https://gateway.pinata.cloud/ipfs/${event.imageCid}` : null;
+    const coverUrl = event.imageUrl || (event.imageCid ? `https://gateway.pinata.cloud/ipfs/${event.imageCid}` : null);
     const votes = summary?.totalVotes ?? event._count?.votes ?? 0;
     const submissions = summary?.totalSubmissions ?? event._count?.submissions ?? 0;
 

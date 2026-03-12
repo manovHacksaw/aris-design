@@ -43,7 +43,7 @@ export interface LaunchFormData {
   participantInstructions?: string;
   submissionGuidelines?: string;
   moderationRules?: string;
-  proposals?: Array<{ type?: string; title: string; imageCid?: string; order: number; media?: File; mediaPreview?: string }>;
+  proposals?: Array<{ type?: string; title: string; imageUrl?: string; order: number; media?: File; mediaPreview?: string }>;
   useRefundCredit?: boolean;
   refundCreditAmount?: number;
 }
@@ -156,29 +156,27 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
       }
       const startMs = resolvedStartMs;
 
-      let imageCid: string | undefined;
+      let imageUrl: string | undefined;
       if (form.coverImage && form.coverImage instanceof File) {
-        console.log("[LaunchStepModal] Uploading cover image to Pinata...");
         const uploadResult = await uploadToPinata(form.coverImage);
-        imageCid = uploadResult.cid;
+        imageUrl = uploadResult.imageUrl;
       } else if (typeof form.coverImage === "string") {
-        imageCid = form.coverImage;
+        imageUrl = form.coverImage;
       }
 
-      const uploadedProposals: Array<{ type: "TEXT"; title: string; imageCid?: string; order: number }> = [];
+      const uploadedProposals: Array<{ type: "TEXT"; title: string; imageUrl?: string; order: number }> = [];
       if (form.type === "vote" && form.proposals && form.proposals.length > 0) {
         for (let i = 0; i < form.proposals.length; i++) {
           const p = form.proposals[i];
-          let pImageCid = p.imageCid;
+          let pImageUrl = p.imageUrl;
           if (p.media && p.media instanceof File) {
-            console.log(`[LaunchStepModal] Uploading media for option ${i + 1} to Pinata...`);
             const pUploadResult = await uploadToPinata(p.media);
-            pImageCid = pUploadResult.cid;
+            pImageUrl = pUploadResult.imageUrl;
           }
           uploadedProposals.push({
             type: "TEXT" as const, // currently all proposals are TEXT typed, but can contain images
             title: p.title || `Option ${i + 1}`,
-            imageCid: pImageCid,
+            imageUrl: pImageUrl,
             order: p.order ?? i
           });
         }
@@ -250,7 +248,6 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
 
       // ── Step 0.5: Pre-Create Event in DB (Validates before Wallet) ─────────
       console.log("[LaunchStepModal] Pre-creating event in DB to run validations...");
-      const dummyCid = "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG"; // Fallback realistic IPFS hash
 
       // Resolve final timestamps
       const resolvedStart = form.startImmediately ? new Date() : new Date(form.startDate);
@@ -271,7 +268,7 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
         startTime: eventStartTime,
         endTime: eventEndTime,
         ...(form.type === "post" ? { postingStart, postingEnd } : {}),
-        imageCid: imageCid || dummyCid,
+        imageUrl: imageUrl || "",
         allowSubmissions: form.type === "post",
         allowVoting: true,
         baseReward: parseFloat(form.baseReward) || 0,
@@ -286,7 +283,7 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
         regions: form.regions,
         preferredGender: (form as any).preferredGender,
         ageGroup: (form as any).ageGroup,
-        samples: form.type === "post" ? [imageCid || dummyCid] : undefined,
+        samples: form.type === "post" ? [imageUrl || ""] : undefined,
         proposals: form.type === "vote"
           ? (uploadedProposals.length >= 2
             ? uploadedProposals

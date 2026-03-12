@@ -47,8 +47,9 @@ function formatPool(n?: number) {
     return `$${n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
-function CoverImage({ cid, title }: { cid?: string; title: string }) {
-    if (!cid) {
+function CoverImage({ imageUrl, cid, title }: { imageUrl?: string; cid?: string; title: string }) {
+    const src = imageUrl || (cid ? `https://gateway.pinata.cloud/ipfs/${cid}` : undefined);
+    if (!src) {
         return (
             <div className="w-full h-full bg-secondary/60 flex items-center justify-center">
                 <Layers className="w-6 h-6 text-muted-foreground/40" />
@@ -57,7 +58,7 @@ function CoverImage({ cid, title }: { cid?: string; title: string }) {
     }
     return (
         <img
-            src={`https://gateway.pinata.cloud/ipfs/${cid}`}
+            src={src}
             alt={title}
             className="w-full h-full object-cover"
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
@@ -218,7 +219,7 @@ export default function BrandCampaignsPage() {
                                 {/* Image & title */}
                                 <div className="flex items-center gap-4 flex-1 min-w-0">
                                     <div className="w-20 h-20 md:w-16 md:h-16 rounded-[16px] overflow-hidden shrink-0 border border-border/50 bg-secondary/40">
-                                        <CoverImage cid={event.imageCid} title={event.title} />
+                                        <CoverImage imageUrl={event.imageUrl} cid={event.imageCid} title={event.title} />
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2 mb-1 flex-wrap">

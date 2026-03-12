@@ -167,7 +167,14 @@ export default function BrandValuePropositionPage() {
   }, [user, router]);
 
   function handleBrandLogin() {
-    connect();
+    if (isConnected && !isCheckingUser) {
+      // Already authenticated — re-sync directly instead of re-opening Privy modal
+      hasSyncedRef.current = true;
+      setIsCheckingUser(true);
+      syncWithBackend().finally(() => setIsCheckingUser(false));
+    } else {
+      connect();
+    }
   }
 
   const isAuthenticating = isConnected && !user && (isCheckingUser || userLoading);
