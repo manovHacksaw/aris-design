@@ -233,12 +233,18 @@ export default function BrandValuePropositionPage() {
 
       {/* Sticky Nav */}
       <div className="sticky top-0 z-20 border-b border-border/30 bg-background/80 backdrop-blur-md px-6 py-4 flex items-center justify-between">
-        <Link href="/register" className="flex items-center gap-2 text-foreground/60 hover:text-foreground transition-colors">
+        <Link href="/" className="flex items-center gap-2 text-foreground/60 hover:text-foreground transition-colors">
           <span className="text-lg font-display uppercase tracking-widest">
             Aris <span className="text-primary">Brands</span>
           </span>
         </Link>
         <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            className="text-xs font-bold text-foreground/40 hover:text-foreground transition-colors uppercase tracking-widest hidden sm:block"
+          >
+            Home
+          </Link>
           <Link
             href="/claim-brand"
             className="text-xs font-bold text-foreground/40 hover:text-foreground transition-colors uppercase tracking-widest hidden sm:block"

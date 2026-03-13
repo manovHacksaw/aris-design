@@ -1,0 +1,10 @@
+﻿app/(user)/explore/page.tsx(141,29): error TS2739: Type '{ name: any; }' is missing the following properties from type 'EventCreator': avatar, handle
+app/brand/events/[id]/page.tsx(176,40): error TS2339: Property 'imageUrl' does not exist on type '{ id: string; type: "IMAGE" | "TEXT"; title: string; content?: string | undefined; imageCid?: string | undefined; order: number; voteCount: number; finalRank?: number | undefined; }'.
+app/brand/insights/page.tsx(73,33): error TS2339: Property 'payload' does not exist on type 'TooltipProps<any, any>'.
+app/brand/insights/page.tsx(73,42): error TS2339: Property 'label' does not exist on type 'TooltipProps<any, any>'.
+app/brand/settings/page.tsx(68,13): error TS2339: Property 'logoUrl' does not exist on type '{ id: string; name: string; logoCid?: string | undefined; tagline?: string | undefined; description?: string | undefined; categories?: string[] | undefined; isActive: boolean; isVerified: boolean; socialLinks?: Record<...> | undefined; createdAt?: string | undefined; }'.
+app/brand/settings/page.tsx(69,31): error TS2339: Property 'logoUrl' does not exist on type '{ id: string; name: string; logoCid?: string | undefined; tagline?: string | undefined; description?: string | undefined; categories?: string[] | undefined; isActive: boolean; isVerified: boolean; socialLinks?: Record<...> | undefined; createdAt?: string | undefined; }'.
+components/brand/LaunchStepModal.tsx(271,9): error TS2353: Object literal may only specify known properties, and 'imageUrl' does not exist in type 'CreateEventRequest'.
+components/onboarding/steps/StepIdentity.tsx(88,15): error TS2339: Property 'url' does not exist on type '{ imageUrl: string; publicId: string; }'.
+components/providers/ClientProviders.tsx(57,15): error TS2353: Object literal may only specify known properties, and 'allowlistContractAddresses' does not exist in type '{ paymasterContext?: Record<string, any> | undefined; }'.
+

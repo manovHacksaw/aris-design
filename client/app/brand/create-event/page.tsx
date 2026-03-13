@@ -2,11 +2,13 @@
 
 import { useState, useRef, useCallback } from "react";
 import {
-    ChevronLeft, ChevronRight, Sparkles, Loader2, X, Plus, Minus,
+    ChevronLeft, ChevronRight, Info, Rocket, Sparkles, Loader2, X, Plus, Minus,
     Upload, Users, DollarSign, Globe, FileText, Shield, Hash,
     CheckCircle2, ImageIcon, RefreshCw, Zap, Copy, Check, Pencil,
+    Tag, Trophy, Clock, ShieldCheck, ThumbsUp,
 } from "lucide-react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -26,18 +28,21 @@ const CREATOR_RATE = 0.050;   // $0.050/participant — creator reward (post onl
 const FEE_VOTE = 0.015;   // $0.015/participant — platform fee (vote_only)
 const FEE_POST = 0.020;   // $0.020/participant — platform fee (post_and_vote)
 
-const STEPS = [
-    { id: "basics", label: "Basics", icon: FileText },
-    { id: "rewards", label: "Rewards", icon: DollarSign },
-    { id: "audience", label: "Audience", icon: Users },
-    { id: "instructions", label: "Instructions", icon: FileText },
-    { id: "content", label: "Content", icon: ImageIcon },
-    { id: "moderation", label: "Moderation", icon: Shield },
-    { id: "hashtags", label: "Hashtags", icon: Hash },
-    { id: "review", label: "Review", icon: CheckCircle2 },
-] as const;
+const FORM_QUESTIONS = [
+    { id: "type", title: "What type of campaign is this?", guideline: "Social Post campaigns let creators submit content. Vote campaigns are fixed options you define." },
+    { id: "title", title: "Give your campaign a title", guideline: "Keep it catchy. You can also generate an AI tagline." },
+    { id: "description", title: "Describe your campaign", guideline: "Explain what it is about and why people should participate." },
+    { id: "schedule", title: "When does it happen?", guideline: "Set the start and end dates. Post campaigns need a distinct posting phase." },
+    { id: "cover", title: "Upload a cover image", guideline: "This is the primary visual identity of your campaign." },
+    { id: "rewards", title: "Set your budget & limits", guideline: "Define the maximum number of participants and the prize pool." },
+    { id: "audience", title: "Who is your target audience?", guideline: "Optional: specify gender, age groups, and regions." },
+    { id: "instructions", title: "Participation Instructions", guideline: "Clear rules for how users should engage." },
+    { id: "content", title: "Content Setup", guideline: "Provide options to vote on, or sample images to guide creators." },
+    { id: "moderation", title: "Moderation & Discoverability", guideline: "Set community rules and hashtags for the campaign." },
+    { id: "review", title: "Review & Launch", guideline: "Check your settings before deploying to the blockchain." }
+];
 
-type StepId = typeof STEPS[number]["id"];
+type StepId = string;
 
 const GENDERS = ["All", "Male", "Female", "Non-binary"];
 const AGE_GROUPS = ["All Ages", "18-24", "25-34", "35-44", "45+"];
@@ -162,6 +167,7 @@ export default function CreateEventPage() {
     const { user } = useUser();
     const [currentStep, setCurrentStep] = useState(0);
     const [modalOpen, setModalOpen] = useState(false);
+    const [direction, setDirection] = useState(1);
     const [taglineLoading, setTaglineLoading] = useState(false);
     const [proposalAiLoading, setProposalAiLoading] = useState(false);
     const coverInputRef = useRef<HTMLInputElement>(null);
@@ -227,7 +233,7 @@ export default function CreateEventPage() {
                 setAvailableCredit(amount);
                 if (amount > 0) set({ refundCreditAmount: amount, useRefundCredit: true });
             })
-            .catch(() => {});
+            .catch(() => { });
     }, [address]);
 
     const set = useCallback((patch: Partial<FormData>) => setForm((f) => ({ ...f, ...patch })), []);
@@ -393,10 +399,15 @@ export default function CreateEventPage() {
     // ── Validation per step ────────────────────────────────────────────────
     const validateStep = (idx: number): string | null => {
         switch (idx) {
-            case 0:
+            case 0: return null;
+            case 1:
                 if (!form.title.trim()) return "Event title is required.";
+                return null;
+            case 2:
                 if (form.description.trim().length < 20) return "Description must be at least 20 characters.";
-                if (!form.startImmediately && !form.startDate) return "Start date is required (or enable Start Immediately).";
+                return null;
+            case 3:
+                if (!form.startImmediately && !form.startDate) return "Start date is required.";
                 if (!form.endDate) return "End date is required.";
                 if (isPost && !form.postingEndDate) return "Posting end / voting start date is required.";
                 if (durationMs < 10 * 60 * 1000) return "Event must run for at least 10 minutes total.";
@@ -406,16 +417,20 @@ export default function CreateEventPage() {
                     if (pEndMs >= new Date(form.endDate).getTime()) return "Voting end must be after posting end.";
                 }
                 return null;
-            case 1:
+            case 4: return null;
+            case 5:
                 if (!form.maxParticipants || parseInt(form.maxParticipants) < 10) return "Minimum 10 participants required.";
                 if (parseInt(form.maxParticipants) > 100_000) return "Maximum 100,000 participants allowed.";
-                if (!form.topPrize || parseFloat(form.topPrize) < minTop) return `Top prize must be at least $${minTop.toFixed(2)} (= base pool).`;
-                if (isPost && (!form.leaderboardPool || parseFloat(form.leaderboardPool) <= 0)) return "Leaderboard pool is required for post & vote events.";
+                if (!form.topPrize || parseFloat(form.topPrize) < minTop) return `Top prize must be at least $${minTop.toFixed(2)}.`;
+                if (isPost && (!form.leaderboardPool || parseFloat(form.leaderboardPool) <= 0)) return "Leaderboard pool is required.";
                 return null;
-            case 4:
+            case 6: return null;
+            case 7: return null;
+            case 8:
                 if (isPost && form.sampleImages.length === 0) return "At least one sample image is required.";
                 if (!isPost && form.proposals.filter(p => p.title.trim()).length < 2) return "At least 2 voting options are required.";
                 return null;
+            case 9: return null;
             default:
                 return null;
         }
@@ -424,65 +439,66 @@ export default function CreateEventPage() {
     const goNext = () => {
         const err = validateStep(currentStep);
         if (err) { toast.error(err); return; }
-        setCurrentStep((s) => Math.min(s + 1, STEPS.length - 1));
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        setDirection(1);
+        setCurrentStep((s) => Math.min(s + 1, FORM_QUESTIONS.length - 1));
     };
 
-    const goBack = () => setCurrentStep((s) => Math.max(s - 1, 0));
+    const goBack = () => {
+        setDirection(-1);
+        setCurrentStep((s) => Math.max(s - 1, 0));
+    };
 
-    // ── Render step content ────────────────────────────────────────────────
-    const renderStep = () => {
+    const slideVariants = {
+        enter: (dir: number) => ({ x: dir > 0 ? 1000 : -1000, opacity: 0 }),
+        center: { x: 0, opacity: 1 },
+        exit: (dir: number) => ({ x: dir < 0 ? 1000 : -1000, opacity: 0 }),
+    };
+
+    const renderQuestionFields = () => {
         switch (currentStep) {
-            // ─ Step 0: Basics ───────────────────────────────────────────────
-            case 0: return (
-                <div className="space-y-5">
-                    <SectionCard title="Campaign Basics" subtitle="Tell us what your campaign is about">
-                        {/* Event Type */}
-                        <div>
-                            <Label>Event Type</Label>
-                            <div className="grid grid-cols-2 gap-3">
-                                {(["post", "vote"] as const).map((t) => (
-                                    <button
-                                        key={t}
-                                        onClick={() => set({ type: t })}
-                                        className={cn(
-                                            "p-4 rounded-xl border-2 text-left transition-all",
-                                            form.type === t
-                                                ? "border-primary bg-primary/5"
-                                                : "border-border hover:border-primary/30"
-                                        )}
-                                    >
-                                        <p className="font-bold text-sm text-foreground capitalize">
-                                            {t === "post" ? "Social Post Campaign" : "Vote Campaign"}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            {t === "post"
-                                                ? "Creators submit content · Audience votes for best"
-                                                : "Audience votes between fixed options you define"}
-                                        </p>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Title */}
-                        <div>
-                            <Label>Campaign Title</Label>
-                            <Input
-                                placeholder="e.g. Summer Noodle Challenge"
-                                value={form.title}
-                                onChange={(e) => set({ title: e.target.value })}
-                                maxLength={120}
-                            />
-                            <p className="text-xs text-muted-foreground mt-1">{form.title.length}/120</p>
-                        </div>
-
-                        {/* AI Tagline */}
-                        <div>
-                            <Label optional>Tagline</Label>
+            case 0: // Type
+                return (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {(["post", "vote"] as const).map((t) => (
+                            <button
+                                key={t}
+                                onClick={() => { set({ type: t }); setTimeout(goNext, 300); }}
+                                className={cn(
+                                    "p-6 rounded-2xl border-2 text-left transition-all hover:-translate-y-1 hover:shadow-lg",
+                                    form.type === t
+                                        ? "border-primary bg-primary/10"
+                                        : "border-border bg-secondary/40 hover:border-primary/50"
+                                )}
+                            >
+                                <p className="font-black text-xl text-foreground capitalize mb-2">
+                                    {t === "post" ? "Social Post Campaign" : "Vote Campaign"}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    {t === "post"
+                                        ? "Creators submit content · Audience votes for the best"
+                                        : "Audience votes between fixed options you define"}
+                                </p>
+                            </button>
+                        ))}
+                    </div>
+                );
+            case 1: // Title
+                return (
+                    <div className="space-y-6">
+                        <Input
+                            autoFocus
+                            placeholder="e.g. Summer Noodle Challenge"
+                            value={form.title}
+                            onChange={(e) => set({ title: e.target.value })}
+                            maxLength={120}
+                            className="text-2xl p-6 font-medium"
+                            onKeyDown={(e) => { if (e.key === "Enter" && form.title.trim()) goNext(); }}
+                        />
+                        <div className="flex flex-col gap-2">
+                            <Label optional>Optional Tagline</Label>
                             <div className="flex gap-2">
                                 <Input
-                                    placeholder="AI-generated tagline will appear here"
+                                    placeholder="AI-generated tagline"
                                     value={form.tagline}
                                     onChange={(e) => set({ tagline: e.target.value })}
                                     className="flex-1"
@@ -490,135 +506,97 @@ export default function CreateEventPage() {
                                 <button
                                     onClick={handleGenerateTagline}
                                     disabled={taglineLoading || !form.title.trim()}
-                                    className="shrink-0 flex items-center gap-1.5 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-xl text-xs font-semibold transition-all disabled:opacity-50"
+                                    className="shrink-0 flex items-center gap-2 px-6 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-xl font-bold transition-all disabled:opacity-50"
                                 >
-                                    {taglineLoading
-                                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                        : <Sparkles className="w-3.5 h-3.5" />}
+                                    {taglineLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                                     {form.tagline ? "Regenerate" : "Generate"}
                                 </button>
                             </div>
                         </div>
-
-                        {/* Description */}
-                        <div>
-                            <Label>Description</Label>
-                            <Textarea
-                                placeholder="Describe your campaign — what it's about, why creators should participate..."
-                                value={form.description}
-                                onChange={(e) => set({ description: e.target.value })}
-                                rows={4}
-                                maxLength={2000}
-                            />
-                            <p className="text-xs text-muted-foreground mt-1">{form.description.length}/2000</p>
-                        </div>
-                    </SectionCard>
-
-                    <SectionCard
-                        title="Schedule"
-                        subtitle={isPost
-                            ? "Set distinct posting and voting phases for your campaign"
-                            : "When does voting open and close?"}
-                    >
-                        {/* Start Immediately toggle */}
+                    </div>
+                );
+            case 2: // Description
+                return (
+                    <div>
+                        <Textarea
+                            autoFocus
+                            placeholder="Describe your campaign — what it's about, why creators should participate..."
+                            value={form.description}
+                            onChange={(e) => set({ description: e.target.value })}
+                            rows={6}
+                            maxLength={2000}
+                            className="text-lg p-6"
+                        />
+                        <p className="text-xs text-muted-foreground mt-2 text-right">{form.description.length}/2000</p>
+                    </div>
+                );
+            case 3: // Schedule
+                return (
+                    <div className="space-y-6">
                         <button
                             type="button"
                             onClick={() => set({ startImmediately: !form.startImmediately })}
                             className={cn(
-                                "flex items-center gap-3 w-full px-4 py-3 rounded-xl border text-sm font-semibold transition-all",
+                                "flex items-center gap-3 w-full p-4 rounded-xl border text-sm font-semibold transition-all hover:shadow-md",
                                 form.startImmediately
-                                    ? "border-primary/50 bg-primary/10 text-primary"
-                                    : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/30"
+                                    ? "border-accent bg-accent/10 text-accent"
+                                    : "border-border bg-secondary/40 text-muted-foreground hover:border-accent/50"
                             )}
                         >
-                            <Zap className={cn("w-4 h-4 shrink-0", form.startImmediately ? "text-primary" : "")} />
+                            <Zap className={cn("w-5 h-5 shrink-0", form.startImmediately ? "text-accent" : "")} />
                             Start Event Immediately
                             <span className={cn(
-                                "ml-auto w-4 h-4 rounded border-2 flex items-center justify-center",
-                                form.startImmediately ? "border-primary bg-primary" : "border-muted-foreground"
+                                "ml-auto w-5 h-5 rounded border-2 flex items-center justify-center transition-all",
+                                form.startImmediately ? "border-accent bg-accent" : "border-muted-foreground"
                             )}>
-                                {form.startImmediately && <CheckCircle2 className="w-2.5 h-2.5 text-primary-foreground" />}
+                                {form.startImmediately && <CheckCircle2 className="w-3 h-3 text-white" />}
                             </span>
                         </button>
-
                         {isPost ? (
-                            /* POST & VOTE: posting phase + voting phase */
-                            <div className="space-y-5">
-                                {/* Posting phase */}
-                                <div>
-                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Posting Phase</p>
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                        <div>
-                                            <Label>Submissions Open</Label>
-                                            <Input
-                                                type="datetime-local"
-                                                value={form.startDate}
-                                                disabled={form.startImmediately}
-                                                className={form.startImmediately ? "opacity-40 cursor-not-allowed" : ""}
-                                                onChange={(e) => set({ startDate: e.target.value })}
-                                            />
-                                            {form.startImmediately && <p className="text-xs text-primary mt-1">Starts now</p>}
-                                        </div>
-                                        <div>
-                                            <Label>Submissions Close</Label>
-                                            <Input
-                                                type="datetime-local"
-                                                value={form.postingEndDate}
-                                                min={form.startImmediately ? undefined : form.startDate}
-                                                onChange={(e) => set({ postingEndDate: e.target.value })}
-                                            />
-                                            <p className="text-xs text-muted-foreground mt-1">Voting begins here</p>
-                                        </div>
-                                        <div>
-                                            <Label>Post Duration</Label>
-                                            <div className={cn(
-                                                "flex items-center h-[46px] px-4 rounded-xl border text-sm font-mono",
-                                                postingDurationMs > 0 ? "border-primary/30 bg-primary/5 text-primary" : "border-border bg-secondary/20 text-muted-foreground"
-                                            )}>
-                                                {fmtDuration(postingDurationMs)}
-                                            </div>
-                                        </div>
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-secondary/20 p-4 rounded-xl border border-border">
+                                    <div>
+                                        <Label>Submissions Open</Label>
+                                        <Input
+                                            type="datetime-local"
+                                            value={form.startDate}
+                                            disabled={form.startImmediately}
+                                            className={form.startImmediately ? "opacity-40 cursor-not-allowed" : ""}
+                                            onChange={(e) => set({ startDate: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label>Submissions Close</Label>
+                                        <Input
+                                            type="datetime-local"
+                                            value={form.postingEndDate}
+                                            min={form.startImmediately ? undefined : form.startDate}
+                                            onChange={(e) => set({ postingEndDate: e.target.value })}
+                                        />
                                     </div>
                                 </div>
-                                {/* Voting phase */}
-                                <div>
-                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Voting Phase</p>
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                        <div>
-                                            <Label>Voting Opens</Label>
-                                            <div className="flex items-center h-[46px] px-4 rounded-xl border border-border bg-secondary/20 text-sm text-muted-foreground">
-                                                {form.postingEndDate
-                                                    ? new Date(form.postingEndDate).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
-                                                    : "Set submissions close ↑"}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <Label>Voting Closes</Label>
-                                            <Input
-                                                type="datetime-local"
-                                                value={form.endDate}
-                                                min={form.postingEndDate}
-                                                onChange={(e) => set({ endDate: e.target.value })}
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label>Vote Duration</Label>
-                                            <div className={cn(
-                                                "flex items-center h-[46px] px-4 rounded-xl border text-sm font-mono",
-                                                votingDurationMs > 0 ? "border-primary/30 bg-primary/5 text-primary" : "border-border bg-secondary/20 text-muted-foreground"
-                                            )}>
-                                                {fmtDuration(votingDurationMs)}
-                                            </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-secondary/20 p-4 rounded-xl border border-border">
+                                    <div>
+                                        <Label>Voting Opens</Label>
+                                        <div className="flex items-center h-[50px] px-4 rounded-xl border border-border bg-secondary/40 text-muted-foreground">
+                                            {form.postingEndDate
+                                                ? new Date(form.postingEndDate).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+                                                : "Set submissions close ↑"}
                                         </div>
                                     </div>
+                                    <div>
+                                        <Label>Voting Closes</Label>
+                                        <Input
+                                            type="datetime-local"
+                                            value={form.endDate}
+                                            min={form.postingEndDate}
+                                            onChange={(e) => set({ endDate: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
-                                {durationMs >= 10 * 60 * 1000 && (
-                                    <p className="text-xs text-primary font-medium">Total campaign: {fmtDuration(durationMs)}</p>
-                                )}
                             </div>
                         ) : (
-                            /* VOTE ONLY: single start + end */
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-secondary/20 p-4 rounded-xl border border-border">
                                 <div>
                                     <Label>Voting Start</Label>
                                     <Input
@@ -628,7 +606,6 @@ export default function CreateEventPage() {
                                         className={form.startImmediately ? "opacity-40 cursor-not-allowed" : ""}
                                         onChange={(e) => set({ startDate: e.target.value })}
                                     />
-                                    {form.startImmediately && <p className="text-xs text-primary mt-1">Starts now</p>}
                                 </div>
                                 <div>
                                     <Label>Voting End</Label>
@@ -639,818 +616,576 @@ export default function CreateEventPage() {
                                         onChange={(e) => set({ endDate: e.target.value })}
                                     />
                                 </div>
-                                <div>
-                                    <Label>Duration</Label>
-                                    <div className={cn(
-                                        "flex items-center h-[46px] px-4 rounded-xl border text-sm font-mono",
-                                        durationMs > 0 ? "border-primary/30 bg-primary/5 text-primary" : "border-border bg-secondary/20 text-muted-foreground"
-                                    )}>
-                                        {fmtDuration(durationMs)}
-                                    </div>
-                                </div>
                             </div>
                         )}
-
                         <div>
                             <Label optional>Timezone</Label>
                             <Select value={form.timezone} onChange={(e) => set({ timezone: e.target.value })}>
                                 {TIMEZONES.map((tz) => <option key={tz}>{tz}</option>)}
                             </Select>
                         </div>
-                    </SectionCard>
-
-                    <SectionCard title="Cover Image" subtitle="Visual identity for your campaign">
-                        <div
-                            onClick={() => coverInputRef.current?.click()}
-                            onDragOver={(e) => e.preventDefault()}
-                            onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleCoverFile(f); }}
-                            className="border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center gap-3 cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-all"
-                        >
-                            {coverPreview ? (
-                                <img src={coverPreview} alt="cover" className="w-full max-h-48 object-cover rounded-lg" />
-                            ) : (
-                                <>
-                                    <Upload className="w-8 h-8 text-muted-foreground" />
-                                    <p className="text-sm text-muted-foreground text-center">Click or drag to upload cover image</p>
-                                </>
-                            )}
-                        </div>
+                    </div>
+                );
+            case 4: // Cover Image
+                return (
+                    <div
+                        onClick={() => coverInputRef.current?.click()}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleCoverFile(f); }}
+                        className="border-2 border-dashed border-border rounded-2xl p-10 flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all w-full h-80"
+                    >
+                        {coverPreview ? (
+                            <img src={coverPreview} alt="cover" className="w-full h-full object-cover rounded-xl" />
+                        ) : (
+                            <>
+                                <Upload className="w-12 h-12 text-muted-foreground transition-all group-hover:text-primary" />
+                                <p className="text-lg font-medium text-muted-foreground text-center">Click or drag to upload cover image</p>
+                            </>
+                        )}
                         <input ref={coverInputRef} type="file" accept="image/*" className="hidden"
                             onChange={(e) => { const f = e.target.files?.[0]; if (f) handleCoverFile(f); }} />
-                    </SectionCard>
-                </div>
-            );
-
-            // ─ Step 1: Rewards ──────────────────────────────────────────────
-            case 1: return (
-                <div className="space-y-5">
-                    <SectionCard title="Participants & Budget" subtitle="Define capacity and reward pools">
-                        <div>
-                            <Label>Max Participants (Voters)</Label>
-                            <Input
-                                type="number"
-                                min={10}
-                                max={100000}
-                                placeholder="e.g. 100"
-                                value={form.maxParticipants}
-                                onChange={(e) => set({ maxParticipants: e.target.value })}
-                            />
-                            <p className="text-xs text-muted-foreground mt-1">Minimum 10 · Maximum 100,000</p>
-                        </div>
-
-                        <div>
-                            <Label>Top Prize Pool (USDC)</Label>
-                            <div className="relative">
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                    </div>
+                );
+            case 5: // Rewards
+                return (
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div>
+                                <Label>Max Participants (Voters)</Label>
                                 <Input
-                                    type="number"
-                                    min={minTop}
-                                    step={0.01}
-                                    placeholder={minTop > 0 ? minTop.toFixed(2) : "0.00"}
-                                    value={form.topPrize}
-                                    onChange={(e) => set({ topPrize: e.target.value })}
-                                    className="pl-8"
+                                    type="number" min={10} max={100000} placeholder="e.g. 100"
+                                    value={form.maxParticipants}
+                                    onChange={(e) => set({ maxParticipants: e.target.value })}
                                 />
+                                <p className="text-xs text-muted-foreground mt-2">Required min 10</p>
                             </div>
-                            {pCount > 0 && (
-                                <p className="text-xs text-muted-foreground mt-1">
-                                    Minimum: ${minTop.toFixed(2)} (= base pool)
-                                </p>
-                            )}
+                            <div>
+                                <Label>Top Prize Pool (USDC)</Label>
+                                <div className="relative">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                                    <Input
+                                        type="number" min={minTop} step={0.01}
+                                        placeholder={minTop > 0 ? minTop.toFixed(2) : "0.00"}
+                                        value={form.topPrize}
+                                        onChange={(e) => set({ topPrize: e.target.value })}
+                                        className="pl-8"
+                                    />
+                                </div>
+                                {pCount > 0 && <p className="text-xs text-muted-foreground mt-2">Min: ${minTop.toFixed(2)}</p>}
+                            </div>
                         </div>
-
                         {isPost && (
                             <div>
                                 <Label optional>Leaderboard Pool (USDC)</Label>
                                 <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                                     <Input
-                                        type="number"
-                                        min={0}
-                                        step={0.01}
-                                        placeholder="0.00"
+                                        type="number" min={0} step={0.01} placeholder="0.00"
                                         value={form.leaderboardPool}
                                         onChange={(e) => set({ leaderboardPool: e.target.value })}
                                         className="pl-8"
                                     />
                                 </div>
-                                <p className="text-xs text-muted-foreground mt-1">Distributed 50/35/15% to top 3 creators</p>
+                                <p className="text-xs text-muted-foreground mt-2">Top 3 creators split this pool</p>
                             </div>
                         )}
-
-                        {/* Refund Credit Integration */}
+                        {/* Refund Credit */}
                         {availableCredit > 0 && (
-                            <div className={cn(
-                                "p-4 rounded-xl border transition-all",
-                                form.useRefundCredit ? "bg-primary/5 border-primary/30" : "bg-secondary/20 border-border"
-                            )}>
-                                <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                                            <RefreshCw className="w-4 h-4 text-primary" />
-                                        </div>
+                            <div className={cn("p-5 rounded-2xl border transition-all mt-4", form.useRefundCredit ? "bg-primary/10 border-primary" : "bg-secondary/40 border-border")}>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <RefreshCw className="w-5 h-5 text-primary" />
                                         <div>
-                                            <p className="text-sm font-bold text-foreground">Event Credit Available</p>
-                                            <p className="text-[10px] text-muted-foreground font-medium">From previously ended campaigns</p>
+                                            <p className="font-bold text-foreground">Apply Event Credit?</p>
+                                            <p className="text-sm font-medium text-muted-foreground">From previously ended apps</p>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => set({ useRefundCredit: !form.useRefundCredit })}
-                                        className={cn(
-                                            "relative w-10 h-5 rounded-full transition-colors duration-200",
-                                            form.useRefundCredit ? "bg-primary" : "bg-foreground/20"
-                                        )}
-                                    >
-                                        <div className={cn(
-                                            "absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform duration-200",
-                                            form.useRefundCredit ? "translate-x-5.5" : "translate-x-0.5"
-                                        )} />
+                                    <button onClick={() => set({ useRefundCredit: !form.useRefundCredit })} className={cn("relative w-12 h-6 rounded-full transition-colors", form.useRefundCredit ? "bg-primary" : "bg-foreground/20")}>
+                                        <div className={cn("absolute top-1 w-4 h-4 bg-white rounded-full transition-transform", form.useRefundCredit ? "translate-x-7" : "translate-x-1")} />
                                     </button>
                                 </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs text-muted-foreground font-medium">Current Balance</span>
-                                    <span className="text-sm font-black text-primary font-mono">${availableCredit.toFixed(2)}</span>
-                                </div>
-                                {form.useRefundCredit && (
-                                    <p className="text-[10px] text-primary/70 font-medium mt-2 leading-tight italic">
-                                        This credit will be applied directly from the Rewards Vault. You only need to fund the remaining amount.
-                                    </p>
-                                )}
                             </div>
                         )}
-                    </SectionCard>
-
-                    {/* Reward Breakdown */}
-                    <div className="bg-card border border-border rounded-2xl p-6">
-                        <h3 className="text-sm font-bold mb-4 text-foreground">Reward Breakdown</h3>
-                        <div className="divide-y divide-border">
-                            <RewardRow label="Base Pool" rate={BASE_RATE} count={pCount} note="$0.030 per voter" />
-                            <RewardRow label="Top Prize" count={pCount} note="Distributed to top voters" />
-                            {isPost && <RewardRow label="Creator Reward" rate={CREATOR_RATE} count={pCount} note="$0.050 per creator" />}
-                            {isPost && ldrNum > 0 && (
-                                <div className="flex items-center justify-between py-2">
-                                    <span className="text-sm">Leaderboard Pool</span>
-                                    <span className="text-sm font-mono font-bold">${ldrNum.toFixed(2)}</span>
+                        {pCount > 0 && (
+                            <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 mt-6">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm font-semibold">Total Net Deposit Required</span>
+                                    <span className="text-2xl font-black font-mono text-primary">${Math.max(0, totalLocked - (form.useRefundCredit ? form.refundCreditAmount : 0)).toFixed(2)}</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            case 6: // Audience
+                return (
+                    <div className="space-y-6">
+                        <div>
+                            <Label optional>Preferred Gender</Label>
+                            <div className="flex flex-wrap gap-2">
+                                {GENDERS.map((g) => (
+                                    <button key={g} onClick={() => set({ preferredGender: g })}
+                                        className={cn("px-5 py-2.5 rounded-full text-sm font-semibold border transition-all hover:shadow-md",
+                                            form.preferredGender === g ? "border-accent bg-accent/20 text-accent" : "border-border text-muted-foreground hover:border-accent/50 hover:text-accent"
+                                        )}>
+                                        {g}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <Label optional>Age Group</Label>
+                            <div className="flex flex-wrap gap-2">
+                                {AGE_GROUPS.map((a) => (
+                                    <button key={a} onClick={() => set({ ageGroup: a })}
+                                        className={cn("px-5 py-2.5 rounded-full text-sm font-semibold border transition-all hover:shadow-md",
+                                            form.ageGroup === a ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:border-primary/50"
+                                        )}>
+                                        {a}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <Label optional>Regions</Label>
+                            <div className="flex gap-2">
+                                <Input
+                                    placeholder="e.g. South Asia, Brazil…"
+                                    value={form.regionInput}
+                                    onChange={(e) => set({ regionInput: e.target.value })}
+                                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addRegion(); } }}
+                                />
+                                <button onClick={addRegion} className="px-6 bg-secondary border border-border rounded-xl font-bold hover:bg-secondary/70 transition-all text-sm">Add</button>
+                            </div>
+                            {form.regions.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-4">
+                                    {form.regions.map((r) => (
+                                        <span key={r} className="flex items-center gap-2 px-4 py-2 bg-secondary rounded-full text-sm font-semibold shadow-sm">
+                                            <Globe className="w-4 h-4 text-muted-foreground" /> {r}
+                                            <button onClick={() => set({ regions: form.regions.filter((x) => x !== r) })}><X className="w-4 h-4 hover:text-red-500 transition-colors" /></button>
+                                        </span>
+                                    ))}
                                 </div>
                             )}
-                            <RewardRow label="Platform Fee" rate={isPost ? FEE_POST : FEE_VOTE} count={pCount} note={isPost ? "$0.020/participant" : "$0.015/participant"} />
                         </div>
-                        <div className="pt-3 mt-1 border-t border-border flex justify-between items-center text-xs text-muted-foreground mb-1">
-                            <span>Total Rewards Budget</span>
-                            <span className="font-mono font-medium">${totalLocked.toFixed(2)}</span>
+                    </div>
+                );
+            case 7: // Instructions
+                return (
+                    <div>
+                        <Textarea
+                            autoFocus
+                            placeholder="e.g. Vote for the design that best represents summer. Only one vote per account is allowed."
+                            value={form.participantInstructions}
+                            onChange={(e) => set({ participantInstructions: e.target.value })}
+                            rows={8} maxLength={1000} className="text-lg p-6"
+                        />
+                        <div className="flex justify-end text-xs text-muted-foreground mt-2">
+                            <span>{form.participantInstructions.length}/1000</span>
                         </div>
-                        {form.useRefundCredit && (
-                            <div className="flex justify-between items-center text-xs text-primary mb-2">
-                                <span>Applied Credit</span>
-                                <span className="font-mono font-bold">-${form.refundCreditAmount.toFixed(2)}</span>
+                    </div>
+                );
+            case 8: // Content (Post Guidelines / Vote Options)
+                return isPost ? (
+                    <div className="space-y-6">
+                        <Textarea
+                            placeholder="e.g. Upload a photo of your best recipe using our product. Include a caption."
+                            value={form.submissionGuidelines}
+                            onChange={(e) => set({ submissionGuidelines: e.target.value })}
+                            rows={4} maxLength={1000}
+                        />
+                        <div>
+                            <Label>Accepted Formats</Label>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {CONTENT_TYPES.map((ct) => (
+                                    <button key={ct} onClick={() => {
+                                        const updated = form.contentType.includes(ct) ? form.contentType.filter((c) => c !== ct) : [...form.contentType, ct];
+                                        set({ contentType: updated });
+                                    }}
+                                        className={cn("px-4 py-2 rounded-lg text-sm font-semibold border transition-all",
+                                            form.contentType.includes(ct) ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
+                                        )}>{ct}</button>
+                                ))}
                             </div>
-                        )}
-                        <div className="pt-1 flex justify-between items-center">
-                            <span className="text-sm font-bold">Net Deposit Required</span>
-                            <span className="text-lg font-black font-mono text-primary">
-                                {pCount > 0 ? `$${Math.max(0, totalLocked - (form.useRefundCredit ? form.refundCreditAmount : 0)).toFixed(2)}` : "$—"}
-                            </span>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-2">Locked in RewardsVaultV3 on Polygon Amoy</p>
-                    </div>
-
-                    {/* Top prize distribution info */}
-                    <div className="bg-secondary/30 border border-border rounded-2xl p-5 space-y-2">
-                        <p className="text-xs font-semibold text-foreground mb-2">Top Prize Distribution</p>
-                        {[["🥇 1st Place", "50%"], ["🥈 2nd Place", "35%"], ["🥉 3rd Place", "15%"]].map(([place, pct]) => (
-                            <div key={place} className="flex justify-between text-xs">
-                                <span className="text-muted-foreground">{place}</span>
-                                <span className="font-mono font-bold">{pct}</span>
+                        <div>
+                            <Label>Sample Images (Up to 10)</Label>
+                            <div className="flex flex-wrap gap-4 mt-2">
+                                {form.sampleImages.map((sample, idx) => (
+                                    <div key={idx} className="relative w-24 h-24 rounded-xl overflow-hidden group border border-border">
+                                        <img src={sample.preview} alt={`Sample ${idx}`} className="w-full h-full object-cover" />
+                                        <button onClick={() => set({ sampleImages: form.sampleImages.filter((_, i) => i !== idx) })} className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500"><X className="w-3 h-3" /></button>
+                                    </div>
+                                ))}
+                                {form.sampleImages.length < 10 && (
+                                    <label className="w-24 h-24 flex items-center justify-center rounded-xl border-2 border-dashed border-border hover:border-primary/50 cursor-pointer transition-all">
+                                        <Plus className="w-6 h-6 text-muted-foreground" />
+                                        <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                                            const files = Array.from(e.target.files || []);
+                                            const newSamples = files.map(f => ({ file: f, preview: URL.createObjectURL(f) }));
+                                            set({ sampleImages: [...form.sampleImages, ...newSamples].slice(0, 10) });
+                                        }} multiple />
+                                    </label>
+                                )}
                             </div>
-                        ))}
-                    </div>
-                </div>
-            );
-
-            // ─ Step 2: Audience ─────────────────────────────────────────────
-            case 2: return (
-                <SectionCard title="Target Audience" subtitle="Optional — helps match your campaign to the right participants">
-                    <div>
-                        <Label optional>Preferred Gender</Label>
-                        <div className="flex flex-wrap gap-2">
-                            {GENDERS.map((g) => (
-                                <button key={g} onClick={() => set({ preferredGender: g })}
-                                    className={cn("px-4 py-2 rounded-xl text-sm font-medium border transition-all",
-                                        form.preferredGender === g ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/30"
-                                    )}>
-                                    {g}
-                                </button>
-                            ))}
                         </div>
                     </div>
-
-                    <div>
-                        <Label optional>Age Group</Label>
-                        <div className="flex flex-wrap gap-2">
-                            {AGE_GROUPS.map((a) => (
-                                <button key={a} onClick={() => set({ ageGroup: a })}
-                                    className={cn("px-4 py-2 rounded-xl text-sm font-medium border transition-all",
-                                        form.ageGroup === a ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/30"
-                                    )}>
-                                    {a}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div>
-                        <Label optional>Regions</Label>
-                        <div className="flex gap-2">
-                            <Input
-                                placeholder="e.g. South Asia, Nigeria, Brazil…"
-                                value={form.regionInput}
-                                onChange={(e) => set({ regionInput: e.target.value })}
-                                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addRegion(); } }}
-                                className="flex-1"
-                            />
-                            <button onClick={addRegion}
-                                className="shrink-0 px-4 py-2.5 bg-secondary border border-border rounded-xl text-sm font-semibold hover:bg-secondary/70 transition-all">
-                                Add
+                ) : (
+                    <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                        <div className="flex justify-end mb-1">
+                            <button
+                                onClick={handleAiProposals}
+                                disabled={proposalAiLoading || !form.title.trim()}
+                                className="flex items-center gap-1.5 px-4 py-2 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-xl text-xs font-bold transition-all disabled:opacity-50"
+                            >
+                                {proposalAiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                                AI Suggestions
                             </button>
                         </div>
-                        {form.regions.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mt-3">
-                                {form.regions.map((r) => (
-                                    <span key={r} className="flex items-center gap-1.5 px-3 py-1 bg-secondary rounded-full text-xs font-medium">
-                                        <Globe className="w-3 h-3 text-muted-foreground" />{r}
-                                        <button onClick={() => set({ regions: form.regions.filter((x) => x !== r) })}><X className="w-3 h-3 text-muted-foreground hover:text-foreground" /></button>
+                        {form.proposals.map((p, idx) => (
+                            <div key={idx} className="flex flex-col sm:flex-row items-center gap-4 p-4 border border-border rounded-xl bg-secondary/10">
+                                <Input
+                                    placeholder={`Option ${idx + 1}`}
+                                    value={p.title}
+                                    onChange={(e) => updateProposal(idx, e.target.value)}
+                                    className="flex-1"
+                                />
+                                {p.mediaPreview ? (
+                                    <div className="relative group shrink-0">
+                                        <img src={p.mediaPreview} alt={`Preview`} className="w-16 h-16 rounded-lg object-cover border border-border" />
+                                        <button onClick={() => removeProposalMedia(idx)} className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 text-white opacity-0 group-hover:opacity-100 transition-all"><X className="w-3 h-3" /></button>
+                                    </div>
+                                ) : (
+                                    <div className="shrink-0 flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setAiGeneratorProposalIdx(idx)}
+                                            className="flex items-center gap-2 px-4 py-3 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-xl font-semibold transition-all text-sm"
+                                        >
+                                            <Sparkles className="w-4 h-4" /> Generate
+                                        </button>
+                                        <label className="flex items-center gap-2 px-4 py-3 bg-secondary border border-border rounded-xl font-semibold cursor-pointer hover:bg-secondary/70 transition-all text-sm">
+                                            <Upload className="w-4 h-4" /> Media
+                                            <input type="file" accept="image/*" className="hidden" onChange={(e) => updateProposalMedia(idx, e.target.files?.[0])} />
+                                        </label>
+                                    </div>
+                                )}
+                                {form.proposals.length > 2 && (
+                                    <button onClick={() => removeProposal(idx)} className="shrink-0 p-3 hover:bg-red-500/10 text-muted-foreground hover:text-red-500 rounded-xl transition-colors"><Minus className="w-5 h-5" /></button>
+                                )}
+                            </div>
+                        ))}
+                        {form.proposals.length < 10 && (
+                            <button onClick={addProposal} className="flex items-center gap-2 text-primary font-bold hover:opacity-80 transition-opacity">
+                                <Plus className="w-5 h-5" /> Add Option
+                            </button>
+                        )}
+                    </div>
+                );
+            case 9: // Moderation
+                return (
+                    <div className="space-y-6">
+                        <div>
+                            <Label>Moderation Rules</Label>
+                            <div className="flex flex-wrap gap-2 mb-4">
+                                {MODERATION_CHIPS.map((chip) => (
+                                    <button key={chip} onClick={() => {
+                                        const cur = form.moderationRules;
+                                        if (!cur.includes(chip)) set({ moderationRules: cur ? `${cur}\n• ${chip}` : `• ${chip}` });
+                                    }} className="px-4 py-2 bg-secondary/60 border border-border rounded-full text-xs font-semibold hover:border-primary/50 transition-all">+ {chip}</button>
+                                ))}
+                            </div>
+                            <Textarea value={form.moderationRules} onChange={(e) => set({ moderationRules: e.target.value })} rows={5} />
+                        </div>
+                        <div>
+                            <Label>Hashtags</Label>
+                            <div className="flex gap-2 mb-4">
+                                <div className="relative flex-1">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">#</span>
+                                    <Input value={form.hashtagInput} onChange={(e) => set({ hashtagInput: e.target.value.replace(/^#/, "") })} onKeyDown={(e) => { if (e.key === "Enter") addHashtag(); }} className="pl-8" />
+                                </div>
+                                <button onClick={addHashtag} className="px-6 bg-secondary border border-border rounded-xl font-bold hover:bg-secondary/70">Add</button>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {form.hashtags.map((tag) => (
+                                    <span key={tag} className="flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-sm font-semibold text-primary">
+                                        #{tag} <button onClick={() => set({ hashtags: form.hashtags.filter((t) => t !== tag) })}><X className="w-4 h-4 hover:text-red-500" /></button>
                                     </span>
                                 ))}
                             </div>
-                        )}
-                    </div>
-                </SectionCard>
-            );
-
-            // ─ Step 3: Instructions ─────────────────────────────────────────
-            case 3: return (
-                <SectionCard title="Participation Instructions" subtitle="How should participants engage with your campaign?">
-                    <Textarea
-                        placeholder={`e.g.\n• Vote for the design that best represents summer.\n• Only one vote per account is allowed.\n• Voting closes when capacity is reached.`}
-                        value={form.participantInstructions}
-                        onChange={(e) => set({ participantInstructions: e.target.value })}
-                        rows={8}
-                        maxLength={1000}
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>Be clear and concise — participants will read this before engaging.</span>
-                        <span>{form.participantInstructions.length}/1000</span>
-                    </div>
-                </SectionCard>
-            );
-
-            // ─ Step 4: Content Setup ────────────────────────────────────────
-            case 4: return isPost ? (
-                <div className="space-y-5">
-                    <SectionCard title="Submission Guidelines" subtitle="Tell creators exactly what to submit">
-                        <Textarea
-                            placeholder={`e.g.\n• Upload a photo of your best recipe using our product.\n• Include a caption describing the dish.\n• Must be original content.`}
-                            value={form.submissionGuidelines}
-                            onChange={(e) => set({ submissionGuidelines: e.target.value })}
-                            rows={6}
-                            maxLength={1000}
-                        />
-                        <p className="text-xs text-muted-foreground text-right">{form.submissionGuidelines.length}/1000</p>
-                    </SectionCard>
-
-                    <SectionCard title="Accepted Content Types" subtitle="What formats can creators submit?">
-                        <div className="flex flex-wrap gap-2">
-                            {CONTENT_TYPES.map((ct) => (
-                                <button key={ct}
-                                    onClick={() => {
-                                        const updated = form.contentType.includes(ct)
-                                            ? form.contentType.filter((c) => c !== ct)
-                                            : [...form.contentType, ct];
-                                        set({ contentType: updated });
-                                    }}
-                                    className={cn("px-4 py-2 rounded-xl text-sm font-medium border transition-all",
-                                        form.contentType.includes(ct)
-                                            ? "border-primary bg-primary/10 text-primary"
-                                            : "border-border text-muted-foreground hover:border-primary/30"
-                                    )}>
-                                    {ct}
-                                </button>
-                            ))}
                         </div>
-                    </SectionCard>
-
-                    <SectionCard title="Sample Images" subtitle="Provide 1-10 samples to guide creators">
-                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                            {form.sampleImages.map((sample, idx) => (
-                                <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-border group">
-                                    <img
-                                        src={sample.preview}
-                                        alt={`Sample ${idx + 1}`}
-                                        className="w-full h-full object-cover"
-                                    />
-                                    {/* Hover overlay: Edit + Remove */}
-                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5">
-                                        <button
-                                            type="button"
-                                            onClick={() => handleEditSample(idx)}
-                                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-black/70 border border-white/20 text-[10px] font-black text-white uppercase tracking-widest hover:bg-primary/20 hover:border-primary/50 transition-all backdrop-blur-sm"
-                                        >
-                                            <Pencil className="w-2.5 h-2.5" />
-                                            Edit
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => set({ sampleImages: form.sampleImages.filter((_, i) => i !== idx) })}
-                                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-black/70 border border-white/20 text-[10px] font-black text-white/60 uppercase tracking-widest hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-400 transition-all backdrop-blur-sm"
-                                        >
-                                            <X className="w-2.5 h-2.5" />
-                                            Remove
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                            {form.sampleImages.length < 10 && (
-                                sampleAddMode ? (
-                                    <div className="flex flex-col gap-2 aspect-square rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-3 items-center justify-center">
-                                        <span className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">Add Sample</span>
-                                        <button
-                                            onClick={() => { setSampleAddMode(false); setAiGeneratorSampleOpen(true); }}
-                                            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-primary/15 border border-primary/30 text-[10px] font-black text-primary uppercase tracking-widest hover:bg-primary/25 transition-all"
-                                        >
-                                            <Sparkles className="w-3 h-3" />
-                                            Generate
-                                        </button>
-                                        <label className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-white/5 border border-white/10 text-[10px] font-black text-white/40 uppercase tracking-widest hover:bg-white/8 hover:text-white/60 transition-all cursor-pointer">
-                                            <Upload className="w-3 h-3" />
-                                            Upload
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                className="hidden"
-                                                multiple
-                                                onChange={(e) => {
-                                                    setSampleAddMode(false);
-                                                    const files = Array.from(e.target.files || []);
-                                                    const newSamples = files.map(f => ({ file: f, preview: URL.createObjectURL(f) }));
-                                                    const total = form.sampleImages.length + newSamples.length;
-                                                    if (total > 10) {
-                                                        toast.error("Maximum 10 samples allowed");
-                                                        set({ sampleImages: [...form.sampleImages, ...newSamples.slice(0, 10 - form.sampleImages.length)] });
-                                                    } else {
-                                                        set({ sampleImages: [...form.sampleImages, ...newSamples] });
-                                                    }
-                                                }}
-                                            />
-                                        </label>
-                                        <button
-                                            onClick={() => setSampleAddMode(false)}
-                                            className="text-[9px] text-white/20 hover:text-white/40 transition-colors mt-0.5"
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <button
-                                        onClick={() => setSampleAddMode(true)}
-                                        className="flex flex-col items-center justify-center aspect-square rounded-xl border-2 border-dashed border-border hover:border-primary/40 hover:bg-primary/5 cursor-pointer transition-all w-full"
-                                    >
-                                        <Plus className="w-5 h-5 text-muted-foreground" />
-                                        <span className="text-[10px] text-muted-foreground mt-1">Add Sample</span>
-                                    </button>
-                                )
-                            )}
-                        </div>
-                        <p className="text-[10px] text-muted-foreground">Minimum 1 · Maximum 10 images</p>
-                    </SectionCard>
-                </div>
-            ) : (
-                <SectionCard
-                    title="Voting Options"
-                    subtitle={`Define what participants vote for · ${form.proposals.length}/10 options`}
-                >
-                    <div className="flex justify-end mb-1">
-                        <button
-                            onClick={handleAiProposals}
-                            disabled={proposalAiLoading || !form.title.trim()}
-                            className="flex items-center gap-1.5 px-3 py-2 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-xl text-xs font-semibold transition-all disabled:opacity-50"
-                        >
-                            {proposalAiLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                            AI Suggestions
-                        </button>
                     </div>
-
-                    <div className="space-y-4">
-                        {form.proposals.map((p, idx) => (
-                            <div key={idx} className="flex flex-col gap-2 p-4 border border-border rounded-xl bg-secondary/20">
-                                <div className="flex items-center gap-2">
-                                    <span className="w-6 text-xs text-muted-foreground font-mono shrink-0 text-center">{idx + 1}</span>
-                                    <Input
-                                        placeholder={`Option ${idx + 1}`}
-                                        value={p.title}
-                                        onChange={(e) => updateProposal(idx, e.target.value)}
-                                        className="flex-1"
-                                    />
-                                    {form.proposals.length > 2 && (
-                                        <button onClick={() => removeProposal(idx)} className="shrink-0 p-2 hover:bg-red-500/10 rounded-lg transition-colors">
-                                            <Minus className="w-4 h-4 text-muted-foreground hover:text-red-400" />
-                                        </button>
-                                    )}
-                                </div>
-
-                                {/* Media Upload Area */}
-                                <div className="pl-8 pr-10">
-                                    {p.mediaPreview ? (
-                                        <div className="relative inline-block mt-2 group">
-                                            {p.media?.type.startsWith('video/') ? (
-                                                <video src={p.mediaPreview} className="h-20 max-w-[12rem] rounded-md object-cover border border-border" controls />
+                );
+            case 10: // Review
+                const userPerspectiveCover = coverPreview || "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop";
+                return (
+                    <div className="flex flex-col lg:flex-row gap-6 w-full text-left">
+                        {/* ── Left column (User View) ── */}
+                        <div className="flex-1 min-w-0" onClick={() => setCurrentStep(4)}>
+                            <div className="relative rounded-[24px] overflow-hidden h-[220px] md:h-[260px] border border-white/[0.05] transition-all hover:border-accent/50 cursor-pointer group">
+                                <img src={userPerspectiveCover} className="w-full h-full object-cover" alt="Event" />
+                                <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-black/10" />
+                                <div className="absolute inset-0 p-6 flex flex-col justify-between">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <div className="bg-black/30 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-full flex items-center gap-1.5 hover:bg-black/50 transition-colors" onClick={(e) => { e.stopPropagation(); setCurrentStep(0); }}>
+                                            <Tag className="w-3 h-3 text-white/60" />
+                                            <span className="text-[10px] font-black text-white">{form.type === "post_and_vote" ? "Post & Vote" : "Vote Only"}</span>
+                                        </div>
+                                    </div>
+                                    <div className="hover:translate-x-1 transition-transform" onClick={(e) => { e.stopPropagation(); setCurrentStep(1); }}>
+                                        <h1 className="font-display text-4xl md:text-[3rem] text-white leading-tight mb-1 group-hover:text-accent transition-colors">
+                                            {form.title || "Untitled Event"}
+                                        </h1>
+                                        {form.tagline && (
+                                            <p className="text-xs text-white/60 font-medium leading-relaxed line-clamp-2 max-w-[420px] mb-4">
+                                                {form.tagline}
+                                            </p>
+                                        )}
+                                        <div className="flex items-center gap-3 mt-1 pointer-events-none opacity-50">
+                                            {isPost ? (
+                                                <div className="px-5 py-2.5 bg-orange-500 text-white rounded-full text-xs font-black uppercase tracking-widest">
+                                                    Submit Entry
+                                                </div>
                                             ) : (
-                                                <>
-                                                    <img src={p.mediaPreview} alt={`Option ${idx + 1} preview`} className="h-20 max-w-[12rem] rounded-md object-cover border border-border" />
-                                                    {/* Edit overlay for images */}
-                                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center gap-1.5">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleEditProposal(idx)}
-                                                            className="flex items-center gap-1 px-2 py-1 rounded-md bg-black/70 border border-white/20 text-[10px] font-black text-white uppercase tracking-widest hover:bg-primary/20 hover:border-primary/50 transition-all"
-                                                        >
-                                                            <Pencil className="w-2.5 h-2.5" />
-                                                            Edit
-                                                        </button>
-                                                    </div>
-                                                </>
+                                                <div className="px-5 py-2.5 bg-lime-400 text-black rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-1.5">
+                                                    <ThumbsUp className="w-3.5 h-3.5" />
+                                                    Vote Below
+                                                </div>
                                             )}
-                                            <button
-                                                onClick={() => removeProposalMedia(idx)}
-                                                className="absolute -top-2 -right-2 bg-background border border-border rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-500"
-                                            >
-                                                <X className="w-3 h-3" />
-                                            </button>
                                         </div>
-                                    ) : (
-                                        <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                            {/* Generate with AI */}
-                                            <button
-                                                type="button"
-                                                onClick={() => setAiGeneratorProposalIdx(idx)}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-lg text-xs font-semibold text-primary transition-colors"
-                                            >
-                                                <Sparkles className="w-3.5 h-3.5" />
-                                                Generate
-                                            </button>
-                                            {/* Upload photo/video */}
-                                            <label className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary/40 hover:bg-secondary border border-border rounded-lg text-xs font-medium cursor-pointer transition-colors text-muted-foreground hover:text-foreground">
-                                                <Upload className="w-3.5 h-3.5" />
-                                                <span>Upload</span>
-                                                <input
-                                                    type="file"
-                                                    accept="image/*,video/*"
-                                                    className="hidden"
-                                                    onChange={(e) => updateProposalMedia(idx, e.target.files?.[0])}
-                                                />
-                                            </label>
-                                        </div>
-                                    )}
+                                    </div>
+                                </div>
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                    <div className="bg-black/80 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2 border border-white/20 shadow-2xl">
+                                        <Pencil className="w-4 h-4 text-white" />
+                                        <span className="text-xs font-black text-white">EDIT HERO</span>
+                                    </div>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-
-                    {form.proposals.length < 10 && (
-                        <button onClick={addProposal}
-                            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mt-2">
-                            <Plus className="w-4 h-4" /> Add option
-                        </button>
-                    )}
-                    <p className="text-xs text-muted-foreground">Minimum 2 · Maximum 10 options</p>
-                </SectionCard>
-            );
-
-            // ─ Step 5: Moderation ───────────────────────────────────────────
-            case 5: return (
-                <SectionCard title="Moderation Rules" subtitle="Community guidelines for your campaign">
-                    <div className="flex flex-wrap gap-2 mb-3">
-                        {MODERATION_CHIPS.map((chip) => (
-                            <button key={chip}
-                                onClick={() => {
-                                    const current = form.moderationRules;
-                                    const hasChip = current.includes(chip);
-                                    if (!hasChip) {
-                                        set({ moderationRules: current ? `${current}\n• ${chip}` : `• ${chip}` });
-                                    }
-                                }}
-                                className="px-3 py-1.5 bg-secondary/60 border border-border rounded-full text-xs hover:border-primary/40 hover:bg-primary/5 transition-all">
-                                + {chip}
-                            </button>
-                        ))}
-                    </div>
-                    <Textarea
-                        placeholder={`e.g.\n• No copyrighted material\n• Original content only\n• No offensive content`}
-                        value={form.moderationRules}
-                        onChange={(e) => set({ moderationRules: e.target.value })}
-                        rows={6}
-                        maxLength={500}
-                    />
-                    <p className="text-xs text-muted-foreground text-right">{form.moderationRules.length}/500</p>
-                </SectionCard>
-            );
-
-            // ─ Step 6: Hashtags ─────────────────────────────────────────────
-            case 6: return (
-                <SectionCard title="Hashtags" subtitle="Help users discover your campaign">
-                    <div className="flex gap-2">
-                        <div className="relative flex-1">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">#</span>
-                            <Input
-                                placeholder="e.g. summerfood"
-                                value={form.hashtagInput}
-                                onChange={(e) => set({ hashtagInput: e.target.value.replace(/^#/, "") })}
-                                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addHashtag(); } }}
-                                className="pl-7"
-                            />
                         </div>
-                        <button onClick={addHashtag}
-                            className="shrink-0 px-4 py-2.5 bg-secondary border border-border rounded-xl text-sm font-semibold hover:bg-secondary/70 transition-all">
-                            Add
-                        </button>
-                    </div>
 
-                    {/* Title word quick-add */}
-                    {form.title && (
-                        <div className="flex flex-wrap gap-2">
-                            <span className="text-xs text-muted-foreground self-center">Quick add:</span>
-                            {form.title.split(/\s+/).filter(w => w.length > 3).slice(0, 5).map((w) => {
-                                const clean = w.toLowerCase().replace(/[^a-z0-9]/g, "");
-                                return clean && !form.hashtags.includes(clean) ? (
-                                    <button key={clean} onClick={() => set({ hashtags: [...form.hashtags, clean] })}
-                                        className="px-2.5 py-1 bg-secondary/60 border border-dashed border-border rounded-full text-xs hover:border-primary/40 transition-all">
-                                        #{clean}
-                                    </button>
-                                ) : null;
-                            })}
-                        </div>
-                    )}
-
-                    {form.hashtags.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                            {form.hashtags.map((tag) => (
-                                <span key={tag} className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-full text-xs font-medium text-primary">
-                                    #{tag}
-                                    <button onClick={() => set({ hashtags: form.hashtags.filter((t) => t !== tag) })}>
-                                        <X className="w-3 h-3 hover:text-primary/70" />
-                                    </button>
-                                </span>
-                            ))}
-                        </div>
-                    )}
-                    <p className="text-xs text-muted-foreground">{form.hashtags.length}/10 hashtags added</p>
-                </SectionCard>
-            );
-
-            // ─ Step 7: Review ───────────────────────────────────────────────
-            case 7: return (
-                <div className="space-y-5">
-                    <SectionCard title="Campaign Summary" subtitle="Review everything before launching">
-                        <div className="space-y-3">
-                            {[
-                                ["Type", form.type === "post" ? "Social Post Campaign" : "Vote Campaign"],
-                                ["Title", form.title],
-                                form.tagline ? ["Tagline", form.tagline] : null,
-                                ["Duration", fmtDuration(durationMs)],
-                                ["Participants", form.maxParticipants || "—"],
-                                form.preferredGender !== "All" ? ["Audience", `${form.preferredGender}, ${form.ageGroup}`] : null,
-                                form.regions.length > 0 ? ["Regions", form.regions.join(", ")] : null,
-                                (form.hashtags && form.hashtags.length > 0) ? ["Hashtags", form.hashtags.map(h => `#${h}`).join(" ")] : null,
-                            ].filter(Boolean).map((item) => {
-                                const [k, v] = item as [string, string | number];
-                                return (
-                                    <div key={k} className="flex justify-between gap-4 text-sm">
-                                        <span className="text-muted-foreground shrink-0">{k}</span>
-                                        <span className="font-medium text-right truncate max-w-[240px]">{v}</span>
+                        {/* ── Right column (Details & Financials) ── */}
+                        <div className="lg:w-[320px] shrink-0 space-y-4">
+                            <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5 relative group cursor-pointer hover:border-accent/40 transition-all" onClick={() => setCurrentStep(3)}>
+                                <div className="flex items-center gap-3 mb-4 pt-1">
+                                    <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                                        <span className="text-xs font-black text-accent">B</span>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    </SectionCard>
-
-                    <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6">
-                        <h3 className="text-sm font-bold mb-4">Reward Pool</h3>
-                        <div className="space-y-2">
-                            {[
-                                ["Base Pool", `$${basePool.toFixed(2)}`],
-                                ["Top Prize", `$${effectiveTop.toFixed(2)}`],
-                                ...(isPost ? [["Creator Pool", `$${creatorPool.toFixed(2)}`]] : []),
-                                ...(isPost && ldrNum > 0 ? [["Leaderboard", `$${ldrNum.toFixed(2)}`]] : []),
-                                ["Platform Fee", `$${platformFee.toFixed(2)}`],
-                            ].map(([k, v]) => (
-                                <div key={k} className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">{k}</span>
-                                    <span className="font-mono font-medium">{v}</span>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-black text-foreground">Your Brand</p>
+                                        <p className="text-[10px] text-foreground/40 font-medium">Event Host</p>
+                                    </div>
                                 </div>
-                            ))}
-                            <div className="pt-3 border-t border-primary/20 flex justify-between">
-                                <span className="font-bold text-sm">Total Locked</span>
-                                <span className="font-black font-mono text-primary text-base">${totalLocked.toFixed(2)}</span>
+                                <div className="flex items-center justify-between py-3 px-3 rounded-[12px] border bg-accent/5 border-accent/20 mb-4 group-hover:bg-accent/10 transition-colors">
+                                    <div className="flex items-center gap-1.5">
+                                        <Clock className="w-3.5 h-3.5 text-accent" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-accent/80">
+                                            Duration
+                                        </span>
+                                    </div>
+                                    <span className="text-sm font-black text-accent">{fmtDuration(durationMs)}</span>
+                                </div>
+                                <div className="flex items-center justify-between py-3 border-t border-border/30">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Participants Max</span>
+                                    <div className="flex items-center gap-1.5">
+                                        <Users className="w-3 h-3 text-foreground/40" />
+                                        <span className="text-sm font-black text-foreground">{form.maxParticipants || "0"}</span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between py-3 border-t border-border/30">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Watching Now</span>
+                                    <div className="flex items-center gap-1.5 opacity-40">
+                                        <span className="relative flex h-1.5 w-1.5"><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" /></span>
+                                        <span className="text-sm font-black text-green-400">--</span>
+                                    </div>
+                                </div>
+                                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-accent/20 p-2 rounded-full">
+                                    <Pencil className="w-3 h-3 text-accent" />
+                                </div>
+                            </div>
+
+                            <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5 relative group cursor-pointer hover:border-[#A78BFA]/40 transition-all" onClick={() => setCurrentStep(5)}>
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Trophy className="w-4 h-4 text-[#A78BFA]" />
+                                    <span className="text-sm font-black text-foreground">Rewards Pool</span>
+                                </div>
+
+                                <div className="bg-[#A78BFA]/5 border border-[#A78BFA]/15 rounded-[14px] p-4 mb-4 group-hover:bg-[#A78BFA]/10 transition-colors">
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Top Prize</p>
+                                    <p className="text-3xl font-black text-foreground">${effectiveTop.toFixed(2)}</p>
+                                    <p className="text-[10px] text-foreground/40 font-medium tracking-tight">USDC</p>
+                                </div>
+
+                                {isPost && (
+                                    <div className="mb-4">
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Creator Leaderboard</p>
+                                        <p className="text-xl font-black text-foreground">${creatorPool.toFixed(2)}</p>
+                                        <p className="text-[10px] text-foreground/40 font-medium tracking-tight">USDC</p>
+                                    </div>
+                                )}
+
+                                <div className="pt-3 mt-3 border-t border-white/[0.08]">
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Voter Base Pool</p>
+                                    <p className="text-lg font-bold text-foreground">${basePool.toFixed(2)}</p>
+                                </div>
+
+                                <div className="pt-4 mt-4 border-t border-accent/20 flex justify-between items-end">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-accent">Total Deposit</p>
+                                    <p className="text-xl font-black text-accent font-mono">${totalLocked.toFixed(2)}</p>
+                                </div>
+
+                                <div className="pb-4 mt-4 mb-4 border-b border-t border-border/40 pt-4">
+                                    <div className="flex items-center gap-1.5 mb-2.5">
+                                        <ShieldCheck className="w-3 h-3 text-foreground/40" />
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40">Eligibility</p>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-orange-500/10 text-orange-400/80 border border-orange-500/15">
+                                            Open to All Users
+                                        </span>
+                                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-foreground/5 text-foreground/50 border border-border/40">
+                                            1 Submission / User
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div className="pt-2">
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-3">
+                                        {isPost ? "Posting Rules" : "Voting Guidelines"}
+                                    </p>
+                                    <ol className="space-y-2.5">
+                                        {(isPost
+                                            ? (form.instructions ? form.instructions.split("\n").filter(Boolean) : [
+                                                "Upload a high-res image (max 5 MB).",
+                                                "One submission per participant.",
+                                                "No offensive, copyrighted material."
+                                            ])
+                                            : [
+                                                "Browse all entries in the grid below.",
+                                                "Click the vote button on your favourite entry.",
+                                                "You can only cast one vote — choose wisely!",
+                                            ]
+                                        ).slice(0, 3).map((rule, i) => (
+                                            <li key={i} className="flex gap-2.5 text-xs text-foreground/60">
+                                                <span className={cn(
+                                                    "w-4 h-4 rounded-full font-black text-[9px] flex items-center justify-center shrink-0 mt-0.5",
+                                                    isPost ? "bg-orange-500/10 text-orange-400" : "bg-lime-400/10 text-lime-400"
+                                                )}>
+                                                    {i + 1}
+                                                </span>
+                                                {rule}
+                                            </li>
+                                        ))}
+                                    </ol>
+                                </div>
+                                
+                                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-[#A78BFA]/20 p-2 rounded-full">
+                                    <Pencil className="w-3 h-3 text-[#A78BFA]" />
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    {!isPost && form.proposals.filter(p => p.title.trim()).length > 0 && (
-                        <SectionCard title="Voting Options">
-                            <div className="space-y-2">
-                                {form.proposals.filter(p => p.title.trim()).map((p, i) => (
-                                    <div key={i} className="flex items-center gap-3 text-sm">
-                                        <span className="w-5 h-5 rounded-full bg-secondary text-xs flex items-center justify-center shrink-0 font-mono">{i + 1}</span>
-                                        <span>{p.title}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </SectionCard>
-                    )}
-
-                    <div className="bg-card border border-border rounded-2xl p-4 flex items-start gap-3">
-                        <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
-                        <p className="text-xs text-muted-foreground">
-                            Clicking <strong>Launch Campaign</strong> will open a transaction modal. Your smart account will approve USDC and lock the reward pool on-chain — gasless via Privy on Polygon Amoy.
-                        </p>
-                    </div>
-                </div>
-            );
-
-            default: return null;
+                );
         }
     };
 
-    // ── Sticky Summary Sidebar ─────────────────────────────────────────────
-    const SummarySidebar = () => (
-        <div className="space-y-4">
-            {/* Wallet info */}
-            <div className="bg-card border border-border rounded-2xl p-5">
-                <div className="flex items-center justify-between mb-3">
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Wallet</p>
-                    <button
-                        onClick={refreshBalance}
-                        className="p-1 hover:bg-secondary rounded-lg transition-colors"
-                        title="Refresh balance"
-                    >
-                        <RefreshCw className="w-3 h-3 text-muted-foreground" />
-                    </button>
-                </div>
-                <div className="space-y-2.5">
-                    <div className="flex justify-between items-center text-xs">
-                        <span className="text-muted-foreground">Smart Account</span>
-                        <button
-                            onClick={copyAddress}
-                            disabled={!address}
-                            className="flex items-center gap-1.5 font-mono font-medium text-foreground hover:text-primary transition-colors disabled:cursor-default group"
-                            title={address ?? undefined}
-                        >
-                            {address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "—"}
-                            {address && (
-                                addressCopied
-                                    ? <Check className="w-3 h-3 text-green-500" />
-                                    : <Copy className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-colors" />
-                            )}
-                        </button>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">USDC Balance</span>
-                        <span className="font-mono font-bold text-primary">${balance}</span>
-                    </div>
-                    {availableCredit > 0 && (
-                        <div className="flex justify-between text-xs pt-1 border-t border-border">
-                            <span className="text-muted-foreground">Refund Credit</span>
-                            <span className="font-mono font-bold text-green-500">+${availableCredit.toFixed(2)}</span>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <div className="bg-card border border-border rounded-2xl p-5">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Campaign Summary</p>
-                <div className="space-y-2.5">
-                    {[
-                        ["Type", form.type === "post" ? "Social Post" : "Vote"],
-                        ["Participants", form.maxParticipants || "—"],
-                        ["Duration", fmtDuration(durationMs)],
-                        ["Total Locked", pCount > 0 ? `$${totalLocked.toFixed(2)}` : "—"],
-                        ["Network", "Polygon Amoy"],
-                    ].map(([k, v]) => (
-                        <div key={k} className="flex justify-between text-xs">
-                            <span className="text-muted-foreground">{k}</span>
-                            <span className={cn("font-medium", k === "Total Locked" && pCount > 0 && "text-primary font-bold")}>{v}</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Step progress */}
-            <div className="bg-card border border-border rounded-2xl p-5">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Progress</p>
-                <div className="space-y-2">
-                    {STEPS.map((s, i) => (
-                        <div key={s.id} className={cn("flex items-center gap-2.5 text-xs",
-                            i < currentStep ? "text-primary" : i === currentStep ? "text-foreground font-semibold" : "text-muted-foreground/50"
-                        )}>
-                            <div className={cn("w-4 h-4 rounded-full flex items-center justify-center shrink-0 text-[10px]",
-                                i < currentStep ? "bg-primary text-primary-foreground" : i === currentStep ? "bg-primary/20 text-primary" : "bg-secondary"
-                            )}>
-                                {i < currentStep ? "✓" : i + 1}
-                            </div>
-                            {s.label}
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-
-    // ── Build LaunchFormData ───────────────────────────────────────────────
     const launchData: LaunchFormData = {
         ...form,
         proposals: form.proposals.filter(p => p.title.trim()),
     };
 
     return (
-        <div className="min-h-screen bg-background">
-            {/* Top bar */}
-            <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border">
-                <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <Link href="/brand/dashboard" className="p-2 hover:bg-secondary rounded-xl transition-colors">
-                            <ChevronLeft className="w-4 h-4" />
-                        </Link>
-                        <div>
-                            <h1 className="text-sm font-black">Create Campaign</h1>
-                            <p className="text-xs text-muted-foreground hidden sm:block">
-                                Step {currentStep + 1} of {STEPS.length} — {STEPS[currentStep].label}
-                            </p>
-                        </div>
+        <div className="h-[90vh] min-h-[600px] w-full bg-background flex flex-col relative overflow-hidden font-sans">
+            {/* Top Bar Navigation */}
+            <div className="absolute top-0 left-0 right-0 px-4 py-6 sm:px-6 sm:py-8 flex justify-between items-center z-20 pointer-events-none">
+                <Link href="/brand/dashboard" className="pointer-events-auto flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group">
+                    <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
+                    <span className="text-xs font-black tracking-widest uppercase">Exit</span>
+                </Link>
+                <div className="pointer-events-auto flex flex-col items-end gap-2">
+                    <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                        Step {currentStep + 1} of {FORM_QUESTIONS.length}
                     </div>
-
-                    {/* Step pills (desktop) */}
-                    <div className="hidden lg:flex items-center gap-1">
-                        {STEPS.map((s, i) => (
-                            <div key={s.id} className={cn(
-                                "w-2 h-2 rounded-full transition-all",
-                                i < currentStep ? "bg-primary" : i === currentStep ? "bg-primary w-6" : "bg-border"
+                    <div className="flex gap-1.5 opacity-80">
+                        {FORM_QUESTIONS.map((_, i) => (
+                            <div key={i} className={cn(
+                                "h-1 rounded-full transition-all duration-300",
+                                i === currentStep ? "bg-primary w-8 shadow-sm shadow-primary/50" : i < currentStep ? "bg-primary/40 w-3" : "bg-border w-2"
                             )} />
                         ))}
-                    </div>
-
-                    {/* Progress bar (mobile) */}
-                    <div className="lg:hidden flex-1 max-w-[120px]">
-                        <div className="h-1 bg-border rounded-full overflow-hidden">
-                            <div className="h-full bg-primary rounded-full transition-all"
-                                style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }} />
-                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Body */}
-            <div className="max-w-6xl mx-auto px-4 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 items-start">
-                    {/* Step content */}
-                    <div>
-                        {renderStep()}
-
-                        {/* Navigation */}
-                        <div className="flex items-center justify-between mt-8 pt-6 border-t border-border">
-                            <button
-                                onClick={goBack}
-                                disabled={currentStep === 0}
-                                className="flex items-center gap-2 px-5 py-3 rounded-xl border border-border text-sm font-semibold hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                            >
-                                <ChevronLeft className="w-4 h-4" /> Back
-                            </button>
-
-                            {currentStep < STEPS.length - 1 ? (
-                                <button
-                                    onClick={goNext}
-                                    className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-bold hover:opacity-90 transition-all"
-                                >
-                                    Continue <ChevronRight className="w-4 h-4" />
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={() => {
-                                        const err = validateStep(0) || validateStep(1) || validateStep(4);
-                                        if (err) { toast.error(err); return; }
-                                        setModalOpen(true);
-                                    }}
-                                    className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-bold hover:opacity-90 transition-all"
-                                >
-                                    Launch Campaign <ChevronRight className="w-4 h-4" />
-                                </button>
-                            )}
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col items-center justify-start px-4 sm:px-8 pt-24 sm:pt-32 pb-32 sm:pb-40 w-full max-w-5xl mx-auto z-10 overflow-y-auto no-scrollbar">
+                <AnimatePresence mode="wait" custom={direction}>
+                    <motion.div
+                        key={currentStep}
+                        custom={direction}
+                        variants={slideVariants}
+                        initial="enter"
+                        animate="center"
+                        exit="exit"
+                        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                        className="w-full text-center"
+                    >
+                        {/* Guideline Tooltip */}
+                        <div className="mb-6 group relative inline-flex items-center gap-2 text-accent bg-accent/10 px-4 py-2 rounded-full cursor-help hover:bg-accent/20 transition-colors border border-accent/20">
+                            <Info className="w-4 h-4" />
+                            <span className="text-xs font-bold tracking-wide uppercase">Setup Guide</span>
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-72 p-4 bg-card border border-border shadow-2xl rounded-2xl text-xs text-foreground font-medium opacity-0 group-hover:opacity-100 pointer-events-none transition-all scale-95 group-hover:scale-100 origin-top z-50 leading-relaxed">
+                                {FORM_QUESTIONS[currentStep].guideline}
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-45 w-3 h-3 bg-card border-t border-l border-border" />
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Sticky sidebar */}
-                    <div className="hidden lg:block sticky top-[65px]">
-                        <SummarySidebar />
-                    </div>
-                </div>
+                        {/* Title */}
+                        <h2 className="text-5xl sm:text-6xl lg:text-7xl font-display uppercase mb-6 sm:mb-8 text-foreground tracking-tighter leading-none px-2 group-hover:text-accent transition-colors duration-500">
+                            {FORM_QUESTIONS[currentStep].title}
+                        </h2>
+
+                        {/* Dynamic Input Surface */}
+                        <div className="w-full text-left mx-auto max-w-3xl px-2 sm:px-4">
+                            {renderQuestionFields()}
+                        </div>
+                    </motion.div>
+                </AnimatePresence>
+            </div>
+
+            {/* Bottom Bar Execution */}
+            <div className="absolute bottom-0 left-0 right-0 px-4 pb-6 pt-8 sm:px-6 sm:pb-8 sm:pt-10 flex justify-between items-center z-20 bg-gradient-to-t from-background via-background/95 to-transparent pointer-events-none">
+                {currentStep > 0 ? (
+                    <button
+                        onClick={goBack}
+                        className="pointer-events-auto flex items-center gap-2 px-6 py-3.5 rounded-2xl border-2 border-border text-sm font-bold hover:bg-secondary hover:border-accent/40 hover:text-accent transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 group"
+                    >
+                        <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" /> Back
+                    </button>
+                ) : <div />}
+
+                {currentStep < FORM_QUESTIONS.length - 1 ? (
+                    <button
+                        onClick={goNext}
+                        className="pointer-events-auto flex items-center gap-2 px-8 py-3.5 bg-foreground text-background rounded-2xl text-sm font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-accent/50 shadow-foreground/20 group hover:bg-accent hover:text-white"
+                    >
+                        Continue <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    </button>
+                ) : (
+                    <button
+                        onClick={() => {
+                            let errMessage = null;
+                            for (let i = 0; i < FORM_QUESTIONS.length; i++) {
+                                const err = validateStep(i);
+                                if (err) { errMessage = `Step ${i + 1}: ${err}`; break; }
+                            }
+                            if (errMessage) { toast.error(errMessage); return; }
+                            setModalOpen(true);
+                        }}
+                        className="pointer-events-auto flex items-center gap-2 px-8 py-3.5 bg-primary text-primary-foreground rounded-2xl text-sm font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/50 group hover:bg-accent"
+                    >
+                        Launch <Rocket className="w-4 h-4 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 ml-1" />
+                    </button>
+                )}
             </div>
 
             <LaunchStepModal
@@ -1459,54 +1194,8 @@ export default function CreateEventPage() {
                 onClose={() => setModalOpen(false)}
                 onSuccess={() => router.push("/brand/dashboard")}
             />
-
-            {/* Brand AI Image Generator for voting options */}
-            <BrandImageGeneratorModal
-                isOpen={aiGeneratorProposalIdx !== null}
-                onClose={() => setAiGeneratorProposalIdx(null)}
-                onAddToOption={(file, preview) => {
-                    if (aiGeneratorProposalIdx === null) return;
-                    set({
-                        proposals: form.proposals.map((p, i) =>
-                            i === aiGeneratorProposalIdx
-                                ? { ...p, media: file, mediaPreview: preview }
-                                : p
-                        ),
-                    });
-                    setAiGeneratorProposalIdx(null);
-                }}
-                brandId={user?.id ?? ""}
-                eventTitle={form.title}
-                eventDescription={form.description}
-                optionLabel={aiGeneratorProposalIdx !== null ? `Option ${aiGeneratorProposalIdx + 1}` : undefined}
-            />
-
-            {/* Brand AI Image Generator for sample images */}
-            <BrandImageGeneratorModal
-                isOpen={aiGeneratorSampleOpen}
-                onClose={() => setAiGeneratorSampleOpen(false)}
-                onAddToOption={(file, preview) => {
-                    if (form.sampleImages.length >= 10) {
-                        toast.error("Maximum 10 samples allowed");
-                        return;
-                    }
-                    set({ sampleImages: [...form.sampleImages, { file, preview: preview ?? URL.createObjectURL(file) }] });
-                    setAiGeneratorSampleOpen(false);
-                }}
-                brandId={user?.id ?? ""}
-                eventTitle={form.title}
-                eventDescription={form.description}
-                optionLabel="Sample Image"
-            />
-
-            {/* Pintura image editor — for editing sample and proposal images */}
             {pinturaImageSrc && (
-                <PinturaImageEditor
-                    isOpen={pinturaOpen}
-                    imageSrc={pinturaImageSrc}
-                    onDone={handlePinturaDone}
-                    onClose={handlePinturaClose}
-                />
+                <PinturaImageEditor isOpen={pinturaOpen} imageSrc={pinturaImageSrc} onDone={handlePinturaDone} onClose={handlePinturaClose} />
             )}
         </div>
     );
