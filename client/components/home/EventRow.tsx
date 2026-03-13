@@ -43,24 +43,28 @@ export default function EventRow({
             </div>
 
             {/* Horizontal scroll row */}
-            <div className="flex gap-1 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
-                {loading
-                    ? Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="flex-shrink-0 w-[168px] sm:w-[180px] p-3">
-                            <div className="aspect-square rounded-lg bg-white/[0.06] animate-pulse mb-3" />
-                            <div className="h-3.5 bg-white/[0.06] rounded animate-pulse mb-2 w-4/5" />
-                            <div className="h-3 bg-white/[0.04] rounded animate-pulse w-3/5" />
-                        </div>
-                    ))
-                    : events.map((event) => (
-                        <SpotifyEventCard key={event.id} event={event} />
-                    ))}
+            <div className="relative">
+                <div className="flex gap-1 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
+                    {loading
+                        ? Array.from({ length: 4 }).map((_, i) => (
+                            <div
+                                key={i}
+                                className="flex-shrink-0 w-[280px] sm:w-[300px] aspect-[4/5] rounded-2xl bg-white/[0.05] animate-pulse border border-white/[0.06]"
+                                style={{ animationDelay: `${i * 80}ms` }}
+                            />
+                        ))
+                        : events.map((event) => (
+                            <SpotifyEventCard key={event.id} event={event} />
+                        ))}
 
-                {!loading && events.length === 0 && (
-                    <p className="text-sm text-white/20 font-medium py-8 pl-3">
-                        No events available right now.
-                    </p>
-                )}
+                    {!loading && events.length === 0 && (
+                        <p className="text-sm text-white/20 font-medium py-8 pl-3">
+                            No events available right now.
+                        </p>
+                    )}
+                </div>
+                {/* Right fade */}
+                <div className="absolute top-0 right-0 w-24 h-full bg-gradient-to-l from-background to-transparent pointer-events-none" />
             </div>
         </section>
     );

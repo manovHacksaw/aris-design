@@ -1,89 +1,159 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Search, Sparkles, Trophy, Palette, PenLine, Video, Building2, Rocket } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { Search } from "lucide-react";
+import { useEffect, useState } from "react";
 
-const categories = [
-    { label: "ALL", icon: Sparkles },
-    { label: "ARTISTS", icon: Palette },
-    { label: "DESIGNERS", icon: PenLine },
-    { label: "CREATORS", icon: Video },
-    { label: "BRANDS", icon: Building2 },
-    { label: "STARTUPS", icon: Rocket },
-];
+/* ─────────────────────────────────────────────────────────
+   Sparkle Particle System  (Aceternity-inspired)
+───────────────────────────────────────────────────────── */
+interface Particle {
+    id: number;
+    x: number;
+    y: number;
+    size: number;
+    duration: number;
+    delay: number;
+    opacity: number;
+}
 
-export default function HomeHeader() {
-    const [searchQuery, setSearchQuery] = useState("");
-    const [activeCategory, setActiveCategory] = useState("ALL");
+function SparkleCanvas() {
+    const [particles, setParticles] = useState<Particle[]>([]);
+
+    useEffect(() => {
+        const p: Particle[] = Array.from({ length: 28 }, (_, i) => ({
+            id: i,
+            x: Math.random() * 100,
+            y: Math.random() * 100,
+            size: Math.random() * 3 + 1,
+            duration: Math.random() * 3 + 2,
+            delay: Math.random() * 4,
+            opacity: Math.random() * 0.5 + 0.1,
+        }));
+        setParticles(p);
+    }, []);
 
     return (
-        <div className="space-y-6 mb-8">
-            {/* Title + Subheading */}
-            <div className="space-y-3">
-                <motion.h1
-                    initial={{ opacity: 0, y: -12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                    className="text-6xl md:text-8xl font-black tracking-tighter uppercase font-display leading-none"
-                    style={{
-                        background: "linear-gradient(135deg, #fff 60%, rgba(255,255,255,0.45) 100%)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        filter: "drop-shadow(0 0 32px rgba(59,130,246,0.25))",
-                    }}
-                >
-                    Home
-                </motion.h1>
-
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {particles.map((p) => (
                 <motion.div
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1, duration: 0.35 }}
-                    className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-5"
-                >
-                    <p className="text-sm md:text-base font-bold text-white/35 tracking-wide">
-                        Participate in Events and Earn Dollars
-                    </p>
+                    key={p.id}
+                    className="absolute rounded-full bg-lime-400"
+                    style={{ left: `${p.x}%`, top: `${p.y}%`, width: p.size, height: p.size }}
+                    animate={{ y: [0, -30, 0], opacity: [0, p.opacity, 0], scale: [0.5, 1, 0.5] }}
+                    transition={{ duration: p.duration, delay: p.delay, repeat: Infinity, ease: "easeInOut" }}
+                />
+            ))}
+            <div className="absolute -top-12 -left-12 w-64 h-64 bg-lime-500/[0.08] rounded-full blur-3xl" />
+            <div className="absolute -top-8 right-1/3 w-48 h-48 bg-lime-400/[0.05] rounded-full blur-3xl" />
+        </div>
+    );
+}
 
-                    <div className="flex items-center gap-2.5">
-                        {/* Base Reward Badge */}
-                        <div className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-full overflow-hidden group cursor-default">
-                            <div className="absolute inset-0 bg-yellow-400/[0.06] border border-yellow-400/20 rounded-full" />
-                            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full" />
-                            <Sparkles className="w-3 h-3 text-yellow-400 relative z-10 fill-yellow-400/30" />
-                            <span className="text-[10px] font-black uppercase text-yellow-400 tracking-[0.18em] relative z-10">
-                                Base Reward
-                            </span>
-                        </div>
+/* ─────────────────────────────────────────────────────────
+   Shimmer Gradient Word
+───────────────────────────────────────────────────────── */
+function ShimmerWord({ children }: { children: string }) {
+    return (
+        <span className="bg-gradient-to-r from-lime-300 via-green-300 to-lime-400 bg-clip-text text-transparent">
+            {children}
+        </span>
+    );
+}
 
-                        {/* Top Prize Badge */}
-                        <div className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-full overflow-hidden group cursor-default">
-                            <div className="absolute inset-0 bg-blue-500/[0.06] border border-blue-500/25 rounded-full" />
-                            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full" />
-                            <Trophy className="w-3 h-3 text-blue-400 relative z-10 fill-blue-400/20" />
-                            <span className="text-[10px] font-black uppercase text-blue-400 tracking-[0.18em] relative z-10">
-                                Top Prize
-                            </span>
-                        </div>
+/* ─────────────────────────────────────────────────────────
+   Animated Headline — word-by-word blur-fade reveal
+───────────────────────────────────────────────────────── */
+const HEADLINE_LINES = ["PARTICIPATE IN", "EVENTS. EARN", "DOLLARS."];
+
+function AnimatedHeadline() {
+    const container = {
+        hidden: {},
+        show: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } },
+    };
+    const word = {
+        hidden: { opacity: 0, y: 24, filter: "blur(8px)" },
+        show: {
+            opacity: 1,
+            y: 0,
+            filter: "blur(0px)",
+            transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+        },
+    };
+
+    return (
+        <motion.h1
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] leading-[0.92] tracking-tight text-white uppercase"
+        >
+            {HEADLINE_LINES.map((line, li) => (
+                <span key={li} className="block">
+                    {line.split(" ").map((w, wi) => (
+                        <motion.span key={wi} variants={word} className="inline-block mr-[0.22em]">
+                            {li === 2 && wi === 0 ? <ShimmerWord>{w}</ShimmerWord> : w}
+                        </motion.span>
+                    ))}
+                </span>
+            ))}
+        </motion.h1>
+    );
+}
+
+/* ─────────────────────────────────────────────────────────
+   Main Export
+───────────────────────────────────────────────────────── */
+export default function HomeHeader() {
+    const [searchQuery, setSearchQuery] = useState("");
+
+    return (
+        <div className="space-y-8 mb-8">
+
+            {/* ── HERO BLOCK ── */}
+            <div className="relative rounded-3xl overflow-hidden border border-white/[0.06] bg-white/[0.02]">
+                <SparkleCanvas />
+
+                {/* Dot grid */}
+                <div
+                    className="absolute inset-0 pointer-events-none opacity-[0.025]"
+                    style={{
+                        backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)",
+                        backgroundSize: "28px 28px",
+                    }}
+                />
+
+                {/* Bottom fade */}
+                <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background/70 to-transparent pointer-events-none" />
+
+                <div className="relative z-10 px-6 pt-8 pb-8 sm:px-8">
+                    <div className="mb-3">
+                        <AnimatedHeadline />
                     </div>
-                </motion.div>
+
+                    <motion.p
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.55, duration: 0.5 }}
+                        className="text-sm text-white/40 font-medium max-w-xs leading-relaxed"
+                    >
+                        Earn{" "}
+                        <span className="text-white font-bold">3 cents</span>{" "}
+                        for every vote you cast. Vote mindfully — higher rewards go to those who align with the crowd.
+                    </motion.p>
+                </div>
             </div>
 
-            {/* Search Bar */}
+            {/* ── SEARCH BAR ── */}
             <motion.div
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15, duration: 0.35 }}
+                transition={{ delay: 0.9, duration: 0.35 }}
                 className="relative group max-w-3xl"
             >
-                {/* Ambient glow on focus */}
-                <div className="absolute -inset-px bg-gradient-to-r from-blue-500/30 via-purple-500/20 to-blue-500/30 rounded-2xl opacity-0 group-focus-within:opacity-100 transition-all duration-500 blur-sm pointer-events-none" />
-
-                {/* Inner container */}
-                <div className="relative flex items-center bg-white/[0.03] border border-white/8 group-focus-within:border-blue-500/35 rounded-2xl transition-all duration-300">
-                    <Search className="absolute left-5 w-4 h-4 text-white/20 group-focus-within:text-blue-400 transition-colors duration-300 pointer-events-none" />
+                <div className="absolute -inset-px bg-gradient-to-r from-lime-400/20 via-green-400/15 to-lime-400/20 rounded-2xl opacity-0 group-focus-within:opacity-100 transition-all duration-500 blur-sm pointer-events-none" />
+                <div className="relative flex items-center bg-white/[0.03] border border-white/[0.08] group-focus-within:border-lime-400/35 rounded-2xl transition-all duration-300">
+                    <Search className="absolute left-5 w-4 h-4 text-white/20 group-focus-within:text-lime-400 transition-colors duration-300 pointer-events-none" />
                     <input
                         type="text"
                         value={searchQuery}
@@ -94,39 +164,6 @@ export default function HomeHeader() {
                 </div>
             </motion.div>
 
-            {/* Category Tabs */}
-            <motion.div
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.35 }}
-                className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide"
-            >
-                {categories.map((cat) => {
-                    const isActive = activeCategory === cat.label;
-                    const Icon = cat.icon;
-                    return (
-                        <button
-                            key={cat.label}
-                            onClick={() => setActiveCategory(cat.label)}
-                            className={cn(
-                                "relative flex items-center gap-2 px-5 py-2 rounded-full text-[11px] font-black whitespace-nowrap uppercase tracking-wider transition-all duration-200 overflow-hidden",
-                                isActive
-                                    ? "text-white shadow-lg shadow-blue-500/25"
-                                    : "bg-white/[0.03] border border-white/8 text-white/35 hover:border-white/15 hover:text-white/60"
-                            )}
-                        >
-                            {isActive && (
-                                <>
-                                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600" />
-                                    <div className="absolute inset-0 opacity-40 bg-gradient-to-b from-white/20 to-transparent" />
-                                </>
-                            )}
-                            <Icon className={cn("w-3 h-3 relative z-10", isActive ? "text-white/90" : "text-white/30")} />
-                            <span className="relative z-10">{cat.label}</span>
-                        </button>
-                    );
-                })}
-            </motion.div>
         </div>
     );
 }

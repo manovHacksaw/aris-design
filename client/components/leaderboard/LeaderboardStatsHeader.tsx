@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { Trophy, Star, Users, Flame, MousePointerClick, Zap, Layout } from "lucide-react";
 import { cn } from "@/lib/utils";
 import UserStatsCard from "./UserStatsCard";
-import TopUsers from "./TopUsers";
 import SquareEventCard from "@/components/events/SquareEventCard";
 import Link from "next/link";
 
@@ -25,10 +24,6 @@ export default function LeaderboardStatsHeader({ tab, user, topData }: Leaderboa
                 <div className="space-y-6">
                     <h3 className="text-xl font-black tracking-tight text-white uppercase tracking-[0.2em] opacity-30">Your Standings</h3>
                     <UserStatsCard user={user} />
-                </div>
-                <div className="space-y-8">
-                    <h3 className="text-xl font-black tracking-tight text-white uppercase tracking-[0.2em] opacity-30">Top Contenders</h3>
-                    <TopUsers />
                 </div>
             </div>
         );

@@ -122,17 +122,39 @@ export default function RightDashboard() {
 
       {/* 1. Login Streak */}
       <Link href="/dashboard" className="block group transition-transform active:scale-[0.98]">
-        <div className="bg-[#EA580C] rounded-[24px] p-6 flex justify-between items-center shadow-lg shadow-orange-950/20 group-hover:bg-[#F97316] transition-colors overflow-hidden relative font-sans border border-white/10">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+        <div className="rounded-[24px] p-6 flex justify-between items-center overflow-hidden relative font-sans
+          bg-gradient-to-br from-[#F97316] via-[#EA580C] to-[#C2410C]
+          shadow-[0_8px_32px_rgba(234,88,12,0.45),0_2px_8px_rgba(0,0,0,0.3)]
+          border border-orange-400/30
+          group-hover:shadow-[0_12px_40px_rgba(249,115,22,0.55),0_2px_8px_rgba(0,0,0,0.3)]
+          transition-all duration-300">
+
+          {/* Shine sweep */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out pointer-events-none skew-x-12" />
+
+          {/* Top gloss */}
+          <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent rounded-t-[24px] pointer-events-none" />
+
+          {/* Radial glow top-right */}
+          <div className="absolute -top-6 -right-6 w-28 h-28 bg-yellow-300/30 rounded-full blur-2xl pointer-events-none" />
+
+          {/* Bottom shadow vignette */}
+          <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/20 to-transparent pointer-events-none rounded-b-[24px]" />
+
           <div className="relative z-10">
-            <p className="text-[11px] font-black text-white/80 uppercase tracking-[0.15em] mb-1">Login Streak</p>
-            <h3 className="text-4xl font-black text-white tracking-tight">{streak} Days</h3>
+            <p className="text-[11px] font-black text-white/80 uppercase tracking-[0.15em] mb-1" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.25)" }}>Login Streak</p>
+            <h3 className="text-4xl font-black text-white tracking-tight" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>{streak} Days</h3>
             {longestStreak !== null && (
               <p className="text-[10px] font-bold text-white/50 mt-0.5">Best: {longestStreak} days</p>
             )}
           </div>
-          <div className="relative z-10 w-14 h-14 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md border border-white/20 shadow-inner">
-            <Flame className="w-8 h-8 text-white fill-current" />
+
+          <div className="relative z-10 w-14 h-14 rounded-full flex items-center justify-center
+            bg-gradient-to-br from-white/40 to-white/15
+            border border-white/40
+            shadow-[0_2px_12px_rgba(0,0,0,0.25),inset_0_1px_1px_rgba(255,255,255,0.5)]
+            backdrop-blur-md">
+            <Flame className="w-8 h-8 text-white fill-current drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]" />
           </div>
         </div>
       </Link>

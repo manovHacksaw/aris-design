@@ -50,45 +50,40 @@ export function AppSkeleton() {
 
         {/* Content area */}
         <div className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto">
-          <div className="max-w-[1600px] mx-auto space-y-6">
-            {/* Page title */}
-            <div className="space-y-2">
-              <div className="h-9 w-64 rounded-xl bg-white/[0.06] animate-pulse" />
-              <div className="h-4 w-44 rounded-lg bg-white/[0.03] animate-pulse" />
+          <div className="max-w-[1600px] mx-auto space-y-10 pt-4">
+
+            {/* Hero block skeleton */}
+            <div className="rounded-3xl border border-white/[0.06] bg-white/[0.02] p-8 space-y-4">
+              <div className="space-y-2">
+                <div className="h-12 w-72 rounded-xl bg-white/[0.07] animate-pulse" />
+                <div className="h-12 w-56 rounded-xl bg-white/[0.07] animate-pulse" style={{ animationDelay: "80ms" }} />
+                <div className="h-12 w-40 rounded-xl bg-white/[0.07] animate-pulse" style={{ animationDelay: "160ms" }} />
+              </div>
+              <div className="h-4 w-64 rounded-lg bg-white/[0.04] animate-pulse" style={{ animationDelay: "240ms" }} />
             </div>
 
-            {/* Trending row */}
-            <div className="flex gap-4 overflow-hidden">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-32 w-48 shrink-0 rounded-2xl bg-white/[0.04] animate-pulse"
-                  style={{ animationDelay: `${i * 60}ms` }}
-                />
-              ))}
-            </div>
+            {/* Search bar skeleton */}
+            <div className="h-14 max-w-3xl rounded-2xl bg-white/[0.04] border border-white/[0.06] animate-pulse" />
 
-            {/* Filter chips */}
-            <div className="flex gap-2 flex-wrap">
-              {[72, 88, 64, 96, 80].map((w, i) => (
-                <div
-                  key={i}
-                  className="h-8 rounded-full bg-white/[0.04] animate-pulse"
-                  style={{ width: `${w}px`, animationDelay: `${i * 60}ms` }}
-                />
-              ))}
-            </div>
+            {/* Event rows skeleton (3 rows) */}
+            {Array.from({ length: 3 }).map((_, row) => (
+              <div key={row} className="space-y-4" style={{ animationDelay: `${row * 100}ms` }}>
+                <div className="flex items-center justify-between">
+                  <div className="h-6 w-40 rounded-lg bg-white/[0.07] animate-pulse" />
+                  <div className="h-4 w-16 rounded-lg bg-white/[0.04] animate-pulse" />
+                </div>
+                <div className="flex gap-3 overflow-hidden">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="flex-shrink-0 w-[280px] aspect-[4/5] rounded-2xl bg-white/[0.05] animate-pulse border border-white/[0.06]"
+                      style={{ animationDelay: `${i * 70}ms` }}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
 
-            {/* Feed grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="aspect-[3/4] rounded-2xl bg-white/[0.04] animate-pulse"
-                  style={{ animationDelay: `${i * 50}ms` }}
-                />
-              ))}
-            </div>
           </div>
         </div>
       </div>

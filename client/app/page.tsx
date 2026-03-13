@@ -2,7 +2,6 @@
 
 import SidebarLayout from "@/components/home/SidebarLayout";
 import HomeHeader from "@/components/home/HomeHeader";
-import FlagshipBanner from "@/components/home/FlagshipBanner";
 import TrendingEvents from "@/components/home/TrendingEvents";
 import EventsTabFeed from "@/components/home/EventsTabFeed";
 import BottomNav from "@/components/BottomNav";
@@ -21,10 +20,7 @@ export default function Home() {
               {/* 1. Header Section (Heading, Search, Categories) */}
               <HomeHeader />
 
-              {/* 2. Flagship Event Banner */}
-              <FlagshipBanner />
-
-              {/* 3. Trending Section */}
+              {/* 2. Trending Section */}
               <TrendingEvents />
 
               {/* 4. Events Tabbed Feed */}
