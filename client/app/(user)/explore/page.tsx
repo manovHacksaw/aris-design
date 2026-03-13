@@ -80,7 +80,7 @@ export default function Explore() {
         <div className="flex flex-col">
           <ExploreHeader />
 
-          <main className="max-w-[1400px] mx-auto w-full px-4 md:px-8 py-10 flex flex-col lg:flex-row gap-12">
+          <main className="w-full py-10 flex flex-col lg:flex-row gap-12">
 
             {/* Mobile Suggestions (On top) */}
             <section className="lg:hidden space-y-6">

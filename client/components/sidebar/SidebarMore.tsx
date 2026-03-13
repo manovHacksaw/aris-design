@@ -134,7 +134,8 @@ export default function SidebarMore() {
                 ref={buttonRef}
                 onClick={toggleMenu}
                 className={cn(
-                    "group flex items-center w-full pl-3 py-3 rounded-xl",
+                    "group flex items-center w-full py-3 rounded-xl",
+                    isCollapsed ? "justify-center" : "pl-3",
                     "text-[#9CA3AF] hover:bg-secondary hover:text-white",
                     "transition-colors duration-150 ease-out",
                     isOpen && "text-white bg-secondary"
@@ -149,8 +150,8 @@ export default function SidebarMore() {
 
                 <span
                     className={cn(
-                        "whitespace-nowrap overflow-hidden transition-all duration-150 ease-out font-normal ml-3 text-[15px]",
-                        !isCollapsed ? "opacity-100 w-auto" : "opacity-0 w-0"
+                        "whitespace-nowrap overflow-hidden transition-all duration-150 ease-out font-normal text-base",
+                        !isCollapsed ? "opacity-100 w-auto ml-3" : "opacity-0 w-0 ml-0"
                     )}
                 >
                     More

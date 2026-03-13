@@ -29,7 +29,8 @@ export default function SidebarItem({
         <Link
             href={href}
             className={cn(
-                "group flex items-center relative w-full pl-3 py-2.5 my-1",
+                "group flex items-center relative w-full py-2.5 my-1",
+                isCollapsed ? "justify-center" : "pl-3",
                 "transition-all duration-200 ease-out",
                 // Active/Hover states
                 isActive
@@ -51,12 +52,12 @@ export default function SidebarItem({
                     />
                 ) : isActive && ActiveIcon ? (
                     <ActiveIcon
-                        size={20}
+                        size={22}
                         className="transition-colors duration-150 text-white"
                     />
                 ) : Icon ? (
                     <Icon
-                        size={20}
+                        size={22}
                         className={cn(
                             "transition-colors duration-150",
                             isActive
@@ -69,9 +70,9 @@ export default function SidebarItem({
 
             <span
                 className={cn(
-                    "whitespace-nowrap overflow-hidden transition-all duration-150 ease-out ml-3 text-sm",
+                    "whitespace-nowrap overflow-hidden transition-all duration-150 ease-out text-base",
                     isActive ? "font-black text-white" : "font-semibold",
-                    showExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
+                    showExpanded ? "opacity-100 w-auto ml-3" : "opacity-0 w-0 ml-0"
                 )}
             >
                 {label}

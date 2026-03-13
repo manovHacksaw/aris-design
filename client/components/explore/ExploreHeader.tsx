@@ -42,10 +42,10 @@ export default function ExploreHeader() {
                 transition={{ duration: 0.35, ease: "easeInOut" }}
                 className="sticky top-0 z-[100] w-full bg-background/80 backdrop-blur-xl border-b border-white/5 pt-8 pb-4"
             >
-                <div className="max-w-[1400px] mx-auto px-4 md:px-8 space-y-8">
+                <div className="space-y-8">
                     {/* Title + Desc */}
                     <div className="space-y-1">
-                        <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase leading-none">Discover</h1>
+                        <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] leading-[0.92] tracking-tight text-white uppercase">Discover</h1>
                         <p className="text-xs font-black text-white/30 uppercase tracking-[0.2em]">Explore events, brands and creators</p>
                     </div>
 

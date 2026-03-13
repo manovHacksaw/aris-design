@@ -81,7 +81,7 @@ export default function Sidebar() {
                 }}
             >
                 {/* Logo Section */}
-                <div className="flex items-center pt-8 pb-6 pl-6 pr-3 h-[88px]">
+                <div className={cn("flex items-center pt-8 pb-6 h-[88px]", isCollapsed ? "justify-center" : "pl-6 pr-3")}>
                     <Link href="/home" className="flex items-center group">
                         <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center transition-transform duration-150 group-hover:scale-105 active:scale-95">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
@@ -90,8 +90,8 @@ export default function Sidebar() {
                         </div>
                         <span
                             className={cn(
-                                "text-xl font-black tracking-[0.15em] text-white uppercase overflow-hidden transition-all duration-150 ease-out whitespace-nowrap ml-4",
-                                showExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
+                                "text-xl font-black tracking-[0.15em] text-white uppercase overflow-hidden transition-all duration-150 ease-out whitespace-nowrap",
+                                showExpanded ? "opacity-100 w-auto ml-4" : "opacity-0 w-0 ml-0"
                             )}
                         >
                             ARIS
@@ -132,7 +132,8 @@ export default function Sidebar() {
                             <button
                                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                                 className={cn(
-                                    "group flex items-center w-full pl-3 py-2 rounded-xl",
+                                    "group flex items-center w-full py-2 rounded-xl",
+                                    isCollapsed ? "justify-center" : "pl-3",
                                     "text-white/50 hover:bg-white/5 hover:text-white",
                                     "transition-colors duration-150 ease-out"
                                 )}
@@ -162,7 +163,8 @@ export default function Sidebar() {
                             <button
                                 onClick={() => logout()}
                                 className={cn(
-                                    "group relative flex items-center w-full pl-3 py-2 rounded-xl",
+                                    "group relative flex items-center w-full py-2 rounded-xl",
+                                    isCollapsed ? "justify-center" : "pl-3",
                                     "text-white/50 hover:bg-white/5 hover:text-red-400",
                                     "transition-colors duration-150 ease-out"
                                 )}
@@ -171,8 +173,8 @@ export default function Sidebar() {
                                     <IoLogOutOutline size={20} className="transition-colors duration-150" />
                                 </div>
                                 <span className={cn(
-                                    "whitespace-nowrap overflow-hidden transition-all duration-150 ease-out ml-3 text-[14px] font-medium",
-                                    showExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
+                                    "whitespace-nowrap overflow-hidden transition-all duration-150 ease-out text-base font-medium",
+                                    showExpanded ? "opacity-100 w-auto ml-3" : "opacity-0 w-0 ml-0"
                                 )}>
                                     Logout
                                 </span>
@@ -190,7 +192,8 @@ export default function Sidebar() {
                             <button
                                 onClick={toggleSidebar}
                                 className={cn(
-                                    "group flex items-center w-full pl-3 py-2 rounded-xl",
+                                    "group flex items-center w-full py-2 rounded-xl",
+                                    isCollapsed ? "justify-center" : "pl-3",
                                     "text-white/50 hover:bg-white/5 hover:text-white",
                                     "transition-colors duration-150 ease-out"
                                 )}

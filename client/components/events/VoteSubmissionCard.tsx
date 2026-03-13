@@ -11,6 +11,7 @@ interface VoteSubmissionCardProps {
     isVoted: boolean;
     disabled: boolean;
     onVote: () => void;
+    optionIndex?: number;
 }
 
 export default function VoteSubmissionCard({
@@ -18,6 +19,7 @@ export default function VoteSubmissionCard({
     isVoted,
     disabled,
     onVote,
+    optionIndex,
 }: VoteSubmissionCardProps) {
     const handleClick = () => {
         if (!disabled) onVote();
@@ -57,14 +59,20 @@ export default function VoteSubmissionCard({
                 {/* Top gradient for creator info */}
                 <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/60 to-transparent" />
 
-                {/* Rank badge */}
-                {submission.rank && submission.rank <= 3 && (
+                {/* Rank / Option badge */}
+                {optionIndex !== undefined ? (
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-background/80 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/10">
+                        <span className="text-[10px] font-black text-foreground/70 tracking-wide">
+                            Option {optionIndex + 1}
+                        </span>
+                    </div>
+                ) : submission.rank && submission.rank <= 3 ? (
                     <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-background/80 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/10">
                         <span className="text-[10px] font-black text-foreground tracking-wide">
                             #{submission.rank}
                         </span>
                     </div>
-                )}
+                ) : null}
 
                 {/* Creator info top-right */}
                 <div className="absolute top-3 right-3 flex items-center gap-1.5">

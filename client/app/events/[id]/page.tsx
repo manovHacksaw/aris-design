@@ -4,8 +4,9 @@ import SidebarLayout from "@/components/home/SidebarLayout";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Clock, Trophy, Users, ChevronLeft, Share2, ImageIcon, CheckCircle2, Loader2,
-    AlertCircle, Crown, Medal, Info, Eye, Pencil,
-    ChevronDown, ChevronUp, Vote, Upload, PlusCircle
+    AlertCircle, Crown, Medal, Info, Upload, PlusCircle, Vote, ChevronRight,
+    Twitter, Instagram, Globe, ExternalLink, LayoutGrid, List, ThumbsUp, Coins,
+    ShieldCheck, Tag
 } from "lucide-react";
 import { calculateTotalPool } from "@/lib/eventUtils";
 import Link from "next/link";
@@ -15,7 +16,6 @@ import { VoteSubmission, PostSubmission, SubmissionStatus } from "@/types/events
 import { formatCount } from "@/lib/eventUtils";
 import ModeBadge from "@/components/events/ModeBadge";
 import StatusBadge from "@/components/events/StatusBadge";
-import RewardBlock from "@/components/events/RewardBlock";
 import VoteSubmissionCard from "@/components/events/VoteSubmissionCard";
 import PostSubmissionCard from "@/components/events/PostSubmissionCard";
 import { getEventById, Event, voteForProposals } from "@/services/event.service";
@@ -31,6 +31,7 @@ import { useUser } from "@/context/UserContext";
 import { useSocket } from "@/context/SocketContext";
 import { toast } from "sonner";
 import Countdown from "@/components/events/Countdown";
+import { use } from "react";
 
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
@@ -83,7 +84,403 @@ function toPostSubmission(sub: Submission, currentUserId?: string | null): PostS
     };
 }
 
-import { use } from "react";
+// ─── Social link helpers ─────────────────────────────────────────────────────
+
+const SOCIAL_SLOTS = [
+    { key: "twitter", label: "Twitter", icon: <Twitter className="w-3.5 h-3.5" /> },
+    { key: "instagram", label: "Instagram", icon: <Instagram className="w-3.5 h-3.5" /> },
+    { key: "website", label: "Website", icon: <Globe className="w-3.5 h-3.5" /> },
+];
+
+function SocialLinks({ links }: { links?: Record<string, string> }) {
+    return (
+        <div className="pt-3 border-t border-white/[0.06] mt-3">
+            <p className="text-[9px] font-black uppercase tracking-widest text-foreground/30 mb-2.5">Brand Links</p>
+            <div className="flex gap-2">
+                {SOCIAL_SLOTS.map(({ key, label, icon }) => {
+                    const url = links?.[key];
+                    return url ? (
+                        <a
+                            key={key}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={label}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-white/[0.05] border border-white/[0.08] text-foreground/60 hover:text-foreground hover:bg-white/[0.08] hover:border-white/[0.15] transition-all"
+                        >
+                            {icon}
+                            <span className="text-[9px] font-black uppercase tracking-wider hidden sm:block">{label}</span>
+                        </a>
+                    ) : (
+                        <div
+                            key={key}
+                            title={`${label} not linked`}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-white/[0.02] border border-white/[0.04] text-foreground/20 cursor-not-allowed"
+                        >
+                            {icon}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+// ─── Right Sidebar ────────────────────────────────────────────────────────────
+
+function EventSidebar({
+    event,
+    activeViewers,
+    mode,
+    votedSubmissionId,
+    votedSub,
+    hasSubmitted,
+    mySubmission,
+    file,
+    preview,
+    caption,
+    submitting,
+    fileRef,
+    onFileChange,
+    onSubmit,
+    onCaptionChange,
+}: {
+    event: Event;
+    activeViewers: number;
+    mode: "post" | "vote" | "completed" | "upcoming";
+    votedSubmissionId?: string | null;
+    votedSub?: Submission | null;
+    hasSubmitted?: boolean;
+    mySubmission?: Submission | null;
+    file?: File | null;
+    preview?: string | null;
+    caption?: string;
+    submitting?: boolean;
+    fileRef?: React.RefObject<HTMLInputElement | null>;
+    onFileChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onSubmit?: () => void;
+    onCaptionChange?: (v: string) => void;
+}) {
+    const targetDate = event.status === "posting" ? event.postingEnd! : event.endTime;
+    const socialLinks = (event.brand as any)?.socialLinks as Record<string, string> | undefined;
+    const topReward = event.topReward ?? event.leaderboardPool ?? 0;
+    const leaderboardPool = event.leaderboardPool ?? 0;
+
+    return (
+        <div className="space-y-4">
+            {/* ── Event info card ── */}
+            <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5">
+                {/* Brand */}
+                <div className="flex items-center gap-3 mb-4">
+                    {event.brand?.logoCid ? (
+                        <img
+                            src={`${PINATA_GW}/${event.brand.logoCid}`}
+                            className="w-10 h-10 rounded-xl object-cover border border-border/40"
+                        />
+                    ) : (
+                        <div className="w-10 h-10 rounded-xl bg-[#A78BFA]/10 flex items-center justify-center">
+                            <span className="text-xs font-black text-[#A78BFA]">{event.brand?.name?.[0] ?? "B"}</span>
+                        </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                        <p className="text-xs font-black text-foreground">{event.brand?.name}</p>
+                        <p className="text-[10px] text-foreground/40 font-medium">Event Host</p>
+                    </div>
+                    {event.category && (
+                        <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#A78BFA]/10 border border-[#A78BFA]/20 shrink-0">
+                            <Tag className="w-2.5 h-2.5 text-[#A78BFA]/70" />
+                            <span className="text-[9px] font-black uppercase tracking-widest text-[#A78BFA]/80">
+                                {event.category}
+                            </span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Time remaining */}
+                {event.status !== "completed" && targetDate && (
+                    <div className={cn(
+                        "flex items-center justify-between py-3 px-3 rounded-[12px] border mt-1",
+                        event.status === "posting"
+                            ? "bg-orange-500/8 border-orange-500/20"
+                            : "bg-lime-400/5 border-lime-400/20"
+                    )}>
+                        <div className="flex items-center gap-1.5">
+                            <Clock className={cn("w-3 h-3", event.status === "posting" ? "text-orange-400" : "text-lime-400")} />
+                            <span className={cn("text-[10px] font-black uppercase tracking-widest",
+                                event.status === "posting" ? "text-orange-400/80" : "text-lime-400/80"
+                            )}>
+                                {event.status === "posting" ? "Posting Ends In" : "Voting Ends In"}
+                            </span>
+                        </div>
+                        <Countdown targetDate={targetDate} label="" />
+                    </div>
+                )}
+
+                {/* Participants */}
+                <div className="py-3 border-t border-border/30">
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Participating</span>
+                        <div className="flex items-center gap-1.5">
+                            <Users className="w-3 h-3 text-foreground/40" />
+                            <span className="text-sm font-black text-foreground">
+                                {formatCount(event._count?.submissions ?? 0)}
+                            </span>
+                            {event.capacity && (
+                                <span className="text-[10px] text-foreground/35 font-medium">
+                                    / {formatCount(event.capacity)}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                    {event.capacity && (
+                        <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${Math.min(((event._count?.submissions ?? 0) / event.capacity) * 100, 100)}%` }}
+                                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                                className="h-full rounded-full bg-gradient-to-r from-[#F97316] via-[#EA580C] to-[#C2410C]"
+                            />
+                        </div>
+                    )}
+                </div>
+
+                {/* Active viewers */}
+                {activeViewers > 0 && (
+                    <div className="flex items-center justify-between py-3 border-t border-border/30">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Watching Now</span>
+                        <div className="flex items-center gap-1.5">
+                            <span className="relative flex h-1.5 w-1.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
+                            </span>
+                            <span className="text-sm font-black text-green-400">{activeViewers}</span>
+                        </div>
+                    </div>
+                )}
+
+                {/* Social links */}
+                <SocialLinks links={socialLinks} />
+            </div>
+
+            {/* ── Rewards + Guidelines card ── */}
+            <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5">
+                {/* Vote & Earn highlight — voting phase only */}
+                {mode === "vote" && (
+                    <div className="mb-4 bg-lime-400/8 border border-lime-400/20 rounded-[14px] p-3.5 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-lime-400/15 flex items-center justify-center shrink-0">
+                            <Coins className="w-4 h-4 text-lime-400" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-black text-lime-400">Vote &amp; Earn $0.03</p>
+                            <p className="text-[10px] text-foreground/50 leading-tight mt-0.5">
+                                Fixed reward per vote, distributed on completion
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <Trophy className="w-4 h-4 text-[#A78BFA]" />
+                        <span className="text-sm font-black text-foreground">Rewards Pool</span>
+                    </div>
+                    <span className="text-[9px] bg-[#A78BFA]/10 text-[#A78BFA] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border border-[#A78BFA]/20">
+                        Guaranteed
+                    </span>
+                </div>
+
+                {/* Grand prize */}
+                {topReward > 0 && (
+                    <div className="bg-[#A78BFA]/5 border border-[#A78BFA]/15 rounded-[14px] p-4 mb-3">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Grand-Prize Winner</p>
+                        <p className="text-2xl font-black text-foreground">${topReward.toLocaleString()}</p>
+                        <p className="text-[10px] text-foreground/40 font-medium">USDC</p>
+                    </div>
+                )}
+
+                {/* Leaderboard pool */}
+                {leaderboardPool > 0 && (
+                    <div className="mb-4">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Leaderboard Pool</p>
+                        <p className="text-xl font-black text-foreground">${leaderboardPool.toLocaleString()}</p>
+                        <p className="text-[10px] text-foreground/40 font-medium">USDC</p>
+                    </div>
+                )}
+
+                {/* Base reward */}
+                {event.baseReward != null && event.baseReward > 0 && (
+                    <div className="mb-4">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Per {mode === "vote" ? "Vote" : "Submission"}</p>
+                        <p className="text-lg font-black text-foreground">${event.baseReward.toLocaleString()}</p>
+                    </div>
+                )}
+
+                {/* Eligibility — posting phase only */}
+                {mode === "post" && (
+                    <div className="pb-4 mb-4 border-b border-border/40">
+                        <div className="flex items-center gap-1.5 mb-2.5">
+                            <ShieldCheck className="w-3 h-3 text-foreground/40" />
+                            <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40">Eligibility</p>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-orange-500/10 text-orange-400/80 border border-orange-500/15">
+                                Open to All Users
+                            </span>
+                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-foreground/5 text-foreground/50 border border-border/40">
+                                1 Submission / User
+                            </span>
+                        </div>
+                    </div>
+                )}
+
+                {/* Submission guidelines */}
+                <div className={cn(mode !== "post" && "pt-4 border-t border-border/40")}>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-3">
+                        {mode === "vote" ? "Voting Guidelines" : "Posting Rules"}
+                    </p>
+                    <ol className="space-y-2.5">
+                        {(mode === "vote"
+                            ? [
+                                "Browse all entries in the grid below.",
+                                "Click the vote button on your favourite entry.",
+                                "You can only cast one vote — choose wisely!",
+                            ]
+                            : (event.submissionGuidelines
+                                ? event.submissionGuidelines.split("\n").filter(Boolean)
+                                : [
+                                    "Upload a high-res image (JPEG or PNG, max 5 MB).",
+                                    "Aspect ratio: 4:5 or 1:1 preferred.",
+                                    "Add an optional caption to describe your work.",
+                                    "One submission per participant — make it count.",
+                                    "No offensive, copyrighted   content.",
+                                ])
+                        ).map((rule, i) => (
+                            <li key={i} className="flex gap-2.5 text-xs text-foreground/60">
+                                <span className={cn(
+                                    "w-4 h-4 rounded-full font-black text-[9px] flex items-center justify-center shrink-0 mt-0.5",
+                                    mode === "vote"
+                                        ? "bg-lime-400/10 text-lime-400"
+                                        : "bg-orange-500/10 text-orange-400"
+                                )}>
+                                    {i + 1}
+                                </span>
+                                {rule}
+                            </li>
+                        ))}
+                    </ol>
+                </div>
+            </div>
+
+            {/* ── Vote status / Submit form ── */}
+            {mode === "vote" && (
+                <div className={cn(
+                    "rounded-[20px] p-4 flex items-center gap-3 border",
+                    votedSubmissionId
+                        ? "bg-lime-400/8 border-lime-400/25"
+                        : "bg-lime-400/5 border-lime-400/20"
+                )}>
+                    <div className="w-9 h-9 rounded-full bg-lime-400/15 flex items-center justify-center shrink-0">
+                        {votedSubmissionId
+                            ? <CheckCircle2 className="w-4 h-4 text-lime-400" />
+                            : <Vote className="w-4 h-4 text-lime-400" />
+                        }
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-black text-foreground">
+                            {votedSubmissionId ? "Vote cast!" : "Cast your vote"}
+                        </p>
+                        <p className="text-xs text-foreground/40 mt-0.5">
+                            {votedSubmissionId
+                                ? `You voted for @${votedSub?.user?.username || "this entry"}`
+                                : "Pick your favourite entry from the grid"}
+                        </p>
+                    </div>
+                    {votedSub && (votedSub.imageUrl || votedSub.imageCid) && (
+                        <img
+                            src={votedSub.imageUrl || `${PINATA_GW}/${votedSub.imageCid}`}
+                            className="w-10 h-10 rounded-xl object-cover border-2 border-lime-400/40 shrink-0"
+                        />
+                    )}
+                </div>
+            )}
+
+            {mode === "post" && !hasSubmitted && fileRef && (
+                <div className="bg-white/[0.03] border border-white/[0.08] rounded-[24px] overflow-hidden">
+                    <div className="px-5 pt-5 pb-3 border-b border-border/30 flex items-center gap-3">
+                        <div className="w-7 h-7 rounded-xl bg-orange-500/10 flex items-center justify-center">
+                            <PlusCircle className="w-3.5 h-3.5 text-orange-400" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-black text-foreground">Post Your Entry</h3>
+                            <p className="text-[10px] text-foreground/40 font-medium">Upload your image to enter</p>
+                        </div>
+                    </div>
+                    <div className="p-4 space-y-3">
+                        <div
+                            onClick={() => fileRef.current?.click()}
+                            className={cn(
+                                "relative border-2 border-dashed rounded-[16px] flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden",
+                                preview ? "border-orange-500/30 h-[180px]" : "border-border/40 hover:border-orange-500/40 h-[120px]"
+                            )}
+                        >
+                            {preview ? (
+                                <>
+                                    <img src={preview} className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                        <span className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-black text-white">Change</span>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="flex flex-col items-center gap-2 p-4 text-center">
+                                    <Upload className="w-5 h-5 text-foreground/30" />
+                                    <p className="text-xs font-black text-foreground/50">Drop image or click</p>
+                                    <p className="text-[9px] text-foreground/20 uppercase tracking-widest font-bold">JPEG · PNG · max 5 MB</p>
+                                </div>
+                            )}
+                        </div>
+                        <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" className="hidden" onChange={onFileChange} />
+                        <textarea
+                            value={caption}
+                            onChange={(e) => onCaptionChange?.(e.target.value)}
+                            placeholder="Caption… (optional)"
+                            rows={2}
+                            maxLength={280}
+                            className="w-full bg-secondary/40 border border-border/40 rounded-xl px-3 py-2.5 text-xs text-foreground placeholder:text-foreground/30 resize-none focus:outline-none focus:border-orange-500/50 transition-colors"
+                        />
+                        <button
+                            onClick={onSubmit}
+                            disabled={!file || submitting}
+                            className="w-full py-3.5 bg-foreground text-background rounded-[14px] text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-foreground/90 active:scale-[0.98] transition-all disabled:opacity-30"
+                        >
+                            {submitting ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading…</> : <><Upload className="w-3.5 h-3.5" /> Submit Entry</>}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {mode === "post" && hasSubmitted && (
+                <div className="bg-orange-500/8 border border-orange-500/25 rounded-[20px] p-4 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-2xl bg-orange-500/15 flex items-center justify-center shrink-0">
+                        <CheckCircle2 className="w-4 h-4 text-orange-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-black text-foreground">Entry submitted!</p>
+                        <p className="text-xs text-foreground/50 mt-0.5">Voting starts when posting ends.</p>
+                    </div>
+                    {(mySubmission?.imageUrl || mySubmission?.imageCid) && (
+                        <img
+                            src={mySubmission.imageUrl || `${PINATA_GW}/${mySubmission.imageCid}`}
+                            className="w-10 h-10 rounded-xl object-cover shrink-0 border border-orange-500/30"
+                        />
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function EventDetailPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
     const resolvedParams = use(params as any);
@@ -103,28 +500,28 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     const [mySubmission, setMySubmission] = useState<Submission | null>(null);
     const [activeViewers, setActiveViewers] = useState<number>(0);
 
+    // Post submission form state (lifted up so sidebar can use it)
+    const [file, setFile] = useState<File | null>(null);
+    const [preview, setPreview] = useState<string | null>(null);
+    const [caption, setCaption] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+    const [pinturaOpen, setPinturaOpen] = useState(false);
+    const fileRef = useRef<HTMLInputElement>(null);
+
+    // Tabs
+    const [activeTab, setActiveTab] = useState<"trending" | "latest" | "top">("trending");
+    const [gridView, setGridView] = useState(true);
+
     useEffect(() => {
         if (!socket || !id) return;
         socket.emit("join-event", id);
-
         const handleVoteUpdate = ({ submissionId, delta }: { submissionId: string; delta: number }) => {
-            setSubmissions((prev) =>
-                prev.map((s) =>
-                    s.id === submissionId
-                        ? { ...s, _count: { votes: (s._count?.votes ?? 0) + delta } }
-                        : s
-                )
-            );
+            setSubmissions((prev) => prev.map((s) => s.id === submissionId ? { ...s, _count: { votes: (s._count?.votes ?? 0) + delta } } : s));
             setOptimisticVoteDelta((prev) => (prev === submissionId ? null : prev));
         };
-
-        const handlePresenceUpdate = ({ activeCount }: { activeCount: number }) => {
-            setActiveViewers(activeCount);
-        };
-
+        const handlePresenceUpdate = ({ activeCount }: { activeCount: number }) => setActiveViewers(activeCount);
         socket.on("vote-update", handleVoteUpdate);
         socket.on("presence-update", handlePresenceUpdate);
-
         return () => {
             socket.emit("leave-event", id);
             socket.off("vote-update", handleVoteUpdate);
@@ -138,22 +535,16 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                 setLoading(true);
                 const ev = await getEventById(id, !!user?.id);
                 setEvent(ev);
-
-                if (ev.hasVoted && ev.userVotes && ev.userVotes.length > 0) {
+                if (ev.hasVoted && ev.userVotes?.length) {
                     const vote = ev.userVotes[0];
                     setVotedSubmissionId(vote.submissionId || vote.proposalId || null);
                 } else {
                     setVotedSubmissionId(null);
                 }
-
                 if (ev.hasSubmitted) {
                     setHasSubmitted(true);
                     if (ev.userSubmission) setMySubmission(ev.userSubmission as Submission);
-                } else {
-                    setHasSubmitted(false);
-                    setMySubmission(null);
                 }
-
                 if (ev.status === "posting" || ev.status === "voting" || ev.status === "completed") {
                     if (ev.eventType === "post_and_vote") {
                         const res = await getEventSubmissions(id, { sortBy: "votes", limit: 50 });
@@ -165,11 +556,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                             eventId: ev.id,
                             imageCid: p.imageCid,
                             content: p.title + (p.content ? `\n${p.content}` : ""),
-                            user: {
-                                name: ev.brand?.name || "Brand",
-                                username: ev.brand?.name || "brand",
-                                profilePicCid: ev.brand?.logoCid,
-                            },
+                            user: { name: ev.brand?.name || "Brand", username: ev.brand?.name || "brand", profilePicCid: ev.brand?.logoCid },
                             _count: { votes: p.voteCount || 0 },
                             rank: p.finalRank,
                             createdAt: ev.createdAt,
@@ -187,232 +574,22 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         load();
     }, [id, user?.id]);
 
-    const handleVote = useCallback(
-        async (submissionId: string) => {
-            if (!event) return;
-            if (votedSubmissionId) return;
-            const sub = submissions.find((s) => s.id === submissionId);
-            if (!sub) return;
-            if (sub.userId === user?.id && event.eventType !== "vote_only") {
-                toast.error("You can't vote for your own submission.");
-                return;
-            }
-            setOptimisticVoteDelta(submissionId);
-            setVotedSubmissionId(submissionId);
-            try {
-                if (event.eventType === "vote_only") {
-                    await voteForProposals(event.id, [submissionId]);
-                } else {
-                    await voteOnSubmission(event.id, submissionId);
-                }
-            } catch (err: any) {
-                setOptimisticVoteDelta(null);
-                setVotedSubmissionId(null);
-                toast.error(err?.message ?? "Failed to record vote. Please try again.");
-            }
-        },
-        [event, submissions, user?.id, votedSubmissionId]
-    );
-
-    const handleNewSubmission = useCallback((sub: Submission) => {
-        setHasSubmitted(true);
-        setMySubmission(sub);
-        setSubmissions((prev) => [sub, ...prev]);
-    }, []);
-
-    const coverUrl =
-        imgUrl(event?.imageUrl, event?.imageCid) ??
-        "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop";
-
-    const brandLogoUrl = event?.brand?.logoCid
-        ? imgUrl(undefined, event.brand.logoCid)
-        : undefined;
-
-    const enrichedSubmissions = submissions.map((sub) => ({
-        ...sub,
-        _count: {
-            votes: (sub._count?.votes ?? 0) + (optimisticVoteDelta === sub.id ? 1 : 0),
-        },
-    }));
-
-    const displayMode =
-        event?.eventType === "vote_only"
-            ? "vote"
-            : event?.status === "posting"
-                ? "post"
-                : "vote";
-
-    return (
-        <SidebarLayout>
-            <main className="max-w-[1200px] mx-auto pb-24">
-                {/* ── Hero ── */}
-                <div className="relative w-full h-[280px] md:h-[360px] mb-0 md:rounded-[32px] overflow-hidden -mx-4 md:mx-0 w-[calc(100%+32px)] md:w-full">
-                    <img
-                        src={coverUrl}
-                        className="w-full h-full object-cover"
-                        alt="Event Cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-
-                    {/* Nav */}
-                    <div className="absolute top-0 left-0 right-0 p-4 md:p-6 flex items-center justify-between z-20">
-                        <Link
-                            href="/home"
-                            className="bg-black/30 backdrop-blur-md border border-white/10 text-white px-4 py-2 rounded-full flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-black/50 transition-all"
-                        >
-                            <ChevronLeft className="w-4 h-4" />
-                            Back
-                        </Link>
-                        <button className="p-2.5 bg-black/30 backdrop-blur-md border border-white/10 rounded-full hover:bg-white/20 transition-colors text-white">
-                            <Share2 className="w-4 h-4" />
-                        </button>
-                    </div>
-
-                    {/* Hero content */}
-                    {!loading && event && (
-                        <div className="absolute bottom-0 left-0 right-0 p-5 md:p-8 z-20">
-                            <div className="flex items-start gap-3 mb-3">
-                                <div className="w-10 h-10 rounded-xl bg-white p-1 shadow-xl overflow-hidden shrink-0">
-                                    {brandLogoUrl ? (
-                                        <img src={brandLogoUrl} alt="Logo" className="w-full h-full object-cover rounded-lg" />
-                                    ) : (
-                                        <div className="w-full h-full bg-primary/10 rounded-lg flex items-center justify-center">
-                                            <span className="text-[9px] font-black text-primary">{event.brand?.name?.[0] ?? "B"}</span>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                        <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.15em]">
-                                            {event.brand?.name}
-                                        </p>
-                                        <ModeBadge mode={displayMode} />
-                                        <StatusBadge status={
-                                            event.status === "posting" ? "live"
-                                                : event.status === "voting" ? "live"
-                                                    : event.status === "completed" ? "ended"
-                                                        : "upcoming"
-                                        } />
-                                    </div>
-                                    <h1 className="text-2xl md:text-4xl font-black text-white tracking-tighter leading-tight">
-                                        {event.title}
-                                    </h1>
-                                </div>
-                            </div>
-
-                            {/* Meta chips */}
-                            <div className="flex flex-wrap gap-2">
-                                {event.status !== "completed" && (
-                                    <Countdown
-                                        targetDate={event.status === "posting" ? event.postingEnd! : event.endTime}
-                                        label={event.status === "posting" ? "Posting Ends" : "Voting Ends"}
-                                    />
-                                )}
-                                {event._count && (
-                                    <div className="bg-white/10 backdrop-blur-xl border border-white/15 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
-                                        <Users className="text-white/60 w-3 h-3" />
-                                        <span className="text-[10px] font-black text-white">
-                                            {formatCount(event._count.submissions)}
-                                        </span>
-                                    </div>
-                                )}
-                                {activeViewers > 0 && (
-                                    <div className="bg-white/10 backdrop-blur-xl border border-white/15 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
-                                        <span className="relative flex h-1.5 w-1.5">
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
-                                        </span>
-                                        <span className="text-[10px] font-black text-white">{activeViewers} watching</span>
-                                    </div>
-                                )}
-                                {(event.leaderboardPool || event.topReward) && (
-                                    <div className="bg-yellow-500/15 backdrop-blur-xl border border-yellow-500/20 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
-                                        <Trophy className="text-yellow-400 w-3 h-3" />
-                                        <span className="text-[10px] font-black text-yellow-300">
-                                            ${(event.leaderboardPool || event.topReward || 0).toLocaleString()} Pool
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* ── Body ── */}
-                {loading ? (
-                    <div className="flex items-center justify-center py-24 px-4">
-                        <Loader2 className="w-8 h-8 animate-spin text-primary/50" />
-                    </div>
-                ) : fetchError ? (
-                    <div className="flex flex-col items-center justify-center py-24 gap-3 text-center px-4">
-                        <AlertCircle className="w-8 h-8 text-red-400" />
-                        <p className="text-sm font-bold text-foreground/60">{fetchError}</p>
-                        <Link href="/home" className="text-xs font-black text-primary hover:underline">Back to home</Link>
-                    </div>
-                ) : event ? (
-                    <AnimatePresence mode="wait">
-                        {event.status === "posting" && event.eventType === "post_and_vote" ? (
-                            <motion.div key="posting" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                                <PostingView
-                                    event={event}
-                                    submissions={enrichedSubmissions}
-                                    hasSubmitted={hasSubmitted}
-                                    mySubmission={mySubmission}
-                                    currentUserId={user?.id}
-                                    onSubmitted={handleNewSubmission}
-                                />
-                            </motion.div>
-                        ) : event.status === "voting" || (event.eventType === "vote_only" && event.status !== "completed") ? (
-                            <motion.div key="voting" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                                <VotingView
-                                    event={event}
-                                    submissions={enrichedSubmissions}
-                                    votedSubmissionId={votedSubmissionId}
-                                    currentUserId={user?.id}
-                                    onVote={handleVote}
-                                />
-                            </motion.div>
-                        ) : event.status === "completed" ? (
-                            <motion.div key="completed" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                                <CompletedView event={event} submissions={enrichedSubmissions} currentUserId={user?.id} />
-                            </motion.div>
-                        ) : (
-                            <motion.div key="upcoming" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                                <UpcomingView event={event} />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                ) : null}
-            </main>
-        </SidebarLayout>
-    );
-}
-
-// ─── Posting View ───────────────────────────────────────────────────────────
-
-function PostingView({
-    event,
-    submissions,
-    hasSubmitted,
-    mySubmission,
-    currentUserId,
-    onSubmitted,
-}: {
-    event: Event;
-    submissions: Submission[];
-    hasSubmitted: boolean;
-    mySubmission: Submission | null;
-    currentUserId?: string | null;
-    onSubmitted: (sub: Submission) => void;
-}) {
-    const [activeTab, setActiveTab] = useState<"latest" | "top" | "yours">("latest");
-    const [file, setFile] = useState<File | null>(null);
-    const [preview, setPreview] = useState<string | null>(null);
-    const [caption, setCaption] = useState("");
-    const [submitting, setSubmitting] = useState(false);
-    const [pinturaOpen, setPinturaOpen] = useState(false);
-    const [briefOpen, setBriefOpen] = useState(false);
-    const fileRef = useRef<HTMLInputElement>(null);
+    const handleVote = useCallback(async (submissionId: string) => {
+        if (!event || votedSubmissionId) return;
+        const sub = submissions.find((s) => s.id === submissionId);
+        if (!sub) return;
+        if (sub.userId === user?.id && event.eventType !== "vote_only") { toast.error("You can't vote for your own submission."); return; }
+        setOptimisticVoteDelta(submissionId);
+        setVotedSubmissionId(submissionId);
+        try {
+            if (event.eventType === "vote_only") await voteForProposals(event.id, [submissionId]);
+            else await voteOnSubmission(event.id, submissionId);
+        } catch (err: any) {
+            setOptimisticVoteDelta(null);
+            setVotedSubmissionId(null);
+            toast.error(err?.message ?? "Failed to record vote.");
+        }
+    }, [event, submissions, user?.id, votedSubmissionId]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const f = e.target.files?.[0];
@@ -424,491 +601,327 @@ function PostingView({
         setPreview(URL.createObjectURL(f));
     };
 
-    const handlePinturaDone = (editedFile: File, editedPreview: string) => {
-        if (preview) URL.revokeObjectURL(preview);
-        setFile(editedFile);
-        setPreview(editedPreview);
-        setPinturaOpen(false);
-    };
-
-    const handleDiscard = () => {
-        if (preview) URL.revokeObjectURL(preview);
-        setFile(null);
-        setPreview(null);
-        // Reset file input so same file can be re-selected
-        if (fileRef.current) fileRef.current.value = "";
-    };
-
     const handleSubmit = async () => {
         if (!file) { toast.error("Please select an image."); return; }
         setSubmitting(true);
         try {
             const { imageUrl } = await uploadToPinata(file);
-            const sub = await createSubmission({
-                eventId: event.id,
-                imageUrl,
-                caption: caption.trim() || undefined,
-            });
+            const sub = await createSubmission({ eventId: event!.id, imageUrl, caption: caption.trim() || undefined });
             toast.success("Submission uploaded!");
-            onSubmitted(sub);
+            setHasSubmitted(true);
+            setMySubmission(sub);
+            setSubmissions((prev) => [sub, ...prev]);
         } catch (err: any) {
-            toast.error(err?.message ?? "Submission failed. Please try again.");
+            toast.error(err?.message ?? "Submission failed.");
         } finally {
             setSubmitting(false);
         }
     };
 
-    const sortedSubmissions = [...submissions].sort((a, b) =>
-        activeTab === "top" ? (b._count?.votes ?? 0) - (a._count?.votes ?? 0) : 0
-    );
-    const filteredSubmissions =
-        activeTab === "yours"
-            ? sortedSubmissions.filter((s) => s.userId === currentUserId)
-            : sortedSubmissions;
+    const coverUrl = imgUrl(event?.imageUrl, event?.imageCid) ?? "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop";
 
-    return (
-        <div className="px-4 md:px-0">
-            {/* ── Main CTA: Post / Already submitted ── */}
-            <div className="mt-5 mb-5">
-                {hasSubmitted ? (
-                    /* Already submitted state */
-                    <div className="bg-primary/8 border border-primary/25 rounded-[28px] p-6 flex items-center gap-5">
-                        <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0">
-                            <CheckCircle2 className="w-7 h-7 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-sm font-black text-foreground">Entry submitted!</p>
-                            <p className="text-xs text-foreground/50 mt-0.5">
-                                Your post is live. Voting starts when the posting phase ends.
-                            </p>
-                        </div>
-                        {(mySubmission?.imageUrl || mySubmission?.imageCid) && (
-                            <img
-                                src={mySubmission.imageUrl || `${PINATA_GW}/${mySubmission.imageCid}`}
-                                alt="Your submission"
-                                className="w-16 h-16 rounded-xl object-cover shrink-0 border border-primary/30"
-                            />
-                        )}
-                    </div>
-                ) : (
-                    /* Submission form */
-                    <div className="bg-card border border-border/40 rounded-[28px] overflow-hidden">
-                        {/* Header */}
-                        <div className="px-6 pt-6 pb-4 border-b border-border/30 flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-                                <PlusCircle className="w-4 h-4 text-primary" />
-                            </div>
-                            <div>
-                                <h3 className="text-sm font-black text-foreground">Post Your Entry</h3>
-                                <p className="text-[11px] text-foreground/40 font-medium">Upload your image to enter the challenge</p>
-                            </div>
-                        </div>
+    const enrichedSubmissions = submissions.map((sub) => ({
+        ...sub,
+        _count: { votes: (sub._count?.votes ?? 0) + (optimisticVoteDelta === sub.id ? 1 : 0) },
+    }));
 
-                        <div className="p-6 space-y-4">
-                            {/* Image drop zone */}
-                            <div
-                                onClick={() => fileRef.current?.click()}
-                                className={cn(
-                                    "relative border-2 border-dashed rounded-[20px] flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden",
-                                    preview
-                                        ? "border-primary/30 h-[320px]"
-                                        : "border-border/40 hover:border-primary/40 hover:bg-primary/3 h-[200px]"
-                                )}
-                            >
-                                {preview ? (
-                                    <>
-                                        <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-                                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                                            <div className="bg-black/60 backdrop-blur-md px-4 py-2 rounded-full">
-                                                <span className="text-xs font-black text-white">Change Image</span>
-                                            </div>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="flex flex-col items-center gap-3 p-8">
-                                        <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center">
-                                            <Upload className="w-6 h-6 text-foreground/30" />
-                                        </div>
-                                        <div className="text-center">
-                                            <p className="text-sm font-black text-foreground/60">Drop your image here</p>
-                                            <p className="text-xs text-foreground/30 mt-1">or click to browse</p>
-                                        </div>
-                                        <p className="text-[10px] text-foreground/20 uppercase tracking-widest font-bold">
-                                            JPEG · PNG · GIF · WebP · max 5 MB
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                            <input
-                                ref={fileRef}
-                                type="file"
-                                accept="image/jpeg,image/png,image/gif,image/webp"
-                                className="hidden"
-                                onChange={handleFileChange}
-                            />
+    const votedSub = votedSubmissionId ? enrichedSubmissions.find((s) => s.id === votedSubmissionId) : null;
 
-                            {/* Caption */}
-                            <textarea
-                                value={caption}
-                                onChange={(e) => setCaption(e.target.value)}
-                                placeholder="Write a caption… (optional)"
-                                rows={2}
-                                maxLength={280}
-                                className="w-full bg-secondary/40 border border-border/40 rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-foreground/30 resize-none focus:outline-none focus:border-primary/50 transition-colors"
-                            />
+    const displayMode: "post" | "vote" | "completed" | "upcoming" =
+        event?.status === "completed" ? "completed"
+            : event?.status === "posting" ? "post"
+                : event?.status === "voting" || event?.eventType === "vote_only" ? "vote"
+                    : "upcoming";
 
-                            <button
-                                onClick={handleSubmit}
-                                disabled={!file || submitting}
-                                className="w-full py-4 bg-foreground text-background rounded-[18px] text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2.5 hover:bg-foreground/90 active:scale-[0.98] transition-all disabled:opacity-30"
-                            >
-                                {submitting ? (
-                                    <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</>
-                                ) : (
-                                    <><Upload className="w-4 h-4" /> Submit Entry</>
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* ── Collapsible Brief + Rewards ── */}
-            <div className="mb-6">
-                <button
-                    onClick={() => setBriefOpen((v) => !v)}
-                    className="w-full flex items-center justify-between bg-card border border-border/40 rounded-[20px] px-5 py-4 hover:border-border/60 transition-colors"
-                >
-                    <div className="flex items-center gap-3">
-                        <Info className="w-4 h-4 text-foreground/40" />
-                        <span className="text-xs font-black uppercase tracking-[0.15em] text-foreground/50">Challenge Brief & Rewards</span>
-                    </div>
-                    {(mySubmission?.imageUrl || mySubmission?.imageCid) && (
-                        <img
-                            src={mySubmission.imageUrl || `${PINATA_GW}/${mySubmission.imageCid}`}
-                            alt="Your submission"
-                            className="ml-auto w-16 h-16 rounded-xl object-cover shrink-0"
-                        />
-                    )}
-                    {briefOpen ? <ChevronUp className="w-4 h-4 text-foreground/30" /> : <ChevronDown className="w-4 h-4 text-foreground/30" />}
-                </button>
-
-                <AnimatePresence>
-                    {briefOpen && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="overflow-hidden"
-                        >
-                            <div className="grid md:grid-cols-[1fr_300px] gap-4 pt-3">
-                                <div className="bg-card border border-border/40 rounded-[20px] p-5">
-                                    <p className="text-sm font-medium text-foreground/70 leading-relaxed">{event.description}</p>
-                                </div>
-                                <RewardBlock
-                                    rewardPool={`$${((event.leaderboardPool ?? 0) + (event.baseReward ?? 0)).toLocaleString()}`}
-                                    baseReward={event.baseReward ? `$${event.baseReward}` : "$0"}
-                                    topReward={event.topReward ? `$${event.topReward}` : undefined}
-                                    mode="post"
-                                    variant="full"
-                                />
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
-
-            {/* ── Submissions Feed ── */}
-            {submissions.length > 0 && (
-                <div>
-                    <div className="flex items-center justify-between mb-5">
-                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40">
-                            Community Posts ({submissions.length})
-                        </h3>
-                        <div className="flex bg-secondary rounded-xl p-1 border border-border/40">
-                            {(["latest", "top", "yours"] as const).map((tab) => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab)}
-                                    className={cn(
-                                        "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                                        activeTab === tab ? "bg-foreground text-background" : "text-foreground/40 hover:text-foreground"
-                                    )}
-                                >
-                                    {tab === "yours" ? "Mine" : tab}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {filteredSubmissions.map((sub) => (
-                            <PostSubmissionCard key={sub.id} submission={toPostSubmission(sub, currentUserId)} />
-                        ))}
-                    </div>
-                    {activeTab === "yours" && filteredSubmissions.length === 0 && (
-                        <div className="text-center py-16">
-                            <p className="text-sm text-foreground/30 font-bold">You haven&apos;t submitted yet</p>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Pintura editor — opened when user clicks Edit on uploaded image */}
-            {preview && (
-                <PinturaImageEditor
-                    isOpen={pinturaOpen}
-                    imageSrc={preview}
-                    onDone={handlePinturaDone}
-                    onClose={() => setPinturaOpen(false)}
-                />
-            )}
-        </div>
-    );
-}
-
-// ─── Voting View ────────────────────────────────────────────────────────────
-
-function VotingView({
-    event,
-    submissions,
-    votedSubmissionId,
-    currentUserId,
-    onVote,
-}: {
-    event: Event;
-    submissions: Submission[];
-    votedSubmissionId: string | null;
-    currentUserId?: string | null;
-    onVote: (id: string) => void;
-}) {
-    const [activeTab, setActiveTab] = useState<"top" | "latest">("top");
-    const [briefOpen, setBriefOpen] = useState(false);
-
-    const sortedSubmissions = [...submissions].sort((a, b) => {
+    const sortedSubmissions = [...enrichedSubmissions].sort((a, b) => {
         if (activeTab === "top") return (b._count?.votes || 0) - (a._count?.votes || 0);
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        if (activeTab === "latest") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return (b._count?.votes || 0) - (a._count?.votes || 0); // trending = votes
     });
 
-    const votedSub = votedSubmissionId
-        ? submissions.find((s) => s.id === votedSubmissionId)
-        : null;
-
     return (
-        <div className="px-4 md:px-0">
-            {/* ── Vote status banner ── */}
-            <div className="mt-5 mb-5">
-                {votedSubmissionId ? (
-                    <div className="bg-primary/8 border border-primary/25 rounded-[24px] p-4 flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-                            <CheckCircle2 className="w-5 h-5 text-primary" />
-                        </div>
+        <SidebarLayout>
+            <main className="w-full pb-24 pt-2">
+                {/* ── Breadcrumb ── */}
+                <div className="flex items-center gap-1.5 mb-4 px-0">
+                    <Link href="/home" className="text-xs text-foreground/40 hover:text-foreground transition-colors">Home</Link>
+                    <ChevronRight className="w-3 h-3 text-foreground/20" />
+                    <span className="text-xs text-foreground/60 font-medium truncate max-w-[260px]">
+                        {loading ? "Loading…" : event?.title ?? "Event"}
+                    </span>
+                    <div className="ml-auto flex items-center gap-2">
+                        <button className="p-2 rounded-full bg-white/[0.04] border border-white/[0.08] text-foreground/40 hover:text-foreground transition-colors">
+                            <Share2 className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+                </div>
+
+                {loading ? (
+                    <div className="flex flex-col lg:flex-row gap-6 animate-pulse">
+                        {/* Left skeleton */}
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-black text-foreground">Vote cast!</p>
-                            <p className="text-xs text-foreground/40 mt-0.5">
-                                You voted for <span className="text-foreground/70 font-bold">
-                                    @{votedSub?.user?.username || "this entry"}
-                                </span>
-                            </p>
+                            {/* Banner */}
+                            <div className="rounded-[24px] bg-white/[0.05] h-[220px] md:h-[260px] mb-5" />
+                            {/* Tab bar */}
+                            <div className="flex items-center gap-6 border-b border-border/40 pb-3 mb-5">
+                                <div className="h-3 w-20 bg-white/[0.06] rounded-full" />
+                                <div className="h-3 w-14 bg-white/[0.04] rounded-full" />
+                                <div className="h-3 w-10 bg-white/[0.04] rounded-full" />
+                                <div className="ml-auto h-3 w-28 bg-white/[0.04] rounded-full" />
+                            </div>
+                            {/* Cards grid */}
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                {Array.from({ length: 6 }).map((_, i) => (
+                                    <div key={i} className="rounded-[20px] bg-white/[0.05] aspect-[3/4]" />
+                                ))}
+                            </div>
                         </div>
-                        {(votedSub?.imageUrl || votedSub?.imageCid) && (
-                            <img
-                                src={votedSub.imageUrl || `${PINATA_GW}/${votedSub.imageCid}`}
-                                alt="Voted for"
-                                className="w-12 h-12 rounded-xl object-cover shrink-0 border-2 border-primary/40"
-                            />
-                        )}
-                    </div>
-                ) : (
-                    <div className="bg-card border border-border/40 rounded-[24px] p-4 flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                            <Vote className="w-5 h-5 text-foreground/30" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-black text-foreground">Cast your vote</p>
-                            <p className="text-xs text-foreground/40 mt-0.5">
-                                Pick your favorite entry below — you get one vote
-                            </p>
+                        {/* Right skeleton */}
+                        <div className="lg:w-[300px] shrink-0 space-y-4">
+                            <div className="rounded-[20px] bg-white/[0.05] h-[180px]" />
+                            <div className="rounded-[20px] bg-white/[0.05] h-[320px]" />
                         </div>
                     </div>
-                )}
-            </div>
+                ) : fetchError ? (
+                    <div className="flex flex-col items-center justify-center py-32 gap-3 text-center">
+                        <AlertCircle className="w-8 h-8 text-red-400" />
+                        <p className="text-sm font-bold text-foreground/60">{fetchError}</p>
+                        <Link href="/home" className="text-xs font-black text-primary hover:underline">Back to home</Link>
+                    </div>
+                ) : event ? (
+                    <div className="flex flex-col lg:flex-row gap-6">
+                        {/* ── Left column ── */}
+                        <div className="flex-1 min-w-0">
+                            {/* Banner card */}
+                            <div className="relative rounded-[24px] overflow-hidden h-[220px] md:h-[260px] mb-5">
+                                <img src={coverUrl} className="w-full h-full object-cover" alt="Event" />
+                                <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-black/10" />
+                                <div className="absolute inset-0 p-6 flex flex-col justify-between">
+                                    {/* Top badges */}
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        {event.status !== "completed" && (
+                                            <div className="bg-black/30 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                                                <Clock className="w-3 h-3 text-white/60" />
+                                                <span className="text-[10px] font-black text-white">
+                                                    {event.status === "posting" ? "Posting" : "Voting"} phase
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
 
-            {/* ── Collapsible Brief + Rewards ── */}
-            <div className="mb-6">
-                <button
-                    onClick={() => setBriefOpen((v) => !v)}
-                    className="w-full flex items-center justify-between bg-card border border-border/40 rounded-[20px] px-5 py-4 hover:border-border/60 transition-colors"
-                >
-                    <div className="flex items-center gap-3">
-                        <Info className="w-4 h-4 text-foreground/40" />
-                        <span className="text-xs font-black uppercase tracking-[0.15em] text-foreground/50">About this challenge</span>
-                    </div>
-                    {briefOpen ? <ChevronUp className="w-4 h-4 text-foreground/30" /> : <ChevronDown className="w-4 h-4 text-foreground/30" />}
-                </button>
-
-                <AnimatePresence>
-                    {briefOpen && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="overflow-hidden"
-                        >
-                            <div className="grid md:grid-cols-[1fr_300px] gap-4 pt-3">
-                                <div className="bg-card border border-border/40 rounded-[20px] p-5">
-                                    <p className="text-sm font-medium text-foreground/70 leading-relaxed">{event.description}</p>
+                                    {/* Bottom: title, description, CTAs */}
+                                    <div>
+                                        <h1 className="font-display text-3xl md:text-[2.6rem] text-white leading-tight mb-1">
+                                            {event.title}
+                                        </h1>
+                                        {event.description && (
+                                            <p className="text-xs text-white/60 font-medium leading-relaxed line-clamp-2 max-w-[420px] mb-4">
+                                                {event.description}
+                                            </p>
+                                        )}
+                                        <div className="flex items-center gap-3">
+                                            {displayMode === "post" && !hasSubmitted && (
+                                                <button
+                                                    onClick={() => fileRef.current?.click()}
+                                                    className="px-5 py-2.5 bg-orange-500 text-white rounded-full text-xs font-black uppercase tracking-widest hover:bg-orange-500/90 transition-all"
+                                                >
+                                                    Submit Entry
+                                                </button>
+                                            )}
+                                            {displayMode === "vote" && !votedSubmissionId && (
+                                                <div className="px-5 py-2.5 bg-lime-400 text-black rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-1.5">
+                                                    <ThumbsUp className="w-3.5 h-3.5" />
+                                                    Vote Below
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                                <RewardBlock
-                                    rewardPool={`$${calculateTotalPool(event).toLocaleString()}`}
-                                    baseReward={event.baseReward ? `$${event.baseReward}` : "$0"}
-                                    topReward={event.topReward ? `$${event.topReward}` : undefined}
-                                    mode="vote"
-                                    variant="full"
+                            </div>
+
+                            {/* Tab bar */}
+                            {displayMode !== "upcoming" && (
+                                <div className="flex items-center justify-between mb-5 border-b border-border/40 pb-3">
+                                    <div className="flex items-center gap-1">
+                                        {(["trending", "latest", "top"] as const).map((tab) => (
+                                            <button
+                                                key={tab}
+                                                onClick={() => setActiveTab(tab)}
+                                                className={cn(
+                                                    "relative px-4 py-2 text-xs font-black uppercase tracking-[0.15em] transition-all",
+                                                    activeTab === tab ? "text-foreground" : "text-foreground/30 hover:text-foreground/60"
+                                                )}
+                                            >
+                                                {tab}
+                                                {activeTab === tab && (
+                                                    <motion.div layoutId="eventTab" className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-primary" />
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground/30">
+                                            {enrichedSubmissions.length} {event.eventType === "vote_only" ? "Options" : "Submissions"}
+                                        </span>
+                                        <div className="flex border border-border/40 rounded-lg overflow-hidden">
+                                            <button onClick={() => setGridView(true)} className={cn("p-1.5 transition-colors", gridView ? "bg-white/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}>
+                                                <LayoutGrid className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button onClick={() => setGridView(false)} className={cn("p-1.5 transition-colors", !gridView ? "bg-white/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}>
+                                                <List className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Submissions */}
+                            {displayMode === "upcoming" ? (
+                                <div className="py-16 flex flex-col items-center text-center gap-4">
+                                    <div className="w-14 h-14 rounded-3xl bg-primary/10 flex items-center justify-center">
+                                        <Clock className="w-7 h-7 text-primary" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-black text-foreground tracking-tighter mb-1">Coming Soon</h2>
+                                        <p className="text-sm text-foreground/50 font-medium">
+                                            Goes live on <strong>{new Date(event.startTime).toLocaleString()}</strong>
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : displayMode === "completed" ? (
+                                <CompletedView event={event} submissions={enrichedSubmissions} currentUserId={user?.id} gridView={gridView} />
+                            ) : displayMode === "vote" ? (
+                                <AnimatePresence>
+                                    <div className={gridView ? "grid grid-cols-2 md:grid-cols-3 gap-4" : "flex flex-col gap-3"}>
+                                        {sortedSubmissions.map((sub, idx) => (
+                                            <motion.div key={sub.id} layout initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2, delay: idx * 0.03 }}>
+                                                <VoteSubmissionCard
+                                                    submission={toVoteSubmission(sub)}
+                                                    isVoted={votedSubmissionId === sub.id}
+                                                    onVote={() => handleVote(sub.id)}
+                                                    disabled={!!votedSubmissionId || (event.eventType !== "vote_only" && sub.userId === user?.id)}
+                                                    optionIndex={event.eventType === "vote_only" ? idx : undefined}
+                                                />
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                    {enrichedSubmissions.length === 0 && (
+                                        <div className="text-center py-20">
+                                            <p className="text-sm text-foreground/30 font-bold">
+                                                {event.eventType === "vote_only" ? "No options yet" : "No entries yet"}
+                                            </p>
+                                        </div>
+                                    )}
+                                </AnimatePresence>
+                            ) : (
+                                /* posting */
+                                <div>
+                                    {enrichedSubmissions.length > 0 ? (
+                                        <div className={gridView ? "grid grid-cols-2 md:grid-cols-3 gap-4" : "flex flex-col gap-3"}>
+                                            {sortedSubmissions.map((sub) => (
+                                                <PostSubmissionCard key={sub.id} submission={toPostSubmission(sub, user?.id)} />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-20">
+                                            <ImageIcon className="w-8 h-8 text-foreground/10 mx-auto mb-3" />
+                                            <p className="text-sm text-foreground/30 font-bold">No posts yet — be the first!</p>
+                                        </div>
+                                    )}
+                                    {preview && (
+                                        <PinturaImageEditor
+                                            isOpen={pinturaOpen}
+                                            imageSrc={preview}
+                                            onDone={(f, p) => { if (preview) URL.revokeObjectURL(preview); setFile(f); setPreview(p); setPinturaOpen(false); }}
+                                            onClose={() => setPinturaOpen(false)}
+                                        />
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* ── Right: Sticky sidebar ── */}
+                        <div className="lg:w-[300px] shrink-0">
+                            <div className="sticky top-6">
+                                <EventSidebar
+                                    event={event}
+                                    activeViewers={activeViewers}
+                                    mode={displayMode}
+                                    votedSubmissionId={votedSubmissionId}
+                                    votedSub={votedSub ?? undefined}
+                                    hasSubmitted={hasSubmitted}
+                                    mySubmission={mySubmission}
+                                    file={file}
+                                    preview={preview}
+                                    caption={caption}
+                                    submitting={submitting}
+                                    fileRef={fileRef}
+                                    onFileChange={handleFileChange}
+                                    onSubmit={handleSubmit}
+                                    onCaptionChange={setCaption}
                                 />
                             </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
-
-            {/* ── Sort tabs + count ── */}
-            <div className="flex items-center justify-between mb-5">
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40">
-                    {submissions.length} {submissions.length === 1 ? "Entry" : "Entries"}
-                </h3>
-                <div className="flex bg-secondary rounded-xl p-1 border border-border/40">
-                    {(["top", "latest"] as const).map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={cn(
-                                "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                                activeTab === tab ? "bg-foreground text-background" : "text-foreground/40 hover:text-foreground"
-                            )}
-                        >
-                            {tab}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* ── Voting Grid ── */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <AnimatePresence>
-                    {sortedSubmissions.map((sub, idx) => (
-                        <motion.div
-                            key={sub.id}
-                            layout
-                            initial={{ opacity: 0, scale: 0.92 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.25, delay: idx * 0.04 }}
-                        >
-                            <VoteSubmissionCard
-                                submission={toVoteSubmission(sub)}
-                                isVoted={votedSubmissionId === sub.id}
-                                onVote={() => onVote(sub.id)}
-                                disabled={!!votedSubmissionId || (event.eventType !== "vote_only" && sub.userId === currentUserId)}
-                            />
-                        </motion.div>
-                    ))}
-                </AnimatePresence>
-            </div>
-
-            {submissions.length === 0 && (
-                <div className="text-center py-24">
-                    <p className="text-sm text-foreground/30 font-bold">No entries yet</p>
-                </div>
-            )}
-        </div>
+                        </div>
+                    </div>
+                ) : null}
+            </main>
+        </SidebarLayout>
     );
 }
 
-// ─── Completed View ─────────────────────────────────────────────────────────
+// ─── Completed View ──────────────────────────────────────────────────────────
 
-function CompletedView({
-    event,
-    submissions,
-    currentUserId,
-}: {
+function CompletedView({ event, submissions, currentUserId, gridView }: {
     event: Event;
     submissions: Submission[];
     currentUserId?: string | null;
+    gridView: boolean;
 }) {
     const winners = submissions.filter((s) => s.rank && s.rank <= 3).sort((a, b) => (a.rank || 0) - (b.rank || 0));
     const others = submissions.filter((s) => !s.rank || s.rank > 3).sort((a, b) => (b._count?.votes || 0) - (a._count?.votes || 0));
-
     const medalColors = ["text-yellow-400", "text-slate-400", "text-amber-600"];
     const medalIcons = [Crown, Medal, Medal];
 
     return (
-        <div className="px-4 md:px-0 space-y-12 mt-6">
-            {/* Winners podium */}
-            <div>
-                <div className="flex items-center gap-3 mb-6">
-                    <Trophy className="w-5 h-5 text-yellow-500" />
-                    <h2 className="text-lg font-black text-foreground tracking-tighter">Hall of Fame</h2>
-                    <p className="text-xs text-foreground/30 font-bold uppercase tracking-widest">Final results</p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-                    {winners.map((sub, i) => {
-                        const Icon = medalIcons[i] || Medal;
-                        return (
-                            <div key={sub.id} className="relative">
-                                <div className={cn(
-                                    "absolute -top-3 left-4 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
-                                    i === 0 ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" :
-                                        i === 1 ? "bg-slate-500/20 text-slate-300 border border-slate-500/30" :
-                                            "bg-amber-700/20 text-amber-500 border border-amber-700/30"
-                                )}>
-                                    <Icon className={cn("w-3 h-3", medalColors[i])} />
-                                    {i === 0 ? "Winner" : `#${i + 1}`}
-                                </div>
-                                <PostSubmissionCard
-                                    submission={toPostSubmission(sub, currentUserId)}
-                                />
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* Other participants */}
-            {others.length > 0 && (
+        <div className="space-y-10">
+            {winners.length > 0 && (
                 <div>
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40 mb-5">
-                        All Participants ({others.length})
-                    </h3>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        {others.map((sub) => (
-                            <PostSubmissionCard key={sub.id} submission={toPostSubmission(sub, currentUserId)} />
-                        ))}
+                    <div className="flex items-center gap-2 mb-5">
+                        <Trophy className="w-4 h-4 text-yellow-500" />
+                        <h2 className="text-sm font-black text-foreground tracking-tighter uppercase">Hall of Fame</h2>
+                        <span className="text-[10px] text-foreground/30 font-bold uppercase tracking-widest">Final results</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+                        {winners.map((sub, i) => {
+                            const Icon = medalIcons[i] || Medal;
+                            return (
+                                <div key={sub.id} className="relative">
+                                    <div className={cn(
+                                        "absolute -top-3 left-4 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
+                                        i === 0 ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" :
+                                            i === 1 ? "bg-slate-500/20 text-slate-300 border border-slate-500/30" :
+                                                "bg-amber-700/20 text-amber-500 border border-amber-700/30"
+                                    )}>
+                                        <Icon className={cn("w-3 h-3", medalColors[i])} />
+                                        {i === 0 ? "Winner" : `#${i + 1}`}
+                                    </div>
+                                    <PostSubmissionCard submission={toPostSubmission(sub, currentUserId)} />
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             )}
-        </div>
-    );
-}
-
-// ─── Upcoming View ──────────────────────────────────────────────────────────
-
-function UpcomingView({ event }: { event: Event }) {
-    return (
-        <div className="px-4 md:px-0 py-24 flex flex-col items-center text-center gap-6">
-            <div className="w-16 h-16 rounded-3xl bg-primary/10 flex items-center justify-center">
-                <Clock className="w-8 h-8 text-primary" />
-            </div>
-            <div>
-                <h2 className="text-2xl font-black text-foreground tracking-tighter mb-2">Coming Soon</h2>
-                <p className="text-sm text-foreground/50 font-medium max-w-[400px]">
-                    This campaign hasn&apos;t started yet. It will go live on{" "}
-                    <strong>{new Date(event.startTime).toLocaleString()}</strong>.
-                </p>
-            </div>
-            <div className="bg-card border border-border/40 rounded-2xl p-4 flex items-start gap-3 max-w-[480px] text-left">
-                <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <p className="text-xs font-bold text-foreground/60 leading-relaxed">{event.description}</p>
-            </div>
+            {others.length > 0 && (
+                <div>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40 mb-4">
+                        All Participants ({others.length})
+                    </h3>
+                    <div className={gridView ? "grid grid-cols-2 lg:grid-cols-3 gap-4" : "flex flex-col gap-3"}>
+                        {others.map((sub) => <PostSubmissionCard key={sub.id} submission={toPostSubmission(sub, currentUserId)} />)}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

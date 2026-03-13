@@ -1,8 +1,10 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, X, Calendar, Building2, User, Loader2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { searchAll, EventSearchResult, BrandSearchResult, UserSearchResult } from "@/services/search.service";
 
 /* ─────────────────────────────────────────────────────────
    Sparkle Particle System  (Aceternity-inspired)
@@ -105,7 +107,47 @@ function AnimatedHeadline() {
    Main Export
 ───────────────────────────────────────────────────────── */
 export default function HomeHeader() {
+    const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
+    const [results, setResults] = useState<{ events: EventSearchResult[]; brands: BrandSearchResult[]; users: UserSearchResult[] } | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [open, setOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Debounced search
+    useEffect(() => {
+        if (!searchQuery.trim()) {
+            setResults(null);
+            setOpen(false);
+            return;
+        }
+        const timer = setTimeout(async () => {
+            setLoading(true);
+            try {
+                const res = await searchAll(searchQuery.trim(), 4);
+                setResults(res.results);
+                setOpen(true);
+            } catch {
+                setResults(null);
+            } finally {
+                setLoading(false);
+            }
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    // Close on outside click
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+                setOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
+    }, []);
+
+    const hasResults = results && (results.events.length + results.brands.length + results.users.length) > 0;
 
     return (
         <div className="space-y-8 mb-8">
@@ -146,6 +188,7 @@ export default function HomeHeader() {
 
             {/* ── SEARCH BAR ── */}
             <motion.div
+                ref={containerRef}
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.9, duration: 0.35 }}
@@ -153,15 +196,118 @@ export default function HomeHeader() {
             >
                 <div className="absolute -inset-px bg-gradient-to-r from-lime-400/20 via-green-400/15 to-lime-400/20 rounded-2xl opacity-0 group-focus-within:opacity-100 transition-all duration-500 blur-sm pointer-events-none" />
                 <div className="relative flex items-center bg-white/[0.03] border border-white/[0.08] group-focus-within:border-lime-400/35 rounded-2xl transition-all duration-300">
-                    <Search className="absolute left-5 w-4 h-4 text-white/20 group-focus-within:text-lime-400 transition-colors duration-300 pointer-events-none" />
+                    {loading
+                        ? <Loader2 className="absolute left-5 w-4 h-4 text-lime-400 animate-spin pointer-events-none" />
+                        : <Search className="absolute left-5 w-4 h-4 text-white/20 group-focus-within:text-lime-400 transition-colors duration-300 pointer-events-none" />
+                    }
                     <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+                        onFocus={() => hasResults && setOpen(true)}
                         placeholder="Search events, brands, or categories..."
-                        className="w-full bg-transparent py-4 pl-12 pr-6 text-sm font-medium text-white placeholder:text-white/20 outline-none"
+                        className="w-full bg-transparent py-4 pl-12 pr-10 text-sm font-medium text-white placeholder:text-white/20 outline-none"
                     />
+                    {searchQuery && (
+                        <button
+                            onClick={() => { setSearchQuery(""); setResults(null); setOpen(false); }}
+                            className="absolute right-4 text-white/20 hover:text-white/60 transition-colors"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    )}
                 </div>
+
+                {/* ── RESULTS DROPDOWN ── */}
+                <AnimatePresence>
+                    {open && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute top-full mt-2 left-0 right-0 z-50 bg-[#0f1117] border border-white/[0.08] rounded-2xl overflow-hidden shadow-2xl"
+                        >
+                            {!hasResults ? (
+                                <p className="px-5 py-4 text-sm text-white/30">No results for "{searchQuery}"</p>
+                            ) : (
+                                <div className="divide-y divide-white/[0.05]">
+                                    {/* Events */}
+                                    {results!.events.length > 0 && (
+                                        <div className="p-3">
+                                            <p className="px-2 pb-1.5 text-[10px] font-black uppercase tracking-widest text-white/20">Events</p>
+                                            {results!.events.map((ev) => (
+                                                <button
+                                                    key={ev.id}
+                                                    onClick={() => { router.push(`/events/${ev.id}`); setOpen(false); setSearchQuery(""); }}
+                                                    className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/[0.04] transition-colors text-left"
+                                                >
+                                                    {ev.imageUrls?.thumbnail
+                                                        ? <img src={ev.imageUrls.thumbnail} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+                                                        : <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0"><Calendar className="w-4 h-4 text-white/20" /></div>
+                                                    }
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-semibold text-white truncate">{ev.title}</p>
+                                                        {ev.brand && <p className="text-xs text-white/30 truncate">{ev.brand.name}</p>}
+                                                    </div>
+                                                    <span className={`ml-auto text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full flex-shrink-0 ${ev.status === 'posting' || ev.status === 'voting' ? 'bg-lime-400/10 text-lime-400' : 'bg-white/5 text-white/30'}`}>
+                                                        {ev.status}
+                                                    </span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Brands */}
+                                    {results!.brands.length > 0 && (
+                                        <div className="p-3">
+                                            <p className="px-2 pb-1.5 text-[10px] font-black uppercase tracking-widest text-white/20">Brands</p>
+                                            {results!.brands.map((brand) => (
+                                                <button
+                                                    key={brand.id}
+                                                    onClick={() => { router.push(`/brand/${brand.id}`); setOpen(false); setSearchQuery(""); }}
+                                                    className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/[0.04] transition-colors text-left"
+                                                >
+                                                    {brand.logoCid
+                                                        ? <img src={`https://gateway.pinata.cloud/ipfs/${brand.logoCid}`} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+                                                        : <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0"><Building2 className="w-4 h-4 text-white/20" /></div>
+                                                    }
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-semibold text-white truncate">{brand.name}</p>
+                                                        {brand.tagline && <p className="text-xs text-white/30 truncate">{brand.tagline}</p>}
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Users */}
+                                    {results!.users.length > 0 && (
+                                        <div className="p-3">
+                                            <p className="px-2 pb-1.5 text-[10px] font-black uppercase tracking-widest text-white/20">Creators</p>
+                                            {results!.users.map((user) => (
+                                                <button
+                                                    key={user.id}
+                                                    onClick={() => { router.push(`/profile/${user.username}`); setOpen(false); setSearchQuery(""); }}
+                                                    className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/[0.04] transition-colors text-left"
+                                                >
+                                                    {user.avatarUrl
+                                                        ? <img src={user.avatarUrl} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                                                        : <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0"><User className="w-4 h-4 text-white/20" /></div>
+                                                    }
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-semibold text-white truncate">{user.displayName}</p>
+                                                        <p className="text-xs text-white/30 truncate">@{user.username}</p>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </motion.div>
 
         </div>

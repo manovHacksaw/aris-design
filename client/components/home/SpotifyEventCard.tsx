@@ -50,7 +50,7 @@ export default function SpotifyEventCard({ event }: Props) {
                             )}
                         </motion.div>
                     )}
-                </AnimatePresence>
+                </AnimatePresence> 
 
                 {/* Hover info */}
                 <AnimatePresence>
