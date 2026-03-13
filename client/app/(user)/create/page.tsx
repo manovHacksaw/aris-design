@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import SidebarLayout from "@/components/home/SidebarLayout";
 import BottomNav from "@/components/BottomNav";
-import { Sparkles, Palette, PenLine, Video, Building2, Rocket, Loader2, PlayCircle, Star } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, Palette, PenLine, Video, Building2, Rocket, Star } from "lucide-react";
+import { motion } from "framer-motion";
 import { AIGeneratorWindow } from "@/components/create/AIGeneratorWindow";
 import { useUser } from "@/context/UserContext";
 import { getEvents } from "@/services/event.service";
@@ -34,7 +34,6 @@ export default function Create() {
         setLoading(true);
         getEvents({ status: "posting", limit: 20 })
             .then((res) => {
-                // Filter for events that allow posting/submissions
                 const filtered = (res.events || []).filter((e: any) =>
                     e.eventType === 'post_and_vote' || e.allowSubmissions
                 );
@@ -45,15 +44,15 @@ export default function Create() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
+        <div className="min-h-screen bg-background text-foreground font-sans">
             <SidebarLayout>
-                <main className="flex-1 p-4 md:p-8 w-full max-w-[1600px] mx-auto space-y-12 pb-20 md:pb-12">
+                <main className="flex-1 w-full max-w-[1600px] mx-auto space-y-12 pb-20 md:pb-12 pt-2">
 
-                    {/* New Create Hero Panel */}
+                    {/* Hero */}
                     <motion.section
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6 }}
+                        transition={{ duration: 0.5 }}
                     >
                         <CreateHero />
                     </motion.section>
@@ -64,12 +63,10 @@ export default function Create() {
                     {/* User's Posted Submissions */}
                     {user?.id && <UserPostsSection userId={user.id} />}
 
-                    {/* Category Pills */}
-                    <section className="space-y-6">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-xl font-black text-white uppercase tracking-[0.2em] opacity-30">Select Category</h3>
-                        </div>
-                        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+                    {/* Category Filter */}
+                    <section className="space-y-5">
+                        <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Filter by Category</p>
+                        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                             {categoryTabs.map((cat) => {
                                 const isActive = activeCategory === cat.label;
                                 const Icon = cat.icon;
@@ -78,13 +75,13 @@ export default function Create() {
                                         key={cat.label}
                                         onClick={() => setActiveCategory(cat.label)}
                                         className={cn(
-                                            "relative flex items-center gap-2.5 px-6 py-3 rounded-full text-[11px] font-black uppercase tracking-widest transition-all duration-300",
+                                            "relative flex items-center gap-2 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-200 shrink-0",
                                             isActive
-                                                ? "bg-white text-black shadow-xl"
-                                                : "bg-white/5 text-white/40 border border-white/5 hover:bg-white/10 hover:text-white"
+                                                ? "bg-lime-400 text-black shadow-[0_4px_20px_rgba(163,230,53,0.2)]"
+                                                : "bg-white/[0.04] text-white/40 border border-white/[0.08] hover:bg-white/[0.08] hover:text-white/70"
                                         )}
                                     >
-                                        <Icon className={cn("w-3.5 h-3.5", isActive ? "text-primary" : "text-white/30")} />
+                                        <Icon className={cn("w-3.5 h-3.5", isActive ? "text-black" : "text-white/30")} />
                                         <span>{cat.label}</span>
                                     </button>
                                 );
@@ -92,48 +89,52 @@ export default function Create() {
                         </div>
                     </section>
 
-                    {/* Active Events Header */}
-                    <div className="flex items-center justify-between border-t border-white/5 pt-12">
+                    {/* Opportunities Header */}
+                    <div className="flex items-end justify-between border-t border-white/[0.06] pt-10">
                         <div>
-                            <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Opportunities</h2>
-                            <p className="text-xs font-bold text-white/30 uppercase tracking-[0.2em] mt-1">Submit your work to these live events</p>
+                            <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-1">
+                                Submit your work
+                            </p>
+                            <h2 className="font-display text-4xl md:text-5xl text-white uppercase tracking-tight">
+                                Opportunities
+                            </h2>
                         </div>
                         <div className="hidden sm:flex items-center gap-8">
                             <div className="text-right">
-                                <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">Live Events</p>
-                                <p className="text-xl font-black text-white">{openEvents.length}</p>
+                                <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-1">Live Events</p>
+                                <p className="text-2xl font-black text-white">{openEvents.length}</p>
                             </div>
                             <div className="text-right">
-                                <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">Total Prize Pool</p>
-                                <p className="text-xl font-black text-primary">$42,500</p>
+                                <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-1">Total Prize Pool</p>
+                                <p className="text-2xl font-black text-lime-400">$42,500</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Events Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {loading ? (
-                            [...Array(6)].map((_, i) => (
-                                <EventCardSkeleton key={i} />
-                            ))
+                            [...Array(6)].map((_, i) => <EventCardSkeleton key={i} />)
                         ) : openEvents.length > 0 ? (
                             openEvents.map((event, i) => (
                                 <motion.div
                                     key={event.id}
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: i * 0.05 }}
+                                    initial={{ opacity: 0, y: 12 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: i * 0.05, duration: 0.3 }}
                                 >
                                     <EventCard event={event} />
                                 </motion.div>
                             ))
                         ) : (
-                            <div className="col-span-full py-24 text-center bg-white/[0.02] rounded-[40px] border border-dashed border-white/10">
-                                <div className="w-16 h-16 rounded-3xl bg-white/5 flex items-center justify-center mx-auto mb-6">
-                                    <Star className="w-8 h-8 text-white/10" />
+                            <div className="col-span-full py-24 text-center bg-white/[0.02] rounded-[32px] border border-dashed border-white/[0.08]">
+                                <div className="w-14 h-14 rounded-3xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto mb-5">
+                                    <Star className="w-7 h-7 text-white/20" />
                                 </div>
-                                <p className="text-white/40 font-black uppercase tracking-[0.2em] text-sm">No Active Post Opportunities</p>
-                                <p className="text-white/20 text-xs mt-2">Check back soon for new challenges</p>
+                                <p className="font-display text-2xl text-white/30 uppercase tracking-tight mb-1">
+                                    No Active Opportunities
+                                </p>
+                                <p className="text-xs text-white/20 font-medium">Check back soon for new challenges</p>
                             </div>
                         )}
                     </div>
