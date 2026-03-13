@@ -30,37 +30,32 @@ export default function SidebarButton({
                 "transition-colors duration-150 ease-out",
                 // Hover effect
                 isDestructive
-                    ? "text-[#EF4444] hover:bg-[#EF4444]/10"
-                    : "text-foreground/60 hover:bg-secondary hover:text-foreground",
+                    ? "text-[#FF60B6] hover:bg-[#FF60B6]/10"
+                    : "text-white/50 hover:bg-white/5 hover:text-white",
                 // Rounded
                 "rounded-xl",
                 // Active Styling
-                isActive && !isDestructive && "text-foreground font-bold"
+                isActive && !isDestructive && "text-white font-black bg-[#6366F1] border border-white/10 shadow-[4px_4px_0px_0px_#FFFFFF]"
             )}
         >
-            {/* Left accent pill for active state */}
-            {isActive && !isDestructive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary rounded-full" />
-            )}
-
             <div className="flex-shrink-0 relative flex items-center justify-center w-8 h-8">
                 <Icon
-                    size={24}
+                    size={20}
                     className={cn(
                         "transition-colors duration-150",
                         isActive && !isDestructive
-                            ? "text-foreground"
+                            ? "text-white"
                             : "",
-                        isDestructive ? "text-[#EF4444]" : "group-hover:text-foreground",
-                        !isActive && !isDestructive && "text-foreground/60"
+                        isDestructive ? "text-[#FF60B6]" : "group-hover:text-white",
+                        !isActive && !isDestructive && "text-white/40"
                     )}
                 />
             </div>
 
             <span
                 className={cn(
-                    "whitespace-nowrap overflow-hidden transition-all duration-150 ease-out text-left ml-3 text-[15px]",
-                    isActive ? "font-semibold" : "font-normal",
+                    "whitespace-nowrap overflow-hidden transition-all duration-150 ease-out text-left ml-3 text-sm",
+                    isActive ? "font-black" : "font-semibold",
                     showExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
                 )}
             >

@@ -13,12 +13,12 @@ import { useAuth } from "@/context/AuthContext";
 import { calculateTotalPool } from "@/lib/eventUtils";
 
 const CAMPAIGN_STATUS_STYLES: Record<string, string> = {
-    posting: "bg-green-500/10 text-green-500 border-green-500/20",
-    voting: "bg-purple-500/10 text-purple-500 border-purple-500/20",
-    scheduled: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-    draft: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-    completed: "bg-muted text-muted-foreground border-border",
-    cancelled: "bg-red-500/10 text-red-400 border-red-500/20",
+    posting: "bg-neon-lime text-black border-border",
+    voting: "bg-lavender text-black border-border",
+    scheduled: "bg-vibrant-blue text-black border-border",
+    draft: "bg-vibrant-yellow text-black border-border",
+    completed: "bg-secondary text-secondary-foreground border-border",
+    cancelled: "bg-vibrant-pink text-white border-border",
 };
 
 const CAMPAIGN_STATUS_LABELS: Record<string, string> = {
@@ -41,8 +41,8 @@ function CampaignCard({ event }: { event: Event }) {
         <Link
             href={`/brand/events/${event.id}`}
             className={cn(
-                "group block bg-card border rounded-[20px] overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-primary/30",
-                isCancelled ? "border-red-500/20 opacity-75 hover:opacity-100" : "border-border"
+                "group block bg-card border-[1.5px] border-border rounded-lg overflow-hidden transition-all duration-200 hover:shadow-card hover:-translate-y-1",
+                isCancelled && "opacity-75 hover:opacity-100"
             )}
         >
             {/* Cover */}
@@ -142,8 +142,8 @@ export default function BrandDashboard() {
             {/* Campaigns + Notifications */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Active Campaigns */}
-                <section className="lg:col-span-2 bg-card border border-border rounded-[24px] overflow-hidden shadow-sm">
-                    <div className="p-6 border-b border-border flex justify-between items-center">
+                <section className="lg:col-span-2 bg-card border-[1.5px] border-border rounded-xl overflow-hidden">
+                    <div className="p-6 border-b-[1.5px] border-border flex justify-between items-center bg-secondary/10">
                         <h3 className="font-bold text-lg">Active Campaigns</h3>
                         <Link href="/brand/events" className="text-sm text-primary font-bold hover:underline flex items-center gap-1">
                             View All <ArrowRight className="w-3 h-3" />
@@ -167,7 +167,7 @@ export default function BrandDashboard() {
 
                 {/* Notifications + Pro Tip */}
                 <aside className="space-y-6">
-                    <div className="bg-card border border-border rounded-[24px] p-6 shadow-sm">
+                    <div className="bg-card border-[1.5px] border-border rounded-xl p-6">
                         <h3 className="font-bold text-lg mb-4">Needs Attention</h3>
                         {loadingNotifs ? (
                             <div className="space-y-3 animate-pulse">
@@ -197,13 +197,13 @@ export default function BrandDashboard() {
                         )}
                     </div>
 
-                    <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-[24px] p-6">
-                        <h3 className="font-bold text-primary mb-2">Pro Tip</h3>
-                        <p className="text-sm text-muted-foreground mb-4 font-medium">
+                    <div className="bg-neon-lime border-[1.5px] border-border rounded-xl p-6 shadow-card">
+                        <h3 className="font-black text-black mb-2 uppercase tracking-tight">Pro Tip</h3>
+                        <p className="text-sm text-black/80 mb-4 font-bold leading-snug">
                             Campaigns with video requirements get 40% higher engagement on average.
                         </p>
-                        <Link href="#" className="text-xs font-black text-primary flex items-center gap-1 hover:underline uppercase tracking-wide">
-                            Read Case Study <ExternalLink className="w-3 h-3" />
+                        <Link href="#" className="inline-flex items-center gap-1.5 px-3 py-1 bg-black text-white rounded-full text-xs font-black hover:opacity-80 transition-opacity uppercase tracking-wide">
+                            Case Study <ExternalLink className="w-3 h-3" />
                         </Link>
                     </div>
                 </aside>

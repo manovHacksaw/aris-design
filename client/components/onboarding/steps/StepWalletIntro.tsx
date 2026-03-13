@@ -11,7 +11,16 @@ const CARDS = [
     bg: "bg-emerald-400/10",
     border: "border-emerald-400/20",
     title: "How rewards work",
-    desc: "Vote on campaigns, create content, and complete challenges to earn USDC directly to your wallet.",
+    desc: (
+      <span className="flex items-center gap-1 flex-wrap">
+        Vote on campaigns, create content, and complete challenges to earn
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-foreground/5 rounded-md border border-border/50">
+          <img src="/usdc.png" alt="USDC" className="w-2.5 h-2.5" />
+          <span className="text-[10px] font-bold">USDC</span>
+        </span>
+        directly to your wallet.
+      </span>
+    ) as any,
   },
   {
     Icon: Zap,

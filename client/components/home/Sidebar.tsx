@@ -65,7 +65,7 @@ export default function Sidebar() {
 
             <motion.aside
                 className={cn(
-                    "fixed left-0 top-0 h-screen bg-background border-r border-border flex flex-col z-50 overflow-hidden",
+                    "fixed left-0 top-0 h-screen bg-[#111111] border-r border-white/5 flex flex-col z-50 overflow-hidden",
                     // Mobile styles: fixed inset-y-0 left-0 transform transition-transform
                     // Desktop styles: hidden md:flex
                     isMobileOpen ? "translate-x-0 w-[240px]" : "-translate-x-full md:translate-x-0",
@@ -81,24 +81,25 @@ export default function Sidebar() {
                 }}
             >
                 {/* Logo Section */}
-                <div className="flex items-center pt-6 pb-5 pl-4 pr-3">
+                <div className="flex items-center pt-8 pb-6 pl-6 pr-3 h-[88px]">
                     <Link href="/home" className="flex items-center group">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20 transition-transform duration-150 group-hover:scale-105 active:scale-95">
-                            <span className="text-white font-bold text-base select-none">A</span>
+                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center transition-transform duration-150 group-hover:scale-105 active:scale-95">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
+                                <path d="M12 4L4 18H20L12 4Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
                         </div>
                         <span
                             className={cn(
-                                "text-xl font-bold tracking-tight text-foreground overflow-hidden transition-all duration-150 ease-out whitespace-nowrap ml-3",
+                                "text-xl font-black tracking-[0.15em] text-white uppercase overflow-hidden transition-all duration-150 ease-out whitespace-nowrap ml-4",
                                 showExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
                             )}
                         >
-                            Aris
+                            ARIS
                         </span>
                     </Link>
                 </div>
 
-                {/* Subtle divider under logo */}
-                <div className="mx-4 h-[1px] bg-border mb-2" />
+                {/* Divider removed to match image */}
 
                 {/* Navigation */}
                 <nav className="flex-1 flex flex-col px-3 pt-2">
@@ -132,7 +133,7 @@ export default function Sidebar() {
                                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                                 className={cn(
                                     "group flex items-center w-full pl-3 py-2 rounded-xl",
-                                    "text-foreground/60 hover:bg-secondary hover:text-foreground",
+                                    "text-white/50 hover:bg-white/5 hover:text-white",
                                     "transition-colors duration-150 ease-out"
                                 )}
                             >
@@ -162,7 +163,7 @@ export default function Sidebar() {
                                 onClick={() => logout()}
                                 className={cn(
                                     "group relative flex items-center w-full pl-3 py-2 rounded-xl",
-                                    "text-foreground/60 hover:bg-secondary hover:text-red-400",
+                                    "text-white/50 hover:bg-white/5 hover:text-red-400",
                                     "transition-colors duration-150 ease-out"
                                 )}
                             >
@@ -190,7 +191,7 @@ export default function Sidebar() {
                                 onClick={toggleSidebar}
                                 className={cn(
                                     "group flex items-center w-full pl-3 py-2 rounded-xl",
-                                    "text-foreground/60 hover:bg-secondary hover:text-foreground",
+                                    "text-white/50 hover:bg-white/5 hover:text-white",
                                     "transition-colors duration-150 ease-out"
                                 )}
                                 aria-label={showExpanded ? "Collapse sidebar" : "Expand sidebar"}

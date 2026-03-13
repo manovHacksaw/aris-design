@@ -589,7 +589,7 @@ function PostingView({
                             alt="Your submission"
                             className="ml-auto w-16 h-16 rounded-xl object-cover shrink-0"
                         />
-__SWITCH__
+                    )}
                     {briefOpen ? <ChevronUp className="w-4 h-4 text-foreground/30" /> : <ChevronDown className="w-4 h-4 text-foreground/30" />}
                 </button>
 
@@ -618,73 +618,6 @@ __SWITCH__
                 </AnimatePresence>
             </div>
 
-                    {/* Image pick / preview */}
-                    {preview ? (
-                        <div className="relative rounded-[20px] overflow-hidden h-56 border border-primary/20">
-                            <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-                            {/* Action overlay */}
-                            <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                                <button
-                                    type="button"
-                                    onClick={handleDiscard}
-                                    className="px-4 py-2 rounded-xl bg-black/70 border border-white/20 text-[11px] font-black text-white/70 uppercase tracking-widest hover:text-white transition-colors backdrop-blur-md"
-                                >
-                                    Discard
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setPinturaOpen(true)}
-                                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-black/70 border border-white/20 text-[11px] font-black text-white uppercase tracking-widest hover:bg-primary/20 hover:border-primary/50 transition-all backdrop-blur-md"
-                                >
-                                    <Pencil className="w-3 h-3" />
-                                    Edit
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div
-                            onClick={() => fileRef.current?.click()}
-                            className="relative border-2 border-dashed border-border/40 hover:border-primary/40 rounded-[20px] h-40 flex flex-col items-center justify-center cursor-pointer transition-colors"
-                        >
-                            <ImageIcon className="w-8 h-8 text-foreground/20 mb-2" />
-                            <p className="text-xs text-foreground/40 font-bold">Click to upload image</p>
-                            <p className="text-[10px] text-foreground/25 mt-1">JPEG, PNG, GIF or WebP · max 5 MB</p>
-                        </div>
-                    )}
-                    <input
-                        ref={fileRef}
-                        type="file"
-                        accept="image/jpeg,image/png,image/gif,image/webp"
-                        className="hidden"
-                        onChange={handleFileChange}
-                    />
-
-                    {/* Caption */}
-                    <textarea
-                        value={caption}
-                        onChange={(e) => setCaption(e.target.value)}
-                        placeholder="Add a caption (optional)"
-                        rows={2}
-                        maxLength={280}
-                        className="w-full bg-secondary/40 border border-border/40 rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-foreground/30 resize-none focus:outline-none focus:border-primary/50 transition-colors"
-                    />
-
-                    <button
-                        onClick={handleSubmit}
-                        disabled={!file || submitting}
-                        className="w-full py-3.5 bg-foreground text-background rounded-[18px] text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2.5 hover:bg-foreground/90 active:scale-[0.98] transition-all disabled:opacity-40"
-                    >
-                        {submitting ? (
-                            <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</>
-                        ) : (
-                            "Submit Entry"
-                        )}
-                    </button>
-                </div>
-            )}
-
-            {/* Submissions feed */}
-__SWITCH__
             {/* ── Submissions Feed ── */}
             {submissions.length > 0 && (
                 <div>

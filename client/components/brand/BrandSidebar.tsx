@@ -58,7 +58,7 @@ export default function BrandSidebar() {
 
     return (
         <motion.aside
-            className="sticky top-0 h-screen bg-background border-r border-border hidden md:flex flex-col z-50 overflow-hidden shrink-0"
+            className="sticky top-0 h-screen bg-[#111111] border-r border-white/5 hidden md:flex flex-col z-50 overflow-hidden shrink-0"
             initial={false}
             animate={{
                 width: showExpanded ? 260 : 72
@@ -69,24 +69,25 @@ export default function BrandSidebar() {
             }}
         >
             {/* Logo Section */}
-            <div className="flex items-center pt-6 pb-5 pl-4 pr-3 h-[88px]">
+            <div className="flex items-center pt-8 pb-6 pl-6 pr-3 h-[88px]">
                 <Link href="/brand/dashboard" className="flex items-center group">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20 transition-transform duration-150 group-hover:scale-105 active:scale-95">
-                        <span className="text-white font-bold text-base select-none">B</span>
+                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center transition-transform duration-150 group-hover:scale-105 active:scale-95">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
+                            <path d="M12 4L4 18H20L12 4Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
                     </div>
                     <span
                         className={cn(
-                            "text-xl font-bold tracking-tight text-foreground overflow-hidden transition-all duration-150 ease-out whitespace-nowrap ml-3",
+                            "text-xl font-black tracking-[0.15em] text-white uppercase overflow-hidden transition-all duration-150 ease-out whitespace-nowrap ml-4",
                             showExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
                         )}
                     >
-                        Aris <span className="text-primary text-sm font-medium ml-1">Brand</span>
+                        ARIS
                     </span>
                 </Link>
             </div>
 
-            {/* Subtle divider under logo */}
-            <div className="mx-4 h-[1px] bg-border mb-2" />
+            {/* Divider removed to match image */}
 
             {/* Navigation */}
             <nav className="flex-1 flex flex-col px-3 pt-2 overflow-y-auto scrollbar-hide">
@@ -136,7 +137,7 @@ export default function BrandSidebar() {
                             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                             className={cn(
                                 "group flex items-center w-full pl-3 py-3 rounded-xl",
-                                "text-foreground/60 hover:bg-secondary hover:text-foreground",
+                                "text-white/50 hover:bg-white/5 hover:text-white",
                                 "transition-colors duration-150 ease-out"
                             )}
                         >

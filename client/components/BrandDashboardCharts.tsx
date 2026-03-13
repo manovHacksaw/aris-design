@@ -12,15 +12,15 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 const INTERESTS = ["Music", "Visual Arts", "Tech", "Fashion", "Fitness"];
 const GENDER = [
     { label: "Female", value: 58, color: "bg-primary" },
-    { label: "Male",   value: 35, color: "bg-primary/40" },
-    { label: "Other",  value: 7,  color: "bg-primary/15" },
+    { label: "Male", value: 35, color: "bg-primary/40" },
+    { label: "Other", value: 7, color: "bg-primary/15" },
 ];
 
 const STAT_META = [
-    { icon: TrendingUp, label: "Total Views",  key: "totalViews"     as const, changeKey: "viewsChange"       as const },
-    { icon: Users,      label: "Engagement",   key: "engagementRate" as const, changeKey: "engagementChange"  as const },
-    { icon: DollarSign, label: "Total Spend",  key: "totalSpend"     as const, changeKey: "spendChange"       as const },
-    { icon: Zap,        label: "Conversions",  key: "conversions"    as const, changeKey: "conversionsChange" as const },
+    { icon: TrendingUp, label: "Total Views", key: "totalViews" as const, changeKey: "viewsChange" as const, color: "bg-neon-lime" },
+    { icon: Users, label: "Engagement", key: "engagementRate" as const, changeKey: "engagementChange" as const, color: "bg-lavender" },
+    { icon: DollarSign, label: "Total Spend", key: "totalSpend" as const, changeKey: "spendChange" as const, color: "bg-vibrant-orange" },
+    { icon: Zap, label: "Conversions", key: "conversions" as const, changeKey: "conversionsChange" as const, color: "bg-vibrant-yellow" },
 ];
 
 function formatValue(key: string, raw: number): string {
@@ -58,7 +58,7 @@ export default function BrandDashboardCharts() {
     useEffect(() => {
         getBrandAnalyticsOverview()
             .then((data) => setAnalytics(data as BrandAnalytics))
-            .catch(() => {})
+            .catch(() => { })
             .finally(() => setLoading(false));
     }, []);
 
@@ -88,27 +88,30 @@ export default function BrandDashboardCharts() {
 
             {/* KPI Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {STAT_META.map(({ icon: Icon, label, key, changeKey }, i) => {
+                {STAT_META.map(({ icon: Icon, label, key, changeKey, color }, i) => {
                     const raw = stats[key];
                     const change = stats[changeKey];
                     return (
                         <motion.div
                             key={label}
-                            initial={{ opacity: 0, y: 16 }}
-                            animate={{ opacity: 1, y: 0 }}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: i * 0.07 }}
-                            className="bg-card border border-border rounded-[24px] p-5 shadow-sm"
+                            className={cn(
+                                "border-[1.5px] border-border rounded-xl p-5 shadow-card transition-transform hover:-translate-y-1",
+                                color
+                            )}
                         >
-                            <div className="flex items-center justify-between mb-3">
-                                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
-                                <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-                                    <Icon className="w-4 h-4 text-primary" />
+                            <div className="flex items-center justify-between mb-4">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-black/60">{label}</p>
+                                <div className="w-8 h-8 rounded-lg bg-black/10 flex items-center justify-center">
+                                    <Icon className="w-4 h-4 text-black" />
                                 </div>
                             </div>
-                            <div className="text-2xl font-black text-foreground mb-2">{formatValue(key, raw)}</div>
-                            <div className="inline-flex items-center gap-0.5 text-xs font-bold px-2 py-0.5 rounded-full bg-green-500/10 text-green-600">
+                            <div className="text-3xl font-black text-black mb-2 tracking-tight">{formatValue(key, raw)}</div>
+                            <div className="inline-flex items-center gap-0.5 text-[10px] font-black px-2 py-0.5 rounded-full bg-black/10 text-black uppercase">
                                 <ArrowUp className="w-3 h-3" />
-                                +{change}% vs last week
+                                +{change}%
                             </div>
                         </motion.div>
                     );
@@ -122,7 +125,7 @@ export default function BrandDashboardCharts() {
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.32 }}
-                    className="lg:col-span-2 bg-card border border-border rounded-[24px] p-6 shadow-sm"
+                    className="lg:col-span-2 bg-card border-[1.5px] border-border rounded-xl p-6 shadow-sm"
                 >
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="font-bold text-lg">Daily Engagement</h3>
@@ -168,7 +171,7 @@ export default function BrandDashboardCharts() {
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.42 }}
-                    className="bg-card border border-border rounded-[24px] p-6 shadow-sm space-y-5"
+                    className="bg-card border-[1.5px] border-border rounded-xl p-6 shadow-sm space-y-5"
                 >
                     <h3 className="font-bold text-lg">Audience Insights</h3>
 

@@ -381,12 +381,15 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
               </a>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs text-muted-foreground">USDC balance</span>
-              <span className="text-xs font-mono font-bold text-foreground">
-                {usdcBalance !== null
-                  ? `$${(Number(usdcBalance) / 1_000_000).toFixed(2)}`
-                  : "—"}
-              </span>
+              <span className="text-xs text-muted-foreground whitespace-nowrap">USDC balance</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-mono font-bold text-foreground">
+                  {usdcBalance !== null
+                    ? `$${(Number(usdcBalance) / 1_000_000).toFixed(2)}`
+                    : "—"}
+                </span>
+                <img src="/usdc.png" alt="USDC" className="w-3 h-3" />
+              </div>
             </div>
             {form.useRefundCredit && form.refundCreditAmount && (
               <div className="flex items-center justify-between gap-2">

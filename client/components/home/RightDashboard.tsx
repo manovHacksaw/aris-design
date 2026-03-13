@@ -1,186 +1,298 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { TrendingUp, Flame, Zap, ChevronRight } from "lucide-react";
+import {
+  Flame,
+  Copy,
+  ExternalLink,
+  Share2,
+  Wallet,
+  Zap,
+  Plus,
+  Send,
+} from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/context/UserContext";
-import { xpToLevel, xpForNextLevel, levelToRank } from "@/types/user";
+import { useWallet } from "@/context/WalletContext";
+import { xpForNextLevel } from "@/types/user";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import {
+  getXpStatus,
+  getXpTransactions,
+  loginPing,
+  type FullXpStatus,
+  type XpTransactionSummary,
+} from "@/services/xp.service";
+
+function buildDailyXP(transactions: XpTransactionSummary[], days = 7): number[] {
+  const buckets: number[] = Array(days).fill(0);
+  const now = new Date();
+  for (const tx of transactions) {
+    const diffMs = now.getTime() - new Date(tx.createdAt).getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays >= 0 && diffDays < days) {
+      buckets[days - 1 - diffDays] += tx.amount;
+    }
+  }
+  return buckets;
+}
+
+function relativeTime(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins || 1}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function txLabel(tx: XpTransactionSummary): string {
+  if (tx.description) return tx.description;
+  switch (tx.type) {
+    case "LOGIN_STREAK": return "Login streak bonus";
+    case "SUBMISSION": return "Post submitted";
+    case "VOTE_CAST": return "Vote cast";
+    case "MILESTONE": return "Milestone reached";
+    case "REFERRAL": return "Referral bonus";
+    default: return "XP earned";
+  }
+}
 
 export default function RightDashboard() {
   const { user, stats } = useUser();
+  const { balance, address } = useWallet();
+  const [copied, setCopied] = useState(false);
+  const [xpStatus, setXpStatus] = useState<FullXpStatus | null>(null);
+  const [transactions, setTransactions] = useState<XpTransactionSummary[]>([]);
 
-  const xp = user?.xp ?? 0;
-  const streak = user?.currentStreak ?? 0;
-  const level = xpToLevel(xp);
-  const rank = levelToRank(level);
-  const { progress, next } = xpForNextLevel(xp);
-  const nextRank = levelToRank(level + 1);
+  const truncatedAddress = address
+    ? `${address.slice(0, 4)}...${address.slice(-4)}`
+    : "0x00...0000";
 
-  // Weekly XP bars — derive from real XP if available, otherwise show pattern
-  const weeklyBars = stats
-    ? [50, 60, 45, 70, 55, 80, progress].map((v) => Math.max(5, v))
-    : [40, 65, 45, 80, 55, 90, 75];
+  const streak = xpStatus?.streak?.current ?? user?.currentStreak ?? 0;
+  const longestStreak = xpStatus?.streak?.longest ?? null;
+  const referralCode = xpStatus?.referralStats?.referralCode ?? user?.referralCode ?? "—";
+  const { progress } = xpForNextLevel(user?.xp ?? 0);
+  const totalEarnings = stats?.earnings ?? 0;
 
-  const recentActivity = [
-    stats && stats.posts > 0 && {
-      type: "Submissions",
-      title: `${stats.posts} total posts`,
-      status: "Completed",
-      points: `+${stats.posts * 50} XP`,
-    },
-    stats && stats.votes > 0 && {
-      type: "Votes Cast",
-      title: `${stats.votes} votes total`,
-      status: "In Progress",
-      points: `+${stats.votes * 25} XP`,
-    },
-  ].filter(Boolean) as { type: string; title: string; status: string; points: string }[];
+  const earnedToday = transactions
+    .filter((tx) => Date.now() - new Date(tx.createdAt).getTime() < 86400000)
+    .reduce((sum, tx) => sum + tx.amount, 0);
+
+  const dailyXP = buildDailyXP(transactions, 7);
+  const maxXP = Math.max(...dailyXP, 1);
+  const weeklyBars = dailyXP.map((v) => Math.round((v / maxXP) * 100));
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const [status, txRes] = await Promise.all([
+          getXpStatus(),
+          getXpTransactions(50, 0),
+        ]);
+        if (!cancelled) {
+          setXpStatus(status);
+          setTransactions(txRes.transactions);
+        }
+      } catch {
+        // graceful degradation
+      }
+    }
+    load();
+    loginPing().catch(() => { });
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleCopy = () => {
+    if (referralCode === "—") return;
+    navigator.clipboard.writeText(referralCode);
+    setCopied(true);
+    toast.success("Referral code copied!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const recentTx = transactions.slice(0, 4);
 
   return (
-    <div className="flex flex-col gap-5 sticky top-6">
-      {/* 1. Streak & Rank Card */}
-      <div className="bg-card rounded-3xl p-6 border border-border shadow-card overflow-hidden relative group flex flex-col justify-center">
-        <div className="absolute -top-10 -right-10 w-28 h-28 bg-orange-300/20 rounded-full blur-3xl group-hover:bg-orange-300/30 transition-all duration-500" />
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <p className="text-xs text-foreground/40 mb-1 font-medium">Current Streak</p>
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-4xl font-display text-foreground tabular-nums">
-                  {streak || "—"}
-                </h3>
-                <span className="text-sm font-semibold text-orange-500">
-                  {streak > 0 ? "Days" : ""}
-                </span>
-              </div>
-            </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-amber-400 rounded-2xl flex items-center justify-center shadow-soft">
-              <Flame className="w-6 h-6 text-white fill-current" />
+    <div className="flex flex-col gap-4 sticky top-6 pb-10">
+
+      {/* 1. Login Streak */}
+      <Link href="/dashboard" className="block group transition-transform active:scale-[0.98]">
+        <div className="bg-[#EA580C] rounded-[24px] p-6 flex justify-between items-center shadow-lg shadow-orange-950/20 group-hover:bg-[#F97316] transition-colors overflow-hidden relative font-sans border border-white/10">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+          <div className="relative z-10">
+            <p className="text-[11px] font-black text-white/80 uppercase tracking-[0.15em] mb-1">Login Streak</p>
+            <h3 className="text-4xl font-black text-white tracking-tight">{streak} Days</h3>
+            {longestStreak !== null && (
+              <p className="text-[10px] font-bold text-white/50 mt-0.5">Best: {longestStreak} days</p>
+            )}
+          </div>
+          <div className="relative z-10 w-14 h-14 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md border border-white/20 shadow-inner">
+            <Flame className="w-8 h-8 text-white fill-current" />
+          </div>
+        </div>
+      </Link>
+
+      {/* 2. Wallet Card */}
+      <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-[32px] p-6 shadow-lg flex flex-col relative overflow-hidden">
+
+        {/* Balance */}
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-1">
+            <Image src="/usdc.png" alt="USDC" width={36} height={36} className="rounded-full" />
+            <div className="flex items-baseline gap-2">
+              <h3 className="text-4xl font-black text-white tracking-tight">${balance}</h3>
+              <span className="text-lg font-bold text-white/30">USDC</span>
             </div>
           </div>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-foreground/50">{rank}</span>
-              <span className="text-xs text-orange-500 font-medium">{progress}% to {nextRank}</span>
-            </div>
-            <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 1.5, ease: "easeOut" }}
-                className="h-full bg-gradient-to-r from-orange-400 to-amber-400"
-              />
-            </div>
-          </div>
+          <p className="text-[11px] font-bold text-[#60A5FA] mt-2">+$2.20 from last week</p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <button className="flex-1 flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-sm font-black text-white/70 transition-all active:scale-[0.98]">
+            <Plus size={18} />
+            Top Up
+          </button>
+          <button className="flex-1 flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-sm font-black text-white/70 transition-all active:scale-[0.98]">
+            <Send size={18} className="-rotate-45" />
+            Transfer
+          </button>
+        </div>
+
+        {/* Address & Explorer */}
+        <div className="mt-6 pt-4 border-t border-white/[0.06] flex justify-between items-center">
+          <button
+            onClick={() => {
+              address && navigator.clipboard.writeText(address);
+              toast.success("Address copied!");
+            }}
+            className="text-[10px] font-bold text-white/30 hover:text-white transition-colors flex items-center gap-1.5"
+          >
+            {truncatedAddress} <Copy size={10} />
+          </button>
+          <a
+            href={address ? `https://amoy.polygonscan.com/address/${address}` : "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[10px] font-black text-white/30 hover:text-white uppercase tracking-widest flex items-center gap-1.5"
+          >
+            Explorer <ExternalLink size={10} />
+          </a>
         </div>
       </div>
 
-      {/* 2. XP Analysis Card */}
-      <div className="bg-card rounded-3xl p-6 border border-border shadow-card">
-        <div className="flex items-center justify-between mb-7">
-          <div>
-            <h3 className="text-base font-display text-foreground">XP Analysis</h3>
-            <p className="text-xs text-foreground/40 mt-0.5">
-              Level {level} · {xp.toLocaleString()} XP
-            </p>
-          </div>
-          <div className="w-9 h-9 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
-            <TrendingUp className="w-4 h-4 text-primary" />
-          </div>
-        </div>
-        <div className="h-32 flex items-end justify-between gap-1.5 mb-6">
-          {weeklyBars.map((height, i) => (
-            <motion.div
-              key={i}
-              initial={{ height: 0 }}
-              animate={{ height: `${height}%` }}
-              transition={{ duration: 1, delay: i * 0.1 }}
-              className={cn(
-                "w-full rounded-t-xl transition-all duration-300 relative group/bar",
-                i === weeklyBars.length - 1
-                  ? "bg-primary shadow-[0_0_20px_rgba(47,106,255,0.4)]"
-                  : "bg-primary/10 hover:bg-primary/30"
-              )}
-            >
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-foreground text-background text-[9px] font-black px-1.5 py-0.5 rounded opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap">
-                {Math.round(height * 10)} XP
-              </div>
-            </motion.div>
-          ))}
-        </div>
-        <div className="flex items-center justify-between text-[10px] text-foreground/30 font-black uppercase tracking-widest px-1">
-          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-            <span key={d}>{d}</span>
-          ))}
-        </div>
-      </div>
-
-      {/* 3. Recent Activity */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-display text-foreground">Recent Activity</h3>
-          <Link href="/activity" className="text-xs text-primary hover:underline flex items-center gap-0.5 transition-colors font-medium">
-            View All <ChevronRight className="w-3.5 h-3.5" />
+      {/* 3. XP Tracking */}
+      <div className="bg-[#181818] border border-white/5 rounded-[28px] p-6 shadow-sm flex flex-col h-auto">
+        <div className="flex items-center justify-between mb-6">
+          <span className="text-[13px] font-black text-white/90">XP Tracking</span>
+          <Link href="/dashboard" className="text-[11px] font-black text-[#A78BFA] hover:underline uppercase tracking-wider">
+            View Dashboard
           </Link>
         </div>
 
+        <div className="mb-8">
+          <h4 className="text-4xl font-black text-[#A78BFA] tracking-tight">{earnedToday} XP</h4>
+          <p className="text-xs font-bold text-white/30">Earned Today</p>
+        </div>
+
+        {/* Bar chart — last 7 days */}
+        <div className="h-28 flex items-end justify-between gap-1.5 px-0.5 mb-8 relative z-10">
+          {weeklyBars.map((pct, i) => (
+            <div key={i} className="flex-1 flex flex-col items-center justify-end h-full group/bar relative">
+              <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md px-2 py-1 rounded text-[10px] font-black text-white opacity-0 group-hover/bar:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
+                {dailyXP[i]} XP
+              </div>
+              <motion.div
+                initial={{ height: 0 }}
+                animate={{ height: `${pct || 2}%` }}
+                className={cn(
+                  "w-full transition-all duration-300 rounded-sm",
+                  i === 6 ? "bg-[#A78BFA]" : "bg-[#A78BFA]/20"
+                )}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Level progress bar */}
         <div className="space-y-3">
-          {recentActivity.length > 0 ? (
-            recentActivity.map((item, idx) => (
-              <Link href="/activity" key={idx} className="block bg-card hover:-translate-y-0.5 transition-all border border-border rounded-2xl p-4 group cursor-pointer shadow-soft hover:shadow-card">
-                <div className="flex justify-between items-start mb-2">
-                  <span className={cn(
-                    "text-[10px] font-semibold",
-                    item.type === "Votes Cast" ? "text-accent" : "text-primary"
-                  )}>
-                    {item.type}
-                  </span>
-                  <span className="text-[10px] text-foreground/40 bg-secondary px-2 py-0.5 rounded-full font-medium">
-                    {item.status}
-                  </span>
-                </div>
-                <h4 className="text-sm font-medium text-foreground mb-2.5">{item.title}</h4>
-                <div className="flex items-center gap-1 text-primary text-xs font-semibold">
-                  <Zap className="w-3 h-3 fill-current" />
-                  {item.points}
-                </div>
-              </Link>
-            ))
-          ) : (
-            [{
-              type: "Post Event",
-              title: "Complete your first submission",
-              status: "Pending",
-              points: "+250 XP"
-            }, {
-              type: "Vote Event",
-              title: "Cast your first vote",
-              status: "Pending",
-              points: "+50 XP"
-            }].map((item, idx) => (
-              <Link href="/explore" key={idx} className="block bg-card hover:-translate-y-0.5 transition-all border border-border rounded-2xl p-4 group cursor-pointer shadow-soft hover:shadow-card opacity-60">
-                <div className="flex justify-between items-start mb-2">
-                  <span className={cn(
-                    "text-[10px] font-semibold",
-                    item.type === "Vote Event" ? "text-accent" : "text-primary"
-                  )}>
-                    {item.type}
-                  </span>
-                  <span className="text-[10px] text-foreground/40 bg-secondary px-2 py-0.5 rounded-full font-medium">
-                    {item.status}
-                  </span>
-                </div>
-                <h4 className="text-sm font-medium text-foreground mb-2.5">{item.title}</h4>
-                <div className="flex items-center gap-1 text-primary text-xs font-semibold">
-                  <Zap className="w-3 h-3 fill-current" />
-                  {item.points}
-                </div>
-              </Link>
-            ))
-          )}
+          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              className="h-full bg-[#A78BFA] rounded-full"
+            />
+          </div>
+          <p className="text-[10px] font-bold text-white/20 text-center uppercase tracking-[0.15em]">
+            {progress}% to next level
+          </p>
         </div>
       </div>
+
+      {/* 4. Referral Card */}
+      <div className="bg-[#111111] border border-white/5 rounded-[24px] p-6 shadow-xl">
+        <h3 className="text-[17px] font-black text-white mb-1 tracking-tight">Earn with Referrals</h3>
+        <p className="text-[13px] font-medium text-white/40 mb-6">Invite friends and get 10% of their XP.</p>
+
+        <div className="flex items-center gap-2">
+          <div className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 font-mono text-[13px] text-white/60 font-bold tracking-tight truncate">
+            {referralCode}
+          </div>
+          <button
+            onClick={handleCopy}
+            className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-black transition-all active:scale-95 hover:bg-white/90 shadow-sm"
+          >
+            {copied ? <div className="text-[10px] font-black uppercase">OK</div> : <Copy size={20} />}
+          </button>
+          <button className="w-12 h-12 rounded-xl bg-[#B6FF60] flex items-center justify-center text-black transition-all active:scale-95 hover:bg-[#c8ff7a] shadow-lg shadow-[#B6FF60]/20">
+            <Share2 size={20} />
+          </button>
+        </div>
+      </div>
+
+      {/* 5. XP History */}
+      <div className="mt-2 px-2">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em]">XP History</h3>
+          <Link href="/dashboard" className="text-[11px] font-black text-[#A78BFA] hover:underline uppercase tracking-widest">
+            View All
+          </Link>
+        </div>
+
+        {recentTx.length === 0 ? (
+          <div className="bg-[#181818] border border-white/5 rounded-2xl p-4 text-center">
+            <p className="text-[11px] font-bold text-white/20 uppercase tracking-wider">No XP activity yet</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {recentTx.map((tx) => (
+              <div
+                key={tx.id}
+                className="bg-[#181818] border border-white/5 rounded-2xl p-4 flex items-center justify-between group hover:border-[#A78BFA]/20 transition-colors shadow-sm"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-[#A78BFA]/10 flex items-center justify-center border border-[#A78BFA]/20">
+                    <Zap size={18} className="text-[#A78BFA]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-white leading-snug">{txLabel(tx)}</p>
+                    <p className="text-[10px] font-bold text-white/20">{relativeTime(tx.createdAt)}</p>
+                  </div>
+                </div>
+                <span className={cn("text-xs font-black", tx.amount >= 0 ? "text-[#A78BFA]" : "text-red-400")}>
+                  {tx.amount >= 0 ? "+" : ""}{tx.amount} XP
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }

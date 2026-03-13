@@ -1,65 +1,71 @@
 @import "tailwindcss";
 
 :root {
-  /* Soft Pastel Light Theme — Pinterest-inspired */
-  --color-background: #FAF7F5;
-  --color-foreground: #2C2420;
+  /* Vibrant "Navigate" Inspired Theme */
+  --color-background: #F8F9FA;
+  --color-foreground: #111111;
 
-  /* Primary: Soft Turquoise */
-  --color-primary: #45B8C2;
-  --color-primary-foreground: #FFFFFF;
-  --color-primary-dark: #339AA4;
-  --color-primary-light: #86D4DB;
+  /* Primary: Neon Lime */
+  --color-primary: #B6FF60;
+  --color-primary-foreground: #111111;
+  --color-primary-dark: #9EE050;
+  --color-primary-light: #CFFF90;
 
-  /* Secondary: Warm cream */
-  --color-secondary: #F0EAE4;
-  --color-secondary-foreground: #2C2420;
+  /* Secondary: Soft Lavender/Purple */
+  --color-secondary: #9D9DFF;
+  --color-secondary-foreground: #111111;
 
-  /* Accent: Soft peach/amber */
-  --color-accent: #F0A857;
+  /* Accent: Vibrant Orange */
+  --color-accent: #FF6B00;
   --color-accent-foreground: #FFFFFF;
 
   /* UI Surfaces */
   --color-card: #FFFFFF;
-  --color-card-border: rgba(44, 36, 32, 0.07);
+  --color-card-border: #111111;
   --color-input: #FFFFFF;
-  --color-folder: #F5EFE9;
+  --color-folder: #F1F3F5;
 
-  /* Radius System */
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
+  /* Additional Vibrant Colors */
+  --color-vibrant-yellow: #FFC700;
+  --color-vibrant-pink: #FF60B6;
+  --color-vibrant-blue: #60B6FF;
+
+  /* Radius System (Heavily rounded as per image) */
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 28px;
+  --radius-xl: 40px;
   --radius-full: 9999px;
 
-  /* Soft diffuse shadows */
-  --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.06);
-  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.08);
-  --shadow-spotify: 0 8px 32px rgba(0, 0, 0, 0.1);
+  /* Shadows (minimal, preference for solid borders) */
+  --shadow-soft: 0 4px 0 rgba(17, 17, 17, 0.05);
+  --shadow-card: 0 8px 0 rgba(17, 17, 17, 0.08);
+  --shadow-spotify: 0 12px 48px rgba(0, 0, 0, 0.12);
 
-  --border-soft: 1px solid rgba(44, 36, 32, 0.1);
+  --border-thick: 1.5px solid #111111;
 }
 
 .dark {
-  /* Soft dark — warm deep charcoal */
-  --color-background: #1C1917;
-  --color-foreground: #F5EFE9;
-  --color-primary: #45B8C2;
-  --color-primary-foreground: #FFFFFF;
-  --color-primary-dark: #339AA4;
-  --color-primary-light: #86D4DB;
-  --color-secondary: #2C2420;
-  --color-secondary-foreground: #F5EFE9;
-  --color-accent: #F0A857;
-  --color-accent-foreground: #1C1917;
-  --color-card: #262220;
-  --color-card-border: rgba(245, 239, 233, 0.08);
-  --color-input: #2C2420;
-  --color-folder: #2C2420;
+  /* Keep it dark but maintain vibrancy */
+  --color-background: #0A0A0A;
+  --color-foreground: #F8F9FA;
 
-  --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.3);
-  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
-  --shadow-spotify: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --color-primary: #B6FF60;
+  --color-primary-foreground: #111111;
+
+  --color-secondary: #8A8AFF;
+  --color-secondary-foreground: #FFFFFF;
+
+  --color-accent: #FF7A1A;
+  --color-accent-foreground: #FFFFFF;
+
+  --color-card: #141414;
+  --color-card-border: rgba(255, 255, 255, 0.15);
+  --color-input: #1A1A1A;
+  --color-folder: #1A1A1A;
+
+  --shadow-soft: 0 4px 0 rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 8px 0 rgba(0, 0, 0, 0.4);
 }
 
 @theme inline {
@@ -78,11 +84,16 @@
   --color-accent-foreground: var(--color-accent-foreground);
 
   /* Semantic design tokens */
-  --color-emerald: #5CC9A7;
-  --color-aris-bg: #FAF7F5;
+  --color-neon-lime: #B6FF60;
+  --color-lavender: #9D9DFF;
+  --color-vibrant-orange: #FF6B00;
+  --color-vibrant-yellow: #FFC700;
+  --color-vibrant-pink: #FF60B6;
+  --color-vibrant-blue: #60B6FF;
+
+  --color-aris-bg: #F8F9FA;
   --color-aris-card: #FFFFFF;
-  --color-aris-border: rgba(44, 36, 32, 0.07);
-  --color-amber: #F0A857;
+  --color-aris-border: #111111;
 
   --color-card: var(--color-card);
   --color-card-border: var(--color-card-border);
@@ -90,7 +101,7 @@
   --color-input: var(--color-input);
   --color-folder: var(--color-folder);
 
-  --font-sans: var(--font-inter), sans-serif;
+  --font-sans: var(--font-outfit), var(--font-inter), sans-serif;
   --font-display: var(--font-bebas), sans-serif;
   --font-mono: var(--font-jetbrains-mono), monospace;
 

@@ -9,13 +9,13 @@ import { publicClient } from "@/lib/blockchain/client";
 import { confirmAllClaims } from "@/services/reward.service";
 
 const STEPS = [
-  { label: "Preparing claim",    desc: "Verifying your claimable balance on-chain" },
+  { label: "Preparing claim", desc: "Verifying your claimable balance on-chain" },
   { label: "Processing on-chain", desc: "Submitting gasless transaction via Pimlico" },
-  { label: "Rewards credited",   desc: "Your USDC has been transferred to your wallet" },
+  { label: "Rewards credited", desc: "Your USDC has been transferred to your wallet" },
 ];
 
 function StepRow({ index, currentStep, error }: { index: number; currentStep: number; error: boolean }) {
-  const done   = currentStep > index;
+  const done = currentStep > index;
   const active = currentStep === index;
   const failed = active && error;
 
@@ -65,8 +65,8 @@ interface ClaimModalProps {
 
 export default function ClaimModal({ open, claimableUsdc, onClose, onSuccess }: ClaimModalProps) {
   const { sendTransaction, address: smartAccountAddress } = useWallet();
-  const [step, setStep]     = useState(0);
-  const [error, setError]   = useState<string | null>(null);
+  const [step, setStep] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const launched = useRef(false);
 
@@ -82,7 +82,7 @@ export default function ClaimModal({ open, claimableUsdc, onClose, onSuccess }: 
     if (launched.current) return;
     launched.current = true;
     runClaim();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   async function runClaim() {
@@ -128,7 +128,7 @@ export default function ClaimModal({ open, claimableUsdc, onClose, onSuccess }: 
   }
 
   const isSuccess = step === 2 && !error;
-  const isFailed  = !!error;
+  const isFailed = !!error;
 
   if (!open) return null;
 
@@ -156,8 +156,21 @@ export default function ClaimModal({ open, claimableUsdc, onClose, onSuccess }: 
           </div>
           <p className="text-xs text-muted-foreground pl-8">
             {isSuccess
-              ? `$${claimableUsdc.toFixed(2)} USDC is now in your wallet.`
-              : `Claiming $${claimableUsdc.toFixed(2)} USDC — no gas required.`}
+              ? (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-bold">${claimableUsdc.toFixed(2)}</span>
+                  <img src="/usdc.png" alt="USDC" className="w-3.5 h-3.5" />
+                  <span className="text-muted-foreground">is now in your wallet.</span>
+                </div>
+              )
+              : (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-muted-foreground">Claiming</span>
+                  <span className="text-sm font-bold">${claimableUsdc.toFixed(2)}</span>
+                  <img src="/usdc.png" alt="USDC" className="w-3.5 h-3.5" />
+                  <span className="text-muted-foreground">— no gas required.</span>
+                </div>
+              )}
           </p>
         </div>
 

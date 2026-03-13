@@ -114,7 +114,7 @@ export default function WalletPage() {
       try {
         const confetti = (await import("canvas-confetti")).default;
         confetti({ particleCount: 120, spread: 80, origin: { y: 0.55 }, colors: ["#3B82F6", "#10B981", "#F59E0B"] });
-      } catch {}
+      } catch { }
 
       // Refresh real balance after animation settles
       setTimeout(() => refreshBalance(), 1400);
@@ -128,7 +128,7 @@ export default function WalletPage() {
       refreshBalance();
       fetchRewards();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address, isConnected]);
 
   const handleCopy = (val: string) => {
@@ -212,7 +212,10 @@ export default function WalletPage() {
                               ? displayUsdc
                               : parseFloat(usdcBalance) > 0 ? usdcBalance : "0.00"}
                           </span>
-                          <span className="text-sm text-foreground/40 font-bold">USDC</span>
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-foreground/5 rounded-full border border-border">
+                            <img src="/usdc.png" alt="USDC" className="w-3 h-3" />
+                            <span className="text-[10px] font-bold text-foreground/40 tracking-wider">USDC</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -320,9 +323,12 @@ export default function WalletPage() {
                       Claimable Rewards
                     </h3>
                     {rewards && rewards.totalClaimableUsdc > 0 && !allClaimed && (
-                      <span className="text-sm font-black text-primary">
-                        ${rewards.totalClaimableUsdc.toFixed(2)} USDC
-                      </span>
+                      <div className="flex items-center gap-1.5 px-2 py-1 bg-primary/10 rounded-full border border-primary/20">
+                        <img src="/usdc.png" alt="USDC" className="w-3.5 h-3.5" />
+                        <span className="text-sm font-black text-primary">
+                          ${rewards.totalClaimableUsdc.toFixed(2)}
+                        </span>
+                      </div>
                     )}
                   </div>
 
@@ -380,7 +386,9 @@ export default function WalletPage() {
                             className="w-full py-3.5 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
                           >
                             <Gift className="w-4 h-4" />
-                            Claim ${rewards.totalClaimableUsdc.toFixed(2)} USDC
+                            Claim ${rewards.totalClaimableUsdc.toFixed(2)}
+                            <img src="/usdc.png" alt="USDC" className="w-4 h-4" />
+                            USDC
                           </motion.button>
                         </div>
                       </div>

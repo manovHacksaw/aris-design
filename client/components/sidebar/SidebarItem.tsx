@@ -29,25 +29,20 @@ export default function SidebarItem({
         <Link
             href={href}
             className={cn(
-                "group flex items-center relative w-full pl-3 py-2",
-                "transition-colors duration-150 ease-out",
+                "group flex items-center relative w-full pl-3 py-2.5 my-1",
+                "transition-all duration-200 ease-out",
                 // Active/Hover states
                 isActive
-                    ? "text-white"
-                    : "text-[#9CA3AF] hover:bg-secondary hover:text-white",
+                    ? "bg-[#6366F1] text-white border border-white/10 shadow-[1px_1px_0px_0px_#FFFFFF]"
+                    : "text-white/50 hover:bg-white/5 hover:text-white",
                 // Rounded
                 "rounded-xl"
             )}
         >
-            {/* Left accent pill for active state */}
-            {isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary rounded-full transition-all duration-200" />
-            )}
-
             <div className="flex-shrink-0 relative flex items-center justify-center w-8 h-8 transition-all duration-200">
                 {avatar ? (
                     <img
-                        src={avatar}
+                             src={avatar}
                         alt={label}
                         className={cn(
                             "w-7 h-7 rounded-full object-cover transition-all duration-150",
@@ -66,7 +61,7 @@ export default function SidebarItem({
                             "transition-colors duration-150",
                             isActive
                                 ? "text-white"
-                                : "text-[#9CA3AF] group-hover:text-white"
+                                : "text-white/40 group-hover:text-white"
                         )}
                     />
                 ) : null}
@@ -74,8 +69,8 @@ export default function SidebarItem({
 
             <span
                 className={cn(
-                    "whitespace-nowrap overflow-hidden transition-all duration-150 ease-out ml-3 text-[14px]",
-                    isActive ? "font-bold text-white" : "font-medium",
+                    "whitespace-nowrap overflow-hidden transition-all duration-150 ease-out ml-3 text-sm",
+                    isActive ? "font-black text-white" : "font-semibold",
                     showExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
                 )}
             >

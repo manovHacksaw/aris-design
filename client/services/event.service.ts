@@ -20,6 +20,7 @@ export interface Event {
     postingStart?: string;
     postingEnd?: string;
     imageCid?: string;
+    imageUrl?: string;
     samples?: string[];
     sampleUrls?: { cid: string; urls: { thumbnail: string; medium: string; large: string; full: string } }[];
     allowSubmissions: boolean;
@@ -46,6 +47,7 @@ export interface Event {
         id: string;
         name: string;
         logoCid?: string;
+        logoUrl?: string;
     };
     eventAnalytics?: {
         totalViews: number;

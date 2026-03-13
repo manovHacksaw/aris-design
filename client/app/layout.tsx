@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
-import { Inter, Bebas_Neue, JetBrains_Mono } from "next/font/google";
+import { Inter, Bebas_Neue, JetBrains_Mono, Outfit } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ClientProviders } from "@/components/providers/ClientProviders";
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+  display: "swap",
+});
 
 const inter = Inter({
   subsets: ["latin"],
@@ -36,7 +42,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${bebasNeue.variable} ${jetbrainsMono.variable} antialiased`}>
+      <body className={`${outfit.variable} ${inter.variable} ${bebasNeue.variable} ${jetbrainsMono.variable} antialiased`}>
         <Script
           src="https://media-editor.cloudinary.com/all.js"
           strategy="lazyOnload"

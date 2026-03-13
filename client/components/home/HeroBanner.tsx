@@ -31,33 +31,57 @@ export default function HeroBanner() {
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-[0.85] mb-6"
+                    className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-[0.9] mb-6"
                 >
-                    Create the <br />
-                    <span className="italic">Future</span> of Art
+                    Participate & <br />
+                    <span className="text-primary italic">Earn Dollars</span>
                 </motion.h1>
 
-                <motion.p
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="text-white/70 text-sm md:text-base font-medium max-w-md mb-8 leading-relaxed"
-                >
-                    Join the monthly creative battle. Showcase your skills, earn rewards, and level up your global ranking.
-                </motion.p>
+                {/* Gamified Reward Badges */}
+                <div className="flex flex-wrap gap-3 mb-8">
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="flex items-center gap-2.5 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2.5 rounded-2xl group/reward"
+                    >
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-yellow-400/20 text-yellow-400 group-hover/reward:scale-110 transition-transform">
+                            <Sparkles className="w-4 h-4" />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-black text-white/50 uppercase tracking-widest leading-none mb-1">Base Reward</span>
+                            <span className="text-sm font-black text-white leading-none">Guaranteed $1+</span>
+                        </div>
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="flex items-center gap-2.5 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2.5 rounded-2xl group/reward"
+                    >
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary group-hover/reward:scale-110 transition-transform">
+                            <ArrowRight className="w-4 h-4 -rotate-45" />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-black text-white/50 uppercase tracking-widest leading-none mb-1">Top Prize</span>
+                            <span className="text-sm font-black text-white leading-none">Win Up to $1000</span>
+                        </div>
+                    </motion.div>
+                </div>
 
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.3 }}
+                    transition={{ delay: 0.4 }}
                     className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4"
                 >
-                    <button className="bg-foreground text-background px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all hover:bg-foreground hover:shadow-lg hover:shadow-foreground/30 hover:-translate-y-1 active:scale-95">
-                        Register Now
+                    <button className="bg-primary text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-lg shadow-primary/30 transition-all hover:-translate-y-1 active:scale-95">
+                        Start Earning
                         <ArrowRight className="w-4 h-4" />
                     </button>
-                    <button className="bg-white/10 backdrop-blur-xl border border-white/20 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all hover:bg-white/20 hover:border-white/40 hover:-translate-y-1 active:scale-95">
-                        View Details
+                    <button className="bg-white/10 backdrop-blur-xl border border-white/20 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all hover:bg-white/20 hover:-translate-y-1 active:scale-95">
+                        How it Works
                     </button>
                 </motion.div>
             </div>
