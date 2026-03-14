@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import {
     ChevronLeft, Wallet, CheckCircle2, ChevronDown, ChevronUp,
     Loader2, AlertCircle, DollarSign, RefreshCw, Clock, Plus,
-    ExternalLink, AlertTriangle,
+    ExternalLink, AlertTriangle, ArrowUpRight, ArrowDownLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useWallet } from "@/context/WalletContext";
@@ -24,11 +24,11 @@ import {
     type RefundHistoryItem,
 } from "@/services/brand-refunds.service";
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
-
-function fmt$(n?: number) {
+// Helpers
+function fmt$(n?: number | string) {
     if (!n) return "$0.00";
-    return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const num = typeof n === "string" ? parseFloat(n) : n;
+    return `$${num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function fmtDate(iso?: string | null) {
@@ -38,28 +38,27 @@ function fmtDate(iso?: string | null) {
 
 const POLYGONSCAN = "https://amoy.polygonscan.com/tx/";
 
-// ── Main page ──────────────────────────────────────────────────────────────────
-
-export default function BrandRefundsPage() {
+export default function BrandWalletPage() {
     const router = useRouter();
-    const { address, isConnected, sendTransaction, publicClient } = useWallet();
+    const { address, isConnected, balance, sendTransaction, publicClient, refreshBalance } = useWallet();
 
+    const [activeTab, setActiveTab] = useState<"wallet" | "refunds">("wallet");
+
+    // Refunds State
     const [data, setData] = useState<BrandRefundsResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // On-chain refund balance (from contract)
     const [onChainBalance, setOnChainBalance] = useState<number>(0);
     const [balanceLoading, setBalanceLoading] = useState(false);
-
-    // Withdrawal state
     const [isWithdrawing, setIsWithdrawing] = useState(false);
     const [withdrawTxHash, setWithdrawTxHash] = useState<string | null>(null);
-
-    // Per-pool UI
     const [expandedId, setExpandedId] = useState<string | null>(null);
 
-    // ── Load DB refund data ──────────────────────────────────────────────────
+    // Send Funds State
+    const [sendAmount, setSendAmount] = useState("");
+    const [sendAddress, setSendAddress] = useState("");
+
     async function loadDbData() {
         try {
             setLoading(true);
@@ -73,7 +72,6 @@ export default function BrandRefundsPage() {
         }
     }
 
-    // ── Load on-chain balance ────────────────────────────────────────────────
     const loadOnChainBalance = useCallback(async () => {
         if (!address || !REWARDS_VAULT_ADDRESS) return;
         setBalanceLoading(true);
@@ -92,11 +90,13 @@ export default function BrandRefundsPage() {
     }, []);
 
     useEffect(() => {
-        if (isConnected) loadOnChainBalance();
-    }, [isConnected, loadOnChainBalance]);
+        if (isConnected) {
+            loadOnChainBalance();
+            refreshBalance();
+        }
+    }, [isConnected, loadOnChainBalance, refreshBalance]);
 
-    // ── On-chain withdraw ────────────────────────────────────────────────────
-    async function handleWithdraw() {
+    async function handleWithdrawRefund() {
         if (!isConnected || !address) {
             toast.error("Connect your wallet first.");
             return;
@@ -111,22 +111,22 @@ export default function BrandRefundsPage() {
         toast.loading(`Withdrawing ${fmt$(onChainBalance)} USDC…`, { id: toastId });
 
         try {
-            const data = encodeWithdrawRefund();
+            const txData = encodeWithdrawRefund();
             const txHash = await sendTransaction({
-                to: REWARDS_VAULT_ADDRESS,
-                data,
+                to: REWARDS_VAULT_ADDRESS as `0x${string}`,
+                data: txData,
             });
 
             setWithdrawTxHash(txHash);
 
-            // Wait for confirmation
             if (publicClient) {
                 await publicClient.waitForTransactionReceipt({ hash: txHash as `0x${string}`, timeout: 120_000 });
             }
 
             toast.success(`${fmt$(onChainBalance)} USDC withdrawn to your wallet!`, { id: toastId });
             setOnChainBalance(0);
-            await loadOnChainBalance(); // refresh
+            await loadOnChainBalance();
+            await refreshBalance();
         } catch (e: any) {
             console.error("Withdraw failed:", e);
             toast.error(e?.message?.split("\n")[0] ?? "Withdrawal failed", { id: toastId });
@@ -135,7 +135,6 @@ export default function BrandRefundsPage() {
         }
     }
 
-    // ── Use as event credit ──────────────────────────────────────────────────
     function handleUseCredit(pool: RefundPool) {
         const amount = pool.refundBreakdown?.totalRefund ?? 0;
         if (amount <= 0) { toast.error("No refund available for this event."); return; }
@@ -154,48 +153,176 @@ export default function BrandRefundsPage() {
         router.push("/brand/create-event");
     }
 
-    // ── Derived values ───────────────────────────────────────────────────────
     const refundablePools = (data?.pools ?? []).filter(
         (p) => (p.refundBreakdown?.totalRefund ?? 0) > 0
     );
     const dbTotal = refundablePools.reduce((s, p) => s + (p.refundBreakdown?.totalRefund ?? 0), 0);
 
-    // ── Render ───────────────────────────────────────────────────────────────
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <Loader2 className="w-7 h-7 animate-spin text-primary/50" />
+    const renderWalletTab = () => (
+        <div className="space-y-6 animate-in fade-in duration-300">
+            {/* Wallet Balance Card */}
+            <div className="bg-gradient-to-br from-card to-card/50 border border-border/40 rounded-[28px] p-6 lg:p-8 shadow-sm">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <p className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40">Total Balance</p>
+                            <span className="bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border border-primary/20">
+                                Mantle Mainnet
+                            </span>
+                        </div>
+                        <div className="flex items-baseline gap-2">
+                            <h2 className="text-5xl lg:text-6xl font-black tracking-tighter text-foreground">
+                                {fmt$(balance)}
+                            </h2>
+                            <span className="text-xl font-bold text-foreground/40">USDC</span>
+                        </div>
+                        <div className="mt-3 flex items-center gap-1.5 text-sm font-medium text-green-500">
+                            <ArrowUpRight className="w-4 h-4" />
+                            <span>+0.0% this month</span>
+                        </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                        <button className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-border/40 bg-secondary text-sm font-black text-foreground hover:border-border transition-all">
+                            <ArrowDownLeft className="w-4 h-4" />
+                            Deposit
+                        </button>
+                        <button className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-white text-sm font-black hover:bg-primary/90 transition-all shadow-md shadow-primary/20">
+                            <ArrowUpRight className="w-4 h-4" />
+                            Withdraw
+                        </button>
+                    </div>
+                </div>
             </div>
-        );
-    }
 
-    if (error) {
-        return (
-            <div className="max-w-2xl mx-auto p-8 text-center space-y-4">
-                <AlertCircle className="w-8 h-8 text-red-400 mx-auto" />
-                <p className="text-sm font-bold text-foreground/60">{error}</p>
-                <button onClick={loadDbData} className="text-xs font-black text-primary hover:underline flex items-center gap-1.5 mx-auto">
-                    <RefreshCw className="w-3.5 h-3.5" /> Retry
-                </button>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Activity History */}
+                <div className="lg:col-span-2 space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-foreground/40" />
+                            <h3 className="text-sm font-black text-foreground">Activity History</h3>
+                        </div>
+                        <button className="text-xs font-black text-primary hover:underline flex items-center gap-1">
+                            View Explorer <ExternalLink className="w-3 h-3" />
+                        </button>
+                    </div>
+                    
+                    <div className="bg-card border border-border/40 rounded-[20px] divide-y divide-border/30 overflow-hidden">
+                        {(data?.refundHistory && data.refundHistory.length > 0) ? (
+                            (data.refundHistory as RefundHistoryItem[]).slice(0, 3).map((item, i) => (
+                                <div key={i} className="flex items-center gap-4 px-5 py-4 hover:bg-secondary/50 transition-colors">
+                                    <div className="w-10 h-10 rounded-2xl bg-green-500/10 flex items-center justify-center shrink-0">
+                                        <ArrowDownLeft className="w-5 h-5 text-green-500" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-black text-foreground truncate">Refund: {item.eventTitle}</p>
+                                        <p className="text-xs text-foreground/40 font-medium">{fmtDate(item.timestamp)}</p>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                        <p className="text-sm font-black text-green-500">+{fmt$(item.amount)}</p>
+                                        <p className="text-[11px] text-foreground/40 font-medium">USDC</p>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="p-8 text-center">
+                                <p className="text-sm font-medium text-foreground/40">No recent activity.</p>
+                            </div>
+                        )}
+                        
+                        {/* Mock transactions to make it look like the requested layout if no history */}
+                        {(!data?.refundHistory || data.refundHistory.length === 0) && (
+                            <div className="flex items-center gap-4 px-5 py-4 hover:bg-secondary/50 transition-colors">
+                                <div className="w-10 h-10 rounded-2xl bg-secondary flex items-center justify-center shrink-0">
+                                    <Wallet className="w-5 h-5 text-foreground/40" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-black text-foreground truncate">Wallet Connected</p>
+                                    <p className="text-xs text-foreground/40 font-medium">System</p>
+                                </div>
+                                <div className="text-right shrink-0">
+                                    <p className="text-sm font-black text-foreground">—</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Send Funds / Withdraw Panel */}
+                <div className="space-y-4">
+                    <div className="bg-card border border-border/40 rounded-[24px] overflow-hidden">
+                        <div className="flex mx-2 mt-2 gap-1 p-1 bg-secondary rounded-xl">
+                            <button className="flex-1 py-2 text-xs font-black rounded-lg bg-background shadow-sm text-foreground">
+                                Withdraw
+                            </button>
+                            <button className="flex-1 py-2 text-xs font-black rounded-lg text-foreground/50 hover:text-foreground transition-colors">
+                                Deposit
+                            </button>
+                        </div>
+                        
+                        <div className="p-6 space-y-5">
+                            <div>
+                                <h3 className="text-base font-black text-foreground mb-1">Send Funds</h3>
+                                <p className="text-xs text-foreground/50 font-medium">Enter an EVM address and a chain to withdraw to.</p>
+                            </div>
+                            
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-1.5 block">
+                                        Amount
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                                            <span className="text-foreground/40 font-bold">$</span>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            placeholder="0.00"
+                                            value={sendAmount}
+                                            onChange={(e) => setSendAmount(e.target.value)}
+                                            className="w-full h-12 bg-secondary border border-border/40 rounded-xl pl-8 pr-16 text-sm font-bold placeholder:text-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all"
+                                        />
+                                        <button className="absolute inset-y-2 right-2 px-3 bg-primary/10 text-primary text-xs font-black rounded-lg hover:bg-primary/20 transition-colors">
+                                            MAX
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-1.5 block">
+                                        EVM Address
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="0x..."
+                                        value={sendAddress}
+                                        onChange={(e) => setSendAddress(e.target.value)}
+                                        className="w-full h-12 bg-secondary border border-border/40 rounded-xl px-4 text-sm font-medium placeholder:text-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all"
+                                    />
+                                </div>
+                                
+                                <button className="w-full h-12 bg-primary text-white text-sm font-black rounded-xl hover:bg-primary/90 transition-all shadow-md shadow-primary/20 mt-2">
+                                    Withdraw Funds
+                                </button>
+                                
+                                <div className="flex items-start gap-2 bg-yellow-500/5 border border-yellow-500/20 rounded-xl p-3">
+                                    <AlertTriangle className="w-3.5 h-3.5 text-yellow-500 mt-0.5 shrink-0" />
+                                    <p className="text-[11px] font-medium text-yellow-600/80 leading-relaxed">
+                                        Only send assets to EVM-compatible wallets on the Polygon Amoy network.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        );
-    }
+        </div>
+    );
 
-    return (
-        <div className="max-w-3xl mx-auto px-4 md:px-0 pb-24 space-y-8">
-            {/* Header */}
-            <div className="pt-8">
-                <Link href="/brand/dashboard" className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-foreground/40 hover:text-foreground transition-colors mb-6">
-                    <ChevronLeft className="w-4 h-4" /> Back
-                </Link>
-                <h1 className="text-3xl font-black tracking-tighter text-foreground mb-1">Refunds</h1>
-                <p className="text-sm text-foreground/50 font-medium">
-                    Unused USDC from ended events — withdraw to your wallet or apply as event credit.
-                </p>
-            </div>
-
-            {/* On-chain balance card (primary action) */}
+    const renderRefundsTab = () => (
+        <div className="space-y-6 animate-in fade-in duration-300">
+            {/* On-chain balance card */}
             <div className={cn(
                 "rounded-[28px] p-6 border",
                 onChainBalance > 0 ? "bg-primary/5 border-primary/20" : "bg-card border-border/40"
@@ -225,7 +352,7 @@ export default function BrandRefundsPage() {
                     <div className="flex flex-col sm:flex-row gap-2 shrink-0">
                         {onChainBalance > 0 && (
                             <button
-                                onClick={handleWithdraw}
+                                onClick={handleWithdrawRefund}
                                 disabled={isWithdrawing || !isConnected}
                                 className="flex items-center justify-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50"
                             >
@@ -246,7 +373,6 @@ export default function BrandRefundsPage() {
                     </div>
                 </div>
 
-                {/* Wallet not connected warning */}
                 {!isConnected && (
                     <div className="mt-4 flex items-start gap-2 bg-yellow-500/5 border border-yellow-500/20 rounded-xl p-3">
                         <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
@@ -256,7 +382,6 @@ export default function BrandRefundsPage() {
                     </div>
                 )}
 
-                {/* Tx confirmation */}
                 {withdrawTxHash && (
                     <div className="mt-4 flex items-center gap-2 bg-green-500/5 border border-green-500/20 rounded-xl p-3">
                         <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
@@ -273,7 +398,7 @@ export default function BrandRefundsPage() {
                 )}
             </div>
 
-            {/* Per-event breakdown + "Use as credit" */}
+            {/* Per-event breakdown */}
             {refundablePools.length > 0 && (
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -333,7 +458,6 @@ export default function BrandRefundsPage() {
                                     </div>
                                 </div>
 
-                                {/* Breakdown */}
                                 {isExpanded && pool.refundBreakdown && (
                                     <div className="px-5 pb-4 border-t border-border/30">
                                         <div className="pt-4 space-y-2">
@@ -359,7 +483,6 @@ export default function BrandRefundsPage() {
                                     </div>
                                 )}
 
-                                {/* Use as credit action */}
                                 <div className="px-5 pb-5">
                                     <button
                                         onClick={() => handleUseCredit(pool)}
@@ -419,6 +542,69 @@ export default function BrandRefundsPage() {
                     </div>
                 </div>
             )}
+        </div>
+    );
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <Loader2 className="w-7 h-7 animate-spin text-primary/50" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="max-w-2xl mx-auto p-8 text-center space-y-4">
+                <AlertCircle className="w-8 h-8 text-red-400 mx-auto" />
+                <p className="text-sm font-bold text-foreground/60">{error}</p>
+                <button onClick={loadDbData} className="text-xs font-black text-primary hover:underline flex items-center gap-1.5 mx-auto">
+                    <RefreshCw className="w-3.5 h-3.5" /> Retry
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="max-w-5xl mx-auto px-4 md:px-6 pb-24 space-y-6">
+            {/* Header */}
+            <div className="pt-8">
+                <h1 className="text-3xl font-black tracking-tighter text-foreground mb-1">Brand Wallet</h1>
+                <p className="text-sm text-foreground/50 font-medium">
+                    Manage your earnings, deposits, and refunds from past campaigns.
+                </p>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex items-center gap-2 border-b border-border/40 pb-px">
+                <button
+                    onClick={() => setActiveTab("wallet")}
+                    className={cn(
+                        "px-4 py-3 text-sm font-black border-b-2 transition-colors",
+                        activeTab === "wallet"
+                            ? "border-primary text-foreground"
+                            : "border-transparent text-foreground/40 hover:text-foreground/70"
+                    )}
+                >
+                    Overview
+                </button>
+                <button
+                    onClick={() => setActiveTab("refunds")}
+                    className={cn(
+                        "px-4 py-3 text-sm font-black border-b-2 transition-colors",
+                        activeTab === "refunds"
+                            ? "border-primary text-foreground"
+                            : "border-transparent text-foreground/40 hover:text-foreground/70"
+                    )}
+                >
+                    Refunds Center
+                </button>
+            </div>
+
+            {/* Content */}
+            <div className="pt-4">
+                {activeTab === "wallet" ? renderWalletTab() : renderRefundsTab()}
+            </div>
         </div>
     );
 }

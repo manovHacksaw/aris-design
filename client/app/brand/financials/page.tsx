@@ -8,7 +8,7 @@ export default function FinancialsRedirect() {
     const router = useRouter();
 
     useEffect(() => {
-        router.replace("/brand/refunds");
+        router.replace("/brand/wallet");
     }, [router]);
 
     return (

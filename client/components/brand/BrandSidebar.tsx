@@ -49,7 +49,7 @@ export default function BrandSidebar() {
         { label: "Campaigns", href: "/brand/events", icon: IoMegaphoneOutline },
         { label: "Create Campaign", href: "/brand/create-event", icon: IoAddCircleOutline },
         { label: "Insights", href: "/brand/insights", icon: IoStatsChartOutline },
-        { label: "Refunds", href: "/brand/refunds", icon: IoRefreshOutline },
+        { label: "Wallet", href: "/brand/wallet", icon: IoWalletOutline },
         { label: "Notifications", href: "/brand/notifications", icon: IoNotificationsOutline, badge: unreadCount },
         { label: "Settings", href: "/brand/settings", icon: IoSettingsOutline },
     ];
