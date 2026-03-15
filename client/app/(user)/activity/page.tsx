@@ -1,183 +1,391 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import SidebarLayout from "@/components/home/SidebarLayout";
 import { motion } from "framer-motion";
 import {
-    Clock,
-    MessageCircle,
-    ThumbsUp,
-    Zap,
-    Calendar,
-    ArrowUpRight,
-    TrendingUp,
-    Layout,
-    Loader2
+  ImageIcon, MousePointerClick, Trophy, Zap, DollarSign,
+  ThumbsUp, Crown, Calendar, ArrowUpRight, TrendingUp,
+  Flame, RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/context/UserContext";
-import { useEffect, useState } from "react";
 import { getUserStats, getUserSubmissions } from "@/services/user.service";
+import { getEventsVotedByUser } from "@/services/event.service";
 import type { UserStats } from "@/types/user";
 
-export default function YourActivityPage() {
-    const { user } = useUser();
-    const [stats, setStats] = useState<UserStats | null>(null);
-    const [submissions, setSubmissions] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+// ─── Tiers ───────────────────────────────────────────────────────
+const TIERS = [
+  { min: 1,  max: 2,  name: "Rookie",  color: "text-zinc-400",   bg: "bg-zinc-500/10",  bar: "bg-zinc-400"   },
+  { min: 3,  max: 5,  name: "Hustler", color: "text-blue-400",   bg: "bg-blue-500/10",  bar: "bg-blue-400"   },
+  { min: 6,  max: 9,  name: "Creator", color: "text-purple-400", bg: "bg-purple-500/10",bar: "bg-purple-400" },
+  { min: 10, max: 14, name: "Veteran", color: "text-orange-400", bg: "bg-orange-500/10",bar: "bg-orange-400" },
+  { min: 15, max: 19, name: "Elite",   color: "text-yellow-400", bg: "bg-yellow-500/10",bar: "bg-yellow-400" },
+  { min: 20, max: 999,name: "Legend",  color: "text-lime-400",   bg: "bg-lime-400/10",  bar: "bg-lime-400"   },
+] as const;
 
-    useEffect(() => {
-        if (!user) return;
+function getTier(level: number) {
+  return TIERS.find(t => level >= t.min && level <= t.max) ?? TIERS[0];
+}
 
-        const fetchData = async () => {
-            try {
-                // Fetch stats and submissions in parallel
-                const [statsData, submissionsData] = await Promise.all([
-                    getUserStats(),
-                    getUserSubmissions(user.id)
-                ]);
-                setStats(statsData);
-                setSubmissions(submissionsData);
-            } catch (error) {
-                console.error("Failed to load activity data", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+type FeedItem = {
+  id: string;
+  type: "post" | "vote";
+  title: string;
+  brand: string;
+  date: string;
+  status: string;
+  rank?: number | null;
+  votesReceived?: number;
+  votesCast?: number;
+  earnings?: number;
+  imageUrl?: string;
+};
 
-        fetchData();
-    }, [user]);
+type TabFilter = "all" | "post" | "vote";
 
-    const activityStats = [
-        { label: "Total Submissions", value: stats?.posts?.toString() || "0", icon: Layout, color: "text-primary" },
-        { label: "Votes Cast", value: stats?.votesCast?.toString() || "0", icon: ThumbsUp, color: "text-accent" },
-        { label: "Votes Received", value: stats?.votesReceived?.toString() || "0", icon: ThumbsUp, color: "text-primary" },
-        { label: "Events Joined", value: stats?.events?.toString() || "0", icon: Zap, color: "text-accent" },
-        { label: "Total Earnings", value: stats?.earnings ? `$${stats.earnings.toFixed(2)}` : "$0", icon: Zap, color: "text-primary" },
-    ];
+export default function ActivityPage() {
+  const { user } = useUser();
+  const [stats, setStats] = useState<UserStats | null>(null);
+  const [posts, setPosts] = useState<FeedItem[]>([]);
+  const [votes, setVotes] = useState<FeedItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<TabFilter>("all");
 
-    const participatedEvents = submissions.map((sub: any) => ({
-        type: "Post Event",
-        brand: sub.event?.brand?.name || "Unknown Brand",
+  useEffect(() => {
+    if (!user) return;
+    setLoading(true);
+    Promise.all([
+      getUserStats().catch(() => null),
+      getUserSubmissions(user.id).catch(() => []),
+      getEventsVotedByUser(user.id).catch(() => []),
+    ]).then(([s, subs, voted]) => {
+      setStats(s);
+      setPosts((subs as any[]).map((sub: any) => ({
+        id: sub.id,
+        type: "post" as const,
         title: sub.event?.title || "Untitled Event",
-        time: sub.event?.endTime ? `Ends ${new Date(sub.event.endTime).toLocaleDateString()}` : "Active",
-        status: sub.event?.status || "Active",
-        role: "Creator",
-        icon: Layout,
-        reward: sub.finalRank ? `Rank ${sub.finalRank}` : "Pending",
-        points: `Votes: ${sub._count?.votes || 0}`
-    }));
+        brand: sub.event?.brand?.name || "Unknown",
+        date: sub.createdAt
+          ? new Date(sub.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+          : "—",
+        status: sub.event?.status || "unknown",
+        rank: sub.finalRank ?? null,
+        votesReceived: sub._count?.votes ?? 0,
+        earnings: 0,
+        imageUrl: sub.imageCid ? `https://gateway.pinata.cloud/ipfs/${sub.imageCid}` : undefined,
+      })));
+      setVotes((voted as any[]).map((e: any) => ({
+        id: e.id,
+        type: "vote" as const,
+        title: e.title || "Untitled Event",
+        brand: e.brand?.name || "Unknown",
+        date: e.endTime
+          ? new Date(e.endTime).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+          : "—",
+        status: e.status || "completed",
+        votesCast: e._count?.votes ?? 0,
+      })));
+    }).finally(() => setLoading(false));
+  }, [user]);
 
-    return (
-        <SidebarLayout>
-            <main className="max-w-[1200px] mx-auto py-8 space-y-10 pb-24">
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-4 md:px-0">
+  const xp = user?.xp ?? 0;
+  const level = Math.floor(xp / 1000) + 1;
+  const xpProgress = (xp % 1000) / 10;
+  const xpToNext = level * 1000 - xp;
+  const tier = getTier(level);
+
+  const allFeed = [...posts, ...votes].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+  const feed = tab === "post" ? posts : tab === "vote" ? votes : allFeed;
+
+  const creationScore  = Math.min(100, (stats?.posts ?? 0) * 10);
+  const socialScore    = Math.min(100, (stats?.votesCast ?? 0) * 2);
+  const communityScore = Math.min(100, (stats?.events ?? 0) * 15);
+
+  return (
+    <div className="min-h-screen bg-background text-white font-sans selection:bg-primary/30">
+      <SidebarLayout>
+        <main className="w-full pt-6 lg:pt-10 pb-24 md:pb-12 space-y-8">
+
+          {/* ── Header ── */}
+          <div className="space-y-1">
+            <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-white uppercase leading-[0.92] tracking-tight">
+              Activity
+            </h1>
+            <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">
+              Your digital footprint on Aris
+            </p>
+          </div>
+
+          {/* ── Stats Row ── */}
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="h-[80px] rounded-[20px] bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              {[
+                { label: "Posts",          value: String(stats?.posts ?? 0),                                          icon: ImageIcon,         color: "text-lime-400"   },
+                { label: "Votes Cast",     value: String(stats?.votesCast ?? 0),                                      icon: MousePointerClick, color: "text-blue-400"   },
+                { label: "Votes Received", value: String(stats?.votesReceived ?? 0),                                  icon: ThumbsUp,          color: "text-purple-400" },
+                { label: "Events Joined",  value: String(stats?.events ?? 0),                                         icon: Trophy,            color: "text-orange-400" },
+                { label: "Earnings",       value: stats?.earnings ? `$${stats.earnings.toFixed(2)}` : "$0.00",        icon: DollarSign,        color: "text-yellow-400" },
+              ].map((s, i) => (
+                <motion.div
+                  key={s.label}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.06 }}
+                  className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-4 py-3.5 flex items-center gap-3 transition-all"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-white/[0.04] flex items-center justify-center shrink-0">
+                    <s.icon className={cn("w-4 h-4", s.color)} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/30 leading-none mb-1">{s.label}</p>
+                    <p className="font-display text-2xl text-white tracking-tight leading-none">{s.value}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+
+          {/* ── Tabs ── */}
+          <div className="flex items-center gap-1.5 border-t border-white/[0.05] pt-6">
+            {(["all", "post", "vote"] as TabFilter[]).map(t => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={cn(
+                  "px-6 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all border",
+                  tab === t
+                    ? "bg-white text-black border-white"
+                    : "bg-white/[0.04] text-white/40 border-white/[0.06] hover:bg-white/[0.08] hover:text-white/80"
+                )}
+              >
+                {t === "all" ? "All Activity" : t === "post" ? `Posts (${posts.length})` : `Votes (${votes.length})`}
+              </button>
+            ))}
+          </div>
+
+          {/* ── Two-column layout ── */}
+          <div className="flex flex-col lg:flex-row gap-8">
+
+            {/* ── Feed ── */}
+            <div className="flex-1 min-w-0 space-y-3">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">
+                {feed.length} {tab === "all" ? "events" : tab === "post" ? "posts" : "votes"}
+              </p>
+
+              {loading ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="h-[80px] rounded-[20px] bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+                  ))}
+                </div>
+              ) : feed.length === 0 ? (
+                <div className="py-20 text-center bg-white/[0.02] rounded-[24px] border border-dashed border-white/[0.07]">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
+                    {tab === "vote"
+                      ? <MousePointerClick className="w-5 h-5 text-white/20" />
+                      : <ImageIcon className="w-5 h-5 text-white/20" />
+                    }
+                  </div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">No activity yet</p>
+                </div>
+              ) : (
+                feed.map((item, i) => {
+                  const isPost = item.type === "post";
+                  return (
+                    <motion.div
+                      key={item.id + i}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.03 }}
+                      className="flex items-center gap-4 p-4 rounded-[20px] bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08] transition-all group cursor-pointer"
+                    >
+                      {/* Thumbnail */}
+                      <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-white/[0.05] border border-white/[0.06]">
+                        {item.imageUrl ? (
+                          <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className={cn("w-full h-full flex items-center justify-center", isPost ? "bg-lime-500/10" : "bg-blue-500/10")}>
+                            {isPost
+                              ? <ImageIcon className="w-5 h-5 text-lime-400/50" />
+                              : <MousePointerClick className="w-5 h-5 text-blue-400/50" />
+                            }
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className={cn("text-[9px] font-black uppercase tracking-widest", isPost ? "text-lime-400/70" : "text-blue-400/70")}>
+                            {isPost ? "Post" : "Vote"}
+                          </span>
+                          <span className="text-white/20 text-[9px]">·</span>
+                          <span className="text-[9px] font-black text-white/30 uppercase tracking-wide truncate">{item.brand}</span>
+                        </div>
+                        <h4 className="text-sm font-black text-white truncate tracking-tight">{item.title}</h4>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <Calendar className="w-3 h-3 text-white/20" />
+                          <span className="text-[10px] text-white/30 font-black">{item.date}</span>
+                          {isPost && item.votesReceived !== undefined && (
+                            <>
+                              <span className="text-white/15">·</span>
+                              <ThumbsUp className="w-3 h-3 text-white/20" />
+                              <span className="text-[10px] text-white/30 font-black">{item.votesReceived.toLocaleString()} votes</span>
+                            </>
+                          )}
+                          {!isPost && item.votesCast !== undefined && item.votesCast > 0 && (
+                            <>
+                              <span className="text-white/15">·</span>
+                              <span className="text-[10px] text-white/30 font-black">{item.votesCast} cast</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right: rank / status + earnings */}
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        {item.rank != null ? (
+                          item.rank === 1 ? (
+                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 text-[9px] font-black border border-yellow-500/20">
+                              <Crown className="w-2.5 h-2.5" /> #1
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-white/40 text-[9px] font-black border border-white/[0.08]">
+                              #{item.rank}
+                            </span>
+                          )
+                        ) : (
+                          <span className={cn(
+                            "text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border",
+                            ["posting", "voting", "scheduled"].includes(item.status)
+                              ? "bg-lime-400/10 text-lime-400 border-lime-400/20"
+                              : "bg-white/[0.04] text-white/30 border-white/[0.06]"
+                          )}>
+                            {item.status}
+                          </span>
+                        )}
+                        {!!item.earnings && item.earnings > 0 && (
+                          <span className="text-[10px] font-black text-lime-400">${item.earnings.toFixed(2)}</span>
+                        )}
+                      </div>
+
+                      <ArrowUpRight className="w-4 h-4 text-white/10 group-hover:text-white/30 transition-colors shrink-0" />
+                    </motion.div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* ── Right sidebar: XP + Growth ── */}
+            <div className="lg:w-[300px] xl:w-[320px] flex-shrink-0 space-y-6">
+
+              {/* XP / Level card */}
+              <div className={cn(
+                "relative overflow-hidden rounded-[24px] border p-5",
+                tier.bar.replace("bg-", "border-") + "/30",
+                "bg-gradient-to-br from-white/[0.04] to-transparent"
+              )}>
+                <div className={cn("absolute -top-8 -right-8 w-32 h-32 rounded-full blur-[60px] opacity-40", tier.bg)} />
+                <div className="relative z-10">
+                  <div className="flex items-start justify-between mb-4">
                     <div>
-                        <h1 className="text-4xl font-black text-foreground tracking-tighter mb-2">Your Activity</h1>
-                        <p className="text-[11px] font-black text-foreground/30 uppercase tracking-[0.2em]">Track your digital footprints and growth on Aris</p>
+                      <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/30 mb-1">Current Rank</p>
+                      <div className="flex items-baseline gap-2">
+                        <span className={cn("font-display text-5xl leading-none tracking-tight", tier.color)}>
+                          {level}
+                        </span>
+                        <span className={cn("text-xs font-black uppercase tracking-widest", tier.color)}>
+                          {tier.name}
+                        </span>
+                      </div>
                     </div>
+                    <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center border", tier.bg, tier.bar.replace("bg-", "border-") + "/30")}>
+                      <Zap className={cn("w-6 h-6", tier.color)} />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-white/30">Total XP</span>
+                    <span className="font-display text-lg text-white tracking-tight">{xp.toLocaleString()}</span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="w-full h-2 bg-white/[0.06] rounded-full overflow-hidden">
+                      <motion.div
+                        className={cn("h-full rounded-full", tier.bar)}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${xpProgress}%` }}
+                        transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-[9px] font-black text-white/25">
+                      <span>{(xp % 1000).toLocaleString()} / 1000 XP</span>
+                      <span>{xpToNext.toLocaleString()} to Lv.{level + 1}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Growth Index */}
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-5 space-y-5">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">Growth Index</h3>
+                  <TrendingUp className="w-3.5 h-3.5 text-white/30" />
                 </div>
 
-                {isLoading ? (
-                    <div className="flex justify-center items-center py-20">
-                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <div className="space-y-4">
+                  {[
+                    { label: "Creation",  value: creationScore,  bar: "bg-lime-400",   desc: `${stats?.posts ?? 0} posts`            },
+                    { label: "Voting",    value: socialScore,    bar: "bg-blue-400",   desc: `${stats?.votesCast ?? 0} votes cast`   },
+                    { label: "Community", value: communityScore, bar: "bg-purple-400", desc: `${stats?.events ?? 0} events`          },
+                  ].map(g => (
+                    <div key={g.label} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">{g.label}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] font-black text-white/20">{g.desc}</span>
+                          <span className="text-[10px] font-black text-white/50">{g.value}%</span>
+                        </div>
+                      </div>
+                      <div className="w-full h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+                        <motion.div
+                          className={cn("h-full rounded-full", g.bar)}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${g.value}%` }}
+                          transition={{ duration: 0.9, ease: "easeOut", delay: 0.2 }}
+                        />
+                      </div>
                     </div>
-                ) : (
-                    <>
-                        {/* Stats Grid */}
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 px-4 md:px-0">
-                            {activityStats.map((stat, i) => (
-                                <motion.div
-                                    key={i}
-                                    initial={{ opacity: 0, y: 15 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: i * 0.1 }}
-                                    className="bg-card/70 backdrop-blur-md border border-border/60 p-6 rounded-xl md:rounded-2xl group hover:border-primary/30 transition-all duration-300 shadow-sm"
-                                >
-                                    <div className={cn("w-10 h-10 rounded-xl bg-secondary flex items-center justify-center mb-5 group-hover:scale-110 transition-transform", stat.color)}>
-                                        <stat.icon className="w-5 h-5" />
-                                    </div>
-                                    <p className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-1">{stat.label}</p>
-                                    <h3 className="text-3xl font-black text-foreground tracking-tighter">{stat.value}</h3>
-                                </motion.div>
-                            ))}
-                        </div>
+                  ))}
+                </div>
 
-                        {/* Recent Activity Sections */}
-                        <div className="grid lg:grid-cols-[1fr_340px] gap-8 px-4 md:px-0">
-                            {/* Main Timeline */}
-                            <div className="space-y-6">
-                                <h2 className="text-xs font-black uppercase tracking-[0.25em] text-foreground/40 pl-1">Events Participated In</h2>
-                                <div className="bg-card/70 backdrop-blur-md border border-border/60 rounded-2xl md:rounded-3xl overflow-hidden shadow-sm">
-                                    {participatedEvents.length > 0 ? (
-                                        participatedEvents.map((event, i) => (
-                                            <div key={i} className="flex items-center gap-6 p-7 border-b border-border/40 last:border-0 hover:bg-foreground/[0.02] transition-colors group cursor-pointer">
-                                                <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center shrink-0">
-                                                    <event.icon className={cn("w-6 h-6 transition-colors", event.type === "Vote Event" ? "text-accent group-hover:text-accent/80" : "text-primary group-hover:text-primary/80")} />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <span className={cn("text-[9px] font-black uppercase tracking-widest", event.type === "Vote Event" ? "text-accent" : "text-primary")}>{event.type}</span>
-                                                        <span className="text-[10px] text-foreground/20">•</span>
-                                                        <span className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest">{event.brand}</span>
-                                                    </div>
-                                                    <h4 className="text-sm font-black text-foreground truncate tracking-tight">{event.title}</h4>
-                                                    <div className="flex items-center gap-3 mt-1.5 text-[10px] font-bold text-foreground/40 tracking-wider">
-                                                        <span className="flex items-center gap-1.5"><Calendar className="w-3 h-3" /> {event.time}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="text-right hidden sm:block">
-                                                    <p className="text-[10px] font-black text-primary mb-1">{event.reward}</p>
-                                                    <span className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest bg-secondary px-2 py-0.5 rounded-full">{event.status}</span>
-                                                </div>
-                                                <ArrowUpRight className="w-4 h-4 text-foreground/10 group-hover:text-foreground/40 transition-colors" />
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="p-8 text-center text-muted-foreground text-sm font-medium">
-                                            No events participated in yet.
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Right Panel: Growth Stats */}
-                            <div className="space-y-6">
-                                <h2 className="text-xs font-black uppercase tracking-[0.25em] text-foreground/40 pl-1">Growth Index</h2>
-                                <div className="bg-card border border-border/60 p-8 rounded-[32px] shadow-sm">
-                                    <div className="flex items-center justify-between mb-8">
-                                        <span className="text-sm font-black text-foreground tracking-tight">Active Engagement</span>
-                                        <TrendingUp className="w-4 h-4 text-primary" />
-                                    </div>
-                                    <div className="space-y-6">
-                                        {[
-                                            { label: "Creation", value: Math.min(100, (stats?.posts || 0) * 10) },
-                                            { label: "Social", value: Math.min(100, (stats?.votes || 0) * 5) },
-                                            { label: "Community", value: Math.min(100, (stats?.events || 0) * 15) },
-                                        ].map((stat, i) => (
-                                            <div key={i} className="space-y-2.5">
-                                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
-                                                    <span className="text-foreground/40">{stat.label}</span>
-                                                    <span className="text-foreground/60">{stat.value}%</span>
-                                                </div>
-                                                <div className="w-full bg-secondary h-1.5 rounded-full overflow-hidden border border-border/20">
-                                                    <div
-                                                        className="h-full bg-primary"
-                                                        style={{ width: `${stat.value}%` }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <button className="w-full mt-10 py-3.5 bg-secondary hover:bg-border/60 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all">
-                                        Detailed Insights
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </>
+                {(user?.currentStreak ?? 0) > 0 && (
+                  <div className="pt-4 border-t border-white/[0.04] flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-orange-400/10 border border-orange-400/20 flex items-center justify-center shrink-0">
+                      <Flame className="w-4 h-4 text-orange-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-black text-white">{user?.currentStreak} Day Streak</p>
+                      <p className="text-[9px] font-black text-white/30 uppercase tracking-wide mt-0.5">Keep it going</p>
+                    </div>
+                  </div>
                 )}
-            </main>
-        </SidebarLayout>
-    );
+              </div>
+
+            </div>
+          </div>
+
+        </main>
+      </SidebarLayout>
+    </div>
+  );
 }

@@ -87,27 +87,27 @@ export default function Leaderboard() {
     ] as const;
 
     return (
-        <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30 pb-20 md:pb-0">
+        <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
             <SidebarLayout>
-                <main className="flex-1 flex flex-col w-full max-w-[1400px] mx-auto px-4 md:px-8 py-10 space-y-12">
+                <main className="flex-1 flex flex-col w-full space-y-12 pt-6 lg:pt-10 pb-20 md:pb-12">
 
                     {/* Header */}
                     <div className="space-y-2">
-                        <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase leading-none">Leaderboard</h1>
-                        <p className="text-xs font-black text-white/30 uppercase tracking-[0.3em]">Global Rankings & Performance</p>
+                        <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-white uppercase leading-[0.92] tracking-tight">Leaderboard</h1>
+                        <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">Global Rankings & Performance</p>
                     </div>
 
                     {/* Navigation Tabs */}
-                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-4 border-t border-white/5">
+                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar border-t border-white/5 pt-6">
                         {tabs.map((tab) => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={cn(
-                                    "px-8 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
+                                    "px-6 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
                                     activeTab === tab.id
                                         ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.1)]"
-                                        : "bg-white/5 text-white/40 border-white/5 hover:bg-white/10 hover:text-white"
+                                        : "bg-white/[0.04] text-white/40 border-white/[0.06] hover:bg-white/[0.08] hover:text-white/80"
                                 )}
                             >
                                 {tab.label}
@@ -125,11 +125,11 @@ export default function Leaderboard() {
                     </section>
 
                     {/* Global Rankings Table (Bottom Part) */}
-                    <section className="space-y-8 pt-12 border-t border-white/5">
+                    <section className="space-y-8 pt-8 border-t border-white/5">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="space-y-1">
-                                <h3 className="text-2xl font-black text-white uppercase tracking-tight">Global Rankings</h3>
-                                <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">Live updates for all {activeTab}</p>
+                                <h3 className="font-display text-4xl md:text-5xl text-white uppercase leading-none tracking-tight">Global Rankings</h3>
+                                <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Live updates · all {activeTab}</p>
                             </div>
                             <LeaderboardFilters />
                         </div>

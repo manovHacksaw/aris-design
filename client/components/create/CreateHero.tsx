@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Sparkles, Paperclip, ImageIcon, PlayCircle, Settings2 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { BackgroundBeams } from "@/components/ui/background-beams";
+import { StarsBackground } from "@/components/ui/stars-background";
 import { PlaceholdersAndVanishInput } from "@/components/ui/placeholders-and-vanish-input";
 
 const AI_PLACEHOLDERS = [
@@ -33,8 +33,15 @@ export default function CreateHero() {
 
     return (
         <div className="relative w-full rounded-[40px] overflow-hidden bg-[#070709] border border-white/[0.06] min-h-[320px]">
-            {/* Aceternity Background Beams */}
-            <BackgroundBeams className="opacity-60" />
+            {/* Dynamic Stars Background */}
+            <StarsBackground
+                starDensity={0.0002}
+                allStarsTwinkle
+                twinkleProbability={0.8}
+                minTwinkleSpeed={0.3}
+                maxTwinkleSpeed={0.8}
+                className="opacity-70"
+            />
 
             {/* Extra colour glow layers */}
             <div className="absolute inset-0 pointer-events-none">
@@ -43,17 +50,9 @@ export default function CreateHero() {
                 <div className="absolute top-1/2 left-1/3 w-[300px] h-[300px] bg-lime-400/5 rounded-full blur-[100px]" />
             </div>
 
-            <div className="relative z-10 p-8 md:p-12 lg:p-14 space-y-8">
-                {/* Badge */}
-                <motion.div
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4 }}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-[10px] font-black uppercase tracking-widest text-white/50"
-                >
-                    <PlayCircle className="w-3.5 h-3.5 text-lime-400" />
-                    Aris Studio
-                </motion.div>
+            <div className="relative z-10 px-6 py-8 sm:px-8 md:py-12 lg:py-14 space-y-8">
+            
+
 
                 {/* Heading */}
                 <motion.div

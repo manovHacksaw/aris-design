@@ -22,7 +22,7 @@ export default function LeaderboardStatsHeader({ tab, user, topData }: Leaderboa
         return (
             <div className="space-y-12">
                 <div className="space-y-6">
-                    <h3 className="text-xl font-black tracking-tight text-white uppercase tracking-[0.2em] opacity-30">Your Standings</h3>
+                    <h3 className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Your Standings</h3>
                     <UserStatsCard user={user} />
                 </div>
             </div>
@@ -33,7 +33,7 @@ export default function LeaderboardStatsHeader({ tab, user, topData }: Leaderboa
         return (
             <div className="space-y-8">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-black tracking-tight text-white uppercase tracking-[0.2em] opacity-30">Followed Brands</h3>
+                    <h3 className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Followed Brands</h3>
                     <span className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
                         {topData.brands.length} Following
                     </span>
@@ -72,7 +72,7 @@ export default function LeaderboardStatsHeader({ tab, user, topData }: Leaderboa
         return (
             <div className="space-y-8">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-black tracking-tight text-white uppercase tracking-[0.2em] opacity-30">Your Participations</h3>
+                    <h3 className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Your Participations</h3>
                     <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest bg-blue-400/10 px-3 py-1 rounded-full border border-blue-400/20">
                         Active In {topData.events.length}
                     </span>
@@ -106,7 +106,7 @@ export default function LeaderboardStatsHeader({ tab, user, topData }: Leaderboa
         return (
             <div className="space-y-8">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-black tracking-tight text-white uppercase tracking-[0.2em] opacity-30">Your Top Content</h3>
+                    <h3 className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Your Top Content</h3>
                     <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest bg-purple-400/10 px-3 py-1 rounded-full border border-purple-400/20">
                         {topData.content.length} Submissions
                     </span>
