@@ -40,7 +40,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [syncedAddress, setSyncedAddress] = useState<string | null>(null);
 
   const syncingRef = useRef(false);
@@ -98,6 +98,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   /** Re-fetch from /users/me (uses existing token) */
   const refreshUser = useCallback(async () => {
+    setIsLoading(true);
     try {
       const [u, s] = await Promise.all([getCurrentUser(), getUserStats().catch(() => null)]);
       setUser(u);
@@ -109,6 +110,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
       if ((err?.status === 401 || err?.status === 404) && !isOnBrandPage) {
         await syncWithBackend();
       }
+    } finally {
+      setIsLoading(false);
     }
   }, [syncWithBackend, pathname]);
 
@@ -129,6 +132,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setStats(null);
         setSyncedAddress(null);
       }
+      setIsLoading(false);
       return;
     }
 
@@ -143,6 +147,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
         syncWithBackend();
       }
       setSyncedAddress(address);
+    } else if (address === syncedAddress) {
+      setIsLoading(false);
     }
   }, [isConnected, authenticated, isInitialized, ready, address, syncedAddress, pathname]);
 
@@ -154,14 +160,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
   // On mount, if there's an existing token, try to load user silently
   useEffect(() => {
     getAuthToken().then((token) => {
-      if (token && !user && !isLoading) {
+      if (token && !user) {
         getCurrentUser()
           .then((u) => {
             setUser(u);
             return getUserStats().catch(() => null);
           })
           .then((s) => { if (s) setStats(s); })
-          .catch(() => { });
+          .catch(() => { })
+          .finally(() => setIsLoading(false));
+      } else {
+        setIsLoading(false);
       }
     });
   }, []);

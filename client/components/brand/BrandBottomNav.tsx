@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { IoGridOutline, IoMegaphoneOutline, IoAddCircleOutline, IoWalletOutline, IoNotificationsOutline } from "react-icons/io5";
+import { IoGridOutline, IoMegaphoneOutline, IoAddCircleOutline, IoWalletOutline, IoNotificationsOutline, IoRibbonOutline } from "react-icons/io5";
 import { useNotifications } from "@/context/NotificationContext";
 
 const navItems = [
     { label: "Home",      href: "/brand/dashboard",     icon: IoGridOutline },
     { label: "Campaigns", href: "/brand/events",        icon: IoMegaphoneOutline },
     { label: "Create",    href: "/brand/create-event",  icon: IoAddCircleOutline, isProminent: true },
+    { label: "Milestones", href: "/brand/milestones",   icon: IoRibbonOutline },
     { label: "Wallet",    href: "/brand/financials",    icon: IoWalletOutline },
     { label: "Alerts",    href: "/brand/notifications", icon: IoNotificationsOutline },
 ];

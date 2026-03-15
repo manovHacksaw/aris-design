@@ -928,7 +928,7 @@ export default function CreateEventPage() {
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <div className="bg-black/30 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-full flex items-center gap-1.5 hover:bg-black/50 transition-colors" onClick={(e) => { e.stopPropagation(); setCurrentStep(0); }}>
                                             <Tag className="w-3 h-3 text-white/60" />
-                                            <span className="text-[10px] font-black text-white">{form.type === "post_and_vote" ? "Post & Vote" : "Vote Only"}</span>
+                                            <span className="text-[10px] font-black text-white">{form.type === "post" ? "Post & Vote" : "Vote Only"}</span>
                                         </div>
                                     </div>
                                     <div className="hover:translate-x-1 transition-transform" onClick={(e) => { e.stopPropagation(); setCurrentStep(1); }}>
@@ -1054,7 +1054,7 @@ export default function CreateEventPage() {
                                     </p>
                                     <ol className="space-y-2.5">
                                         {(isPost
-                                            ? (form.instructions ? form.instructions.split("\n").filter(Boolean) : [
+                                            ? (form.participantInstructions ? form.participantInstructions.split("\n").filter(Boolean) : [
                                                 "Upload a high-res image (max 5 MB).",
                                                 "One submission per participant.",
                                                 "No offensive, copyrighted material."
