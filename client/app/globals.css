@@ -1,0 +1,186 @@
+@import "tailwindcss";
+
+:root {
+  /* Vibrant "Navigate" Inspired Theme */
+  --color-background: #F8F9FA;
+  --color-foreground: #111111;
+
+  /* Primary: Neon Lime */
+  --color-primary: #B6FF60;
+  --color-primary-foreground: #111111;
+  --color-primary-dark: #9EE050;
+  --color-primary-light: #CFFF90;
+
+  /* Secondary: Soft Lavender/Purple */
+  --color-secondary: #9D9DFF;
+  --color-secondary-foreground: #111111;
+
+  /* Accent: Vibrant Orange */
+  --color-accent: #FF6B00;
+  --color-accent-foreground: #FFFFFF;
+
+  /* UI Surfaces */
+  --color-card: #FFFFFF;
+  --color-card-border: #111111;
+  --color-input: #FFFFFF;
+  --color-folder: #F1F3F5;
+
+  /* Additional Vibrant Colors */
+  --color-vibrant-yellow: #FFC700;
+  --color-vibrant-pink: #FF60B6;
+  --color-vibrant-blue: #60B6FF;
+
+  /* Radius System (Heavily rounded as per image) */
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 28px;
+  --radius-xl: 40px;
+  --radius-full: 9999px;
+
+  /* Shadows (minimal, preference for solid borders) */
+  --shadow-soft: 0 4px 0 rgba(17, 17, 17, 0.05);
+  --shadow-card: 0 8px 0 rgba(17, 17, 17, 0.08);
+  --shadow-spotify: 0 12px 48px rgba(0, 0, 0, 0.12);
+
+  --border-thick: 1.5px solid #111111;
+}
+
+.dark {
+  /* Keep it dark but maintain vibrancy */
+  --color-background: #0A0A0A;
+  --color-foreground: #F8F9FA;
+
+  --color-primary: #B6FF60;
+  --color-primary-foreground: #111111;
+
+  --color-secondary: #8A8AFF;
+  --color-secondary-foreground: #FFFFFF;
+
+  --color-accent: #FF7A1A;
+  --color-accent-foreground: #FFFFFF;
+
+  --color-card: #141414;
+  --color-card-border: rgba(255, 255, 255, 0.15);
+  --color-input: #1A1A1A;
+  --color-folder: #1A1A1A;
+
+  --shadow-soft: 0 4px 0 rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 8px 0 rgba(0, 0, 0, 0.4);
+}
+
+@theme inline {
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-foreground);
+
+  --color-primary: var(--color-primary);
+  --color-primary-foreground: var(--color-primary-foreground);
+  --color-primary-dark: var(--color-primary-dark);
+  --color-primary-light: var(--color-primary-light);
+
+  --color-secondary: var(--color-secondary);
+  --color-secondary-foreground: var(--color-secondary-foreground);
+
+  --color-accent: var(--color-accent);
+  --color-accent-foreground: var(--color-accent-foreground);
+
+  /* Semantic design tokens */
+  --color-neon-lime: #B6FF60;
+  --color-lavender: #9D9DFF;
+  --color-vibrant-orange: #FF6B00;
+  --color-vibrant-yellow: #FFC700;
+  --color-vibrant-pink: #FF60B6;
+  --color-vibrant-blue: #60B6FF;
+
+  --color-aris-bg: #F8F9FA;
+  --color-aris-card: #FFFFFF;
+  --color-aris-border: #111111;
+
+  --color-card: var(--color-card);
+  --color-card-border: var(--color-card-border);
+  --color-border: var(--color-card-border);
+  --color-input: var(--color-input);
+  --color-folder: var(--color-folder);
+
+  --font-sans: var(--font-outfit), var(--font-inter), sans-serif;
+  --font-display: var(--font-bebas), sans-serif;
+  --font-mono: var(--font-jetbrains-mono), monospace;
+
+  /* Radius tokens */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-full: 9999px;
+
+  /* Animations */
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-marquee: marquee 25s linear infinite;
+
+  @keyframes float {
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+
+  @keyframes marquee {
+    0% {
+      transform: translateX(0%);
+    }
+
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+}
+
+/* Base Styles */
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+.bg-card {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F0EAE4;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #B8DDE0;
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #45B8C2;
+}
+
+/* Utility to hide scrollbar but keep functionality */
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar,
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
