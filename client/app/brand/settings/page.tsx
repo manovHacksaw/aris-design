@@ -25,6 +25,12 @@ import { upsertBrandProfile } from "@/services/brand.service";
 import { uploadToPinata, validateImageFile } from "@/lib/pinata-upload";
 import { cn } from "@/lib/utils";
 
+const neuOuter = "bg-card shadow-[8px_8px_16px_rgba(0,0,0,0.03),-8px_-8px_16px_rgba(255,255,255,0.8)] dark:shadow-[8px_8px_16px_rgba(0,0,0,0.3),-8px_-8px_16px_rgba(255,165,0,0.08)] border border-border/10";
+const neuInner = "bg-background shadow-[inset_4px_4px_8px_rgba(0,0,0,0.03),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] dark:shadow-[inset_4px_4px_8px_rgba(0,0,0,0.3),inset_-4px_-4px_8px_rgba(255,165,0,0.06)] border border-border/5";
+const neuInput = "bg-background/50 shadow-[inset_2px_2px_6px_rgba(0,0,0,0.04),inset_-2px_-2px_6px_rgba(255,255,255,0.7)] dark:shadow-[inset_2px_2px_6px_rgba(0,0,0,0.4),inset_-2px_-2px_6px_rgba(255,165,0,0.05)] border-transparent focus:ring-2 focus:ring-orange-600/20 dark:focus:ring-orange-400/20";
+const neuButton = "shadow-[4px_4px_10px_rgba(0,0,0,0.06),-4px_-4px_10px_rgba(255,255,255,0.9)] dark:shadow-[4px_4px_10px_rgba(0,0,0,0.3),-4px_-4px_10px_rgba(255,165,0,0.1)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.1),inset_-2px_-2px_4px_rgba(255,255,255,0.05)] dark:active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.2),inset_-2px_-2px_4px_rgba(255,165,0,0.08)] transition-all duration-300";
+
+
 const CATEGORIES = [
   "Fashion & Apparel", "Technology", "Automotive", "Food & Beverage",
   "Health & Wellness", "Entertainment", "Gaming", "Sports & Fitness", "Beauty & Personal Care",
@@ -181,8 +187,65 @@ export default function BrandSettingsPage() {
 
   if (userLoading && !user) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="max-w-[1200px] mx-auto py-8 space-y-10 pb-24 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="px-4 md:px-0 space-y-3">
+          <div className="h-10 bg-secondary border border-border/40 rounded-xl w-48" />
+          <div className="h-4 bg-secondary border border-border/40 rounded-lg w-64" />
+        </div>
+
+        <div className="px-4 md:px-0 mt-6">
+          {/* Navigation Grid Skeleton */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-12">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className={cn("p-5 md:p-6 flex flex-col items-start gap-4 rounded-[32px]", neuOuter)}>
+                <div className={cn("w-14 h-14 rounded-[20px] bg-secondary", neuInner)} />
+                <div className="h-4 bg-secondary rounded-lg w-24 mt-2" />
+              </div>
+            ))}
+          </div>
+
+          {/* Content Area Skeleton */}
+          <div className="max-w-[800px] mx-auto space-y-8">
+            <div className={cn("rounded-[32px] overflow-hidden", neuOuter)}>
+              <div className="p-8 space-y-10">
+                {/* Logo Section */}
+                <div className="flex flex-col sm:flex-row items-center gap-8">
+                  <div className={cn("w-32 h-32 rounded-[32px] bg-secondary shrink-0", neuInner)} />
+                  <div className="space-y-3 w-full max-w-[200px] flex flex-col items-center sm:items-start">
+                    <div className="h-6 bg-secondary rounded-lg w-32" />
+                    <div className="h-3 bg-secondary rounded-lg w-full" />
+                    <div className="h-3 bg-secondary rounded-lg w-40" />
+                    <div className="h-10 bg-secondary rounded-xl w-32 mt-4" />
+                  </div>
+                </div>
+
+                <div className="h-[1px] bg-border/40" />
+
+                {/* Form Fields */}
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="space-y-2">
+                    <div className="h-3 bg-secondary rounded-lg w-20 ml-1" />
+                    <div className={cn("h-14 rounded-2xl w-full", neuInput)} />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-3 bg-secondary rounded-lg w-20 ml-1" />
+                    <div className={cn("h-14 rounded-2xl w-full", neuInput)} />
+                  </div>
+                  <div className="md:col-span-2 space-y-2">
+                    <div className="h-3 bg-secondary rounded-lg w-24 ml-1" />
+                    <div className={cn("h-32 rounded-2xl w-full", neuInput)} />
+                  </div>
+                </div>
+
+                {/* Save Button */}
+                <div className="flex justify-end pt-4">
+                  <div className={cn("h-12 w-40 rounded-2xl", neuButton, "bg-secondary")} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -218,41 +281,44 @@ export default function BrandSettingsPage() {
         </p>
       </div>
 
-      <div className="grid lg:grid-cols-[280px_1fr] gap-8 px-4 md:px-0">
-        {/* Navigation Sidebar */}
-        <aside className="space-y-2">
+      <div className="px-4 md:px-0 mt-6">
+        {/* Navigation Grid Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-12">
           {settingsSections.map((section) => (
             <button
               key={section.id}
               onClick={() => setActiveSection(section.id)}
               className={cn(
-                "w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-sm font-black transition-all group",
+                "p-5 md:p-6 flex flex-col items-start gap-4 rounded-[32px] transition-all duration-300",
                 activeSection === section.id
-                  ? "bg-foreground text-background shadow-lg shadow-foreground/10"
-                  : "bg-card/50 text-foreground/40 hover:bg-secondary hover:text-foreground"
+                  ? cn("text-orange-600 dark:text-orange-400", neuInner)
+                  : cn("text-foreground/40 hover:text-foreground", neuOuter, "hover:-translate-y-1")
               )}
             >
-              <section.icon className={cn("w-5 h-5", activeSection === section.id ? "" : "opacity-40")} />
-              <span className="flex-1 text-left">{section.label}</span>
-              <ChevronRight
+              <div
                 className={cn(
-                  "w-4 h-4 transition-transform",
-                  activeSection === section.id ? "translate-x-1" : "opacity-0"
+                  "p-4 rounded-[20px] transition-all duration-300",
+                  activeSection === section.id
+                    ? cn("bg-background text-orange-600 dark:text-orange-400", neuOuter)
+                    : cn("bg-transparent", neuInner)
                 )}
-              />
+              >
+                <section.icon className="w-7 h-7" />
+              </div>
+              <span className="text-[14px] font-black tracking-wide ml-1 mt-2">{section.label}</span>
             </button>
           ))}
-        </aside>
+        </div>
 
         {/* Content Area */}
-        <div className="space-y-8">
+        <div className="max-w-[800px] mx-auto space-y-8">
 
           {/* Brand Profile Section */}
           {activeSection === "brand" && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-card border border-border/60 rounded-[32px] overflow-hidden shadow-sm"
+              className={cn("rounded-[32px] overflow-hidden", neuOuter)}
             >
               <div className="p-8 space-y-10">
                 {/* Logo Upload */}
@@ -268,18 +334,20 @@ export default function BrandSettingsPage() {
                     className="relative group cursor-pointer shrink-0"
                     onClick={() => !isUploadingLogo && fileInputRef.current?.click()}
                   >
-                    <div className="w-28 h-28 rounded-2xl overflow-hidden border-4 border-background shadow-xl">
-                      {logoPreview ? (
-                        <img
-                          src={logoPreview}
-                          alt="Brand logo"
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                          <span className="text-primary text-4xl font-black uppercase">{logoInitial}</span>
-                        </div>
-                      )}
+                    <div className={cn("w-32 h-32 rounded-[32px] flex items-center justify-center p-2", neuOuter)}>
+                      <div className={cn("w-full h-full rounded-[24px] overflow-hidden", neuInner)}>
+                        {logoPreview ? (
+                          <img
+                            src={logoPreview}
+                            alt="Brand logo"
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-orange-600/20 to-accent/20 dark:from-orange-400/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                            <span className="text-orange-600 dark:text-orange-400 text-4xl font-black uppercase">{logoInitial}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       {isUploadingLogo
@@ -297,7 +365,7 @@ export default function BrandSettingsPage() {
                     <button
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isUploadingLogo}
-                      className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center gap-2 bg-orange-600 dark:bg-orange-500 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-orange-700 dark:hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isUploadingLogo ? <><Loader2 className="w-3 h-3 animate-spin" /> Uploading…</> : "Upload Logo"}
                     </button>
@@ -317,7 +385,7 @@ export default function BrandSettingsPage() {
                       value={brandName}
                       onChange={(e) => setBrandName(e.target.value)}
                       placeholder="Your brand name"
-                      className="w-full bg-secondary/50 border border-border/60 rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none focus:border-primary/40 transition-colors"
+                      className={cn("w-full rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none transition-colors", neuInput)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -330,7 +398,7 @@ export default function BrandSettingsPage() {
                       onChange={(e) => setTagline(e.target.value)}
                       placeholder="e.g. Just Do It"
                       maxLength={80}
-                      className="w-full bg-secondary/50 border border-border/60 rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none focus:border-primary/40 transition-colors"
+                      className={cn("w-full rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none transition-colors", neuInput)}
                     />
                   </div>
                   <div className="md:col-span-2 space-y-2">
@@ -343,7 +411,7 @@ export default function BrandSettingsPage() {
                       placeholder="Tell creators what your brand is about..."
                       maxLength={200}
                       rows={4}
-                      className="w-full bg-secondary/50 border border-border/60 rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none focus:border-primary/40 transition-colors resize-none"
+                      className={cn("w-full rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none transition-colors resize-none", neuInput)}
                     />
                     <p className="text-xs text-foreground/30 text-right font-bold">{description.length}/200</p>
                   </div>
@@ -353,7 +421,10 @@ export default function BrandSettingsPage() {
                   <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex items-center gap-2 bg-foreground text-background px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-foreground/90 transition-all active:scale-95 shadow-lg shadow-foreground/10 disabled:opacity-60"
+                    className={cn(
+                      "flex items-center gap-2 bg-foreground text-background px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-foreground/90 disabled:opacity-60",
+                      neuButton
+                    )}
                   >
                     {isSaving ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -374,7 +445,7 @@ export default function BrandSettingsPage() {
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-card border border-border/60 rounded-[32px] overflow-hidden shadow-sm"
+              className={cn("rounded-[32px] overflow-hidden", neuOuter)}
             >
               <div className="p-8 space-y-8">
                 <div>
@@ -399,7 +470,7 @@ export default function BrandSettingsPage() {
                             setSocialLinks((prev) => ({ ...prev, [key]: e.target.value }))
                           }
                           placeholder={placeholder}
-                          className="w-full pl-12 pr-5 bg-secondary/50 border border-border/60 rounded-2xl py-4 text-sm font-bold text-foreground focus:outline-none focus:border-primary/40 transition-colors placeholder:text-foreground/20"
+                          className={cn("w-full pl-12 pr-5 rounded-2xl py-4 text-sm font-bold text-foreground focus:outline-none transition-colors placeholder:text-foreground/20", neuInput)}
                         />
                       </div>
                     </div>
@@ -410,7 +481,10 @@ export default function BrandSettingsPage() {
                   <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex items-center gap-2 bg-foreground text-background px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-foreground/90 transition-all active:scale-95 shadow-lg shadow-foreground/10 disabled:opacity-60"
+                    className={cn(
+                      "flex items-center gap-2 bg-foreground text-background px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-foreground/90 disabled:opacity-60",
+                      neuButton
+                    )}
                   >
                     {isSaving ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -429,12 +503,12 @@ export default function BrandSettingsPage() {
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-card border border-border/60 rounded-[32px] overflow-hidden shadow-sm"
+              className={cn("rounded-[32px] overflow-hidden", neuOuter)}
             >
               <div className="p-8 space-y-8">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                    <Tag className="w-5 h-5 text-primary" />
+                  <div className="w-10 h-10 bg-orange-600/10 dark:bg-orange-400/10 rounded-xl flex items-center justify-center">
+                    <Tag className="w-5 h-5 text-orange-600 dark:text-orange-400" />
                   </div>
                   <div>
                     <h3 className="text-xl font-black text-foreground">Brand Categories</h3>
@@ -452,10 +526,10 @@ export default function BrandSettingsPage() {
                         key={cat}
                         onClick={() => toggleCategory(cat)}
                         className={cn(
-                          "px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer",
+                          "px-6 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer border-none",
                           selected
-                            ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                            : "bg-secondary/50 text-foreground/60 border-border/60 hover:border-primary/40 hover:text-foreground"
+                            ? cn("text-orange-600 dark:text-orange-400", neuInner)
+                            : cn("text-foreground/60 hover:text-foreground", neuOuter, "hover:-translate-y-0.5")
                         )}
                       >
                         {cat}
@@ -474,7 +548,10 @@ export default function BrandSettingsPage() {
                   <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex items-center gap-2 bg-foreground text-background px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-foreground/90 transition-all active:scale-95 shadow-lg shadow-foreground/10 disabled:opacity-60"
+                    className={cn(
+                      "flex items-center gap-2 bg-foreground text-background px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-foreground/90 disabled:opacity-60",
+                      neuButton
+                    )}
                   >
                     {isSaving ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -495,7 +572,7 @@ export default function BrandSettingsPage() {
               animate={{ opacity: 1, x: 0 }}
               className="space-y-6"
             >
-              <div className="bg-card border border-border/60 rounded-[32px] p-8 space-y-6 shadow-sm">
+              <div className={cn("rounded-[32px] p-8 space-y-6 container border-none", neuOuter)}>
                 <div className="flex items-center gap-3">
                   <h3 className="text-xl font-black text-foreground tracking-tight">Account Info</h3>
                   <span className="ml-2 text-[10px] bg-secondary text-foreground/40 border border-border/60 px-3 py-1 rounded-full font-black uppercase tracking-widest">
@@ -516,7 +593,7 @@ export default function BrandSettingsPage() {
                       <label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">
                         {label}
                       </label>
-                      <div className="w-full bg-secondary/30 border border-border/40 rounded-2xl px-5 py-4 text-sm font-bold text-foreground/50 cursor-not-allowed break-all">
+                      <div className={cn("w-full rounded-2xl px-5 py-4 text-sm font-bold text-foreground/50 cursor-not-allowed break-all", neuInput)}>
                         {value}
                       </div>
                     </div>
@@ -527,7 +604,7 @@ export default function BrandSettingsPage() {
                     <label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">
                       Wallet Address
                     </label>
-                    <div className="flex items-center gap-3 bg-secondary/30 border border-border/40 rounded-2xl px-5 py-4">
+                    <div className={cn("flex items-center gap-3 rounded-2xl px-5 py-4", neuInput)}>
                       <span className="flex-1 text-sm font-bold text-foreground/50 font-mono break-all">
                         {user.walletAddress
                           ? `${user.walletAddress.slice(0, 8)}…${user.walletAddress.slice(-6)}`
@@ -551,7 +628,7 @@ export default function BrandSettingsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-4 bg-secondary/20 rounded-2xl border border-border/30">
+                <div className={cn("flex items-start gap-3 p-4 rounded-2xl", neuInner)}>
                   <Info className="w-4 h-4 text-foreground/30 mt-0.5 shrink-0" />
                   <p className="text-[11px] text-foreground/40 font-medium leading-relaxed">
                     Account details are managed by your authentication provider and cannot be changed here.

@@ -547,8 +547,80 @@ export default function BrandWalletPage() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <Loader2 className="w-7 h-7 animate-spin text-primary/50" />
+            <div className="max-w-5xl mx-auto px-4 md:px-6 pb-24 space-y-6 animate-pulse">
+                {/* Header Skeleton */}
+                <div className="pt-8 space-y-3">
+                    <div className="h-9 bg-secondary border border-border/40 rounded-xl w-64" />
+                    <div className="h-5 bg-secondary border border-border/40 rounded-lg w-full max-w-md" />
+                </div>
+
+                {/* Tabs Skeleton */}
+                <div className="flex items-center gap-4 border-b border-border/40 pb-2 pt-2">
+                    <div className="h-8 bg-secondary border border-border/40 rounded-lg w-24" />
+                    <div className="h-8 bg-secondary border border-border/40 rounded-lg w-32" />
+                </div>
+
+                {/* Content Skeleton */}
+                <div className="pt-4 space-y-6">
+                    {/* Hero Card Skeleton */}
+                    <div className="bg-card border border-border/40 rounded-[28px] p-6 lg:p-8 h-48 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                        <div className="space-y-4 w-full">
+                            <div className="h-4 bg-secondary border border-border/40 rounded-lg w-32" />
+                            <div className="h-16 bg-secondary border border-border/40 rounded-2xl w-64" />
+                            <div className="h-4 bg-secondary border border-border/40 rounded-lg w-40" />
+                        </div>
+                        <div className="flex gap-3">
+                            <div className="h-12 w-32 bg-secondary border border-border/40 rounded-xl" />
+                            <div className="h-12 w-32 bg-secondary border border-border/40 rounded-xl" />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Left Col Skeleton */}
+                        <div className="lg:col-span-2 space-y-4">
+                            <div className="flex justify-between items-center">
+                                <div className="h-5 bg-secondary border border-border/40 rounded-lg w-32" />
+                                <div className="h-4 bg-secondary border border-border/40 rounded-lg w-24" />
+                            </div>
+                            <div className="bg-card border border-border/40 rounded-[20px] divide-y divide-border/30">
+                                {[1, 2, 3].map((i) => (
+                                    <div key={i} className="flex items-center gap-4 px-5 py-4">
+                                        <div className="w-10 h-10 rounded-2xl bg-secondary border border-border/40 shrink-0" />
+                                        <div className="flex-1 space-y-2">
+                                            <div className="h-4 bg-secondary border border-border/40 rounded-lg w-48" />
+                                            <div className="h-3 bg-secondary border border-border/40 rounded-lg w-24" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <div className="h-4 bg-secondary border border-border/40 rounded-lg w-16" />
+                                            <div className="h-3 bg-secondary border border-border/40 rounded-lg w-10 ml-auto" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Right Col Skeleton */}
+                        <div className="space-y-4">
+                            <div className="bg-card border border-border/40 rounded-[24px] p-6 space-y-6 h-[400px]">
+                                <div className="space-y-2">
+                                    <div className="h-5 bg-secondary border border-border/40 rounded-lg w-24" />
+                                    <div className="h-4 bg-secondary border border-border/40 rounded-lg w-full" />
+                                </div>
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <div className="h-3 bg-secondary border border-border/40 rounded-lg w-16" />
+                                        <div className="h-12 bg-secondary border border-border/40 rounded-xl w-full" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="h-3 bg-secondary border border-border/40 rounded-lg w-24" />
+                                        <div className="h-12 bg-secondary border border-border/40 rounded-xl w-full" />
+                                    </div>
+                                    <div className="h-12 bg-secondary border border-border/40 rounded-xl w-full mt-4" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }

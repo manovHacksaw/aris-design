@@ -38,9 +38,9 @@ export default function SidebarButton({
                 isActive && !isDestructive && "text-white font-black bg-[#6366F1] border border-white/10 shadow-[4px_4px_0px_0px_#FFFFFF]"
             )}
         >
-            <div className="flex-shrink-0 relative flex items-center justify-center w-8 h-8">
+            <div className="flex-shrink-0 relative flex items-center justify-center w-7 h-7">
                 <Icon
-                    size={20}
+                    size={18}
                     className={cn(
                         "transition-colors duration-150",
                         isActive && !isDestructive

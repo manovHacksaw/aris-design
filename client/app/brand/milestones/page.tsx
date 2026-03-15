@@ -66,8 +66,82 @@ export default function MilestonesPage() {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                <div className="w-12 h-12 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin" />
+            <div className="w-full max-w-7xl mx-auto pb-20 space-y-6">
+                <style dangerouslySetInnerHTML={{ __html: `
+                    @keyframes shimmer {
+                        0% { transform: translateX(-100%); }
+                        100% { transform: translateX(100%); }
+                    }
+                `}} />
+                
+                {/* Brand Header Skeleton */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="mb-8"
+                >
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="h-12 w-80 bg-muted rounded-2xl relative overflow-hidden">
+                            <div className="absolute inset-0 animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-foreground/5 to-transparent" />
+                        </div>
+                        <div className="h-8 w-24 bg-muted rounded-full relative overflow-hidden">
+                            <div className="absolute inset-0 animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-foreground/5 to-transparent" />
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="h-4 w-full max-w-2xl bg-muted rounded-lg relative overflow-hidden">
+                            <div className="absolute inset-0 animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-foreground/5 to-transparent" />
+                        </div>
+                        <div className="h-4 w-2/3 max-w-md bg-muted rounded-lg relative overflow-hidden">
+                            <div className="absolute inset-0 animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-foreground/5 to-transparent" />
+                        </div>
+                    </div>
+                </motion.div>
+
+                {/* Row 1: Metrics & Timeline */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <motion.div 
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                        className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6"
+                    >
+                        {[...Array(4)].map((_, i) => (
+                            <div key={i} className="h-[160px] bg-card border border-border rounded-[28px] relative overflow-hidden">
+                                <div className="absolute inset-0 animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-foreground/5 to-transparent" />
+                            </div>
+                        ))}
+                    </motion.div>
+                    <motion.div 
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: 0.3 }}
+                        className="lg:col-span-4 h-full min-h-[300px] bg-card border border-border rounded-[32px] relative overflow-hidden"
+                    >
+                        <div className="absolute inset-0 animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-foreground/5 to-transparent" />
+                    </motion.div>
+                </div>
+
+                {/* Row 2: Table & Upgrade */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.4 }}
+                        className="lg:col-span-8 min-h-[450px] bg-card border border-border rounded-[28px] relative overflow-hidden"
+                    >
+                        <div className="absolute inset-0 animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-foreground/5 to-transparent" />
+                    </motion.div>
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.5, delay: 0.5 }}
+                        className="lg:col-span-4 min-h-[450px] bg-card border border-border rounded-[28px] relative overflow-hidden"
+                    >
+                        <div className="absolute inset-0 animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-foreground/5 to-transparent" />
+                    </motion.div>
+                </div>
             </div>
         );
     }

@@ -1,3 +1,5 @@
+import { url } from "inspector";
+
 export interface GenerationResult {
   success: boolean;
   image?: {

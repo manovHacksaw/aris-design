@@ -40,7 +40,7 @@ export default function SidebarItem({
                 "rounded-xl"
             )}
         >
-            <div className="flex-shrink-0 relative flex items-center justify-center w-8 h-8 transition-all duration-200">
+            <div className="flex-shrink-0 relative flex items-center justify-center w-7 h-7 transition-all duration-200">
                 {avatar ? (
                     <img
                              src={avatar}
@@ -52,12 +52,12 @@ export default function SidebarItem({
                     />
                 ) : isActive && ActiveIcon ? (
                     <ActiveIcon
-                        size={22}
+                        size={18}
                         className="transition-colors duration-150 text-white"
                     />
                 ) : Icon ? (
                     <Icon
-                        size={22}
+                        size={18}
                         className={cn(
                             "transition-colors duration-150",
                             isActive

@@ -68,6 +68,7 @@ export class AuthService {
                 user = await prisma.user.update({
                     where: { id: user.id },
                     data: { privyId },
+                    include: { ownedBrands: true },
                 });
             }
         }
@@ -184,7 +185,7 @@ export class AuthService {
 
         const token = generateToken({
             userId: user.id,
-            address: user.walletAddress!,
+            address: user.walletAddress ?? '',
             email: user.email,
             sessionId: session.id,
         });

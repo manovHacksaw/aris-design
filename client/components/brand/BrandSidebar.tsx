@@ -71,7 +71,7 @@ export default function BrandSidebar() {
             }}
         >
             {/* Logo Section */}
-            <div className="flex items-center pt-8 pb-6 pl-6 pr-3 h-[88px]">
+            <div className="flex items-center pt-4 pb-2 pl-6 pr-3 h-[64px]">
                 <Link href="/brand/dashboard" className="flex items-center group">
                     <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center transition-transform duration-150 group-hover:scale-105 active:scale-95">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
@@ -94,7 +94,7 @@ export default function BrandSidebar() {
             {/* Navigation */}
             <nav className="flex-1 flex flex-col px-3 pt-2 overflow-y-auto scrollbar-hide">
                 {/* Main nav items */}
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1.5">
                     {navItems.map((item) => {
                         const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
                         return (
@@ -105,21 +105,21 @@ export default function BrandSidebar() {
                                     icon={item.icon}
                                     isActive={isActive}
                                 />
-                                {item.badge && item.badge > 0 && (
+                                {item.badge !== undefined && item.badge > 0 ? (
                                     <span className={cn(
                                         "absolute top-2.5 flex items-center justify-center rounded-full bg-primary text-white text-[9px] font-black pointer-events-none",
                                         showExpanded ? "right-3 min-w-[18px] h-[18px] px-1" : "right-2 w-2 h-2"
                                     )}>
                                         {showExpanded ? (item.badge > 99 ? "99+" : item.badge) : ""}
                                     </span>
-                                )}
+                                ) : null}
                             </div>
                         );
                     })}
                 </div>
 
-                {/* Footer cluster - pushed to bottom */}
-                <div className="mt-auto pb-6">
+                {/* Footer cluster */}
+                <div className="pb-4 pt-4 mt-2">
                     {/* Subtle separator */}
                     <div className="mx-1 h-[1px] bg-border mb-2" />
 
@@ -138,7 +138,7 @@ export default function BrandSidebar() {
                         <button
                             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                             className={cn(
-                                "group flex items-center w-full pl-3 py-3 rounded-xl",
+                                "group flex items-center w-full pl-3 py-2 rounded-xl",
                                 "text-white/50 hover:bg-white/5 hover:text-white",
                                 "transition-colors duration-150 ease-out"
                             )}
@@ -178,7 +178,7 @@ export default function BrandSidebar() {
                         <button
                             onClick={toggleSidebar}
                             className={cn(
-                                "group flex items-center w-full pl-3 py-3 rounded-xl",
+                                "group flex items-center w-full pl-3 py-2 rounded-xl",
                                 "text-foreground/60 hover:bg-secondary hover:text-foreground",
                                 "transition-colors duration-150 ease-out"
                             )}

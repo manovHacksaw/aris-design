@@ -50,3 +50,5 @@ coverage
 oldFrontend/
 
 client/service-account.json
+mintingscripts
+web3
