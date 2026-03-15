@@ -44,7 +44,17 @@
       "Bash(tail -f /tmp/claude-1000/-home-manov-Desktop-code-aris-design/tasks/bttw6v1jo.output 2>/dev/null; wait)",
       "Bash(ls \"/home/manov/Desktop/code/aris-design/client/app/\\(user\\)/\")",
       "Bash(ls \"/home/manov/Desktop/code/aris-design/client/app/\\(user\\)/explore/\" && ls \"/home/manov/Desktop/code/aris-design/client/app/\\(user\\)/leaderboard/\" && ls \"/home/manov/Desktop/code/aris-design/client/app/\\(user\\)/dashboard/\")",
-      "Bash(cd /home/manov/Desktop/code/aris-design/server && TO=0xf07ff4470509dd15B9d02e433332bBf4d3DC719a AMOUNT=500 bun run src/scripts/mintUsdc.ts)"
+      "Bash(cd /home/manov/Desktop/code/aris-design/server && TO=0xf07ff4470509dd15B9d02e433332bBf4d3DC719a AMOUNT=500 bun run src/scripts/mintUsdc.ts)",
+      "Bash(grep -r \"\\\\\"Coins\\\\\"\\\\|\\\\\"Tag\\\\\"\\\\|\\\\\"ShieldCheck\\\\\"\" /home/manov/Desktop/code/aris-design/client/node_modules/lucide-react/dist/lucide-react.js 2>/dev/null | head -3 || node -e \"const l = require\\('/home/manov/Desktop/code/aris-design/client/node_modules/lucide-react'\\); console.log\\('Coins:', !!l.Coins, 'Tag:', !!l.Tag, 'ShieldCheck:', !!l.ShieldCheck\\)\")",
+      "WebFetch(domain:ui.aceternity.com)",
+      "Bash(npx shadcn@latest add \"https://ui.aceternity.com/registry/background-beams.json\" --overwrite 2>&1 | tail -5)",
+      "Bash(echo \"y\" | npx shadcn@latest add \"https://ui.aceternity.com/registry/background-beams.json\" 2>&1 | tail -10)",
+      "Bash(kill %1 2>/dev/null; curl -s \"https://raw.githubusercontent.com/aceternity/ui/main/components/ui/background-beams.tsx\" 2>/dev/null | head -5; echo \"---\"; curl -s \"https://raw.githubusercontent.com/aceternity/ui/main/components/ui/sparkles.tsx\" 2>/dev/null | head -5)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:21st.dev)",
+      "Bash(ls /home/manov/Desktop/code/aris-design/client/app/\\\\\\(user\\\\\\)/profile/ 2>/dev/null || echo \"does not exist\")",
+      "Bash(ls /home/manov/Desktop/code/aris-design/client/app/\\\\\\(user\\\\\\)/ 2>/dev/null)",
+      "Bash(cat /home/manov/Desktop/code/aris-design/client/app/\\\\\\(user\\\\\\)/activity/page.tsx 2>/dev/null || echo \"empty\")"
     ]
   }
 }

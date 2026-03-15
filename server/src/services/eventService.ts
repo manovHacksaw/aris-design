@@ -827,11 +827,12 @@ export class EventService {
       // Extract images from votes
       const voteImages = event.votes
         .map(v => v.submission?.imageCid || v.proposal?.imageCid)
-        .filter((cid): cid is string => !!cid);
+        .filter((cid): cid is string => !!cid)
+        .map(cid => getIPFSUrl(cid, 'thumbnail'));
 
       return this.addImageUrls({
         ...event,
-        previewImages: voteImages
+        previewImageUrls: voteImages
       });
     });
   }

@@ -49,6 +49,24 @@ export async function getClaimableRewards(): Promise<ClaimableRewardsResponse> {
   return res.data;
 }
 
+export interface ClaimHistoryEntry {
+  id: string;
+  claimType: ClaimType;
+  finalAmount: number;
+  status: ClaimStatus;
+  transactionHash?: string | null;
+  claimedAt?: string | null;
+  event?: { title: string; id: string } | null;
+}
+
+/** GET /api/rewards/user/history — returns all past (CLAIMED) rewards */
+export async function getRewardHistory(): Promise<ClaimHistoryEntry[]> {
+  const res = await apiRequest<{ success: boolean; data: ClaimHistoryEntry[] }>(
+    "/rewards/user/history"
+  );
+  return res.data ?? [];
+}
+
 /** POST /api/rewards/confirm-all-claims — marks all CREDITED claims as CLAIMED */
 export async function confirmAllClaims(transactionHash: string): Promise<void> {
   await apiRequest<{ success: boolean }>("/rewards/confirm-all-claims", {

@@ -1,14 +1,14 @@
 "use client";
 
-import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
-import { Search, Sparkles, Shirt, Laptop, Wallet, Smartphone, Coffee, Gamepad, Rocket } from "lucide-react";
+import { motion, useScroll, useMotionValueEvent } from "framer-motion";
+import { Search, Sparkles, Shirt, Wallet, Smartphone, Coffee, Gamepad, Rocket, Laptop } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 const sectors = [
     { label: "ALL", icon: Sparkles },
     { label: "APPAREL", icon: Shirt },
-    { label: "SAAS", icon: CloudIcon },
+    { label: "SAAS", icon: Laptop },
     { label: "FINANCE", icon: Wallet },
     { label: "ELECTRONICS", icon: Smartphone },
     { label: "F&B", icon: Coffee },
@@ -16,15 +16,20 @@ const sectors = [
     { label: "STARTUPS", icon: Rocket },
 ];
 
-export default function ExploreHeader() {
-    const [searchQuery, setSearchQuery] = useState("");
-    const [activeSector, setActiveSector] = useState("ALL");
+interface ExploreHeaderProps {
+    activeSector: string;
+    onSectorChange: (s: string) => void;
+    searchQuery: string;
+    onSearchChange: (q: string) => void;
+}
+
+export default function ExploreHeader({ activeSector, onSectorChange, searchQuery, onSearchChange }: ExploreHeaderProps) {
     const [visible, setVisible] = useState(true);
     const { scrollY } = useScroll();
 
     useMotionValueEvent(scrollY, "change", (latest) => {
         const previous = scrollY.getPrevious() || 0;
-        if (latest > previous && latest > 150) {
+        if (latest > previous && latest > 120) {
             setVisible(false);
         } else {
             setVisible(true);
@@ -32,73 +37,60 @@ export default function ExploreHeader() {
     });
 
     return (
-        <AnimatePresence>
-            <motion.div
-                variants={{
-                    visible: { y: 0, opacity: 1 },
-                    hidden: { y: -100, opacity: 0 }
-                }}
-                animate={visible ? "visible" : "hidden"}
-                transition={{ duration: 0.35, ease: "easeInOut" }}
-                className="sticky top-0 z-[100] w-full bg-background/80 backdrop-blur-xl border-b border-white/5 pt-8 pb-4"
-            >
-                <div className="space-y-8">
-                    {/* Title + Desc */}
-                    <div className="space-y-1">
-                        <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] leading-[0.92] tracking-tight text-white uppercase">Discover</h1>
-                        <p className="text-xs font-black text-white/30 uppercase tracking-[0.2em]">Explore events, brands and creators</p>
-                    </div>
+        <motion.div
+            variants={{
+                visible: { y: 0, opacity: 1 },
+                hidden: { y: -110, opacity: 0 }
+            }}
+            animate={visible ? "visible" : "hidden"}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="sticky top-0 z-[100] w-full bg-background/85 backdrop-blur-2xl border-b border-white/5 pt-8 pb-5 space-y-6"
+        >
+            {/* Title + Search Row */}
+            <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-8">
+                <div className="shrink-0">
+                    <h1 className="font-display text-[3.5rem] sm:text-[5rem] leading-[0.88] tracking-tight text-white uppercase">Discover</h1>
+                    <p className="mt-1 text-[10px] font-black text-white/25 uppercase tracking-[0.25em]">Explore events, brands and creators</p>
+                </div>
 
-                    {/* Search & Tabs Row */}
-                    <div className="flex flex-col lg:flex-row items-center gap-6">
-                        {/* Search Bar */}
-                        <div className="relative w-full lg:max-w-md group">
-                            <div className="absolute inset-px bg-gradient-to-r from-primary/30 to-blue-600/30 rounded-2xl opacity-0 group-focus-within:opacity-100 transition-all blur-sm" />
-                            <div className="relative flex items-center bg-white/[0.03] border border-white/10 group-focus-within:border-primary/40 rounded-2xl overflow-hidden transition-all">
-                                <Search className="absolute left-4 w-4 h-4 text-white/20 group-focus-within:text-primary transition-colors" />
-                                <input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Search events, brands, or creators..."
-                                    className="w-full bg-transparent py-3.5 pl-11 pr-4 text-sm font-medium text-white placeholder:text-white/20 outline-none"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Sector Tabs */}
-                        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full">
-                            {sectors.map((sector) => {
-                                const isActive = activeSector === sector.label;
-                                const Icon = sector.icon;
-                                return (
-                                    <button
-                                        key={sector.label}
-                                        onClick={() => setActiveSector(sector.label)}
-                                        className={cn(
-                                            "relative flex items-center gap-2 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
-                                            isActive
-                                                ? "bg-white text-black shadow-lg shadow-white/5"
-                                                : "bg-white/5 text-white/30 border border-white/5 hover:bg-white/10 hover:text-white"
-                                        )}
-                                    >
-                                        <Icon className={cn("w-3.5 h-3.5", isActive ? "text-primary" : "text-white/20")} />
-                                        <span>{sector.label}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
+                {/* Search Bar */}
+                <div className="relative flex-1 max-w-xl group">
+                    <div className="absolute inset-px bg-gradient-to-r from-primary/20 to-blue-600/20 rounded-2xl opacity-0 group-focus-within:opacity-100 transition-all blur-sm" />
+                    <div className="relative flex items-center bg-white/[0.04] border border-white/8 group-focus-within:border-primary/40 rounded-2xl overflow-hidden transition-all">
+                        <Search className="absolute left-4 w-4 h-4 text-white/20 group-focus-within:text-primary transition-colors shrink-0" />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => onSearchChange(e.target.value)}
+                            placeholder="Search events, brands, or creators..."
+                            className="w-full bg-transparent py-3.5 pl-11 pr-4 text-sm font-medium text-white placeholder:text-white/20 outline-none"
+                        />
                     </div>
                 </div>
-            </motion.div>
-        </AnimatePresence>
-    );
-}
+            </div>
 
-function CloudIcon({ className }: { className?: string }) {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-            <path d="M17.5 19c2.5 0 4.5-2 4.5-4.5 0-2.4-1.9-4.3-4.3-4.5-.3-3.1-2.9-5.5-5.7-5.5-2.5 0-4.6 1.8-5.4 4.2-2 .4-3.6 2.1-3.6 4.3 0 2.5 2 4.5 4.5 4.5" />
-        </svg>
+            {/* Sector Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                {sectors.map((sector) => {
+                    const isActive = activeSector === sector.label;
+                    const Icon = sector.icon;
+                    return (
+                        <button
+                            key={sector.label}
+                            onClick={() => onSectorChange(sector.label)}
+                            className={cn(
+                                "relative flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap shrink-0",
+                                isActive
+                                    ? "bg-white text-black shadow-lg"
+                                    : "bg-white/5 text-white/30 border border-white/8 hover:bg-white/10 hover:text-white/70"
+                            )}
+                        >
+                            <Icon className={cn("w-3.5 h-3.5", isActive ? "text-primary" : "")} />
+                            {sector.label}
+                        </button>
+                    );
+                })}
+            </div>
+        </motion.div>
     );
 }
