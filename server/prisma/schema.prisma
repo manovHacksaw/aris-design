@@ -149,6 +149,7 @@ model Event {
   postingStart     DateTime?
   postingEnd       DateTime?
   imageCid         String?
+  imageUrl         String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   brandId          String
@@ -234,6 +235,7 @@ model Proposal {
   updatedAt DateTime     @updatedAt
   content   String?
   imageCid  String?
+  imageUrl  String?
   event     Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
   votes     Vote[]
 

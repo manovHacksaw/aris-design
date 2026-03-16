@@ -48,30 +48,19 @@ export class EventService {
 
     // Event type specific validations
     if (eventType === 'post_and_vote') {
-      if (data.postingStart === undefined && data.title !== undefined) {
-        // Only check if this is creation (title is present)
-        errors.push('postingStart is required for post_and_vote events');
-      }
-      if (data.postingEnd === undefined && data.title !== undefined) {
-        errors.push('postingEnd is required for post_and_vote events');
-      }
-      if (data.leaderboardPool === undefined && data.title !== undefined) {
-        errors.push('leaderboardPool is required for post_and_vote events');
-      } else if (data.leaderboardPool !== undefined && (data.leaderboardPool as any) < 0) {
+      // leaderboardPool is optional — defaults to 0
+      if (data.leaderboardPool !== undefined && (data.leaderboardPool as any) < 0) {
         errors.push('leaderboardPool cannot be negative');
       }
     }
 
-    // Samples validation for post_and_vote
+    // Samples validation for post_and_vote — optional, skip if not provided
     if (eventType === 'post_and_vote') {
-      if (data.title !== undefined && (!data.samples || data.samples.length === 0)) {
-        errors.push('At least one sample image is required for post_and_vote events');
-      }
       if (data.samples && data.samples.length > 10) {
         errors.push('Maximum 10 sample images allowed');
       }
 
-      // Validate sample CIDs
+      // Validate sample CIDs only if samples are provided
       if (data.samples && data.samples.length > 0) {
         const invalidCids = data.samples.some(cid => !/^(Qm[1-9A-HJ-NP-Za-km-z]{44}|bafy[a-z0-9]{50,})$/.test(cid));
         if (invalidCids) {
@@ -117,12 +106,8 @@ export class EventService {
     }
 
     // Validate posting phase timestamps for post_and_vote events
-    if (eventType === 'post_and_vote') {
-      if (!postingStart || !postingEnd) {
-        errors.push('postingStart and postingEnd are required for post_and_vote events');
-        return { isValid: false, errors };
-      }
-
+    // postingStart/postingEnd are optional — if omitted they are auto-derived by the caller
+    if (eventType === 'post_and_vote' && postingStart && postingEnd) {
       // Posting start must be before or equal to event start
       if (postingStart > startTime) {
         errors.push('postingStart must be before or equal to startTime');
@@ -274,9 +259,19 @@ export class EventService {
     // 3. Parse dates
     const startTime = this.parseDate(data.startTime);
     const endTime = this.parseDate(data.endTime);
-    const postingStart = data.postingStart ? this.parseDate(data.postingStart) : null;
-    const postingEnd = data.postingEnd ? this.parseDate(data.postingEnd) : null;
     const nextPhaseAt = data.nextPhaseAt ? this.parseDate(data.nextPhaseAt) : null;
+
+    // For post_and_vote: auto-derive postingStart/postingEnd if not provided.
+    // Default: postingStart = startTime, postingEnd = midpoint between start and end.
+    let postingStart: Date | null = data.postingStart ? this.parseDate(data.postingStart) : null;
+    let postingEnd: Date | null = data.postingEnd ? this.parseDate(data.postingEnd) : null;
+    if (data.eventType === 'post_and_vote') {
+      if (!postingStart) postingStart = startTime;
+      if (!postingEnd) {
+        const midMs = startTime.getTime() + (endTime.getTime() - startTime.getTime()) / 2;
+        postingEnd = new Date(midMs);
+      }
+    }
 
     // 4. Validate event data
     const dataValidation = this.validateEventData(data, data.eventType);
@@ -369,6 +364,7 @@ export class EventService {
           postingStart,
           postingEnd,
           imageCid: data.imageCid || null,
+          imageUrl: data.imageUrl || null,
           allowSubmissions: data.allowSubmissions ?? true,
           allowVoting: data.allowVoting ?? true,
           autoTransition: data.autoTransition ?? false,
@@ -405,6 +401,7 @@ export class EventService {
             title: p.title,
             content: p.content || null,
             imageCid: p.imageCid || null,
+            imageUrl: p.imageUrl || null,
             order: p.order ?? idx,
           })),
         });
@@ -953,6 +950,10 @@ export class EventService {
         }
       }
       updateData.imageCid = data.imageCid;
+    }
+
+    if (!lockedFields.includes('imageUrl') && data.imageUrl !== undefined) {
+      updateData.imageUrl = data.imageUrl;
     }
 
     if (!lockedFields.includes('allowSubmissions') && data.allowSubmissions !== undefined) {
