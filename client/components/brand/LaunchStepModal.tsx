@@ -139,17 +139,11 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
       if (!form.description.trim()) preflightErrors.push("Description is required.");
       if (!form.startImmediately && !form.startDate) preflightErrors.push("Start date is required (or enable Start Immediately).");
       if (!form.endDate) preflightErrors.push("End date is required.");
-      if (form.type === "post" && !form.postingEndDate) preflightErrors.push("Posting end / voting start date is required.");
       const cap = parseInt(form.maxParticipants);
       if (!cap || cap < 5) preflightErrors.push("Capacity must be at least 5 participants.");
       const resolvedStartMs = form.startImmediately ? Date.now() : new Date(form.startDate).getTime();
       const endMs = new Date(form.endDate).getTime();
       if (endMs - resolvedStartMs < 10 * 60 * 1000) preflightErrors.push("Event must run for at least 10 minutes.");
-      if (form.type === "post" && form.postingEndDate) {
-        const pEndMs = new Date(form.postingEndDate).getTime();
-        if (pEndMs <= resolvedStartMs) preflightErrors.push("Posting end must be after start.");
-        if (pEndMs >= endMs) preflightErrors.push("Voting end must be after posting end.");
-      }
       if (!form.topPrize || parseFloat(form.topPrize) <= 0) preflightErrors.push("Top prize is required.");
       if (preflightErrors.length > 0) {
         throw new Error(preflightErrors.join(" "));
@@ -251,23 +245,35 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
 
       // Resolve final timestamps
       const resolvedStart = form.startImmediately ? new Date() : new Date(form.startDate);
-      const postingStart = resolvedStart.toISOString();
-      // For post_and_vote: posting end is explicitly set; voting runs from there to endDate.
-      // For vote_only: startTime/endTime map directly from the resolved form dates.
-      const postingEnd = form.type === "post" && form.postingEndDate
-        ? new Date(form.postingEndDate).toISOString()
-        : undefined;
-      const eventStartTime = form.type === "post" && postingEnd ? postingEnd : resolvedStart.toISOString();
       const eventEndTime = new Date(form.endDate).toISOString();
+
+      // For post_and_vote: auto-derive posting phases from the total duration.
+      // postingStart = event start; postingEnd = midpoint; startTime (voting start) = postingEnd.
+      let postingStart: string | undefined;
+      let postingEnd: string | undefined;
+      let eventStartTime: string;
+
+      if (form.type === "post") {
+        const midMs = resolvedStart.getTime() + (new Date(form.endDate).getTime() - resolvedStart.getTime()) / 2;
+        postingStart = resolvedStart.toISOString();
+        postingEnd = form.postingEndDate
+          ? new Date(form.postingEndDate).toISOString()
+          : new Date(midMs).toISOString();
+        // voting starts when posting ends
+        eventStartTime = postingEnd;
+      } else {
+        eventStartTime = resolvedStart.toISOString();
+      }
 
       const dbEvent = await createEvent({
         title: form.title,
         tagline: form.tagline,
         description: form.description,
+        category: (form as any).category || undefined,
         eventType: form.type === "post" ? "post_and_vote" : "vote_only",
         startTime: eventStartTime,
         endTime: eventEndTime,
-        ...(form.type === "post" ? { postingStart, postingEnd } : {}),
+        ...(form.type === "post" && postingStart && postingEnd ? { postingStart, postingEnd } : {}),
         imageUrl: imageUrl || "",
         allowSubmissions: form.type === "post",
         allowVoting: true,
@@ -283,7 +289,7 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
         regions: form.regions,
         preferredGender: (form as any).preferredGender,
         ageGroup: (form as any).ageGroup,
-        samples: form.type === "post" ? [imageUrl || ""] : undefined,
+        samples: undefined,
         proposals: form.type === "vote"
           ? (uploadedProposals.length >= 2
             ? uploadedProposals
