@@ -116,7 +116,7 @@ function ChartCard({
             {/* Header */}
             <div className="px-5 pt-5 pb-4 border-b border-white/[0.05]">
                 <div className="flex items-start justify-between gap-3 mb-3">
-                    <h3 className="text-sm font-black text-foreground tracking-tight">{title}</h3>
+                    <h3 className="font-display uppercase tracking-widest text-white text-sm pt-1">{title}</h3>
                     {filterButtons && (
                         <div className="flex items-center bg-white/[0.04] border border-white/[0.06] rounded-full p-1 gap-0.5">
                             {filterButtons.map(btn => (
@@ -658,7 +658,7 @@ export default function BrandInsightsPage() {
                             <card.icon className={cn("w-4 h-4", card.color)} />
                         </div>
                         <div>
-                            <p className={cn("text-2xl font-black tracking-tight", card.color)}>{card.value}</p>
+                            <p className={cn("font-display text-3xl uppercase tracking-tight", card.color)}>{card.value}</p>
                             <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5">{card.label}</p>
                             {card.sub && <p className="text-[10px] text-foreground/25 mt-1">{card.sub}</p>}
                         </div>

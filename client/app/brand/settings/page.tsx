@@ -120,20 +120,37 @@ export default function BrandSettingsPage() {
     if (!file) return;
     const validation = validateImageFile(file);
     if (!validation.valid) { showToast("error", validation.error!); return; }
-    setLogoPreview(URL.createObjectURL(file));
+    
+    // Local preview immediately
+    const localUrl = URL.createObjectURL(file);
+    setLogoPreview(localUrl);
     setIsUploadingLogo(true);
+    
     try {
       const { imageUrl: uploadedLogoUrl } = await uploadToPinata(file);
       setLogoUrl(uploadedLogoUrl);
       setLogoPreview(uploadedLogoUrl);
+      showToast("success", "Logo uploaded successfully!");
     } catch {
       showToast("error", "Logo upload failed. Try again.");
-      setLogoPreview(null);
+      setLogoPreview(user?.avatarUrl || null); // Revert to previous on failure
     } finally {
       setIsUploadingLogo(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
+
+  const handleRemoveLogo = async () => {
+        setLogoPreview(null);
+        setLogoUrl(null);
+        try {
+            await upsertBrandProfile({ logoUrl: "" });
+            showToast("success", "Brand logo removed.");
+        } catch {
+            setLogoPreview(logoUrl); // reset visualization if server fails
+        }
+    };
+
 
   function copyWallet() {
     if (!user?.walletAddress) return;
@@ -201,8 +218,8 @@ export default function BrandSettingsPage() {
     return (
       <div className="font-sans max-w-[1200px] mx-auto py-8 space-y-10 pb-24 animate-pulse">
         <div className="px-4 md:px-0 space-y-3">
-          <div className="h-10 bg-secondary border border-border/40 rounded-xl w-48" />
-          <div className="h-4 bg-secondary border border-border/40 rounded-lg w-64" />
+          <div className="h-10 bg-white/[0.04] rounded-xl w-48" />
+          <div className="h-4 bg-white/[0.04] rounded-lg w-64" />
         </div>
         <div className="grid lg:grid-cols-[280px_1fr] gap-8 px-4 md:px-0">
           <aside className="space-y-2">
@@ -238,11 +255,10 @@ export default function BrandSettingsPage() {
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold ${
-            toast.type === "success"
+          className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold ${toast.type === "success"
               ? "bg-green-500/10 border border-green-500/30 text-green-400"
               : "bg-red-500/10 border border-red-500/30 text-red-400"
-          }`}
+            }`}
         >
           {toast.type === "success" ? (
             <CheckCircle className="w-4 h-4 shrink-0" />
@@ -258,8 +274,8 @@ export default function BrandSettingsPage() {
 
       {/* Header */}
       <div className="px-4 md:px-0">
-        <h1 className="text-4xl font-black text-foreground tracking-tighter mb-2">Settings</h1>
-        <p className="text-[11px] font-black text-foreground/30 uppercase tracking-[0.2em]">
+        <h1 className="font-display text-4xl text-white uppercase tracking-tight mb-2">Settings</h1>
+        <p className="text-[11px] font-black text-white/30 uppercase tracking-[0.2em]">
           Manage your brand profile and account
         </p>
       </div>
@@ -292,7 +308,6 @@ export default function BrandSettingsPage() {
 
         {/* Content Area */}
         <div className="space-y-8">
-
           {/* Brand Profile Section */}
           {activeSection === "brand" && (
             <motion.div
@@ -311,7 +326,7 @@ export default function BrandSettingsPage() {
                 />
                 <div className="flex flex-col sm:flex-row items-center gap-8">
                   <div
-                    className="relative group cursor-pointer shrink-0"
+                    className="relative group cursor-pointer"
                     onClick={() => !isUploadingLogo && fileInputRef.current?.click()}
                   >
                     <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-background shadow-xl">
@@ -354,12 +369,12 @@ export default function BrandSettingsPage() {
                   </div>
                 </div>
 
-                <div className="h-[1px] bg-border/40" />
+                <div className="h-[1px] bg-white/[0.04]" />
 
                 {/* Form Fields */}
                 <div className="grid md:grid-cols-2 gap-8">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">
+                    <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">
                       Brand Name
                     </label>
                     <input
@@ -371,7 +386,7 @@ export default function BrandSettingsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">
+                    <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">
                       Tagline
                     </label>
                     <input
@@ -384,7 +399,7 @@ export default function BrandSettingsPage() {
                     />
                   </div>
                   <div className="md:col-span-2 space-y-2">
-                    <label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">
+                    <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">
                       Description
                     </label>
                     <textarea
@@ -395,11 +410,11 @@ export default function BrandSettingsPage() {
                       rows={4}
                       className="w-full bg-secondary/50 border border-border/60 rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none focus:border-primary/40 transition-colors resize-none"
                     />
-                    <p className="text-xs text-foreground/30 text-right font-bold">{description.length}/200</p>
+                    <p className="text-[10px] text-white/20 text-right font-black uppercase tracking-widest">{description.length}/200</p>
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4">
+                <div className="flex justify-end gap-3 pt-4 border-t border-white/[0.04]">
                   <button
                     onClick={handleSave}
                     disabled={isSaving}
@@ -426,8 +441,8 @@ export default function BrandSettingsPage() {
             >
               <div className="p-8 space-y-8">
                 <div>
-                  <h3 className="text-xl font-black text-foreground mb-2">Online Presence</h3>
-                  <p className="text-sm text-foreground/50">
+                  <h3 className="font-display text-2xl text-white uppercase tracking-tight mb-2">Online Presence</h3>
+                  <p className="text-sm font-medium text-white/50">
                     Add your brand's social media and website links to build creator trust.
                   </p>
                 </div>
@@ -435,7 +450,7 @@ export default function BrandSettingsPage() {
                 <div className="grid gap-6">
                   {SOCIAL_KEYS.map(({ key, label, placeholder }) => (
                     <div key={key} className="space-y-2">
-                      <label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">
+                      <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">
                         {label}
                       </label>
                       <div className="relative">
@@ -456,7 +471,7 @@ export default function BrandSettingsPage() {
                   ))}
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4">
+                <div className="flex justify-end gap-3 pt-4 border-t border-white/[0.04]">
                   <button
                     onClick={handleSave}
                     disabled={isSaving}
@@ -487,8 +502,8 @@ export default function BrandSettingsPage() {
                     <Tag className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-foreground">Brand Categories</h3>
-                    <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">
+                    <h3 className="font-display text-2xl text-white uppercase tracking-tight">Brand Categories</h3>
+                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">
                       What industries does your brand operate in?
                     </p>
                   </div>
@@ -515,12 +530,12 @@ export default function BrandSettingsPage() {
                 </div>
 
                 {categories.length > 0 && (
-                  <p className="text-[10px] font-black text-foreground/30 uppercase tracking-widest">
+                  <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">
                     {categories.length} categor{categories.length !== 1 ? "ies" : "y"} selected
                   </p>
                 )}
 
-                <div className="flex justify-end gap-3 pt-4">
+                <div className="flex justify-end gap-3 pt-4 border-t border-white/[0.04]">
                   <button
                     onClick={handleSave}
                     disabled={isSaving}
@@ -547,8 +562,8 @@ export default function BrandSettingsPage() {
             >
               <div className="bg-card border border-border/60 rounded-[32px] p-8 space-y-6 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <h3 className="text-xl font-black text-foreground tracking-tight">Account Info</h3>
-                  <span className="ml-2 text-[10px] bg-secondary text-foreground/40 border border-border/60 px-3 py-1 rounded-full font-black uppercase tracking-widest">
+                  <h3 className="font-display text-2xl text-white uppercase tracking-tight">Account Info</h3>
+                  <span className="ml-2 text-[9px] bg-white/[0.06] text-white/40 border border-white/[0.08] px-3 py-1 rounded-full font-black uppercase tracking-widest">
                     Read-only
                   </span>
                 </div>
@@ -563,7 +578,7 @@ export default function BrandSettingsPage() {
                     { label: "Member Since", value: new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" }) },
                   ].map(({ label, value }) => (
                     <div key={label} className="space-y-2">
-                      <label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">
+                      <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">
                         {label}
                       </label>
                       <div className="w-full bg-secondary/30 border border-border/40 rounded-2xl px-5 py-4 text-sm font-bold text-foreground/40 cursor-not-allowed break-all">
@@ -573,8 +588,8 @@ export default function BrandSettingsPage() {
                   ))}
 
                   {/* Wallet — with copy */}
-                  <div className="md:col-span-2 space-y-2">
-                    <label className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] ml-1">
+                  <div className="md:col-span-2 space-y-2 mt-2">
+                    <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">
                       Wallet Address
                     </label>
                     <div className="flex items-center gap-3 bg-secondary/30 border border-border/40 rounded-2xl px-5 py-4">
@@ -587,7 +602,7 @@ export default function BrandSettingsPage() {
                         <button
                           type="button"
                           onClick={copyWallet}
-                          className="shrink-0 text-foreground/30 hover:text-foreground transition-colors"
+                          className="shrink-0 text-white/30 hover:text-white transition-colors"
                           title="Copy wallet address"
                         >
                           {walletCopied ? (
