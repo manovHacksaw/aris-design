@@ -120,11 +120,11 @@ export default function BrandDashboard() {
     }, []);
 
     return (
-        <div className="space-y-8 pb-32 md:pb-12">
+        <div className="space-y-8 pb-32 md:pb-12 font-sans">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-foreground tracking-tight mb-1">Overview</h1>
-                    <p className="text-muted-foreground">Welcome back, {brandName}</p>
+                    <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight mb-1">Overview</h1>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Welcome back, {brandName}</p>
                 </div>
                 <Link
                     href="/brand/create-event"

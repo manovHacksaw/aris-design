@@ -171,7 +171,7 @@ export default function BrandWalletPage() {
                             </span>
                         </div>
                         <div className="flex items-baseline gap-2">
-                            <h2 className="text-5xl lg:text-6xl font-black tracking-tighter text-foreground">
+                            <h2 className="font-display text-5xl lg:text-6xl tracking-tight text-foreground">
                                 {fmt$(balance)}
                             </h2>
                             <span className="text-xl font-bold text-foreground/40">USDC</span>
@@ -638,11 +638,11 @@ export default function BrandWalletPage() {
     }
 
     return (
-        <main className="w-full pb-24 pt-2 space-y-6">
+        <main className="w-full pb-24 pt-2 space-y-6 font-sans">
             {/* Header */}
             <div className="mb-4">
-                <h1 className="text-3xl font-black tracking-tighter text-foreground mb-1">Brand Wallet</h1>
-                <p className="text-sm text-foreground/50 font-medium">
+                <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight mb-1">Brand Wallet</h1>
+                <p className="text-[10px] font-black text-foreground/50 uppercase tracking-[0.3em]">
                     Manage your earnings, deposits, and refunds from past campaigns.
                 </p>
             </div>

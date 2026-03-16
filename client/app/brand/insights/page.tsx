@@ -641,14 +641,13 @@ export default function BrandInsightsPage() {
     ];
 
     return (
-        <div className="space-y-6 pb-32 md:pb-12">
+        <div className="space-y-6 pb-32 md:pb-12 font-sans">
             {/* Header */}
             <header>
-                <h1 className="text-3xl font-black text-foreground tracking-tight mb-1 flex items-center gap-3">
-                    <BarChart2 className="w-8 h-8 text-primary" />
+                <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight mb-1">
                     Insights
                 </h1>
-                <p className="text-muted-foreground text-sm">Campaign analytics, decision quality signals, and audience demographics</p>
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Campaign analytics, decision quality signals, and audience demographics</p>
             </header>
 
             {/* KPIs */}

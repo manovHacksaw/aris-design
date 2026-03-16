@@ -1,10 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check, Vote } from "lucide-react";
+import { Check, Vote, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VoteSubmission } from "@/types/events";
 import { formatCount } from "@/lib/eventUtils";
+import Image from "next/image";
+import { useState } from "react";
 
 interface VoteSubmissionCardProps {
     submission: VoteSubmission;
@@ -21,9 +23,13 @@ export default function VoteSubmissionCard({
     onVote,
     optionIndex,
 }: VoteSubmissionCardProps) {
+    const [imgError, setImgError] = useState(false);
+
     const handleClick = () => {
         if (!disabled) onVote();
     };
+
+    const isCloudinary = submission.media?.includes('cloudinary.com');
 
     return (
         <motion.div
@@ -49,11 +55,38 @@ export default function VoteSubmissionCard({
                         </p>
                     </div>
                 ) : (
-                    <img
-                        src={submission.media}
-                        alt="Submission"
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
+                    <div className="w-full h-full relative flex flex-col">
+                        <div className={cn("w-full relative overflow-hidden", submission.textContent ? "h-[70%]" : "h-full")}>
+                            {imgError || !submission.media ? (
+                                <div className="w-full h-full flex items-center justify-center bg-secondary">
+                                    <ImageIcon className="w-8 h-8 text-foreground/20" />
+                                </div>
+                            ) : isCloudinary ? (
+                                <Image
+                                    src={submission.media}
+                                    alt="Submission"
+                                    fill
+                                    sizes="(max-width: 768px) 50vw, 33vw"
+                                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                    onError={() => setImgError(true)}
+                                />
+                            ) : (
+                                <img
+                                    src={submission.media}
+                                    alt="Submission"
+                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    onError={() => setImgError(true)}
+                                />
+                            )}
+                        </div>
+                        {submission.textContent && (
+                            <div className="h-[30%] w-full bg-card p-4 pt-3 flex flex-col justify-start z-10 relative border-t border-border/30">
+                                <p className="text-[13px] font-semibold text-foreground/80 line-clamp-2">
+                                    {submission.textContent}
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 {/* Top gradient for creator info */}
@@ -86,15 +119,16 @@ export default function VoteSubmissionCard({
                     </span>
                 </div>
 
-                {/* Bottom gradient */}
-                <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/80 to-transparent" />
+                {/* Bottom gradient (only needed if text isn't occupying the bottom space) */}
+                {(!submission.textContent || submission.mediaType === "text") && (
+                    <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+                )}
 
                 {/* Bottom: vote count + vote button */}
                 <div className="absolute bottom-0 inset-x-0 p-4 flex items-end justify-between">
-                    {/* Vote count */}
-                    <div className="flex items-center gap-1.5">
-                        <Vote className="w-3.5 h-3.5 text-white/60" />
-                        <span className="text-xs font-black text-white/80">
+                    <div className="flex items-center gap-1.5 drop-shadow-md">
+                        <Vote className={cn("w-3.5 h-3.5", (!submission.textContent || submission.mediaType === "text") ? "text-white/60" : "text-foreground/60")} />
+                        <span className={cn("text-xs font-black", (!submission.textContent || submission.mediaType === "text") ? "text-white/80" : "text-foreground/80")}>
                             {formatCount(submission.voteCount)}
                         </span>
                     </div>

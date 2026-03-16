@@ -995,24 +995,79 @@ export default function CreateEventPage() {
                                 </div>
                             </div>
 
-                            {/* Submissions Mock */}
-                            <div className="py-16 flex flex-col items-center text-center gap-4 border border-dashed border-white/[0.08] rounded-2xl group hover:border-[#A78BFA]/40 transition-colors cursor-pointer" onClick={() => setCurrentStep(8)}>
-                                <div className="w-14 h-14 rounded-3xl bg-primary/10 flex items-center justify-center group-hover:bg-[#A78BFA]/20 transition-colors">
-                                    <Clock className="w-7 h-7 text-primary group-hover:text-[#A78BFA] transition-colors" />
-                                </div>
-                                <div>
-                                    <h2 className="text-xl font-black text-foreground tracking-tighter mb-1 group-hover:text-[#A78BFA] transition-colors">Coming Soon</h2>
-                                    <p className="text-sm text-foreground/50 font-medium">
-                                        Submissions will appear here once the event goes live
-                                    </p>
-                                </div>
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none rounded-2xl">
-                                    <div className="bg-black/80 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2 border border-white/20 shadow-2xl">
-                                        <Pencil className="w-4 h-4 text-white" />
-                                        <span className="text-xs font-black text-white">EDIT CONTENT</span>
+                            {/* Submissions / Vote Options panel */}
+                            {isPost ? (
+                                <div className="py-16 flex flex-col items-center text-center gap-4 border border-dashed border-white/[0.08] rounded-2xl group hover:border-[#A78BFA]/40 transition-colors cursor-pointer relative" onClick={() => setCurrentStep(8)}>
+                                    <div className="w-14 h-14 rounded-3xl bg-primary/10 flex items-center justify-center group-hover:bg-[#A78BFA]/20 transition-colors">
+                                        <Clock className="w-7 h-7 text-primary group-hover:text-[#A78BFA] transition-colors" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-black text-foreground tracking-tighter mb-1 group-hover:text-[#A78BFA] transition-colors">Coming Soon</h2>
+                                        <p className="text-sm text-foreground/50 font-medium">
+                                            Submissions will appear here once the event goes live
+                                        </p>
+                                    </div>
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none rounded-2xl">
+                                        <div className="bg-black/80 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2 border border-white/20 shadow-2xl">
+                                            <Pencil className="w-4 h-4 text-white" />
+                                            <span className="text-xs font-black text-white">EDIT CONTENT</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="cursor-pointer group relative" onClick={() => setCurrentStep(8)}>
+                                    {form.proposals.filter(p => p.title.trim()).length === 0 ? (
+                                        <div className="py-16 flex flex-col items-center text-center gap-4 border border-dashed border-lime-400/20 rounded-2xl hover:border-lime-400/40 transition-colors">
+                                            <div className="w-14 h-14 rounded-3xl bg-lime-400/10 flex items-center justify-center group-hover:bg-lime-400/20 transition-colors">
+                                                <ThumbsUp className="w-7 h-7 text-lime-400/60 group-hover:text-lime-400 transition-colors" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-xl font-black text-foreground tracking-tighter mb-1 group-hover:text-lime-400 transition-colors">No Options Yet</h2>
+                                                <p className="text-sm text-foreground/50 font-medium">Add vote options in the Content Setup step</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Vote Options</span>
+                                                <span className="text-[10px] font-black text-lime-400/70 bg-lime-400/10 px-2 py-0.5 rounded-full border border-lime-400/20">
+                                                    {form.proposals.filter(p => p.title.trim()).length} options
+                                                </span>
+                                            </div>
+                                            {form.proposals.filter(p => p.title.trim()).map((p, i) => (
+                                                <div key={i} className="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3 hover:border-lime-400/20 transition-colors">
+                                                    {p.mediaPreview ? (
+                                                        <img src={p.mediaPreview} alt={p.title} className="w-12 h-12 rounded-xl object-cover shrink-0 border border-white/10" />
+                                                    ) : (
+                                                        <div className="w-12 h-12 rounded-xl bg-lime-400/10 flex items-center justify-center shrink-0 border border-lime-400/15">
+                                                            <span className="text-xs font-black text-lime-400">{i + 1}</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-bold text-foreground truncate">{p.title}</p>
+                                                        <div className="mt-1.5 h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
+                                                            <div className="h-full rounded-full bg-gradient-to-r from-lime-400/60 to-lime-400/30" style={{ width: '0%' }} />
+                                                        </div>
+                                                        <p className="text-[10px] text-foreground/30 mt-1 font-medium">0 votes</p>
+                                                    </div>
+                                                    <div className="shrink-0 opacity-40 pointer-events-none">
+                                                        <div className="px-3 py-1.5 bg-lime-400/10 border border-lime-400/20 rounded-full flex items-center gap-1">
+                                                            <ThumbsUp className="w-3 h-3 text-lime-400" />
+                                                            <span className="text-[10px] font-black text-lime-400">Vote</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3 pointer-events-none">
+                                        <div className="bg-black/80 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2 border border-white/20 shadow-2xl">
+                                            <Pencil className="w-4 h-4 text-white" />
+                                            <span className="text-xs font-black text-white">EDIT OPTIONS</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* ── Right column (Details & Financials) ── */}
