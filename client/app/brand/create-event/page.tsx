@@ -5,7 +5,7 @@ import {
     ChevronLeft, ChevronRight, Info, Rocket, Sparkles, Loader2, X, Plus, Minus,
     Upload, Users, DollarSign, Globe, FileText, Shield, Hash,
     CheckCircle2, ImageIcon, RefreshCw, Zap, Copy, Check, Pencil,
-    Tag, Trophy, Clock, ShieldCheck, ThumbsUp,
+    Tag, Trophy, Clock, ShieldCheck, ThumbsUp, Wallet, AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -921,14 +921,14 @@ export default function CreateEventPage() {
                     <div className="flex flex-col lg:flex-row gap-6 w-full text-left">
                         {/* ── Left column (User View) ── */}
                         <div className="flex-1 min-w-0" onClick={() => setCurrentStep(4)}>
-                            <div className="relative rounded-[24px] overflow-hidden h-[220px] md:h-[260px] border border-white/[0.05] transition-all hover:border-accent/50 cursor-pointer group">
+                            <div className="relative rounded-[24px] overflow-hidden h-[220px] md:h-[260px] border border-white/[0.05] transition-all hover:border-accent/50 cursor-pointer group mb-5">
                                 <img src={userPerspectiveCover} className="w-full h-full object-cover" alt="Event" />
                                 <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-black/10" />
                                 <div className="absolute inset-0 p-6 flex flex-col justify-between">
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <div className="bg-black/30 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-full flex items-center gap-1.5 hover:bg-black/50 transition-colors" onClick={(e) => { e.stopPropagation(); setCurrentStep(0); }}>
                                             <Tag className="w-3 h-3 text-white/60" />
-                                            <span className="text-[10px] font-black text-white">{form.type === "post" ? "Post & Vote" : "Vote Only"}</span>
+                                            <span className="text-[10px] font-black text-white">{form.type === "post" ? "Posting" : "Voting"} phase</span>
                                         </div>
                                     </div>
                                     <div className="hover:translate-x-1 transition-transform" onClick={(e) => { e.stopPropagation(); setCurrentStep(1); }}>
@@ -961,114 +961,219 @@ export default function CreateEventPage() {
                                     </div>
                                 </div>
                             </div>
-                        </div>
-
-                        {/* ── Right column (Details & Financials) ── */}
-                        <div className="lg:w-[320px] shrink-0 space-y-4">
-                            <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5 relative group cursor-pointer hover:border-accent/40 transition-all" onClick={() => setCurrentStep(3)}>
-                                <div className="flex items-center gap-3 mb-4 pt-1">
-                                    <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                                        <span className="text-xs font-black text-accent">B</span>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-black text-foreground">Your Brand</p>
-                                        <p className="text-[10px] text-foreground/40 font-medium">Event Host</p>
-                                    </div>
+                            
+                            {/* Tab bar mock */}
+                            <div className="flex items-center justify-between mb-5 border-b border-border/40 pb-3" onClick={() => setCurrentStep(8)}>
+                                <div className="flex items-center gap-1">
+                                    {(["trending", "latest", "top"] as const).map((tab) => (
+                                        <button
+                                            key={tab}
+                                            className={cn(
+                                                "relative px-4 py-2 text-xs font-black uppercase tracking-[0.15em] transition-all",
+                                                tab === "trending" ? "text-foreground" : "text-foreground/30 hover:text-foreground/60"
+                                            )}
+                                        >
+                                            {tab}
+                                            {tab === "trending" && (
+                                                <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-primary" />
+                                            )}
+                                        </button>
+                                    ))}
                                 </div>
-                                <div className="flex items-center justify-between py-3 px-3 rounded-[12px] border bg-accent/5 border-accent/20 mb-4 group-hover:bg-accent/10 transition-colors">
-                                    <div className="flex items-center gap-1.5">
-                                        <Clock className="w-3.5 h-3.5 text-accent" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-accent/80">
-                                            Duration
-                                        </span>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-foreground/30">
+                                        {isPost ? "0 Submissions" : `${form.proposals.filter(p => p.title.trim()).length} Options`}
+                                    </span>
+                                    <div className="flex border border-border/40 rounded-lg overflow-hidden">
+                                        <button className="p-1.5 transition-colors bg-white/10 text-foreground">
+                                            <div className="w-3.5 h-3.5 border border-current rounded-[2px]" />
+                                        </button>
+                                        <button className="p-1.5 transition-colors text-foreground/30 hover:text-foreground/60">
+                                            <div className="w-3.5 h-3.5 flex flex-col gap-0.5"><div className="h-0.5 bg-current rounded" /><div className="h-0.5 bg-current rounded" /><div className="h-0.5 bg-current rounded" /></div>
+                                        </button>
                                     </div>
-                                    <span className="text-sm font-black text-accent">{fmtDuration(durationMs)}</span>
-                                </div>
-                                <div className="flex items-center justify-between py-3 border-t border-border/30">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Participants Max</span>
-                                    <div className="flex items-center gap-1.5">
-                                        <Users className="w-3 h-3 text-foreground/40" />
-                                        <span className="text-sm font-black text-foreground">{form.maxParticipants || "0"}</span>
-                                    </div>
-                                </div>
-                                <div className="flex items-center justify-between py-3 border-t border-border/30">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Watching Now</span>
-                                    <div className="flex items-center gap-1.5 opacity-40">
-                                        <span className="relative flex h-1.5 w-1.5"><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" /></span>
-                                        <span className="text-sm font-black text-green-400">--</span>
-                                    </div>
-                                </div>
-                                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-accent/20 p-2 rounded-full">
-                                    <Pencil className="w-3 h-3 text-accent" />
                                 </div>
                             </div>
 
+                            {/* Submissions Mock */}
+                            <div className="py-16 flex flex-col items-center text-center gap-4 border border-dashed border-white/[0.08] rounded-2xl group hover:border-[#A78BFA]/40 transition-colors cursor-pointer" onClick={() => setCurrentStep(8)}>
+                                <div className="w-14 h-14 rounded-3xl bg-primary/10 flex items-center justify-center group-hover:bg-[#A78BFA]/20 transition-colors">
+                                    <Clock className="w-7 h-7 text-primary group-hover:text-[#A78BFA] transition-colors" />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-black text-foreground tracking-tighter mb-1 group-hover:text-[#A78BFA] transition-colors">Coming Soon</h2>
+                                    <p className="text-sm text-foreground/50 font-medium">
+                                        Submissions will appear here once the event goes live
+                                    </p>
+                                </div>
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none rounded-2xl">
+                                    <div className="bg-black/80 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2 border border-white/20 shadow-2xl">
+                                        <Pencil className="w-4 h-4 text-white" />
+                                        <span className="text-xs font-black text-white">EDIT CONTENT</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── Right column (Details & Financials) ── */}
+                        <div className="lg:w-[300px] shrink-0 space-y-4">
+                            {/* ── Event info card ── */}
+                            <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5 relative group cursor-pointer hover:border-[#A78BFA]/40 transition-all" onClick={() => setCurrentStep(0)}>
+                                {/* Brand */}
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 rounded-xl bg-[#A78BFA]/10 flex items-center justify-center">
+                                        <span className="text-xs font-black text-[#A78BFA]">{user?.username?.[0]?.toUpperCase() ?? "B"}</span>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-black text-foreground">{user?.username ?? "Your Brand"}</p>
+                                        <p className="text-[10px] text-foreground/40 font-medium">Event Host</p>
+                                    </div>
+                                    <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#A78BFA]/10 border border-[#A78BFA]/20 shrink-0">
+                                        <Tag className="w-2.5 h-2.5 text-[#A78BFA]/70" />
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-[#A78BFA]/80">
+                                            {form.type === "post" ? "Post" : "Vote"}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Time remaining mock */}
+                                <div className={cn(
+                                    "flex items-center justify-between py-3 px-3 rounded-[12px] border mt-1",
+                                    form.type === "post"
+                                        ? "bg-orange-500/8 border-orange-500/20"
+                                        : "bg-lime-400/5 border-lime-400/20"
+                                )}>
+                                    <div className="flex items-center gap-1.5">
+                                        <Clock className={cn("w-3 h-3", form.type === "post" ? "text-orange-400" : "text-lime-400")} />
+                                        <span className={cn("text-[10px] font-black uppercase tracking-widest",
+                                            form.type === "post" ? "text-orange-400/80" : "text-lime-400/80"
+                                        )}>
+                                            {form.type === "post" ? "Posting Ends In" : "Voting Ends In"}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-right">
+                                        <div className="flex flex-col"><span className="text-xs font-black font-mono leading-none text-foreground/30">--</span><span className="text-[8px] font-bold text-foreground/30 uppercase mt-0.5">d</span></div><span className="text-xs font-black text-foreground/30 mb-2">:</span>
+                                        <div className="flex flex-col"><span className="text-xs font-black font-mono leading-none text-foreground/30">--</span><span className="text-[8px] font-bold text-foreground/30 uppercase mt-0.5">h</span></div><span className="text-xs font-black text-foreground/30 mb-2">:</span>
+                                        <div className="flex flex-col"><span className="text-xs font-black font-mono leading-none text-foreground/30">--</span><span className="text-[8px] font-bold text-foreground/30 uppercase mt-0.5">m</span></div><span className="text-xs font-black text-foreground/30 mb-2">:</span>
+                                        <div className="flex flex-col"><span className="text-xs font-black font-mono leading-none text-foreground/30">--</span><span className="text-[8px] font-bold text-foreground/30 uppercase mt-0.5">s</span></div>
+                                    </div>
+                                </div>
+
+                                {/* Participants */}
+                                <div className="py-3 border-t border-border/30 mt-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Participating</span>
+                                        <div className="flex items-center gap-1.5">
+                                            <Users className="w-3 h-3 text-foreground/40" />
+                                            <span className="text-sm font-black text-foreground">0</span>
+                                            <span className="text-[10px] text-foreground/35 font-medium">/ {form.maxParticipants ? parseInt(form.maxParticipants) : 0}</span>
+                                        </div>
+                                    </div>
+                                    <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
+                                        <div className="h-full rounded-full bg-gradient-to-r from-[#F97316] via-[#EA580C] to-[#C2410C]" style={{ width: '0%' }} />
+                                    </div>
+                                </div>
+                                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-[#A78BFA]/20 p-2 rounded-full">
+                                    <Pencil className="w-3 h-3 text-[#A78BFA]" />
+                                </div>
+                            </div>
+
+                            {/* ── Rewards + Guidelines card ── */}
                             <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5 relative group cursor-pointer hover:border-[#A78BFA]/40 transition-all" onClick={() => setCurrentStep(5)}>
-                                <div className="flex items-center gap-2 mb-4">
-                                    <Trophy className="w-4 h-4 text-[#A78BFA]" />
-                                    <span className="text-sm font-black text-foreground">Rewards Pool</span>
-                                </div>
-
-                                <div className="bg-[#A78BFA]/5 border border-[#A78BFA]/15 rounded-[14px] p-4 mb-4 group-hover:bg-[#A78BFA]/10 transition-colors">
-                                    <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Top Prize</p>
-                                    <p className="text-3xl font-black text-foreground">${effectiveTop.toFixed(2)}</p>
-                                    <p className="text-[10px] text-foreground/40 font-medium tracking-tight">USDC</p>
-                                </div>
-
-                                {isPost && (
-                                    <div className="mb-4">
-                                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Creator Leaderboard</p>
-                                        <p className="text-xl font-black text-foreground">${creatorPool.toFixed(2)}</p>
-                                        <p className="text-[10px] text-foreground/40 font-medium tracking-tight">USDC</p>
+                                {/* Vote & Earn highlight */}
+                                {!isPost && (
+                                    <div className="mb-4 bg-lime-400/8 border border-lime-400/20 rounded-[14px] p-3.5 flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-lime-400/15 flex items-center justify-center shrink-0">
+                                            <Trophy className="w-4 h-4 text-lime-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-black text-lime-400">Vote & Earn ${BASE_RATE.toFixed(3)}</p>
+                                            <p className="text-[10px] text-foreground/50 leading-tight mt-0.5">
+                                                Fixed reward per vote, distributed on completion
+                                            </p>
+                                        </div>
                                     </div>
                                 )}
 
-                                <div className="pt-3 mt-3 border-t border-white/[0.08]">
-                                    <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Voter Base Pool</p>
-                                    <p className="text-lg font-bold text-foreground">${basePool.toFixed(2)}</p>
+                                {/* Header */}
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-2">
+                                        <Trophy className="w-4 h-4 text-[#A78BFA]" />
+                                        <span className="text-sm font-black text-foreground">Rewards Pool</span>
+                                    </div>
+                                    <span className="text-[9px] bg-[#A78BFA]/10 text-[#A78BFA] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border border-[#A78BFA]/20">
+                                        Guaranteed
+                                    </span>
                                 </div>
 
-                                <div className="pt-4 mt-4 border-t border-accent/20 flex justify-between items-end">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-accent">Total Deposit</p>
-                                    <p className="text-xl font-black text-accent font-mono">${totalLocked.toFixed(2)}</p>
+                                {/* Grand prize */}
+                                {effectiveTop > 0 && (
+                                    <div className="bg-[#A78BFA]/5 border border-[#A78BFA]/15 rounded-[14px] p-4 mb-3">
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Grand-Prize Winner</p>
+                                        <p className="text-2xl font-black text-foreground">${effectiveTop.toLocaleString()}</p>
+                                        <p className="text-[10px] text-foreground/40 font-medium">USDC</p>
+                                    </div>
+                                )}
+
+                                {/* Leaderboard pool */}
+                                {isPost && ldrNum > 0 && (
+                                    <div className="mb-4">
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Leaderboard Pool</p>
+                                        <p className="text-xl font-black text-foreground">${ldrNum.toLocaleString()}</p>
+                                        <p className="text-[10px] text-foreground/40 font-medium">USDC</p>
+                                    </div>
+                                )}
+
+                                {/* Base reward */}
+                                <div className="mb-4">
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Per {!isPost ? "Vote" : "Submission"}</p>
+                                    <p className="text-lg font-black text-foreground">${(!isPost ? BASE_RATE : CREATOR_RATE).toFixed(3)}</p>
                                 </div>
 
-                                <div className="pb-4 mt-4 mb-4 border-b border-t border-border/40 pt-4">
-                                    <div className="flex items-center gap-1.5 mb-2.5">
-                                        <ShieldCheck className="w-3 h-3 text-foreground/40" />
-                                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40">Eligibility</p>
+                                {/* Eligibility — posting phase only */}
+                                {isPost && (
+                                    <div className="pb-4 mb-4 border-b border-border/40">
+                                        <div className="flex items-center gap-1.5 mb-2.5">
+                                            <ShieldCheck className="w-3 h-3 text-foreground/40" />
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40">Eligibility</p>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-orange-500/10 text-orange-400/80 border border-orange-500/15">
+                                                Open to All Users
+                                            </span>
+                                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-foreground/5 text-foreground/50 border border-border/40">
+                                                1 Submission / User
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-orange-500/10 text-orange-400/80 border border-orange-500/15">
-                                            Open to All Users
-                                        </span>
-                                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-foreground/5 text-foreground/50 border border-border/40">
-                                            1 Submission / User
-                                        </span>
-                                    </div>
-                                </div>
-                                
-                                <div className="pt-2">
-                                    <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-3">
-                                        {isPost ? "Posting Rules" : "Voting Guidelines"}
+                                )}
+
+                                {/* Submission guidelines */}
+                                <div className={cn(!isPost && "pt-4 border-t border-border/40")}>
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-3" onClick={(e) => { e.stopPropagation(); setCurrentStep(isPost ? 8 : 7); }}>
+                                        {!isPost ? "Voting Guidelines" : "Posting Rules"}
                                     </p>
                                     <ol className="space-y-2.5">
-                                        {(isPost
-                                            ? (form.participantInstructions ? form.participantInstructions.split("\n").filter(Boolean) : [
-                                                "Upload a high-res image (max 5 MB).",
-                                                "One submission per participant.",
-                                                "No offensive, copyrighted material."
-                                            ])
-                                            : [
+                                        {(!isPost
+                                            ? [
                                                 "Browse all entries in the grid below.",
                                                 "Click the vote button on your favourite entry.",
                                                 "You can only cast one vote — choose wisely!",
                                             ]
-                                        ).slice(0, 3).map((rule, i) => (
+                                            : (form.submissionGuidelines
+                                                ? form.submissionGuidelines.split("\n").filter(Boolean)
+                                                : [
+                                                    "Upload a high-res image (JPEG or PNG, max 5 MB).",
+                                                    "Aspect ratio: 4:5 or 1:1 preferred.",
+                                                    "Add an optional caption to describe your work.",
+                                                    "One submission per participant — make it count.",
+                                                    "No offensive, copyrighted content."
+                                                ])
+                                        ).slice(0, 5).map((rule, i) => (
                                             <li key={i} className="flex gap-2.5 text-xs text-foreground/60">
                                                 <span className={cn(
                                                     "w-4 h-4 rounded-full font-black text-[9px] flex items-center justify-center shrink-0 mt-0.5",
-                                                    isPost ? "bg-orange-500/10 text-orange-400" : "bg-lime-400/10 text-lime-400"
+                                                    !isPost ? "bg-lime-400/10 text-lime-400" : "bg-orange-500/10 text-orange-400"
                                                 )}>
                                                     {i + 1}
                                                 </span>
@@ -1077,11 +1182,53 @@ export default function CreateEventPage() {
                                         ))}
                                     </ol>
                                 </div>
-                                
                                 <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-[#A78BFA]/20 p-2 rounded-full">
                                     <Pencil className="w-3 h-3 text-[#A78BFA]" />
                                 </div>
                             </div>
+                            
+                            {/* ── Vote status / Submit form PROMPT mock ── */}
+                            {!isPost ? (
+                                <div className="rounded-[20px] p-4 flex items-center gap-3 border bg-lime-400/5 border-lime-400/20 opacity-50 pointer-events-none">
+                                    <div className="w-9 h-9 rounded-full bg-lime-400/15 flex items-center justify-center shrink-0">
+                                        <ThumbsUp className="w-4 h-4 text-lime-400" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-black text-foreground">Cast your vote</p>
+                                        <p className="text-xs text-foreground/40 mt-0.5">Pick your favourite entry from the grid</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="bg-white/[0.03] border border-white/[0.08] rounded-[24px] overflow-hidden opacity-50 pointer-events-none mb-32">
+                                    <div className="px-5 pt-5 pb-3 border-b border-border/30 flex items-center gap-3">
+                                        <div className="w-7 h-7 rounded-xl bg-orange-500/10 flex items-center justify-center">
+                                            <Plus className="w-3.5 h-3.5 text-orange-400" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-black text-foreground">Post Your Entry</h3>
+                                            <p className="text-[10px] text-foreground/40 font-medium">Upload your image to enter</p>
+                                        </div>
+                                    </div>
+                                    <div className="p-4 space-y-3">
+                                        <div className="relative border-2 border-dashed rounded-[16px] flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden border-border/40 h-[120px]">
+                                            <div className="flex flex-col items-center gap-2 p-4 text-center">
+                                                <Upload className="w-5 h-5 text-foreground/30" />
+                                                <p className="text-xs font-black text-foreground/50">Drop image or click</p>
+                                                <p className="text-[9px] text-foreground/20 uppercase tracking-widest font-bold">JPEG · PNG · max 5 MB</p>
+                                            </div>
+                                        </div>
+                                        <textarea
+                                            placeholder="Caption… (optional)"
+                                            rows={2}
+                                            readOnly
+                                            className="w-full bg-secondary/40 border border-border/40 rounded-xl px-3 py-2.5 text-xs text-foreground placeholder:text-foreground/30 resize-none focus:outline-none focus:border-orange-500/50 transition-colors"
+                                        />
+                                        <button disabled className="w-full py-3.5 bg-foreground text-background rounded-[14px] text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all opacity-30">
+                                            <Upload className="w-3.5 h-3.5" /> Submit Entry
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 );
@@ -1094,13 +1241,82 @@ export default function CreateEventPage() {
     };
 
     return (
-        <div className="h-[90vh] min-h-[600px] w-full bg-background flex flex-col relative overflow-hidden font-sans">
+        <div className="h-screen w-full bg-background flex flex-col relative overflow-hidden font-sans">
             {/* Top Bar Navigation */}
             <div className="absolute top-0 left-0 right-0 px-4 py-6 sm:px-6 sm:py-8 flex justify-between items-center z-20 pointer-events-none">
                 <Link href="/brand/dashboard" className="pointer-events-auto flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group">
                     <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
                     <span className="text-xs font-black tracking-widest uppercase">Exit</span>
                 </Link>
+                
+                {/* Compact Wallet Info */}
+                <div className="pointer-events-auto hidden md:flex items-center bg-card/90 backdrop-blur-md border border-border/40 rounded-2xl p-1.5 shadow-sm relative group cursor-help transition-all hover:border-primary/50 hover:shadow-primary/10">
+                    <div className="flex items-center gap-2 px-3 py-1">
+                        <Wallet className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
+                        <span className="bg-green-500/10 text-green-500 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border border-green-500/20">
+                            Gasless
+                        </span>
+                    </div>
+                    {address && (
+                        <div className="flex items-center gap-5 bg-card text-foreground px-5 py-2 rounded-xl ml-2 shadow-sm border border-border/40">
+                            <div className="flex flex-col text-left">
+                                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground leading-none mb-1">Connected</span>
+                                <span className="text-xs font-bold leading-none">{address.slice(0, 6)}...{address.slice(-4)}</span>
+                            </div>
+                            <div className="flex flex-col text-right">
+                                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground leading-none mb-0.5">Main Balance</span>
+                                <span className="text-sm font-black text-foreground leading-none">${balance !== undefined ? parseFloat(balance).toFixed(2) : "0.00"}</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Hover Popup */}
+                    <div className="absolute top-full right-0 mt-3 w-80 p-5 bg-card border border-border/50 shadow-2xl rounded-[20px] opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-300 scale-95 group-hover:scale-100 origin-top-right z-50">
+                        <div className="flex items-center gap-2 mb-3">
+                            <Wallet className="w-5 h-5 text-primary" />
+                            <h3 className="text-sm font-black text-foreground">Fund Campaign</h3>
+                            <span className="bg-green-500/10 text-green-500 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border border-green-500/20 ml-auto">
+                                Gasless
+                            </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground font-medium mb-4 leading-relaxed">
+                            Creating campaigns on Aris is completely gasless. You only deposit the required USDC prize pool.
+                        </p>
+                        
+                        {address ? (
+                            <div className="space-y-2">
+                                <div className="bg-secondary/40 p-3 rounded-xl border border-border/40 flex items-center justify-between group/copy">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Connected</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-bold tracking-tight">{address.slice(0, 6)}...{address.slice(-4)}</span>
+                                        <button onClick={(e) => { e.stopPropagation(); copyAddress(); }} className="text-muted-foreground hover:text-primary transition-colors focus:outline-none">
+                                            {addressCopied ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="bg-secondary/40 p-3 rounded-xl border border-border/40 flex items-center justify-between">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Main Balance</span>
+                                    <span className="text-sm font-black text-foreground">${balance !== undefined ? parseFloat(balance).toFixed(2) : "0.00"}</span>
+                                </div>
+                                {availableCredit > 0 && (
+                                    <div className="bg-primary/5 p-3 rounded-xl border border-primary/20 flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <RefreshCw className="w-3.5 h-3.5 text-primary" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-primary/80">Refund Credit</span>
+                                        </div>
+                                        <span className="text-sm font-black text-primary">${availableCredit.toFixed(2)}</span>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2 text-yellow-500 text-xs font-semibold bg-yellow-500/10 px-3 py-2.5 rounded-xl border border-yellow-500/20">
+                                <AlertCircle className="w-4 h-4" />
+                                <span>Wallet not connected</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
                 <div className="pointer-events-auto flex flex-col items-end gap-2">
                     <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                         Step {currentStep + 1} of {FORM_QUESTIONS.length}
@@ -1117,7 +1333,7 @@ export default function CreateEventPage() {
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col items-center justify-start px-4 sm:px-8 pt-24 sm:pt-32 pb-32 sm:pb-40 w-full max-w-5xl mx-auto z-10 overflow-y-auto no-scrollbar">
+            <div className="flex-1 flex flex-col items-center justify-start px-3 sm:px-4 md:px-6 lg:px-8 pt-24 md:pt-32 pb-32 md:pb-40 w-full max-w-[1600px] mx-auto z-10 overflow-y-auto no-scrollbar">
                 <AnimatePresence mode="wait" custom={direction}>
                     <motion.div
                         key={currentStep}
@@ -1140,12 +1356,12 @@ export default function CreateEventPage() {
                         </div>
 
                         {/* Title */}
-                        <h2 className="text-5xl sm:text-6xl lg:text-7xl font-display uppercase mb-6 sm:mb-8 text-foreground tracking-tighter leading-none px-2 group-hover:text-accent transition-colors duration-500">
+                        <h2 className={cn("text-5xl sm:text-6xl lg:text-7xl font-display uppercase mb-6 sm:mb-8 text-foreground tracking-tighter leading-none group-hover:text-accent transition-colors duration-500", currentStep !== 10 && "px-3 sm:px-4")}>
                             {FORM_QUESTIONS[currentStep].title}
                         </h2>
 
                         {/* Dynamic Input Surface */}
-                        <div className="w-full text-left mx-auto max-w-3xl px-2 sm:px-4">
+                        <div className={cn("w-full text-left mx-auto", currentStep === 10 ? "max-w-none" : "max-w-3xl px-3 sm:px-4")}>
                             {renderQuestionFields()}
                         </div>
                     </motion.div>
