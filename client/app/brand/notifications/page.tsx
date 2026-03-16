@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, Zap, DollarSign, AlertCircle, Users, CheckCircle2, Check, CheckSquare } from "lucide-react";
+import { Bell, Zap, DollarSign, AlertCircle, Loader2, Users, CheckCircle2, Check, CheckSquare } from "lucide-react";
 import { useNotifications } from "@/context/NotificationContext";
 import { cn } from "@/lib/utils";
 
@@ -75,14 +75,14 @@ export default function BrandNotificationsPage() {
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <div className="flex items-center gap-3 mb-1">
-                        <h1 className="text-4xl font-black text-foreground tracking-tighter">Notifications</h1>
+                        <h1 className="font-display text-4xl text-white uppercase tracking-tight">Notifications</h1>
                         {unreadCount > 0 && (
                             <span className="bg-primary text-primary-foreground text-xs font-black px-2.5 py-1 rounded-full border border-primary/20">
                                 {unreadCount} New
                             </span>
                         )}
                     </div>
-                    <p className="text-[11px] font-black text-foreground/30 uppercase tracking-[0.2em]">Manage your brand updates, rewards, and insights.</p>
+                    <p className="text-[11px] font-black text-white/30 uppercase tracking-[0.2em]">Manage your brand updates, rewards, and insights.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     {unreadCount > 0 && (
@@ -132,18 +132,8 @@ export default function BrandNotificationsPage() {
 
             {/* List */}
             {isLoading ? (
-                <div className="grid gap-4 animate-pulse">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                        <div key={i} className="bg-card border border-border/60 rounded-[24px] p-4 md:p-6 flex gap-4 items-center">
-                            <div className="w-16 h-16 rounded-[16px] bg-secondary/60 shrink-0" />
-                            <div className="flex-1 space-y-2">
-                                <div className="h-3 w-20 bg-secondary/60 rounded" />
-                                <div className="h-5 w-56 bg-secondary/60 rounded" />
-                                <div className="h-3 w-40 bg-secondary/60 rounded" />
-                            </div>
-                            <div className="hidden md:block h-8 w-24 bg-secondary/60 rounded-xl" />
-                        </div>
-                    ))}
+                <div className="flex items-center justify-center py-24">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary/50" />
                 </div>
             ) : (
                 <div className="grid gap-4">
@@ -160,9 +150,9 @@ export default function BrandNotificationsPage() {
                                     <div
                                         onClick={() => !n.isRead && markAsRead(n.id)}
                                         className={cn(
-                                            "group bg-card rounded-[24px] p-4 md:p-6 transition-all duration-300 shadow-sm flex flex-col md:flex-row gap-4 md:items-center relative border",
-                                            n.isRead
-                                                ? "border-border/60 hover:shadow-md cursor-default"
+                                            "group bg-card border rounded-[24px] p-4 md:p-6 transition-all duration-300 shadow-sm flex flex-col md:flex-row gap-4 md:items-center relative",
+                                            n.isRead 
+                                                ? "border-border hover:shadow-md cursor-default" 
                                                 : "border-primary/30 bg-primary/5 hover:border-primary/50 cursor-pointer shadow-primary/5"
                                         )}
                                     >
@@ -227,7 +217,7 @@ export default function BrandNotificationsPage() {
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                className="bg-card border border-border/60 rounded-[24px] p-12 text-center"
+                                className="bg-card border border-border rounded-[24px] p-12 text-center"
                             >
                                 <div className="w-16 h-16 rounded-[16px] bg-secondary/60 flex items-center justify-center mx-auto mb-4 border border-border/50">
                                     <Bell className="w-8 h-8 text-muted-foreground/40" />

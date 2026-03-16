@@ -116,7 +116,7 @@ function ChartCard({
             {/* Header */}
             <div className="px-5 pt-5 pb-4 border-b border-white/[0.05]">
                 <div className="flex items-start justify-between gap-3 mb-3">
-                    <h3 className="text-sm font-black text-foreground tracking-tight">{title}</h3>
+                    <h3 className="font-display uppercase tracking-widest text-white text-sm pt-1">{title}</h3>
                     {filterButtons && (
                         <div className="flex items-center bg-white/[0.04] border border-white/[0.06] rounded-full p-1 gap-0.5">
                             {filterButtons.map(btn => (
@@ -644,8 +644,11 @@ export default function BrandInsightsPage() {
         <div className="space-y-6 pb-32 md:pb-12">
             {/* Header */}
             <header>
-                <h1 className="text-4xl font-black text-foreground tracking-tighter mb-2">Insights</h1>
-                <p className="text-[11px] font-black text-foreground/30 uppercase tracking-[0.2em]">Campaign analytics, decision quality signals, and audience demographics</p>
+                <h1 className="font-display text-4xl text-white uppercase tracking-tight mb-2 flex items-center gap-3">
+                    <BarChart2 className="w-8 h-8 text-primary" />
+                    Insights
+                </h1>
+                <p className="text-[11px] font-black text-white/30 uppercase tracking-[0.2em]">Campaign analytics, decision quality signals, and audience demographics</p>
             </header>
 
             {/* KPIs */}
@@ -656,7 +659,7 @@ export default function BrandInsightsPage() {
                             <card.icon className={cn("w-4 h-4", card.color)} />
                         </div>
                         <div>
-                            <p className={cn("text-2xl font-black tracking-tight", card.color)}>{card.value}</p>
+                            <p className={cn("font-display text-3xl uppercase tracking-tight", card.color)}>{card.value}</p>
                             <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5">{card.label}</p>
                             {card.sub && <p className="text-[10px] text-foreground/25 mt-1">{card.sub}</p>}
                         </div>
