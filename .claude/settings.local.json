@@ -54,7 +54,9 @@
       "WebFetch(domain:21st.dev)",
       "Bash(ls /home/manov/Desktop/code/aris-design/client/app/\\\\\\(user\\\\\\)/profile/ 2>/dev/null || echo \"does not exist\")",
       "Bash(ls /home/manov/Desktop/code/aris-design/client/app/\\\\\\(user\\\\\\)/ 2>/dev/null)",
-      "Bash(cat /home/manov/Desktop/code/aris-design/client/app/\\\\\\(user\\\\\\)/activity/page.tsx 2>/dev/null || echo \"empty\")"
+      "Bash(cat /home/manov/Desktop/code/aris-design/client/app/\\\\\\(user\\\\\\)/activity/page.tsx 2>/dev/null || echo \"empty\")",
+      "Bash(which cast:*)",
+      "Bash(cast send:*)"
     ]
   }
 }

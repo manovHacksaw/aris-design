@@ -1243,11 +1243,8 @@ export default function CreateEventPage() {
     return (
         <div className="h-screen w-full bg-background flex flex-col relative overflow-hidden font-sans">
             {/* Top Bar Navigation */}
-            <div className="absolute top-0 left-0 right-0 px-4 py-6 sm:px-6 sm:py-8 flex justify-between items-center z-20 pointer-events-none">
-                <Link href="/brand/dashboard" className="pointer-events-auto flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group">
-                    <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
-                    <span className="text-xs font-black tracking-widest uppercase">Exit</span>
-                </Link>
+            <div className="absolute top-0 left-0 right-0 px-4 py-4 md:px-6 md:py-5 lg:px-8 flex justify-between items-center z-20 pointer-events-none">
+                <div />
                 
                 {/* Compact Wallet Info */}
                 <div className="pointer-events-auto hidden md:flex items-center bg-card/90 backdrop-blur-md border border-border/40 rounded-2xl p-1.5 shadow-sm relative group cursor-help transition-all hover:border-primary/50 hover:shadow-primary/10">
@@ -1333,7 +1330,7 @@ export default function CreateEventPage() {
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col items-center justify-start px-3 sm:px-4 md:px-6 lg:px-8 pt-24 md:pt-32 pb-32 md:pb-40 w-full max-w-[1600px] mx-auto z-10 overflow-y-auto no-scrollbar">
+            <div className="flex-1 flex flex-col items-center justify-center px-4 md:px-6 lg:px-8 pt-20 pb-28 w-full max-w-[1600px] mx-auto z-10 overflow-y-auto no-scrollbar">
                 <AnimatePresence mode="wait" custom={direction}>
                     <motion.div
                         key={currentStep}
@@ -1346,7 +1343,7 @@ export default function CreateEventPage() {
                         className="w-full text-center"
                     >
                         {/* Guideline Tooltip */}
-                        <div className="mb-6 group relative inline-flex items-center gap-2 text-accent bg-accent/10 px-4 py-2 rounded-full cursor-help hover:bg-accent/20 transition-colors border border-accent/20">
+                        <div className="mb-4 group relative inline-flex items-center gap-2 text-accent bg-accent/10 px-4 py-2 rounded-full cursor-help hover:bg-accent/20 transition-colors border border-accent/20">
                             <Info className="w-4 h-4" />
                             <span className="text-xs font-bold tracking-wide uppercase">Setup Guide</span>
                             <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-72 p-4 bg-card border border-border shadow-2xl rounded-2xl text-xs text-foreground font-medium opacity-0 group-hover:opacity-100 pointer-events-none transition-all scale-95 group-hover:scale-100 origin-top z-50 leading-relaxed">
@@ -1356,12 +1353,12 @@ export default function CreateEventPage() {
                         </div>
 
                         {/* Title */}
-                        <h2 className={cn("text-5xl sm:text-6xl lg:text-7xl font-display uppercase mb-6 sm:mb-8 text-foreground tracking-tighter leading-none group-hover:text-accent transition-colors duration-500", currentStep !== 10 && "px-3 sm:px-4")}>
+                        <h2 className={cn("text-4xl sm:text-5xl lg:text-6xl font-display uppercase mb-5 text-foreground tracking-tighter leading-none transition-colors duration-500", currentStep !== 10 && "px-2 sm:px-4")}>
                             {FORM_QUESTIONS[currentStep].title}
                         </h2>
 
                         {/* Dynamic Input Surface */}
-                        <div className={cn("w-full text-left mx-auto", currentStep === 10 ? "max-w-none" : "max-w-3xl px-3 sm:px-4")}>
+                        <div className={cn("w-full text-left mx-auto", currentStep === 10 ? "max-w-none" : "max-w-3xl px-2 sm:px-4")}>
                             {renderQuestionFields()}
                         </div>
                     </motion.div>
@@ -1369,7 +1366,7 @@ export default function CreateEventPage() {
             </div>
 
             {/* Bottom Bar Execution */}
-            <div className="absolute bottom-0 left-0 right-0 px-4 pb-6 pt-8 sm:px-6 sm:pb-8 sm:pt-10 flex justify-between items-center z-20 bg-gradient-to-t from-background via-background/95 to-transparent pointer-events-none">
+            <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 pt-8 md:px-6 md:pb-5 lg:px-8 flex justify-between items-center z-20 bg-gradient-to-t from-background via-background/95 to-transparent pointer-events-none">
                 {currentStep > 0 ? (
                     <button
                         onClick={goBack}

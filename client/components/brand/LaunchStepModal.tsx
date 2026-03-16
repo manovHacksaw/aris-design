@@ -283,7 +283,7 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
         regions: form.regions,
         preferredGender: (form as any).preferredGender,
         ageGroup: (form as any).ageGroup,
-        samples: form.type === "post" ? [imageUrl || ""] : undefined,
+        samples: form.type === "post" ? [] : undefined,
         proposals: form.type === "vote"
           ? (uploadedProposals.length >= 2
             ? uploadedProposals

@@ -41,7 +41,7 @@ function CampaignCard({ event }: { event: Event }) {
         <Link
             href={`/brand/events/${event.id}`}
             className={cn(
-                "group block bg-card border-[1.5px] border-border rounded-lg overflow-hidden transition-all duration-200 hover:shadow-card hover:-translate-y-1",
+                "group block bg-card border border-border/60 rounded-[20px] overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-1",
                 isCancelled && "opacity-75 hover:opacity-100"
             )}
         >
@@ -123,8 +123,8 @@ export default function BrandDashboard() {
         <div className="space-y-8 pb-32 md:pb-12">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-foreground tracking-tight mb-1">Overview</h1>
-                    <p className="text-muted-foreground">Welcome back, {brandName}</p>
+                    <h1 className="text-4xl font-black text-foreground tracking-tighter mb-2">Overview</h1>
+                    <p className="text-[11px] font-black text-foreground/30 uppercase tracking-[0.2em]">Welcome back, {brandName}</p>
                 </div>
                 <Link
                     href="/brand/create-event"
@@ -142,8 +142,8 @@ export default function BrandDashboard() {
             {/* Campaigns + Notifications */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Active Campaigns */}
-                <section className="lg:col-span-2 bg-card border-[1.5px] border-border rounded-xl overflow-hidden">
-                    <div className="p-6 border-b-[1.5px] border-border flex justify-between items-center bg-secondary/10">
+                <section className="lg:col-span-2 bg-card border border-border/60 rounded-[28px] overflow-hidden">
+                    <div className="p-6 border-b border-border/60 flex justify-between items-center bg-secondary/10">
                         <h3 className="font-bold text-lg">Active Campaigns</h3>
                         <Link href="/brand/events" className="text-sm text-primary font-bold hover:underline flex items-center gap-1">
                             View All <ArrowRight className="w-3 h-3" />
@@ -167,7 +167,7 @@ export default function BrandDashboard() {
 
                 {/* Notifications + Pro Tip */}
                 <aside className="space-y-6">
-                    <div className="bg-card border-[1.5px] border-border rounded-xl p-6">
+                    <div className="bg-card border border-border/60 rounded-[28px] p-6">
                         <h3 className="font-bold text-lg mb-4">Needs Attention</h3>
                         {loadingNotifs ? (
                             <div className="space-y-3 animate-pulse">

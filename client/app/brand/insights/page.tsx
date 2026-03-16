@@ -644,11 +644,8 @@ export default function BrandInsightsPage() {
         <div className="space-y-6 pb-32 md:pb-12">
             {/* Header */}
             <header>
-                <h1 className="text-3xl font-black text-foreground tracking-tight mb-1 flex items-center gap-3">
-                    <BarChart2 className="w-8 h-8 text-primary" />
-                    Insights
-                </h1>
-                <p className="text-muted-foreground text-sm">Campaign analytics, decision quality signals, and audience demographics</p>
+                <h1 className="text-4xl font-black text-foreground tracking-tighter mb-2">Insights</h1>
+                <p className="text-[11px] font-black text-foreground/30 uppercase tracking-[0.2em]">Campaign analytics, decision quality signals, and audience demographics</p>
             </header>
 
             {/* KPIs */}

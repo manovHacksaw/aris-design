@@ -25,8 +25,8 @@ export default function BrandAnalyticsPage() {
         <div className="space-y-8">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-foreground tracking-tight mb-1">Analytics</h1>
-                    <p className="text-muted-foreground">Deep dive into your campaign performance.</p>
+                    <h1 className="text-4xl font-black text-foreground tracking-tighter mb-2">Analytics</h1>
+                    <p className="text-[11px] font-black text-foreground/30 uppercase tracking-[0.2em]">Deep dive into your campaign performance.</p>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -43,7 +43,7 @@ export default function BrandAnalyticsPage() {
             {/* Key Metrics Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {stats.map((stat, i) => (
-                    <div key={i} className="bg-card border border-border rounded-[24px] p-5 shadow-sm">
+                    <div key={i} className="bg-card border border-border/60 rounded-[28px] p-5 shadow-sm">
                         <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">{stat.label}</p>
                         <div className="flex items-end justify-between">
                             <h3 className="text-2xl font-black text-foreground">{stat.value}</h3>
@@ -66,7 +66,7 @@ export default function BrandAnalyticsPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Main Intearction Chart (CSS Only) */}
-                <div className="bg-card border border-border rounded-[24px] p-6 shadow-sm lg:col-span-2">
+                <div className="bg-card border border-border/60 rounded-[28px] p-6 shadow-sm lg:col-span-2">
                     <div className="flex items-center justify-between mb-8">
                         <h3 className="font-bold text-lg">Daily Engagement</h3>
                         <div className="flex gap-2">
@@ -99,7 +99,7 @@ export default function BrandAnalyticsPage() {
                 </div>
 
                 {/* Demographics */}
-                <div className="bg-card border border-border rounded-[24px] p-6 shadow-sm">
+                <div className="bg-card border border-border/60 rounded-[28px] p-6 shadow-sm">
                     <h3 className="font-bold text-lg mb-6">Audience Age</h3>
                     <div className="space-y-4">
                         {demographics.map((item, i) => (

@@ -66,7 +66,7 @@ export default function MilestonesPage() {
 
     if (loading) {
         return (
-            <div className="w-full max-w-7xl mx-auto pb-20 space-y-6">
+            <div className="w-full pb-20 space-y-6">
                 <style dangerouslySetInnerHTML={{ __html: `
                     @keyframes shimmer {
                         0% { transform: translateX(-100%); }
@@ -165,7 +165,7 @@ export default function MilestonesPage() {
     const targetTier = OVERALL_LEVELS[nextTierIndex];
 
     return (
-        <div className="w-full max-w-7xl mx-auto pb-20 space-y-6">
+        <div className="w-full pb-20 space-y-6">
 
             {/* Brand Header */}
             <div className="mb-8">

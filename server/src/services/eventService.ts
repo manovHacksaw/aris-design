@@ -64,25 +64,26 @@ export class EventService {
 
     // Samples validation for post_and_vote
     if (eventType === 'post_and_vote') {
-      if (data.title !== undefined && (!data.samples || data.samples.length === 0)) {
-        errors.push('At least one sample image is required for post_and_vote events');
+      if (data.title !== undefined && (!data.samples || data.samples.length === 0) && !data.imageUrl && !data.imageCid) {
+        errors.push('At least one sample image or cover image is required for post_and_vote events');
       }
       if (data.samples && data.samples.length > 10) {
         errors.push('Maximum 10 sample images allowed');
       }
 
-      // Validate sample CIDs
+      // Validate sample CIDs (skip URLs — they are Cloudinary/HTTP links)
       if (data.samples && data.samples.length > 0) {
-        const invalidCids = data.samples.some(cid => !/^(Qm[1-9A-HJ-NP-Za-km-z]{44}|bafy[a-z0-9]{50,})$/.test(cid));
+        const invalidCids = data.samples
+          .filter(s => !s.startsWith('http'))
+          .some(cid => !/^(Qm[1-9A-HJ-NP-Za-km-z]{44}|bafy[a-z0-9]{50,})$/.test(cid));
         if (invalidCids) {
           errors.push('One or more sample CIDs are invalid');
         }
       }
     }
 
-    // IPFS CID validation (basic format check)
-    if (data.imageCid !== undefined && data.imageCid.length > 0) {
-      // Basic CID validation: should start with 'Qm' or 'bafy' for CIDv0/v1
+    // IPFS CID validation (only if imageUrl is not provided)
+    if (data.imageCid !== undefined && data.imageCid.length > 0 && !data.imageUrl) {
       if (!/^(Qm[1-9A-HJ-NP-Za-km-z]{44}|bafy[a-z0-9]{50,})$/.test(data.imageCid)) {
         errors.push('Invalid IPFS CID format');
       }
@@ -184,8 +185,15 @@ export class EventService {
 
     const transformed = { ...event };
 
-    // Add event image URLs
-    if (event.imageCid) {
+    // Add event image URLs — prefer Cloudinary imageUrl, fall back to IPFS CID
+    if (event.imageUrl) {
+      transformed.imageUrls = {
+        thumbnail: event.imageUrl,
+        medium: event.imageUrl,
+        large: event.imageUrl,
+        full: event.imageUrl,
+      };
+    } else if (event.imageCid) {
       transformed.imageUrls = {
         thumbnail: getIPFSUrl(event.imageCid, 'thumbnail'),
         medium: getIPFSUrl(event.imageCid, 'medium'),
@@ -369,6 +377,7 @@ export class EventService {
           postingStart,
           postingEnd,
           imageCid: data.imageCid || null,
+          imageUrl: data.imageUrl || null,
           allowSubmissions: data.allowSubmissions ?? true,
           allowVoting: data.allowVoting ?? true,
           autoTransition: data.autoTransition ?? false,
@@ -953,6 +962,9 @@ export class EventService {
         }
       }
       updateData.imageCid = data.imageCid;
+    }
+    if (!lockedFields.includes('imageUrl') && data.imageUrl !== undefined) {
+      updateData.imageUrl = data.imageUrl;
     }
 
     if (!lockedFields.includes('allowSubmissions') && data.allowSubmissions !== undefined) {

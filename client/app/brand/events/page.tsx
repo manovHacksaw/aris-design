@@ -68,7 +68,7 @@ function CoverImage({ imageUrl, cid, title }: { imageUrl?: string; cid?: string;
 
 function SkeletonCard() {
     return (
-        <div className="bg-card border border-border rounded-[24px] p-4 md:p-6 flex flex-col md:flex-row gap-4 md:items-center animate-pulse">
+        <div className="bg-card border border-border/60 rounded-[24px] p-4 md:p-6 flex flex-col md:flex-row gap-4 md:items-center animate-pulse">
             <div className="flex items-center gap-4 flex-1">
                 <div className="w-20 h-20 md:w-16 md:h-16 rounded-[16px] bg-secondary/60 shrink-0" />
                 <div className="flex-1 space-y-2">
@@ -120,8 +120,8 @@ export default function BrandCampaignsPage() {
             {/* Header */}
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-foreground tracking-tight mb-1">Campaigns</h1>
-                    <p className="text-muted-foreground">Manage your active and past campaigns.</p>
+                    <h1 className="text-4xl font-black text-foreground tracking-tighter mb-2">Campaigns</h1>
+                    <p className="text-[11px] font-black text-foreground/30 uppercase tracking-[0.2em]">Manage your active and past campaigns.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="relative hidden md:block">
@@ -191,7 +191,7 @@ export default function BrandCampaignsPage() {
                 {loading ? (
                     Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
                 ) : filtered.length === 0 ? (
-                    <div className="bg-card border border-border rounded-[24px] p-12 text-center">
+                    <div className="bg-card border border-border/60 rounded-[24px] p-12 text-center">
                         <Layers className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
                         <p className="font-bold text-foreground mb-1">
                             {search ? "No campaigns match your search" : "No campaigns yet"}
@@ -214,7 +214,7 @@ export default function BrandCampaignsPage() {
                         return (
                             <div
                                 key={event.id}
-                                className="group bg-card hover:bg-card/80 border border-border rounded-[24px] p-4 md:p-6 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col md:flex-row gap-4 md:items-center"
+                                className="group bg-card hover:bg-card/80 border border-border/60 rounded-[24px] p-4 md:p-6 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col md:flex-row gap-4 md:items-center"
                             >
                                 {/* Image & title */}
                                 <div className="flex items-center gap-4 flex-1 min-w-0">
