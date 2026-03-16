@@ -171,11 +171,11 @@ export default function BrandWalletPage() {
                             </span>
                         </div>
                         <div className="flex items-baseline gap-2">
-                            <h2 className="text-5xl lg:text-6xl font-black tracking-tighter text-foreground">
-                                {fmt$(balance)}
-                            </h2>
-                            <span className="text-xl font-bold text-foreground/40">USDC</span>
-                        </div>
+                        <h2 className="font-display text-5xl lg:text-6xl text-white uppercase tracking-tight">
+                            {fmt$(balance)}
+                        </h2>
+                        <span className="font-display text-2xl text-white/40 uppercase tracking-tight">USDC</span>
+                    </div>
                         <div className="mt-3 flex items-center gap-1.5 text-sm font-medium text-green-500">
                             <ArrowUpRight className="w-4 h-4" />
                             <span>+0.0% this month</span>
@@ -200,8 +200,8 @@ export default function BrandWalletPage() {
                 <div className="lg:col-span-2 space-y-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-foreground/40" />
-                            <h3 className="text-sm font-black text-foreground">Activity History</h3>
+                            <Clock className="w-5 h-5 text-white/40" />
+                            <h3 className="font-display text-xl text-white uppercase tracking-tight pt-1">Activity History</h3>
                         </div>
                         <button className="text-xs font-black text-primary hover:underline flex items-center gap-1">
                             View Explorer <ExternalLink className="w-3 h-3" />
@@ -263,8 +263,8 @@ export default function BrandWalletPage() {
                         
                         <div className="p-6 space-y-5">
                             <div>
-                                <h3 className="text-base font-black text-foreground mb-1">Send Funds</h3>
-                                <p className="text-xs text-foreground/50 font-medium">Enter an EVM address and a chain to withdraw to.</p>
+                                <h3 className="font-display text-2xl text-white uppercase tracking-tight mb-1">Send Funds</h3>
+                                <p className="text-[11px] font-black text-white/30 uppercase tracking-widest">Enter an EVM address and a chain to withdraw to.</p>
                             </div>
                             
                             <div className="space-y-4">
@@ -339,11 +339,11 @@ export default function BrandWalletPage() {
                             }
                         </div>
                         <div>
-                            <p className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40 mb-0.5">On-Chain Refund Balance</p>
-                            <p className="text-3xl font-black tracking-tighter text-foreground">
+                            <p className="text-xs font-black uppercase tracking-[0.2em] text-white/40 mb-0.5">On-Chain Refund Balance</p>
+                            <p className="font-display text-4xl text-white uppercase tracking-tight mt-1">
                                 {fmt$(onChainBalance)}
                             </p>
-                            <p className="text-xs text-foreground/40 font-medium mt-0.5">
+                            <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mt-1">
                                 Live from RewardsVault contract
                             </p>
                         </div>
@@ -641,11 +641,11 @@ export default function BrandWalletPage() {
         <main className="w-full pb-24 pt-2 space-y-6">
             {/* Header */}
             <div className="mb-4">
-                <h1 className="text-3xl font-black tracking-tighter text-foreground mb-1">Brand Wallet</h1>
-                <p className="text-sm text-foreground/50 font-medium">
-                    Manage your earnings, deposits, and refunds from past campaigns.
-                </p>
-            </div>
+            <h1 className="font-display text-4xl text-white uppercase tracking-tight mb-2">Brand Wallet</h1>
+            <p className="text-[11px] font-black text-white/30 uppercase tracking-[0.2em]">
+                Manage your earnings, deposits, and refunds from past campaigns.
+            </p>
+        </div>
 
             {/* Tabs */}
             <div className="flex items-center gap-2 border-b border-border/40 pb-px">
