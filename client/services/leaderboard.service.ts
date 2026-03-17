@@ -6,10 +6,12 @@ export interface UserLeaderboardEntry {
     username: string;
     displayName: string;
     avatarUrl: string | null;
+    avatar: string | null;
     xp: number;
     level: number;
     badges?: string[];
     votesCast?: number;
+    votesReceived?: number;
     followers?: number;
 }
 
@@ -19,6 +21,7 @@ export interface BrandLeaderboardEntry {
     name: string;
     avatar: string | null;
     bio?: string | null;
+    categories?: string[];
     artMinted: number;
     participants: number;
 }
@@ -37,23 +40,24 @@ export interface LeaderboardResponse {
 
 export async function getUserLeaderboard(
     page = 1,
-    limit = 20
+    limit = 50,
+    period = "A"
 ): Promise<LeaderboardResponse> {
     return apiRequest<LeaderboardResponse>(
-        `/leaderboard/users?page=${page}&limit=${limit}`
+        `/leaderboard/users?page=${page}&limit=${limit}&period=${period}`
     );
 }
 
-export async function getBrandLeaderboard(): Promise<{
+export async function getBrandLeaderboard(period = "A"): Promise<{
     success: boolean;
     data: BrandLeaderboardEntry[];
     total: number;
 }> {
     return apiRequest<{ success: boolean; data: BrandLeaderboardEntry[]; total: number }>(
-        '/leaderboard/brands'
+        `/leaderboard/brands?period=${period}`
     );
 }
 
-export async function getEventLeaderboard(): Promise<any> {
-    return apiRequest<any>('/leaderboard/events');
+export async function getEventLeaderboard(period = "A"): Promise<any> {
+    return apiRequest<any>(`/leaderboard/events?period=${period}`);
 }

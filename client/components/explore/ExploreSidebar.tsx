@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { UserPlus, UserMinus, Star, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -16,14 +15,34 @@ interface SuggestedItem {
     username?: string; // for user items
 }
 
-export default function ExploreSidebar({ brands, creators }: { brands: SuggestedItem[], creators: SuggestedItem[] }) {
+export default function ExploreSidebar({
+    brands,
+    creators,
+    loading = false,
+}: {
+    brands: SuggestedItem[];
+    creators: SuggestedItem[];
+    loading?: boolean;
+}) {
+    const router = useRouter();
     return (
-        <aside className="hidden lg:flex flex-col gap-10 w-[300px] shrink-0 sticky top-[200px] h-fit">
+        <aside className="hidden lg:flex flex-col gap-8 w-[280px] shrink-0 sticky top-[160px] h-fit">
             {/* Recommended Brands */}
-            <SuggestedSection title="Recommended Brands" items={brands} type="brand" />
+            {loading ? (
+                <BrandSkeleton />
+            ) : (
+                <SuggestedSection
+                    title="Recommended Brands"
+                    items={brands}
+                    type="brand"
+                    onViewAll={() => router.push("/leaderboard")}
+                />
+            )}
 
             {/* Rising Creators */}
-            <SuggestedSection title="Rising Creators" items={creators} type="user" />
+            {creators.length > 0 && (
+                <SuggestedSection title="Rising Creators" items={creators} type="user" />
+            )}
 
             {/* Aris Pro Banner */}
             <div className="relative rounded-3xl overflow-hidden p-6 cursor-pointer border border-border group">
@@ -42,13 +61,48 @@ export default function ExploreSidebar({ brands, creators }: { brands: Suggested
     );
 }
 
-function SuggestedSection({ title, items, type }: { title: string; items: SuggestedItem[]; type: "brand" | "user" }) {
+function BrandSkeleton() {
+    return (
+        <div className="space-y-4">
+            <div className="h-3 w-32 bg-white/[0.04] rounded animate-pulse" />
+            {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 animate-pulse">
+                    <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex-shrink-0" />
+                    <div className="flex-1 space-y-1.5">
+                        <div className="h-2.5 bg-white/[0.04] rounded w-3/4" />
+                        <div className="h-2 bg-white/[0.04] rounded w-1/2" />
+                    </div>
+                    <div className="h-6 w-14 bg-white/[0.04] rounded" />
+                </div>
+            ))}
+        </div>
+    );
+}
+
+function SuggestedSection({
+    title,
+    items,
+    type,
+    onViewAll,
+}: {
+    title: string;
+    items: SuggestedItem[];
+    type: "brand" | "user";
+    onViewAll?: () => void;
+}) {
     if (!items.length) return null;
     return (
-        <div className="space-y-5">
+        <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <h3 className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em]">{title}</h3>
-                <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">View All</button>
+                <h3 className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em]">{title}</h3>
+                {onViewAll && (
+                    <button
+                        onClick={onViewAll}
+                        className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline"
+                    >
+                        View All
+                    </button>
+                )}
             </div>
             <div className="space-y-3">
                 {items.map((item) => (

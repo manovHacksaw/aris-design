@@ -95,13 +95,13 @@ export default function ExploreHeader({ activeSector, onSectorChange, searchQuer
             }}
             animate={visible ? "visible" : "hidden"}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="sticky top-0 z-[100] w-full bg-background/85 backdrop-blur-2xl border-b border-border pt-8 pb-5 space-y-6"
+            className="sticky top-0 z-[100] w-full bg-background/90 backdrop-blur-2xl border-b border-border pt-5 pb-3 space-y-4"
         >
             {/* Title + Search Row */}
             <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-8">
                 <div className="shrink-0">
-                    <h1 className="font-display text-[3.5rem] sm:text-[5rem] leading-[0.88] tracking-tight text-foreground uppercase">Discover</h1>
-                    <p className="mt-1 text-[10px] font-black text-foreground/25 uppercase tracking-[0.25em]">Explore events, brands and creators</p>
+                    <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight">Discover</h1>
+                    <p className="mt-1 text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em]">Events · Brands · Creators</p>
                 </div>
 
                 {/* Search Bar */}
@@ -233,13 +233,13 @@ export default function ExploreHeader({ activeSector, onSectorChange, searchQuer
                             key={sector.label}
                             onClick={() => onSectorChange(sector.label)}
                             className={cn(
-                                "relative flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap shrink-0",
+                                "relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap shrink-0",
                                 isActive
-                                    ? "bg-foreground text-background shadow-lg"
-                                    : "bg-foreground/5 text-foreground/30 border border-border hover:bg-foreground/10 hover:text-foreground/70"
+                                    ? "bg-lime-400 text-black shadow-md"
+                                    : "bg-foreground/[0.04] text-foreground/30 border border-border hover:bg-foreground/[0.08] hover:text-foreground/60"
                             )}
                         >
-                            <Icon className={cn("w-3.5 h-3.5", isActive ? "text-primary" : "")} />
+                            <Icon className={cn("w-3 h-3", isActive ? "text-black" : "")} />
                             {sector.label}
                         </button>
                     );

@@ -1,39 +1,55 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { Flame, ThumbsUp, Trophy, Zap, MousePointerClick, Users } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import CompactLeaderboardCard from "@/components/leaderboard/CompactLeaderboardCard";
+import { Calendar, Trophy } from "lucide-react";
+import { useUser } from "@/context/UserContext";
 import { getUserLeaderboard, getBrandLeaderboard, getEventLeaderboard } from "@/services/leaderboard.service";
 
-type TabType = 'users' | 'brands' | 'events' | 'content';
+type TabType = "users" | "brands" | "events";
 
 interface LeaderboardTableProps {
     activeTab: TabType;
+    domain?: string;
+    timeline?: string;
 }
 
-function TableSkeleton() {
+const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
+
+function RankBadge({ rank }: { rank: number }) {
+    if (rank === 1) return <span className="text-[11px] font-black text-amber-400 tabular-nums w-6 text-center">01</span>;
+    if (rank === 2) return <span className="text-[11px] font-black text-zinc-300 tabular-nums w-6 text-center">02</span>;
+    if (rank === 3) return <span className="text-[11px] font-black text-orange-400 tabular-nums w-6 text-center">03</span>;
+    return <span className="text-[11px] font-black text-white/18 tabular-nums w-6 text-center">{String(rank).padStart(2, "0")}</span>;
+}
+
+function SkeletonRows() {
     return (
-        <div className="bg-card/50 backdrop-blur-xl border border-border/80 rounded-[32px] overflow-hidden shadow-2xl animate-pulse">
-            <div className="hidden md:grid grid-cols-[80px_1fr_120px_110px_120px_1fr] gap-4 px-8 py-5 border-b border-border/60">
-                {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-3 bg-secondary/60 rounded-full" />)}
-            </div>
-            <div className="divide-y divide-border/40">
-                {Array.from({ length: 7 }).map((_, i) => (
-                    <div key={i} className="px-8 py-6 flex items-center gap-6">
-                        <div className="w-8 h-4 bg-secondary/60 rounded-full shrink-0" />
-                        <div className="w-10 h-10 bg-secondary/60 rounded-full shrink-0" />
-                        <div className="flex-1 h-4 bg-secondary/60 rounded-full max-w-[160px]" />
-                    </div>
-                ))}
-            </div>
+        <div className="divide-y divide-white/[0.04]">
+            {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 py-3 px-2 animate-pulse">
+                    <div className="w-6 h-3 bg-white/[0.04] rounded" />
+                    <div className="w-[26px] h-[26px] rounded-full bg-white/[0.04]" />
+                    <div className="flex-1 h-3 bg-white/[0.04] rounded max-w-[160px]" />
+                    <div className="ml-auto w-12 h-3 bg-white/[0.04] rounded" />
+                    <div className="w-10 h-3 bg-white/[0.04] rounded" />
+                </div>
+            ))}
         </div>
     );
 }
 
-export default function LeaderboardTable({ activeTab }: LeaderboardTableProps) {
+function ColHead({ children, className }: { children: React.ReactNode; className?: string }) {
+    return (
+        <span className={cn("text-[9px] font-black uppercase tracking-[0.2em] text-white/20", className)}>
+            {children}
+        </span>
+    );
+}
+
+export default function LeaderboardTable({ activeTab, domain = "ALL", timeline = "A" }: LeaderboardTableProps) {
+    const { user: currentUser } = useUser();
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -41,211 +57,301 @@ export default function LeaderboardTable({ activeTab }: LeaderboardTableProps) {
         setLoading(true);
         const fetchData = async () => {
             try {
-                if (activeTab === 'users') {
-                    const res = await getUserLeaderboard(1, 20);
-                    const mapped = (res.data || []).map((u) => ({
-                        ...u,
-                        userId: u.id,
-                        avatar: u.avatarUrl,
-                        totalVotesReceived: 0,
-                        totalRewardsEarned: 0,
-                        challengesWon: 0,
-                        streak: 0,
-                        badges: u.badges ?? [],
-                        isCurrentUser: false,
-                    }));
-                    setData(mapped);
-                } else if (activeTab === 'brands') {
-                    const res = await getBrandLeaderboard();
-                    const mapped = (res.data || []).map((b) => ({
-                        ...b,
-                        campaignsCount: b.artMinted,
-                        totalEngagements: b.participants,
-                        totalPrizePool: 0,
-                    }));
-                    setData(mapped);
-                } else if (activeTab === 'events') {
-                    const res = await getEventLeaderboard();
-                    setData(Array.isArray(res?.data) ? res.data : []);
+                if (activeTab === "users") {
+                    const res = await getUserLeaderboard(1, 50, timeline);
+                    setData(res.data || []);
+                } else if (activeTab === "brands") {
+                    const res = await getBrandLeaderboard(timeline);
+                    setData(res.data || []);
                 } else {
-                    setData([]);
+                    const res = await getEventLeaderboard(timeline);
+                    setData(Array.isArray(res?.data) ? res.data : []);
                 }
-            } catch (error) {
-                console.error("Failed to fetch leaderboard data", error);
+            } catch {
+                setData([]);
             } finally {
                 setLoading(false);
             }
         };
-
         fetchData();
-    }, [activeTab]);
+    }, [activeTab, timeline]);
 
-    if (loading) return <TableSkeleton />;
-    if (!data.length) return null;
+    const filtered =
+        domain === "ALL"
+            ? data
+            : data.filter((item: any) => {
+                if (Array.isArray(item.categories)) {
+                    return item.categories.some((c: string) => c.toUpperCase() === domain);
+                }
+                return item.category?.toUpperCase() === domain || item.domain?.toUpperCase() === domain;
+            });
 
-    const renderHeader = () => {
-        switch (activeTab) {
-            case 'brands':
-                return (
-                    <div className="hidden md:grid grid-cols-[80px_1fr_150px_150px_150px] gap-4 px-8 py-5 text-[10px] text-foreground/30 uppercase tracking-[0.2em] font-black border-b border-border/60">
-                        <span>Rank</span>
-                        <span>Brand</span>
-                        <span>Campaigns</span>
-                        <span>Prize Pool</span>
-                        <span>Total Votes</span>
-                    </div>
-                );
-            case 'events':
-                return (
-                    <div className="hidden md:grid grid-cols-[80px_1fr_150px_150px] gap-4 px-8 py-5 text-[10px] text-foreground/30 uppercase tracking-[0.2em] font-black border-b border-border/60">
-                        <span>Rank</span>
-                        <span>Event</span>
-                        <span>Participants</span>
-                        <span>Prize Pool</span>
-                    </div>
-                );
-            case 'content':
-                return (
-                    <div className="hidden md:grid grid-cols-[80px_1fr_150px_150px_150px] gap-4 px-8 py-5 text-[10px] text-foreground/30 uppercase tracking-[0.2em] font-black border-b border-border/60">
-                        <span>Rank</span>
-                        <span>Content</span>
-                        <span>Creator</span>
-                        <span>Votes</span>
-                        <span>Earned</span>
-                    </div>
-                );
-            default: // users
-                return (
-                    <div className="hidden md:grid grid-cols-[80px_1fr_150px_150px_150px_1fr] gap-4 px-8 py-5 text-[10px] text-foreground/30 uppercase tracking-[0.2em] font-black border-b border-border/60">
-                        <span>Rank</span>
-                        <span>User</span>
-                        <span>XP</span>
-                        <span>Votes Cast</span>
-                        <span>Votes Received</span>
-                        <span>Rewards</span>
-                    </div>
-                );
-        }
-    };
+    if (loading) return <SkeletonRows />;
 
-    const renderRow = (item: any, i: number) => {
-        const isUser = activeTab === 'users';
-        const isBrand = activeTab === 'brands';
-        const isEvent = activeTab === 'events';
-        const isContent = activeTab === 'content';
+    if (!filtered.length) {
+        return (
+            <div className="py-24 text-center">
+                <Trophy className="w-8 h-8 text-white/10 mx-auto mb-3" />
+                <p className="text-xs text-white/25 font-black uppercase tracking-widest">No data available</p>
+            </div>
+        );
+    }
+
+    /* ── USERS ── */
+    if (activeTab === "users") {
+        const currentUserEntry = currentUser
+            ? filtered.find(
+                (item: any) =>
+                    item.id === currentUser.id ||
+                    item.username === currentUser.username
+            )
+            : null;
+        const currentUserRank = currentUserEntry
+            ? currentUserEntry.rank || filtered.indexOf(currentUserEntry) + 1
+            : null;
+        const showPinnedSelf = currentUserEntry && currentUserRank != null && currentUserRank > 3;
+
+        const UserRow = ({ item, i, pinned }: { item: any; i: number; pinned?: boolean }) => {
+            const isCurrent =
+                item.id === currentUser?.id ||
+                item.username === currentUser?.username;
+            return (
+                <Link
+                    href={`/profile/${item.username}`}
+                    className={cn(
+                        "grid grid-cols-[24px_1fr_72px_72px_56px] sm:grid-cols-[24px_1fr_88px_88px_72px] gap-2 sm:gap-4 items-center px-2 py-3 rounded-lg transition-colors",
+                        pinned
+                            ? "bg-primary/[0.07] border border-primary/[0.15]"
+                            : isCurrent
+                                ? "bg-primary/[0.06]"
+                                : "hover:bg-white/[0.025]"
+                    )}
+                >
+                    <RankBadge rank={item.rank || i + 1} />
+
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        {item.avatarUrl ? (
+                            <img
+                                src={item.avatarUrl}
+                                className="w-[26px] h-[26px] rounded-full object-cover flex-shrink-0"
+                                alt={item.displayName}
+                            />
+                        ) : (
+                            <div className="w-[26px] h-[26px] rounded-full bg-white/[0.06] flex-shrink-0" />
+                        )}
+                        <div className="min-w-0">
+                            <p
+                                className={cn(
+                                    "text-[13px] font-semibold truncate leading-tight",
+                                    isCurrent ? "text-primary" : "text-white/85"
+                                )}
+                            >
+                                {item.displayName || item.username}
+                            </p>
+                            <p className="text-[10px] text-white/25 truncate leading-tight">
+                                @{item.username}
+                            </p>
+                        </div>
+                        {isCurrent && (
+                            <span className="text-[8px] font-black text-primary uppercase tracking-widest bg-primary/10 px-1.5 py-0.5 rounded flex-shrink-0 ml-1">
+                                you
+                            </span>
+                        )}
+                    </div>
+
+                    <span className="text-[12px] font-black text-primary text-right tabular-nums">
+                        {(item.xp || 0).toLocaleString()}
+                    </span>
+                    <span className="text-[12px] text-white/35 text-right tabular-nums">
+                        {(item.votesCast || 0).toLocaleString()}
+                    </span>
+                    <span className="text-[12px] font-bold text-white/40 text-right">
+                        Lv.{item.level || 1}
+                    </span>
+                </Link>
+            );
+        };
 
         return (
-            <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className={cn(
-                    "group transition-all duration-300",
-                    isUser && item.isCurrentUser ? "bg-primary/5" : "hover:bg-foreground/[0.02]"
-                )}
-            >
-                <div className={cn(
-                    "grid gap-4 items-center px-8 py-6 cursor-pointer",
-                    isUser ? "grid-cols-[80px_1fr_150px_150px_150px_1fr]" :
-                        isEvent ? "grid-cols-[80px_1fr_150px_150px]" :
-                            "grid-cols-[80px_1fr_150px_150px_150px]"
-                )}>
-                    {/* Rank */}
-                    <span className={cn("text-sm font-black tracking-tight", item.rank <= 3 ? "text-primary" : "text-foreground/30")}>
-                        #{item.rank.toString().padStart(2, '0')}
-                    </span>
-
-                    {/* Identity Column */}
-                    <div className="flex items-center gap-4">
-                        <div className="relative">
-                            <img src={item.avatar || item.coverImage} alt={item.username || item.name || item.title} className={cn("w-10 h-10 object-cover bg-background group-hover:border-primary transition-colors", isUser || isBrand ? "rounded-full border-2 border-border/50" : "rounded-lg border border-border/50")} />
-                            {isUser && item.isCurrentUser && <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background" />}
-                        </div>
-                        <div className="flex flex-col">
-                            <span className={cn("text-sm font-black tracking-tight", isUser && item.isCurrentUser ? "text-primary" : "text-foreground")}>
-                                {item.username || item.name || item.title}
-                            </span>
-                            {isUser && item.isCurrentUser && <span className="text-[9px] font-black text-primary uppercase tracking-widest mt-0.5">You</span>}
-                        </div>
-                    </div>
-
-                    {/* Columns based on type */}
-                    {isUser && (
-                        <>
-                            <span className="text-sm font-black text-primary tracking-tight">{item.xp?.toLocaleString()} XP</span>
-                            <span className="text-sm font-bold text-foreground/60 flex items-center gap-2">
-                                <MousePointerClick className="w-4 h-4 text-foreground/20" />
-                                {item.votesCast?.toLocaleString()}
-                            </span>
-                            <span className="text-sm font-bold text-foreground/60 flex items-center gap-2">
-                                <ThumbsUp className="w-4 h-4 text-foreground/20" />
-                                {item.totalVotesReceived?.toLocaleString()}
-                            </span>
-                            <span className="text-sm font-black text-accent tracking-tight">${item.totalRewardsEarned?.toLocaleString()}</span>
-                        </>
-                    )}
-
-                    {isBrand && (
-                        <>
-                            <span className="text-sm font-bold text-foreground/60 flex items-center gap-2">
-                                <Zap className="w-4 h-4 text-foreground/20" />
-                                {item.campaignsCount}
-                            </span>
-                            <span className="text-sm font-black text-accent">${item.totalPrizePool?.toLocaleString()}</span>
-                            <span className="text-sm font-bold text-foreground/60 flex items-center gap-2">
-                                <ThumbsUp className="w-4 h-4 text-foreground/20" />
-                                {item.totalEngagements > 1000000 ? `${(item.totalEngagements / 1000000).toFixed(1)}M` : `${(item.totalEngagements / 1000).toFixed(1)}k`}
-                            </span>
-                        </>
-                    )}
-
-                    {isEvent && (
-                        <>
-                            <span className="text-sm font-bold text-foreground/60 flex items-center gap-2">
-                                <Users className="w-4 h-4 text-foreground/20" />
-                                {item.participants?.toLocaleString()}
-                            </span>
-                            <span className="text-sm font-black text-accent">${item.prizePool?.toLocaleString()}</span>
-                        </>
-                    )}
-
-                    {isContent && (
-                        <>
-                            <span className="text-sm font-bold text-foreground/60">{item.creatorName}</span>
-                            <span className="text-sm font-bold text-foreground/60">{item.votes?.toLocaleString()}</span>
-                            <span className="text-sm font-black text-accent">${item.earned?.toLocaleString()}</span>
-                        </>
-                    )}
-
+            <div>
+                <div className="grid grid-cols-[24px_1fr_72px_72px_56px] sm:grid-cols-[24px_1fr_88px_88px_72px] gap-2 sm:gap-4 px-2 pb-2.5 border-b border-white/[0.05]">
+                    <ColHead>#</ColHead>
+                    <ColHead>User</ColHead>
+                    <ColHead className="text-right">XP</ColHead>
+                    <ColHead className="text-right">Votes</ColHead>
+                    <ColHead className="text-right">Level</ColHead>
                 </div>
-            </motion.div>
+
+                {/* Pinned self row when not in top 3 */}
+                {showPinnedSelf && (
+                    <>
+                        <div className="py-1.5">
+                            <UserRow
+                                item={currentUserEntry}
+                                i={filtered.indexOf(currentUserEntry)}
+                                pinned
+                            />
+                        </div>
+                        <div className="flex items-center gap-3 py-1 px-2">
+                            <div className="flex-1 border-t border-white/[0.05]" />
+                            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/15">rankings</span>
+                            <div className="flex-1 border-t border-white/[0.05]" />
+                        </div>
+                    </>
+                )}
+
+                <div className="divide-y divide-white/[0.03]">
+                    {filtered.map((item: any, i: number) => (
+                        <UserRow key={item.id || i} item={item} i={i} />
+                    ))}
+                </div>
+            </div>
         );
+    }
+
+    /* ── BRANDS ── */
+    if (activeTab === "brands") {
+        return (
+            <div>
+                <div className="grid grid-cols-[24px_1fr_80px_88px] gap-3 sm:gap-5 px-2 pb-2.5 border-b border-white/[0.05]">
+                    <ColHead>#</ColHead>
+                    <ColHead>Brand</ColHead>
+                    <ColHead className="text-right">Events</ColHead>
+                    <ColHead className="text-right">Participants</ColHead>
+                </div>
+                <div className="divide-y divide-white/[0.03]">
+                    {filtered.map((item: any, i: number) => {
+                        const logoSrc = item.avatar
+                            ? item.avatar.startsWith("http")
+                                ? item.avatar
+                                : `${PINATA_GW}/${item.avatar}`
+                            : null;
+                        return (
+                            <Link
+                                key={item.id || i}
+                                href={`/brand/${item.id}`}
+                                className="grid grid-cols-[24px_1fr_80px_88px] gap-3 sm:gap-5 items-center px-2 py-3 rounded-lg hover:bg-white/[0.025] transition-colors"
+                            >
+                                <RankBadge rank={item.rank || i + 1} />
+
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    {logoSrc ? (
+                                        <img
+                                            src={logoSrc}
+                                            className="w-[26px] h-[26px] rounded-md object-cover flex-shrink-0"
+                                            alt={item.name}
+                                        />
+                                    ) : (
+                                        <div className="w-[26px] h-[26px] rounded-md bg-white/[0.06] flex-shrink-0" />
+                                    )}
+                                    <div className="min-w-0">
+                                        <p className="text-[13px] font-semibold text-white/85 truncate leading-tight">
+                                            {item.name}
+                                        </p>
+                                        {item.categories?.length > 0 ? (
+                                            <p className="text-[10px] text-white/25 truncate leading-tight">
+                                                {item.categories.slice(0, 2).join(" · ")}
+                                            </p>
+                                        ) : item.bio ? (
+                                            <p className="text-[10px] text-white/25 truncate leading-tight">
+                                                {item.bio}
+                                            </p>
+                                        ) : null}
+                                    </div>
+                                </div>
+
+                                <span className="text-[12px] font-black text-white/55 text-right tabular-nums">
+                                    {(item.artMinted || 0).toLocaleString()}
+                                </span>
+                                <span className="text-[12px] text-white/35 text-right tabular-nums">
+                                    {(item.participants || 0).toLocaleString()}
+                                </span>
+                            </Link>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    }
+
+    /* ── EVENTS ── */
+    const statusCfg = (s: string) => {
+        if (s === "posting") return { dot: "bg-blue-400", label: "Posting" };
+        if (s === "voting") return { dot: "bg-emerald-400", label: "Voting" };
+        if (s === "completed") return { dot: "bg-white/20", label: "Done" };
+        if (s === "scheduled") return { dot: "bg-yellow-400", label: "Scheduled" };
+        return { dot: "bg-white/15", label: s || "—" };
     };
 
     return (
-        <div className="bg-card/50 backdrop-blur-xl border border-border/80 rounded-[32px] overflow-hidden shadow-2xl">
-            {renderHeader()}
-            <div className="divide-y divide-border/40">
-                {data.map((item, i) => renderRow(item, i))}
+        <div>
+            <div className="grid grid-cols-[24px_1fr_80px_100px] sm:grid-cols-[24px_1fr_80px_80px_100px] gap-3 sm:gap-5 px-2 pb-2.5 border-b border-white/[0.05]">
+                <ColHead>#</ColHead>
+                <ColHead>Event</ColHead>
+                <ColHead className="text-right">Prize</ColHead>
+                <ColHead className="text-right hidden sm:block">Participants</ColHead>
+                <ColHead className="text-right">Status</ColHead>
             </div>
+            <div className="divide-y divide-white/[0.03]">
+                {filtered.map((item: any, i: number) => {
+                    const sc = statusCfg(item.status);
+                    const thumb = item.imageUrl
+                        || (item.imageCid ? `${PINATA_GW}/${item.imageCid}` : null)
+                        || item.coverImage
+                        || item.avatar
+                        || null;
+                    return (
+                        <Link
+                            key={item.id || i}
+                            href={`/events/${item.id}`}
+                            className="grid grid-cols-[24px_1fr_80px_100px] sm:grid-cols-[24px_1fr_80px_80px_100px] gap-3 sm:gap-5 items-center px-2 py-3 rounded-lg hover:bg-white/[0.025] transition-colors"
+                        >
+                            <RankBadge rank={item.rank || i + 1} />
 
-            {/* Mobile Fallback - Simplified List */}
-            <div className="md:hidden flex flex-col gap-4 p-4 text-center">
-                <p className="text-xs text-foreground/40 italic">Switch to desktop for detailed {activeTab} stats.</p>
-                {data.slice(0, 5).map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50">
-                        <span className="text-xs font-black text-foreground/30 w-5">#{item.rank}</span>
-                        <div className="flex-1 text-left font-bold text-sm truncate">{item.username || item.name || item.title}</div>
-                        <div className="text-xs font-black text-primary">
-                            {isUser && `${item.xp} XP`}
-                            {!isUser && (item.totalPrizePool || item.prizePool || item.earned ? `$${(item.totalPrizePool || item.prizePool || item.earned).toLocaleString()}` : '')}
-                        </div>
-                    </div>
-                ))}
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                {thumb ? (
+                                    <img
+                                        src={thumb}
+                                        className="w-[26px] h-[26px] rounded object-cover flex-shrink-0"
+                                        alt={item.title}
+                                    />
+                                ) : (
+                                    <div className="w-[26px] h-[26px] rounded bg-white/[0.06] flex-shrink-0 flex items-center justify-center">
+                                        <Calendar className="w-3 h-3 text-white/20" />
+                                    </div>
+                                )}
+                                <div className="min-w-0">
+                                    <p className="text-[13px] font-semibold text-white/85 truncate leading-tight">
+                                        {item.title}
+                                    </p>
+                                    {item.brand?.name && (
+                                        <p className="text-[10px] text-white/25 truncate leading-tight">
+                                            {item.brand.name}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <span className="text-[12px] font-black text-lime-400 text-right tabular-nums">
+                                {item.prizePool || item.leaderboardPool
+                                    ? `$${(item.prizePool || item.leaderboardPool).toLocaleString()}`
+                                    : "—"}
+                            </span>
+
+                            <span className="text-[12px] text-white/35 text-right tabular-nums hidden sm:block">
+                                {(item.participants || item._count?.submissions || 0).toLocaleString()}
+                            </span>
+
+                            <div className="flex items-center justify-end gap-1.5">
+                                <div className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", sc.dot)} />
+                                <span className="text-[9px] font-black uppercase tracking-widest text-white/40">
+                                    {sc.label}
+                                </span>
+                            </div>
+                        </Link>
+                    );
+                })}
             </div>
         </div>
     );
 }
-
-const isUser = false; // Just to satisfy typescript in the mobile fallback map, though it won't work perfectly without context. Corrected below.

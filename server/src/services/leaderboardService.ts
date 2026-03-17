@@ -5,6 +5,14 @@ import { prisma } from "../lib/prisma";
  * Aggregates and ranks data for brands, users, events, and content
  */
 
+function getPeriodDate(period: string): Date | null {
+  const now = new Date();
+  if (period === "D") return new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  if (period === "W") return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  if (period === "M") return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  return null; // "A" = all time
+}
+
 // ============ BRAND LEADERBOARD ============
 
 export interface BrandLeaderboardItem {
@@ -12,57 +20,44 @@ export interface BrandLeaderboardItem {
   rank: number;
   name: string;
   avatar: string | null;
-  artMinted: number; // Dummy for now
-  participants: number; // Unique voters + unique submission makers across all brand events
+  categories: string[];
+  artMinted: number;
+  participants: number;
 }
 
-export async function getBrandLeaderboard(): Promise<BrandLeaderboardItem[]> {
-  // Get all brands with their events and vote/submission data
+export async function getBrandLeaderboard(period = "A"): Promise<BrandLeaderboardItem[]> {
+  const since = getPeriodDate(period);
   const brands = await prisma.brand.findMany({
-    where: {
-      isActive: true,
-    },
+    where: { isActive: true },
     include: {
       events: {
         where: {
           isDeleted: false,
+          ...(since ? { createdAt: { gte: since } } : {}),
         },
         include: {
-          votes: {
-            select: {
-              userId: true,
-            },
-          },
-          submissions: {
-            select: {
-              userId: true,
-            },
-          },
+          votes: { select: { userId: true } },
+          submissions: { select: { userId: true } },
         },
       },
     },
   });
 
-  // Calculate metrics for each brand
   const brandMetrics = brands.map((brand) => {
-    // Get unique participants (voters + submission makers)
     const uniqueVoters = new Set<string>();
     const uniqueSubmitters = new Set<string>();
-
     brand.events.forEach((event) => {
-      event.votes.forEach((vote) => uniqueVoters.add(vote.userId));
-      event.submissions.forEach((submission) => uniqueSubmitters.add(submission.userId));
+      event.votes.forEach((v) => uniqueVoters.add(v.userId));
+      event.submissions.forEach((s) => uniqueSubmitters.add(s.userId));
     });
-
     const participants = new Set([...uniqueVoters, ...uniqueSubmitters]).size;
-
-    // Dummy ART minted calculation (can be replaced with real logic)
     const artMinted = brand.eventsCreated * 1000 + participants * 100;
 
     return {
       id: brand.id,
       name: brand.name,
       avatar: brand.logoCid ? `https://ipfs.io/ipfs/${brand.logoCid}` : null,
+      categories: brand.categories,
       artMinted,
       participants,
     };
@@ -88,69 +83,84 @@ export async function getBrandLeaderboard(): Promise<BrandLeaderboardItem[]> {
 export interface UserLeaderboardItem {
   id: string;
   rank: number;
-  username: string;
+  username: string | null;
   displayName: string | null;
   avatar: string | null;
+  avatarUrl: string | null;
+  xp: number;
+  level: number;
   votesCast: number;
   votesReceived: number;
 }
 
-export async function getUserLeaderboard(): Promise<UserLeaderboardItem[]> {
-  // Get all users with their votes cast and votes received
+export async function getUserLeaderboard(period = "A"): Promise<UserLeaderboardItem[]> {
+  const since = getPeriodDate(period);
+  const dateFilter = since ? { createdAt: { gte: since } } : {};
+
   const users = await prisma.user.findMany({
     select: {
       id: true,
       username: true,
       displayName: true,
       avatarUrl: true,
-      _count: {
-        select: {
-          votes: true, // Votes cast by this user
-        },
+      xp: true,
+      level: true,
+      votes: {
+        where: dateFilter,
+        select: { id: true },
+      },
+      xpTransactions: {
+        where: dateFilter,
+        select: { amount: true },
       },
       submissions: {
         select: {
-          _count: {
-            select: {
-              votes: true, // Votes received on each submission
-            },
+          votes: {
+            where: dateFilter,
+            select: { id: true },
           },
         },
       },
     },
   });
 
-  // Calculate metrics for each user
   const userMetrics = users.map((user) => {
-    const votesCast = user._count.votes;
+    const votesCast = user.votes.length;
     const votesReceived = user.submissions.reduce(
-      (total, submission) => total + submission._count.votes,
+      (total, s) => total + s.votes.length,
       0
     );
+    // For all-time use cumulative xp field; for periods sum xpTransactions
+    const xp =
+      period === "A"
+        ? user.xp
+        : user.xpTransactions.reduce((sum, tx) => sum + tx.amount, 0);
 
     return {
       id: user.id,
       username: user.username,
       displayName: user.displayName,
       avatar: user.avatarUrl,
+      avatarUrl: user.avatarUrl,
+      xp,
+      level: user.level,
       votesCast,
       votesReceived,
     };
   });
 
-  // Sort by votes cast DESC, then votes received DESC
-  userMetrics.sort((a, b) => {
-    if (b.votesCast !== a.votesCast) {
-      return b.votesCast - a.votesCast;
-    }
-    return b.votesReceived - a.votesReceived;
+  // For period views, hide users with zero activity
+  const visible =
+    period === "A"
+      ? userMetrics
+      : userMetrics.filter((u) => u.xp > 0 || u.votesCast > 0);
+
+  visible.sort((a, b) => {
+    if (b.xp !== a.xp) return b.xp - a.xp;
+    return b.votesCast - a.votesCast;
   });
 
-  // Add ranks
-  return userMetrics.map((user, index) => ({
-    ...user,
-    rank: index + 1,
-  }));
+  return visible.map((user, index) => ({ ...user, rank: index + 1 }));
 }
 
 // ============ EVENT LEADERBOARD ============
@@ -160,16 +170,23 @@ export interface EventLeaderboardItem {
   rank: number;
   title: string;
   avatar: string | null; // Brand logo
+  imageCid: string | null; // Event header image
+  imageUrl: string | null;
+  status: string;
+  leaderboardPool: number;
   brandName: string;
+  brand?: { name: string; logoCid: string | null };
   artMinted: number; // Dummy for now
   participants: number; // Unique voters + unique submission makers
 }
 
-export async function getEventLeaderboard(): Promise<EventLeaderboardItem[]> {
+export async function getEventLeaderboard(period = "A"): Promise<EventLeaderboardItem[]> {
+  const since = getPeriodDate(period);
   // Get all non-deleted events with brand info
   const events = await prisma.event.findMany({
     where: {
       isDeleted: false,
+      ...(since ? { createdAt: { gte: since } } : {}),
     },
     include: {
       brand: {
@@ -205,7 +222,12 @@ export async function getEventLeaderboard(): Promise<EventLeaderboardItem[]> {
       id: event.id,
       title: event.title,
       avatar: event.brand.logoCid ? `https://ipfs.io/ipfs/${event.brand.logoCid}` : null,
+      imageCid: event.imageCid ?? null,
+      imageUrl: (event as any).imageUrl ?? null,
+      status: event.status,
+      leaderboardPool: (event as any).leaderboardPool ?? 0,
       brandName: event.brand.name,
+      brand: { name: event.brand.name, logoCid: event.brand.logoCid },
       artMinted,
       participants,
     };
@@ -231,7 +253,7 @@ export async function getEventLeaderboard(): Promise<EventLeaderboardItem[]> {
 export interface ContentLeaderboardItem {
   id: string;
   rank: number;
-  username: string;
+  username: string | null;
   userAvatar: string | null;
   image: string;
   votes: number;
