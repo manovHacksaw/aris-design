@@ -323,6 +323,9 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
       console.log("[LaunchStepModal] Updating event blockchain status to ACTIVE...");
       await updateBlockchainStatus(dbEvent.id, hash, eventIdBytes32);
 
+      // Mark all steps done
+      setStep(STEPS.length);
+
       // ── Step 4: Cleanup credit ───────────
       if (form.useRefundCredit) {
         clearRefundCredit();

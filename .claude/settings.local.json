@@ -56,7 +56,8 @@
       "Bash(ls /home/manov/Desktop/code/aris-design/client/app/\\\\\\(user\\\\\\)/ 2>/dev/null)",
       "Bash(cat /home/manov/Desktop/code/aris-design/client/app/\\\\\\(user\\\\\\)/activity/page.tsx 2>/dev/null || echo \"empty\")",
       "Bash(which cast:*)",
-      "Bash(cast send:*)"
+      "Bash(cast send:*)",
+      "Bash(rm:*)"
     ]
   }
 }
