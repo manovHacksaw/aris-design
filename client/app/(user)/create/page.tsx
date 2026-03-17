@@ -26,6 +26,7 @@ const categoryTabs = [
 export default function Create() {
     const { user } = useUser();
     const [generatorOpen, setGeneratorOpen] = useState(false);
+    const [heroPrompt, setHeroPrompt] = useState("");
     const [activeCategory, setActiveCategory] = useState("ALL");
     const [openEvents, setOpenEvents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -54,7 +55,7 @@ export default function Create() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5 }}
                     >
-                        <CreateHero />
+                        <CreateHero onGenerate={(p) => { setHeroPrompt(p); setGeneratorOpen(true); }} />
                     </motion.section>
 
                     {/* Drafts */}
@@ -147,8 +148,9 @@ export default function Create() {
 
             <AIGeneratorWindow
                 isOpen={generatorOpen}
-                onClose={() => setGeneratorOpen(false)}
+                onClose={() => { setGeneratorOpen(false); setHeroPrompt(""); }}
                 userId={user?.id ?? ""}
+                initialPrompt={heroPrompt}
             />
         </div>
     );

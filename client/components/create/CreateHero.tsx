@@ -23,7 +23,11 @@ const MANUAL_PLACEHOLDERS = [
 
 const HINTS = ["4K Bokeh", "Cyberpunk", "Cinematic", "Minimalist"];
 
-export default function CreateHero() {
+interface CreateHeroProps {
+    onGenerate?: (prompt: string) => void;
+}
+
+export default function CreateHero({ onGenerate }: CreateHeroProps) {
     const [activeTab, setActiveTab] = useState<"ai" | "manual">("ai");
     const [prompt, setPrompt] = useState("");
 
@@ -40,7 +44,7 @@ export default function CreateHero() {
                 twinkleProbability={0.8}
                 minTwinkleSpeed={0.3}
                 maxTwinkleSpeed={0.8}
-                className="opacity-70"
+                className="opacity-70 pointer-events-none"
             />
 
             {/* Extra colour glow layers */}
@@ -103,7 +107,11 @@ export default function CreateHero() {
                     <PlaceholdersAndVanishInput
                         placeholders={activeTab === "ai" ? AI_PLACEHOLDERS : MANUAL_PLACEHOLDERS}
                         onChange={(e) => setPrompt(e.target.value)}
-                        onSubmit={(_, val) => setPrompt(val)}
+                        onSubmit={(_, val) => {
+                            if (activeTab === "ai" && val.trim() && onGenerate) {
+                                onGenerate(val.trim());
+                            }
+                        }}
                         className="group focus-within:shadow-[0_0_0_1px_rgba(163,230,53,0.3),0_8px_32px_rgba(163,230,53,0.1)]"
                     >
                         {/* Icon buttons + CTA inside the input row */}
@@ -122,6 +130,11 @@ export default function CreateHero() {
                             </button>
                             <button
                                 type="submit"
+                                onClick={() => {
+                                    if (activeTab === "ai" && prompt.trim() && onGenerate) {
+                                        onGenerate(prompt.trim());
+                                    }
+                                }}
                                 className="px-7 py-3 rounded-2xl bg-lime-400 text-black font-black uppercase tracking-widest text-[11px] shadow-[0_4px_24px_rgba(163,230,53,0.3)] hover:bg-lime-300 hover:scale-[1.02] active:scale-95 transition-all whitespace-nowrap"
                             >
                                 {activeTab === "ai" ? "Generate" : "Continue"}

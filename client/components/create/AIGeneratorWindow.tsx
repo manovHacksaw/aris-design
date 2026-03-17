@@ -628,8 +628,18 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                     </div>
 
                     {isLoadingEvents ? (
-                      <div className="flex items-center justify-center py-12">
-                        <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                      <div className="space-y-3">
+                        {[...Array(3)].map((_, i) => (
+                          <div key={i} className="w-full p-4 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-start gap-3 animate-pulse">
+                            <div className="w-12 h-12 rounded-xl bg-white/[0.08] shrink-0" />
+                            <div className="flex-1 space-y-2 py-0.5">
+                              <div className="h-2.5 bg-white/[0.08] rounded-full w-3/4" />
+                              <div className="h-2 bg-white/[0.05] rounded-full w-1/2" />
+                              <div className="h-2 bg-white/[0.05] rounded-full w-1/3 mt-1" />
+                            </div>
+                            <div className="w-4 h-4 rounded bg-white/[0.06] shrink-0 mt-1" />
+                          </div>
+                        ))}
                       </div>
                     ) : events.length === 0 ? (
                       <div className="text-center py-12">
