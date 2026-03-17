@@ -12,7 +12,8 @@ import {
 } from "@/services/user.service";
 import { useUser } from "@/context/UserContext";
 import ProfileView from "@/components/profile/ProfileView";
-import { Loader2, UserX } from "lucide-react";
+import SidebarLayout from "@/components/home/SidebarLayout";
+import { UserX } from "lucide-react";
 import type { User, UserStats } from "@/types/user";
 
 export default function UserProfilePage() {
@@ -76,8 +77,62 @@ export default function UserProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background text-foreground font-sans">
+        <SidebarLayout>
+          <main className="w-full pt-6 lg:pt-10 pb-24 md:pb-12 space-y-6">
+            <div className="flex flex-col lg:flex-row gap-6">
+              {/* Left column skeleton */}
+              <div className="flex-1 min-w-0 space-y-6">
+                {/* Identity card */}
+                <div className="bg-foreground/[0.02] border border-border rounded-[24px] p-6 md:p-8 animate-pulse">
+                  <div className="flex flex-wrap items-start gap-5 mb-6">
+                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-foreground/[0.07] shrink-0" />
+                    <div className="flex-1 min-w-0 space-y-3 pt-1">
+                      <div className="h-8 w-48 bg-foreground/[0.07] rounded-lg" />
+                      <div className="h-3 w-28 bg-foreground/[0.05] rounded-full" />
+                      <div className="flex gap-2">
+                        <div className="h-6 w-28 bg-foreground/[0.05] rounded-full" />
+                        <div className="h-6 w-24 bg-foreground/[0.05] rounded-full" />
+                      </div>
+                    </div>
+                  </div>
+                  {/* Stats row */}
+                  <div className="grid grid-cols-4 gap-4 pt-5 border-t border-border/50">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="space-y-1.5">
+                        <div className="h-2.5 w-12 bg-foreground/[0.05] rounded-full" />
+                        <div className="h-6 w-8 bg-foreground/[0.07] rounded-lg" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Content grid skeleton */}
+                <div className="space-y-4 animate-pulse">
+                  {/* Tab bar */}
+                  <div className="flex gap-2">
+                    <div className="h-9 w-20 bg-foreground/[0.07] rounded-xl" />
+                    <div className="h-9 w-20 bg-foreground/[0.05] rounded-xl" />
+                    <div className="h-9 w-20 bg-foreground/[0.05] rounded-xl" />
+                  </div>
+                  {/* Cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} className="aspect-[3/4] rounded-[20px] bg-foreground/[0.06]" style={{ animationDelay: `${i * 60}ms` }} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right sidebar skeleton */}
+              <div className="lg:w-[280px] shrink-0 space-y-4 animate-pulse">
+                <div className="h-[180px] rounded-[20px] bg-foreground/[0.06]" />
+                <div className="h-[160px] rounded-[20px] bg-foreground/[0.05]" />
+                <div className="h-[140px] rounded-[20px] bg-foreground/[0.04]" />
+              </div>
+            </div>
+          </main>
+        </SidebarLayout>
       </div>
     );
   }

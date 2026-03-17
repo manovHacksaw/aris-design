@@ -52,8 +52,8 @@ export async function updateWalletAddress(
 }
 
 /** GET /api/users/:userId/followers */
-export async function getFollowers(userId: string): Promise<User[]> {
-  const res = await apiRequest<{ success: boolean; followers: User[] }>(`/users/${userId}/followers`);
+export async function getFollowers(userId: string): Promise<(User & { followedAt?: string })[]> {
+  const res = await apiRequest<{ success: boolean; followers: (User & { followedAt?: string })[] }>(`/users/${userId}/followers`);
   return res.followers;
 }
 

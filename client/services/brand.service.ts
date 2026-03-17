@@ -54,6 +54,10 @@ export async function getBrandAnalyticsOverview(): Promise<any> {
   return apiRequest<any>("/analytics/brand/overview");
 }
 
+export async function getBrandById(id: string): Promise<Brand> {
+  return apiRequest<Brand>(`/brands/${id}`);
+}
+
 export async function getAllBrands(params?: { limit?: number; offset?: number }): Promise<{ success: boolean; brands: Brand[]; total: number }> {
   const searchParams = new URLSearchParams();
   if (params?.limit) searchParams.set("limit", params.limit.toString());

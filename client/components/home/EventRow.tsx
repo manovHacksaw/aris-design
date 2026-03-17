@@ -25,18 +25,18 @@ export default function EventRow({
             <div className="flex items-end justify-between mb-4 group/header">
                 <div>
                     {madeFor && (
-                        <p className="text-xs font-bold text-white/40 mb-0.5 uppercase tracking-wider">
+                        <p className="text-xs font-bold text-foreground/40 mb-0.5 uppercase tracking-wider">
                             {madeFor}
                         </p>
                     )}
-                    <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                    <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
                         {title}
                     </h2>
                 </div>
 
                 <Link
                     href={showAllHref}
-                    className="text-[11px] font-black text-white/30 hover:text-white uppercase tracking-[0.15em] transition-colors duration-150 pb-1"
+                    className="text-[11px] font-black text-foreground/40 hover:text-foreground uppercase tracking-[0.15em] transition-colors duration-150 pb-1"
                 >
                     Show all
                 </Link>
@@ -49,7 +49,7 @@ export default function EventRow({
                         ? Array.from({ length: 4 }).map((_, i) => (
                             <div
                                 key={i}
-                                className="flex-shrink-0 w-[280px] sm:w-[300px] aspect-[4/5] rounded-2xl bg-white/[0.05] animate-pulse border border-white/[0.06]"
+                                className="flex-shrink-0 w-[280px] sm:w-[300px] aspect-[4/5] rounded-2xl bg-foreground/[0.05] animate-pulse border border-border"
                                 style={{ animationDelay: `${i * 80}ms` }}
                             />
                         ))
@@ -58,7 +58,7 @@ export default function EventRow({
                         ))}
 
                     {!loading && events.length === 0 && (
-                        <p className="text-sm text-white/20 font-medium py-8 pl-3">
+                        <p className="text-sm text-foreground/30 font-medium py-8 pl-3">
                             No events available right now.
                         </p>
                     )}

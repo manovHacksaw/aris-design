@@ -88,7 +88,7 @@ function AnimatedHeadline() {
             variants={container}
             initial="hidden"
             animate="show"
-            className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] leading-[0.92] tracking-tight text-white uppercase"
+            className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] leading-[0.92] tracking-tight text-foreground uppercase"
         >
             {HEADLINE_LINES.map((line, li) => (
                 <span key={li} className="block">
@@ -153,7 +153,7 @@ export default function HomeHeader() {
         <div className="space-y-8 mb-8">
 
             {/* ── HERO BLOCK ── */}
-            <div className="relative rounded-3xl overflow-hidden border border-white/[0.06] bg-white/[0.02]">
+            <div className="relative rounded-3xl overflow-hidden border border-border bg-card/60">
                 <SparkleCanvas />
 
                 {/* Dot grid */}
@@ -177,10 +177,10 @@ export default function HomeHeader() {
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.55, duration: 0.5 }}
-                        className="text-sm text-white/40 font-medium max-w-xs leading-relaxed"
+                        className="text-sm text-foreground/50 font-medium max-w-xs leading-relaxed"
                     >
                         Earn{" "}
-                        <span className="text-white font-bold">3 cents</span>{" "}
+                        <span className="text-foreground font-bold">3 cents</span>{" "}
                         for every vote you cast. Vote mindfully — higher rewards go to those who align with the crowd.
                     </motion.p>
                 </div>
@@ -195,10 +195,10 @@ export default function HomeHeader() {
                 className="relative group max-w-3xl"
             >
                 <div className="absolute -inset-px bg-gradient-to-r from-lime-400/20 via-green-400/15 to-lime-400/20 rounded-2xl opacity-0 group-focus-within:opacity-100 transition-all duration-500 blur-sm pointer-events-none" />
-                <div className="relative flex items-center bg-white/[0.03] border border-white/[0.08] group-focus-within:border-lime-400/35 rounded-2xl transition-all duration-300">
+                <div className="relative flex items-center bg-white/[0.03] border border-border group-focus-within:border-lime-400/35 rounded-2xl transition-all duration-300">
                     {loading
                         ? <Loader2 className="absolute left-5 w-4 h-4 text-lime-400 animate-spin pointer-events-none" />
-                        : <Search className="absolute left-5 w-4 h-4 text-white/20 group-focus-within:text-lime-400 transition-colors duration-300 pointer-events-none" />
+                        : <Search className="absolute left-5 w-4 h-4 text-foreground/30 group-focus-within:text-lime-400 transition-colors duration-300 pointer-events-none" />
                     }
                     <input
                         type="text"
@@ -206,12 +206,12 @@ export default function HomeHeader() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                         onFocus={() => hasResults && setOpen(true)}
                         placeholder="Search events, brands, or categories..."
-                        className="w-full bg-transparent py-4 pl-12 pr-10 text-sm font-medium text-white placeholder:text-white/20 outline-none"
+                        className="w-full bg-transparent py-4 pl-12 pr-10 text-sm font-medium text-foreground placeholder:text-foreground/30 outline-none"
                     />
                     {searchQuery && (
                         <button
                             onClick={() => { setSearchQuery(""); setResults(null); setOpen(false); }}
-                            className="absolute right-4 text-white/20 hover:text-white/60 transition-colors"
+                            className="absolute right-4 text-foreground/20 hover:text-foreground/60 transition-colors"
                         >
                             <X className="w-4 h-4" />
                         </button>
@@ -226,16 +226,16 @@ export default function HomeHeader() {
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 4, scale: 0.98 }}
                             transition={{ duration: 0.15 }}
-                            className="absolute top-full mt-2 left-0 right-0 z-50 bg-[#0f1117] border border-white/[0.08] rounded-2xl overflow-hidden shadow-2xl"
+                            className="absolute top-full mt-2 left-0 right-0 z-50 bg-card border border-border rounded-2xl overflow-hidden shadow-2xl"
                         >
                             {!hasResults ? (
-                                <p className="px-5 py-4 text-sm text-white/30">No results for "{searchQuery}"</p>
+                                <p className="px-5 py-4 text-sm text-foreground/50">No results for "{searchQuery}"</p>
                             ) : (
                                 <div className="divide-y divide-white/[0.05]">
                                     {/* Events */}
                                     {results!.events.length > 0 && (
                                         <div className="p-3">
-                                            <p className="px-2 pb-1.5 text-[10px] font-black uppercase tracking-widest text-white/20">Events</p>
+                                            <p className="px-2 pb-1.5 text-[10px] font-black uppercase tracking-widest text-foreground/40">Events</p>
                                             {results!.events.map((ev) => (
                                                 <button
                                                     key={ev.id}
@@ -247,8 +247,8 @@ export default function HomeHeader() {
                                                         : <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0"><Calendar className="w-4 h-4 text-white/20" /></div>
                                                     }
                                                     <div className="min-w-0">
-                                                        <p className="text-sm font-semibold text-white truncate">{ev.title}</p>
-                                                        {ev.brand && <p className="text-xs text-white/30 truncate">{ev.brand.name}</p>}
+                                                        <p className="text-sm font-semibold text-foreground truncate">{ev.title}</p>
+                                                        {ev.brand && <p className="text-xs text-foreground/50 truncate">{ev.brand.name}</p>}
                                                     </div>
                                                     <span className={`ml-auto text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full flex-shrink-0 ${ev.status === 'posting' || ev.status === 'voting' ? 'bg-lime-400/10 text-lime-400' : 'bg-white/5 text-white/30'}`}>
                                                         {ev.status}
@@ -261,7 +261,7 @@ export default function HomeHeader() {
                                     {/* Brands */}
                                     {results!.brands.length > 0 && (
                                         <div className="p-3">
-                                            <p className="px-2 pb-1.5 text-[10px] font-black uppercase tracking-widest text-white/20">Brands</p>
+                                            <p className="px-2 pb-1.5 text-[10px] font-black uppercase tracking-widest text-foreground/40">Brands</p>
                                             {results!.brands.map((brand) => (
                                                 <button
                                                     key={brand.id}
@@ -273,8 +273,8 @@ export default function HomeHeader() {
                                                         : <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0"><Building2 className="w-4 h-4 text-white/20" /></div>
                                                     }
                                                     <div className="min-w-0">
-                                                        <p className="text-sm font-semibold text-white truncate">{brand.name}</p>
-                                                        {brand.tagline && <p className="text-xs text-white/30 truncate">{brand.tagline}</p>}
+                                                        <p className="text-sm font-semibold text-foreground truncate">{brand.name}</p>
+                                                        {brand.tagline && <p className="text-xs text-foreground/50 truncate">{brand.tagline}</p>}
                                                     </div>
                                                 </button>
                                             ))}
@@ -284,7 +284,7 @@ export default function HomeHeader() {
                                     {/* Users */}
                                     {results!.users.length > 0 && (
                                         <div className="p-3">
-                                            <p className="px-2 pb-1.5 text-[10px] font-black uppercase tracking-widest text-white/20">Creators</p>
+                                            <p className="px-2 pb-1.5 text-[10px] font-black uppercase tracking-widest text-foreground/40">Creators</p>
                                             {results!.users.map((user) => (
                                                 <button
                                                     key={user.id}
@@ -296,8 +296,8 @@ export default function HomeHeader() {
                                                         : <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0"><User className="w-4 h-4 text-white/20" /></div>
                                                     }
                                                     <div className="min-w-0">
-                                                        <p className="text-sm font-semibold text-white truncate">{user.displayName}</p>
-                                                        <p className="text-xs text-white/30 truncate">@{user.username}</p>
+                                                        <p className="text-sm font-semibold text-foreground truncate">{user.displayName}</p>
+                                                        <p className="text-xs text-foreground/50 truncate">@{user.username}</p>
                                                     </div>
                                                 </button>
                                             ))}

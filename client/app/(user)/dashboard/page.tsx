@@ -6,12 +6,19 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
     Zap, Users, Building2, Trophy, ThumbsUp, ImageIcon,
     Calendar, Crown, X, Star, Flame, Lock, CheckCircle2,
-    MousePointerClick, DollarSign, ArrowUpRight, TrendingUp, Shield
+    MousePointerClick, DollarSign, ArrowUpRight, TrendingUp, Shield,
+    GitBranch, Target, Swords, UserCheck,
 } from "lucide-react";
+import {
+    AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
+    ResponsiveContainer, CartesianGrid,
+} from "recharts";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/context/UserContext";
 import { getUserStats, getUserSubmissions } from "@/services/user.service";
 import { getEventsVotedByUser } from "@/services/event.service";
+import { getXpTransactions, type XpTransactionSummary } from "@/services/xp.service";
+import { getFollowers } from "@/services/user.service";
 import type { UserStats } from "@/types/user";
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -31,6 +38,606 @@ interface ActivityItem {
     earnings?: number;
     xpEarned?: number;
     imageUrl?: string;
+}
+
+// ─── Level Breakdown Modal ───────────────────────────────────────
+
+const TIER_DETAILS = [
+    {
+        name: "Rookie",   color: "text-zinc-400",   bg: "bg-zinc-500/15",   border: "border-zinc-500/30",   glow: "",
+        minLevel: 1, maxLevel: 2, minXP: 0,     maxXP: 1999,
+        perks: ["Access to all public events", "Basic leaderboard visibility", "Earn XP from votes & posts"],
+    },
+    {
+        name: "Hustler",  color: "text-blue-400",   bg: "bg-blue-500/15",   border: "border-blue-500/30",   glow: "shadow-[0_0_20px_rgba(59,130,246,0.15)]",
+        minLevel: 3, maxLevel: 5, minXP: 2000,  maxXP: 4999,
+        perks: ["Blue rank badge on profile", "Priority placement in search", "Unlock Hustler leaderboard bracket"],
+    },
+    {
+        name: "Creator",  color: "text-purple-400", bg: "bg-purple-500/15", border: "border-purple-500/30", glow: "shadow-[0_0_20px_rgba(168,85,247,0.18)]",
+        minLevel: 6, maxLevel: 9, minXP: 5000,  maxXP: 8999,
+        perks: ["Purple rank badge on profile", "Featured in Creator spotlight", "Higher USDC payout weighting"],
+    },
+    {
+        name: "Veteran",  color: "text-orange-400", bg: "bg-orange-500/15", border: "border-orange-500/30", glow: "shadow-[0_0_24px_rgba(249,115,22,0.2)]",
+        minLevel: 10, maxLevel: 14, minXP: 9000,  maxXP: 13999,
+        perks: ["Orange rank badge on profile", "Access to Veteran-only events", "Bonus XP multiplier ×1.2"],
+    },
+    {
+        name: "Elite",    color: "text-yellow-400", bg: "bg-yellow-500/15", border: "border-yellow-500/30", glow: "shadow-[0_0_28px_rgba(234,179,8,0.22)]",
+        minLevel: 15, maxLevel: 19, minXP: 14000, maxXP: 18999,
+        perks: ["Gold rank badge on profile", "Elite leaderboard bracket", "Bonus XP multiplier ×1.5"],
+    },
+    {
+        name: "Legend",   color: "text-lime-400",   bg: "bg-lime-400/15",   border: "border-lime-400/30",   glow: "shadow-[0_0_32px_rgba(163,230,53,0.25)]",
+        minLevel: 20, maxLevel: null, minXP: 19000, maxXP: null,
+        perks: ["Lime rank badge on profile", "Legend-only events & rewards", "Maximum USDC payout weighting", "Bonus XP multiplier ×2.0"],
+    },
+] as const;
+
+const XP_SOURCES = [
+    { icon: MousePointerClick, label: "Cast Vote",    desc: "Every vote cast",           xp: "+1–10 XP",   color: "text-blue-400",   bg: "bg-blue-400/10" },
+    { icon: ImageIcon,         label: "Post Content", desc: "Approved submission",        xp: "+10–50 XP",  color: "text-lime-400",   bg: "bg-lime-400/10" },
+    { icon: Crown,             label: "Top Ranking",  desc: "Rank #1 in an event",        xp: "+50–200 XP", color: "text-yellow-400", bg: "bg-yellow-400/10" },
+    { icon: Flame,             label: "Login Streak", desc: "Consecutive daily logins",   xp: "+5–25 XP",   color: "text-orange-400", bg: "bg-orange-400/10" },
+    { icon: Users,             label: "Referrals",    desc: "Friend joins via your code", xp: "+10–100 XP", color: "text-pink-400",   bg: "bg-pink-400/10" },
+    { icon: Trophy,            label: "Milestones",   desc: "Complete XP milestones",     xp: "+10–2.5k XP",color: "text-purple-400", bg: "bg-purple-400/10" },
+];
+
+function LevelBreakdownModal({ open, onClose, xp, xpLevel }: {
+    open: boolean;
+    onClose: () => void;
+    xp: number;
+    xpLevel: number;
+}) {
+    const currentTierDetail = TIER_DETAILS.find(t => xpLevel >= t.minLevel && (t.maxLevel === null || xpLevel <= t.maxLevel))
+        ?? TIER_DETAILS[0];
+
+    return (
+        <AnimatePresence>
+            {open && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.18 }}
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+                    onClick={onClose}
+                >
+                    <motion.div
+                        initial={{ opacity: 0, y: 20, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 16, scale: 0.97 }}
+                        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                        onClick={e => e.stopPropagation()}
+                        className="w-full max-w-xl max-h-[88vh] bg-card border border-border rounded-[28px] flex flex-col overflow-hidden shadow-2xl"
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
+                            <div>
+                                <h2 className="text-base font-black text-foreground tracking-tight">Level Progression</h2>
+                                <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.2em] mt-0.5">
+                                    How ranks & XP work
+                                </p>
+                            </div>
+                            <button onClick={onClose} className="w-8 h-8 rounded-full bg-foreground/5 hover:bg-foreground/10 flex items-center justify-center transition-colors">
+                                <X className="w-4 h-4 text-foreground/50" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+
+                            {/* Current rank hero */}
+                            <div className={cn(
+                                "relative overflow-hidden rounded-2xl border p-5 flex items-center gap-5",
+                                currentTierDetail.bg, currentTierDetail.border, currentTierDetail.glow
+                            )}>
+                                <div className={cn("absolute -top-6 -right-6 w-28 h-28 rounded-full blur-3xl opacity-30", currentTierDetail.bg)} />
+                                <div className={cn("relative w-16 h-16 rounded-2xl flex items-center justify-center border shrink-0", currentTierDetail.bg, currentTierDetail.border)}>
+                                    <span className={cn("font-display text-4xl leading-none tracking-tight", currentTierDetail.color)}>{xpLevel}</span>
+                                </div>
+                                <div className="relative min-w-0">
+                                    <p className="text-[9px] font-black uppercase tracking-[0.25em] text-foreground/40 mb-0.5">You are here</p>
+                                    <p className={cn("text-2xl font-black tracking-tight", currentTierDetail.color)}>{currentTierDetail.name}</p>
+                                    <p className="text-[10px] font-bold text-foreground/40 mt-0.5">{xp.toLocaleString()} XP total</p>
+                                </div>
+                                <div className="relative ml-auto text-right shrink-0">
+                                    {currentTierDetail.maxXP !== null ? (
+                                        <>
+                                            <p className={cn("text-lg font-black", currentTierDetail.color)}>
+                                                {(currentTierDetail.maxXP + 1 - xp).toLocaleString()}
+                                            </p>
+                                            <p className="text-[9px] font-bold text-foreground/40 uppercase tracking-wider">XP to next tier</p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p className={cn("text-lg font-black", currentTierDetail.color)}>MAX</p>
+                                            <p className="text-[9px] font-bold text-foreground/40 uppercase tracking-wider">Tier</p>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Tier progression ladder */}
+                            <div>
+                                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 mb-3">All Tiers</p>
+                                <div className="space-y-2">
+                                    {TIER_DETAILS.map((t, i) => {
+                                        const isCurrent = t.name === currentTierDetail.name;
+                                        const isPast = TIER_DETAILS.indexOf(currentTierDetail) > i;
+                                        const xpInThisTier = isCurrent ? xp - t.minXP : 0;
+                                        const tierSize = t.maxXP !== null ? t.maxXP - t.minXP + 1 : 10000;
+                                        const pct = isCurrent ? Math.min(100, (xpInThisTier / tierSize) * 100) : isPast ? 100 : 0;
+
+                                        return (
+                                            <motion.div
+                                                key={t.name}
+                                                initial={{ opacity: 0, x: -8 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: i * 0.05 }}
+                                                className={cn(
+                                                    "rounded-2xl border p-4 transition-all",
+                                                    isCurrent ? cn(t.bg, t.border, t.glow) :
+                                                    isPast ? "bg-foreground/[0.04] border-foreground/[0.1]" :
+                                                    "bg-transparent border-border/50 opacity-50"
+                                                )}
+                                            >
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    {/* Tier icon */}
+                                                    <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center border shrink-0",
+                                                        isCurrent || isPast ? cn(t.bg, t.border) : "bg-foreground/[0.04] border-border"
+                                                    )}>
+                                                        {isPast
+                                                            ? <CheckCircle2 className={cn("w-4 h-4", t.color)} />
+                                                            : <Zap className={cn("w-4 h-4", isCurrent ? t.color : "text-foreground/20")} />
+                                                        }
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={cn("text-sm font-black", isCurrent ? t.color : isPast ? "text-foreground/70" : "text-foreground/30")}>
+                                                                {t.name}
+                                                            </span>
+                                                            {isCurrent && (
+                                                                <span className={cn("text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full border", t.bg, t.border, t.color)}>
+                                                                    You
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-[9px] font-bold text-foreground/30">
+                                                            Lv {t.minLevel}{t.maxLevel ? `–${t.maxLevel}` : "+"} · {(t.minXP / 1000).toFixed(0)}k{t.maxXP ? `–${(t.maxXP / 1000).toFixed(0)}k` : "+"} XP
+                                                        </p>
+                                                    </div>
+                                                    {isCurrent && (
+                                                        <span className={cn("text-[10px] font-black shrink-0", t.color)}>
+                                                            {Math.round(pct)}%
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {/* Progress bar (current tier only) */}
+                                                {isCurrent && (
+                                                    <div className="ml-12 mb-2">
+                                                        <div className="w-full h-1 bg-foreground/[0.08] rounded-full overflow-hidden">
+                                                            <motion.div
+                                                                initial={{ width: 0 }}
+                                                                animate={{ width: `${pct}%` }}
+                                                                transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+                                                                className={cn("h-full rounded-full", t.color.replace("text-", "bg-"))}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Perks */}
+                                                {(isCurrent || isPast) && (
+                                                    <div className="ml-12 flex flex-wrap gap-1.5">
+                                                        {t.perks.map((perk) => (
+                                                            <span key={perk} className={cn(
+                                                                "text-[9px] font-bold px-2 py-0.5 rounded-full border",
+                                                                isCurrent ? cn(t.bg, t.border, t.color) : "bg-foreground/[0.04] border-foreground/[0.08] text-foreground/40"
+                                                            )}>
+                                                                {perk}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </motion.div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* How to earn XP */}
+                            <div>
+                                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 mb-3">Ways to Earn XP</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {XP_SOURCES.map((src) => {
+                                        const SrcIcon = src.icon;
+                                        return (
+                                            <div key={src.label} className={cn("rounded-xl border border-border p-3 flex items-center gap-3", src.bg)}>
+                                                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-background/40")}>
+                                                    <SrcIcon className={cn("w-4 h-4", src.color)} />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-[10px] font-black text-foreground/80 leading-snug">{src.label}</p>
+                                                    <p className={cn("text-[9px] font-black", src.color)}>{src.xp}</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
+}
+
+// ─── Milestones Data ─────────────────────────────────────────────
+
+const TIER_LABELS = ["First", "Beginner", "Punctual", "Expert", "Veteran", "Legend"] as const;
+type TierLabel = typeof TIER_LABELS[number];
+
+const TIER_STYLE: Record<TierLabel, { text: string; bg: string; border: string; glow: string; dot: string }> = {
+    First:    { text: "text-zinc-400",   bg: "bg-zinc-500/15",   border: "border-zinc-500/30",   glow: "",                                           dot: "bg-zinc-400" },
+    Beginner: { text: "text-blue-400",   bg: "bg-blue-500/15",   border: "border-blue-500/30",   glow: "",                                           dot: "bg-blue-400" },
+    Punctual: { text: "text-teal-400",   bg: "bg-teal-500/15",   border: "border-teal-500/30",   glow: "",                                           dot: "bg-teal-400" },
+    Expert:   { text: "text-purple-400", bg: "bg-purple-500/15", border: "border-purple-500/30", glow: "shadow-[0_0_16px_rgba(168,85,247,0.2)]",    dot: "bg-purple-400" },
+    Veteran:  { text: "text-orange-400", bg: "bg-orange-500/15", border: "border-orange-500/30", glow: "shadow-[0_0_16px_rgba(249,115,22,0.2)]",    dot: "bg-orange-400" },
+    Legend:   { text: "text-lime-400",   bg: "bg-lime-400/15",   border: "border-lime-400/30",   glow: "shadow-[0_0_20px_rgba(163,230,53,0.25)]",   dot: "bg-lime-400" },
+};
+
+interface MilestoneRow {
+    label: string;
+    icon: React.ElementType;
+    statKey?: string; // key in stats for live progress
+    targets: [number, number, number, number, number, number];
+    unit?: string;
+}
+
+interface MilestoneCategory {
+    id: string;
+    label: string;
+    icon: React.ElementType;
+    color: string;
+    rows: MilestoneRow[];
+    xp: [number, number, number, number, number, number];
+}
+
+const MILESTONE_CATEGORIES: MilestoneCategory[] = [
+    {
+        id: "voter",
+        label: "Voter",
+        icon: MousePointerClick,
+        color: "text-blue-400",
+        xp: [10, 25, 50, 100, 250, 500],
+        rows: [
+            { label: "Rank #1 Votes",      icon: Crown,            targets: [1, 3, 10, 25, 50, 100],         unit: "times" },
+            { label: "Top 3 Finishes",      icon: Trophy,           targets: [1, 5, 25, 50, 100, 250],        unit: "times" },
+            { label: "Top 5 Finishes",      icon: Star,             targets: [1, 5, 50, 100, 250, 500],       unit: "times" },
+            { label: "Top 10 Finishes",     icon: TrendingUp,       targets: [1, 10, 100, 100, 250, 500],     unit: "times" },
+            { label: "> 51%ile Accuracy",   icon: Target,           targets: [1, 25, 125, 250, 500, 1000],    unit: "times" },
+            { label: "Votes Cast",          icon: Zap,              statKey: "votesCast", targets: [1, 25, 125, 250, 500, 1000], unit: "votes" },
+            { label: "Events Participated", icon: Calendar,         statKey: "events",    targets: [1, 5, 25, 50, 100, 250],    unit: "events" },
+        ],
+    },
+    {
+        id: "creator",
+        label: "Creator",
+        icon: ImageIcon,
+        color: "text-lime-400",
+        xp: [10, 50, 100, 250, 500, 1000],
+        rows: [
+            { label: "Rank #1 Posts",       icon: Crown,            targets: [1, 3, 10, 25, 50, 100],         unit: "times" },
+            { label: "Top 3 Finishes",      icon: Trophy,           targets: [1, 5, 10, 50, 100, 250],        unit: "times" },
+            { label: "Top 5 Finishes",      icon: Star,             targets: [1, 5, 25, 100, 250, 500],       unit: "times" },
+            { label: "Top 10 Finishes",     icon: TrendingUp,       targets: [1, 10, 25, 100, 250, 500],      unit: "times" },
+            { label: "> 51%ile Accuracy",   icon: Target,           targets: [1, 25, 50, 250, 500, 1000],     unit: "times" },
+            { label: "Posts Submitted",     icon: ImageIcon,        statKey: "posts",     targets: [1, 25, 100, 250, 500, 1000], unit: "posts" },
+            { label: "Events Participated", icon: Calendar,         statKey: "events",    targets: [1, 5, 10, 25, 50, 100],     unit: "events" },
+        ],
+    },
+    {
+        id: "activity",
+        label: "Activity",
+        icon: Flame,
+        color: "text-orange-400",
+        xp: [10, 25, 50, 100, 250, 500],
+        rows: [
+            { label: "Vote Streak",         icon: Flame,            statKey: "voteStreak",  targets: [1, 3, 7, 15, 30, 100],          unit: "days" },
+            { label: "Post Streak",         icon: Zap,              statKey: "postStreak",  targets: [1, 3, 7, 15, 30, 100],          unit: "days" },
+        ],
+    },
+    {
+        id: "referrals",
+        label: "Referrals",
+        icon: UserCheck,
+        color: "text-pink-400",
+        xp: [10, 25, 125, 500, 1200, 2500],
+        rows: [
+            { label: "Referrals Made",      icon: Users,            targets: [1, 5, 25, 100, 250, 500],       unit: "users" },
+        ],
+    },
+];
+
+// ─── Milestones Modal ─────────────────────────────────────────────
+
+function MilestonesModal({ open, onClose, stats, streak }: {
+    open: boolean;
+    onClose: () => void;
+    stats: UserStats | null;
+    streak: number;
+}) {
+    const [activeCategory, setActiveCategory] = useState("voter");
+    const category = MILESTONE_CATEGORIES.find(c => c.id === activeCategory)!;
+
+    // Get live stat value for a row
+    function getLiveValue(row: MilestoneRow): number {
+        if (!row.statKey) return 0;
+        if (row.statKey === "voteStreak" || row.statKey === "postStreak") return streak;
+        if (!stats) return 0;
+        return (stats as any)[row.statKey] ?? 0;
+    }
+
+    // Which tier index the user is currently at (0-based, -1 = not started)
+    function getCurrentTierIndex(row: MilestoneRow): number {
+        const val = getLiveValue(row);
+        if (!row.statKey) return -1;
+        let reached = -1;
+        for (let i = 0; i < 6; i++) {
+            if (val >= row.targets[i]) reached = i;
+        }
+        return reached;
+    }
+
+    return (
+        <AnimatePresence>
+            {open && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.18 }}
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+                    onClick={onClose}
+                >
+                    <motion.div
+                        initial={{ opacity: 0, y: 20, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 16, scale: 0.97 }}
+                        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                        onClick={e => e.stopPropagation()}
+                        className="w-full max-w-4xl max-h-[88vh] bg-card border border-border rounded-[28px] flex flex-col overflow-hidden shadow-2xl"
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
+                            <div>
+                                <h2 className="text-base font-black text-foreground tracking-tight">All Milestones</h2>
+                                <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.2em] mt-0.5">
+                                    Complete milestones to earn XP and climb ranks
+                                </p>
+                            </div>
+                            <button
+                                onClick={onClose}
+                                className="w-8 h-8 rounded-full bg-foreground/5 hover:bg-foreground/10 flex items-center justify-center transition-colors"
+                            >
+                                <X className="w-4 h-4 text-foreground/50" />
+                            </button>
+                        </div>
+
+                        {/* Tier legend strip */}
+                        <div className="flex items-center gap-2 px-6 py-3 border-b border-border bg-foreground/[0.02] shrink-0 overflow-x-auto no-scrollbar">
+                            {TIER_LABELS.map((tier) => {
+                                const s = TIER_STYLE[tier];
+                                return (
+                                    <div key={tier} className={cn("flex items-center gap-1.5 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest whitespace-nowrap", s.bg, s.border, s.text)}>
+                                        <span className={cn("w-1.5 h-1.5 rounded-full", s.dot)} />
+                                        {tier}
+                                    </div>
+                                );
+                            })}
+                            <span className="text-[9px] font-bold text-foreground/30 ml-auto whitespace-nowrap">↑ tiers left to right</span>
+                        </div>
+
+                        {/* Category tabs */}
+                        <div className="flex items-center gap-1.5 px-6 py-3 border-b border-border shrink-0 overflow-x-auto no-scrollbar">
+                            {MILESTONE_CATEGORIES.map((cat) => {
+                                const CatIcon = cat.icon;
+                                const active = activeCategory === cat.id;
+                                return (
+                                    <button
+                                        key={cat.id}
+                                        onClick={() => setActiveCategory(cat.id)}
+                                        className={cn(
+                                            "flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
+                                            active
+                                                ? "bg-foreground text-background border-foreground"
+                                                : "bg-foreground/[0.04] text-foreground/40 border-foreground/[0.06] hover:bg-foreground/[0.08] hover:text-foreground/70"
+                                        )}
+                                    >
+                                        <CatIcon className="w-3.5 h-3.5" />
+                                        {cat.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-3">
+
+                            {/* Tier header row */}
+                            <div className="grid grid-cols-[1fr_repeat(6,_minmax(0,_1fr))] gap-2 mb-1">
+                                <div className="text-[9px] font-black uppercase tracking-widest text-foreground/25 pl-2">Criteria</div>
+                                {TIER_LABELS.map((tier) => {
+                                    const s = TIER_STYLE[tier];
+                                    return (
+                                        <div key={tier} className={cn("text-center text-[9px] font-black uppercase tracking-widest", s.text)}>
+                                            {tier}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Milestone rows */}
+                            {category.rows.map((row, ri) => {
+                                const liveVal = getLiveValue(row);
+                                const currentTier = getCurrentTierIndex(row);
+                                const nextTierIdx = currentTier + 1;
+                                const hasLiveData = !!row.statKey;
+                                const RowIcon = row.icon;
+
+                                return (
+                                    <motion.div
+                                        key={row.label}
+                                        initial={{ opacity: 0, y: 6 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: ri * 0.04 }}
+                                        className="grid grid-cols-[1fr_repeat(6,_minmax(0,_1fr))] gap-2 items-center rounded-2xl border border-border bg-foreground/[0.015] hover:bg-foreground/[0.03] transition-colors p-3"
+                                    >
+                                        {/* Criteria label */}
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <div className={cn(
+                                                "w-7 h-7 rounded-lg border flex items-center justify-center shrink-0",
+                                                currentTier >= 0 && hasLiveData
+                                                    ? cn(TIER_STYLE[TIER_LABELS[currentTier]].bg, TIER_STYLE[TIER_LABELS[currentTier]].border)
+                                                    : "bg-foreground/[0.05] border-border"
+                                            )}>
+                                                <RowIcon className={cn(
+                                                    "w-3.5 h-3.5",
+                                                    currentTier >= 0 && hasLiveData
+                                                        ? TIER_STYLE[TIER_LABELS[currentTier]].text
+                                                        : "text-foreground/40"
+                                                )} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-[10px] font-black text-foreground/70 truncate leading-snug">{row.label}</p>
+                                                {hasLiveData && (
+                                                    <p className={cn(
+                                                        "text-[9px] font-bold",
+                                                        currentTier >= 0 ? TIER_STYLE[TIER_LABELS[currentTier]].text + "/70" : "text-foreground/30"
+                                                    )}>{liveVal.toLocaleString()} {row.unit}</p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Tier cells */}
+                                        {row.targets.map((target, ti) => {
+                                            const tier = TIER_LABELS[ti];
+                                            const s = TIER_STYLE[tier];
+                                            const achieved = hasLiveData && liveVal >= target;
+                                            const isCurrentTier = hasLiveData && ti === currentTier;
+                                            const isPastAchieved = achieved && !isCurrentTier;
+                                            const isNext = hasLiveData && ti === nextTierIdx;
+                                            const progressPct = isNext ? Math.min(100, (liveVal / target) * 100) : 0;
+
+                                            return (
+                                                <div
+                                                    key={ti}
+                                                    className={cn(
+                                                        "relative flex flex-col items-center justify-center px-1.5 py-2 rounded-xl border text-center transition-all",
+                                                        isCurrentTier
+                                                            ? cn(s.bg, s.border, s.glow)
+                                                            : isPastAchieved
+                                                                ? "bg-foreground/[0.06] border-foreground/[0.2]"
+                                                                : isNext
+                                                                    ? "bg-foreground/[0.03] border-dashed border-foreground/[0.15]"
+                                                                    : "bg-transparent border-transparent"
+                                                    )}
+                                                >
+                                                    {/* Past achieved: subtle ✓ */}
+                                                    {isPastAchieved && (
+                                                        <CheckCircle2 className="w-3 h-3 mb-0.5 text-foreground/50" />
+                                                    )}
+                                                    {/* Current tier: colored ✓ */}
+                                                    {isCurrentTier && (
+                                                        <CheckCircle2 className={cn("w-3.5 h-3.5 mb-0.5", s.text)} />
+                                                    )}
+
+                                                    <span className={cn(
+                                                        "text-[11px] font-black leading-none",
+                                                        isCurrentTier ? s.text
+                                                            : isPastAchieved ? "text-foreground/60"
+                                                                : isNext ? "text-foreground/50"
+                                                                    : "text-foreground/15"
+                                                    )}>
+                                                        ×{target >= 1000 ? `${(target / 1000).toFixed(0)}k` : target}
+                                                    </span>
+
+                                                    {/* Current tier YOU badge */}
+                                                    {isCurrentTier && (
+                                                        <span className={cn("text-[7px] font-black uppercase tracking-widest mt-0.5 px-1.5 py-0.5 rounded-full", s.bg, s.text)}>
+                                                            YOU
+                                                        </span>
+                                                    )}
+
+                                                    {/* Next tier: progress bar */}
+                                                    {isNext && (
+                                                        <div className="w-full mt-1.5 h-0.5 bg-foreground/10 rounded-full overflow-hidden">
+                                                            <div
+                                                                className="h-full bg-foreground/35 rounded-full transition-all duration-700"
+                                                                style={{ width: `${progressPct || 2}%` }}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </motion.div>
+                                );
+                            })}
+
+                            {/* XP Rewards row */}
+                            <div className="grid grid-cols-[1fr_repeat(6,_minmax(0,_1fr))] gap-2 items-center rounded-2xl border border-yellow-500/20 bg-yellow-500/[0.04] p-3 mt-1">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-7 h-7 rounded-lg bg-yellow-500/15 border border-yellow-500/25 flex items-center justify-center shrink-0">
+                                        <Zap className="w-3.5 h-3.5 text-yellow-400" />
+                                    </div>
+                                    <p className="text-[10px] font-black text-yellow-400/80">XP Reward</p>
+                                </div>
+                                {category.xp.map((xpVal, ti) => {
+                                    const tier = TIER_LABELS[ti];
+                                    const s = TIER_STYLE[tier];
+                                    return (
+                                        <div key={ti} className={cn("text-center px-1 py-2 rounded-xl", s.bg, s.border, "border")}>
+                                            <span className={cn("text-[11px] font-black", s.text)}>
+                                                +{xpVal >= 1000 ? `${(xpVal / 1000).toFixed(1)}k` : xpVal}
+                                            </span>
+                                            <p className="text-[8px] font-bold text-foreground/30 mt-0.5">XP</p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Advantages callout */}
+                            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                {[
+                                    { icon: Zap, color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20", title: "Earn XP", desc: "Every milestone unlocks XP that levels up your rank and visibility." },
+                                    { icon: Crown, color: "text-lime-400", bg: "bg-lime-400/10", border: "border-lime-400/20", title: "Climb Ranks", desc: "Higher tiers put you in the Veteran & Legend leaderboard brackets." },
+                                    { icon: DollarSign, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", title: "Higher Rewards", desc: "Top-tier voters and creators earn higher USDC share per event." },
+                                ].map((adv) => {
+                                    const AdvIcon = adv.icon;
+                                    return (
+                                        <div key={adv.title} className={cn("rounded-2xl border p-4 flex gap-3", adv.bg, adv.border)}>
+                                            <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center shrink-0", adv.bg, adv.border, "border")}>
+                                                <AdvIcon className={cn("w-4 h-4", adv.color)} />
+                                            </div>
+                                            <div>
+                                                <p className={cn("text-[11px] font-black mb-0.5", adv.color)}>{adv.title}</p>
+                                                <p className="text-[10px] font-medium text-foreground/50 leading-relaxed">{adv.desc}</p>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
 }
 
 // ─── Rank Badge ──────────────────────────────────────────────────
@@ -219,7 +826,10 @@ export default function DashboardPage() {
     const [voteEvents, setVoteEvents] = useState<ActivityItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
-    const [showAllAchievements, setShowAllAchievements] = useState(false);
+    const [showMilestonesModal, setShowMilestonesModal] = useState(false);
+    const [showLevelModal, setShowLevelModal] = useState(false);
+    const [transactions, setTransactions] = useState<XpTransactionSummary[]>([]);
+    const [followers, setFollowers] = useState<{ followedAt?: string }[]>([]);
 
     useEffect(() => {
         if (!user) return;
@@ -228,7 +838,11 @@ export default function DashboardPage() {
             getUserStats().catch(() => null),
             getUserSubmissions(user.id).catch(() => []),
             getEventsVotedByUser(user.id).catch(() => []),
-        ]).then(([statsData, submissions, votedEvents]) => {
+            getXpTransactions(100, 0).catch(() => ({ transactions: [] })),
+            getFollowers(user.id).catch(() => []),
+        ]).then(([statsData, submissions, votedEvents, txRes, followerList]) => {
+            setTransactions((txRes as any).transactions ?? []);
+            setFollowers(followerList as any);
             setStats(statsData);
 
             setPostEvents((submissions as any[]).map((s: any) => ({
@@ -277,7 +891,124 @@ export default function DashboardPage() {
 
     const achievementFilter = activeTab === "overall" ? "all" : activeTab;
     const achievements = getAchievements(stats, achievementFilter);
-    const visibleAchievements = showAllAchievements ? achievements : achievements.slice(0, 4);
+    const visibleAchievements = achievements.slice(0, 4);
+
+    // ── Chart data ────────────────────────────────────────────────
+
+    // XP over last 14 days
+    const xpAreaData = (() => {
+        const days = 14;
+        const now = new Date();
+        return Array.from({ length: days }, (_, i) => {
+            const date = new Date(now);
+            date.setDate(date.getDate() - (days - 1 - i));
+            const label = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+            const xpEarned = transactions
+                .filter(tx => {
+                    const d = new Date(tx.createdAt);
+                    return d.toDateString() === date.toDateString();
+                })
+                .reduce((sum, tx) => sum + tx.amount, 0);
+            return { label, xp: xpEarned };
+        });
+    })();
+
+    // Cumulative XP (running total ending at current XP)
+    const xpCumulativeData = (() => {
+        const totalXp = user?.xp || 0;
+        const earned = xpAreaData.map(d => d.xp);
+        const totalInWindow = earned.reduce((a, b) => a + b, 0);
+        const baseXp = Math.max(0, totalXp - totalInWindow);
+        let running = baseXp;
+        return xpAreaData.map(d => {
+            running += d.xp;
+            return { label: d.label, xp: running, daily: d.xp };
+        });
+    })();
+
+    // Activity per week (last 4 weeks)
+    const activityData = (() => {
+        const weeks = 8;
+        const now = new Date();
+        return Array.from({ length: weeks }, (_, i) => {
+            const weekStart = new Date(now);
+            weekStart.setDate(weekStart.getDate() - (weeks - 1 - i) * 7 - 6);
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+            const label = weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+            const votes = voteEvents.filter(e => {
+                const d = new Date(e.date);
+                return d >= weekStart && d <= weekEnd;
+            }).length;
+            const posts = postEvents.filter(e => {
+                const d = new Date(e.date);
+                return d >= weekStart && d <= weekEnd;
+            }).length;
+            return { label, votes, posts };
+        });
+    })();
+
+    // XP by source type
+    const xpByType = (() => {
+        const map: Record<string, number> = {};
+        for (const tx of transactions) {
+            const key = tx.type || "OTHER";
+            map[key] = (map[key] || 0) + tx.amount;
+        }
+        const colorMap: Record<string, string> = {
+            VOTE_CAST: "#60A5FA", SUBMISSION: "#A3E635", LOGIN_STREAK: "#FB923C",
+            MILESTONE: "#C084FC", REFERRAL: "#F472B6", OTHER: "#6B7280",
+        };
+        const labelMap: Record<string, string> = {
+            VOTE_CAST: "Votes", SUBMISSION: "Posts", LOGIN_STREAK: "Streaks",
+            MILESTONE: "Milestones", REFERRAL: "Referrals", OTHER: "Other",
+        };
+        return Object.entries(map)
+            .sort((a, b) => b[1] - a[1])
+            .map(([type, amount]) => ({
+                label: labelMap[type] || type,
+                amount,
+                color: colorMap[type] || colorMap.OTHER,
+            }));
+    })();
+
+    // Follower growth — last 30 days, daily cumulative
+    const followerGrowthData = (() => {
+        const days = 30;
+        const now = new Date();
+        const total = followers.length;
+        // Build daily buckets of new followers
+        const newPerDay: Record<string, number> = {};
+        for (const f of followers) {
+            if (!f.followedAt) continue;
+            const d = new Date(f.followedAt).toDateString();
+            newPerDay[d] = (newPerDay[d] || 0) + 1;
+        }
+        // Find earliest follower date
+        const dates = followers
+            .filter(f => f.followedAt)
+            .map(f => new Date(f.followedAt!).getTime());
+        const earliest = dates.length ? Math.min(...dates) : now.getTime();
+
+        // Rolling cumulative from 30 days ago
+        let running = 0;
+        // Count followers older than 30 days as baseline
+        const cutoff = new Date(now);
+        cutoff.setDate(cutoff.getDate() - days);
+        const baseline = followers.filter(f => f.followedAt && new Date(f.followedAt) < cutoff).length;
+        running = baseline;
+
+        return Array.from({ length: days }, (_, i) => {
+            const date = new Date(now);
+            date.setDate(date.getDate() - (days - 1 - i));
+            running += (newPerDay[date.toDateString()] || 0);
+            return {
+                label: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+                followers: running,
+                new: newPerDay[date.toDateString()] || 0,
+            };
+        });
+    })();
 
     const xp = user?.xp || 0;
     const xpLevel = Math.floor(xp / 1000) + 1;
@@ -314,10 +1045,10 @@ export default function DashboardPage() {
 
                     {/* ── Header ─────────────────────────────── */}
                     <div className="space-y-1">
-                        <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-white uppercase leading-[0.92] tracking-tight">
+                        <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight">
                             Dashboard
                         </h1>
-                        <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">
+                        <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em]">
                             Track your performance
                         </p>
                     </div>
@@ -346,13 +1077,168 @@ export default function DashboardPage() {
                                                 <stat.icon className={cn("w-4 h-4", stat.color)} />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/30 leading-none mb-1">{stat.label}</p>
-                                                <p className="font-display text-3xl text-white tracking-tight leading-none">{stat.value}</p>
+                                                <p className="text-[9px] font-black uppercase tracking-[0.15em] text-foreground/30 leading-none mb-1">{stat.label}</p>
+                                                <p className="font-display text-3xl text-foreground tracking-tight leading-none">{stat.value}</p>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             ))}
+                        </div>
+                    )}
+
+                    {/* ── Charts ─────────────────────────────── */}
+                    {!loading && (
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+                            {/* XP Growth (cumulative area chart) */}
+                            <div className="lg:col-span-2 bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">XP Growth</p>
+                                        <p className="text-[9px] font-bold text-foreground/25 mt-0.5">Last 14 days</p>
+                                    </div>
+                                    <span className="text-[10px] font-black text-yellow-400">
+                                        +{xpAreaData.reduce((s, d) => s + d.xp, 0).toLocaleString()} XP
+                                    </span>
+                                </div>
+                                <ResponsiveContainer width="100%" height={140}>
+                                    <AreaChart data={xpCumulativeData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="xpGrad" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stopColor="#A78BFA" stopOpacity={0.35} />
+                                                <stop offset="100%" stopColor="#A78BFA" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                                        <XAxis
+                                            dataKey="label"
+                                            tick={{ fontSize: 8, fill: "rgba(255,255,255,0.25)", fontWeight: 700 }}
+                                            tickLine={false} axisLine={false}
+                                            interval={2}
+                                        />
+                                        <YAxis tick={{ fontSize: 8, fill: "rgba(255,255,255,0.2)", fontWeight: 700 }} tickLine={false} axisLine={false} />
+                                        <Tooltip
+                                            contentStyle={{ background: "hsl(var(--card))", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 11, fontWeight: 700 }}
+                                            labelStyle={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}
+                                            formatter={(val: any, name: any) => [
+                                                name === "xp" ? `${Number(val).toLocaleString()} XP` : `+${val} XP`,
+                                                name === "xp" ? "Total XP" : "Daily Earned"
+                                            ]}
+                                        />
+                                        <Area type="monotone" dataKey="xp" stroke="#A78BFA" strokeWidth={2} fill="url(#xpGrad)" dot={false} activeDot={{ r: 4, fill: "#A78BFA" }} />
+                                        <Area type="monotone" dataKey="daily" stroke="#60A5FA" strokeWidth={1.5} fill="none" strokeDasharray="3 3" dot={false} activeDot={{ r: 3, fill: "#60A5FA" }} />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                                <div className="flex items-center gap-4 mt-2">
+                                    <div className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-[#A78BFA] rounded" /><span className="text-[9px] font-bold text-foreground/30">Cumulative</span></div>
+                                    <div className="flex items-center gap-1.5"><span className="w-3 border-t border-dashed border-[#60A5FA]" /><span className="text-[9px] font-bold text-foreground/30">Daily</span></div>
+                                </div>
+                            </div>
+
+                            {/* XP by Source */}
+                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
+                                <div className="mb-4">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">XP by Source</p>
+                                    <p className="text-[9px] font-bold text-foreground/25 mt-0.5">All time breakdown</p>
+                                </div>
+                                {xpByType.length === 0 ? (
+                                    <p className="text-[10px] text-foreground/20 font-bold text-center py-8">No XP data yet</p>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {xpByType.slice(0, 5).map((src) => {
+                                            const totalXpAllSrc = xpByType.reduce((s, d) => s + d.amount, 0);
+                                            const pct = totalXpAllSrc > 0 ? (src.amount / totalXpAllSrc) * 100 : 0;
+                                            return (
+                                                <div key={src.label}>
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <span className="text-[10px] font-black text-foreground/60">{src.label}</span>
+                                                        <span className="text-[10px] font-black" style={{ color: src.color }}>+{src.amount.toLocaleString()}</span>
+                                                    </div>
+                                                    <div className="h-1.5 bg-foreground/[0.06] rounded-full overflow-hidden">
+                                                        <motion.div
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${pct}%` }}
+                                                            transition={{ duration: 0.8, ease: "easeOut" }}
+                                                            className="h-full rounded-full"
+                                                            style={{ background: src.color }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Follower Growth */}
+                            <div className="lg:col-span-2 bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Follower Growth</p>
+                                        <p className="text-[9px] font-bold text-foreground/25 mt-0.5">Last 30 days</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-black text-pink-400">{stats?.subscribers ?? 0} total</p>
+                                        <p className="text-[9px] font-bold text-foreground/30">
+                                            +{followerGrowthData.reduce((s, d) => s + d.new, 0)} this month
+                                        </p>
+                                    </div>
+                                </div>
+                                {followers.length === 0 ? (
+                                    <div className="h-[120px] flex items-center justify-center">
+                                        <p className="text-[10px] font-bold text-foreground/20">No follower data yet</p>
+                                    </div>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height={120}>
+                                        <AreaChart data={followerGrowthData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                                            <defs>
+                                                <linearGradient id="followerGrad" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stopColor="#F472B6" stopOpacity={0.35} />
+                                                    <stop offset="100%" stopColor="#F472B6" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                                            <XAxis dataKey="label" tick={{ fontSize: 8, fill: "rgba(255,255,255,0.25)", fontWeight: 700 }} tickLine={false} axisLine={false} interval={5} />
+                                            <YAxis tick={{ fontSize: 8, fill: "rgba(255,255,255,0.2)", fontWeight: 700 }} tickLine={false} axisLine={false} allowDecimals={false} />
+                                            <Tooltip
+                                                contentStyle={{ background: "hsl(var(--card))", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 11, fontWeight: 700 }}
+                                                labelStyle={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}
+                                                formatter={(val: any, name: any) => [val, name === "followers" ? "Total Followers" : "New Today"]}
+                                            />
+                                            <Area type="monotone" dataKey="followers" stroke="#F472B6" strokeWidth={2} fill="url(#followerGrad)" dot={false} activeDot={{ r: 4, fill: "#F472B6" }} />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                )}
+                            </div>
+
+                            {/* Activity bar chart */}
+                            <div className="lg:col-span-1 bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Activity</p>
+                                        <p className="text-[9px] font-bold text-foreground/25 mt-0.5">By week</p>
+                                    </div>
+                                    <div className="flex flex-col gap-1 items-end">
+                                        <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#60A5FA]" /><span className="text-[8px] font-bold text-foreground/40">Votes</span></div>
+                                        <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#A3E635]" /><span className="text-[8px] font-bold text-foreground/40">Posts</span></div>
+                                    </div>
+                                </div>
+                                <ResponsiveContainer width="100%" height={120}>
+                                    <BarChart data={activityData.slice(-6)} barGap={2} margin={{ top: 0, right: 2, left: -24, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                                        <XAxis dataKey="label" tick={{ fontSize: 7, fill: "rgba(255,255,255,0.25)", fontWeight: 700 }} tickLine={false} axisLine={false} />
+                                        <YAxis tick={{ fontSize: 7, fill: "rgba(255,255,255,0.2)", fontWeight: 700 }} tickLine={false} axisLine={false} allowDecimals={false} />
+                                        <Tooltip
+                                            contentStyle={{ background: "hsl(var(--card))", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 11, fontWeight: 700 }}
+                                            labelStyle={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}
+                                        />
+                                        <Bar dataKey="votes" fill="#60A5FA" radius={[3, 3, 0, 0]} maxBarSize={16} />
+                                        <Bar dataKey="posts" fill="#A3E635" radius={[3, 3, 0, 0]} maxBarSize={16} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+
                         </div>
                     )}
 
@@ -366,7 +1252,7 @@ export default function DashboardPage() {
                                     "px-6 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
                                     activeTab === tab.id
                                         ? "bg-white text-black border-white"
-                                        : "bg-white/[0.04] text-white/40 border-white/[0.06] hover:bg-white/[0.08] hover:text-white/80"
+                                        : "bg-white/[0.04] text-foreground/40 border-white/[0.06] hover:bg-white/[0.08] hover:text-foreground/80"
                                 )}
                             >
                                 {tab.label}
@@ -380,10 +1266,10 @@ export default function DashboardPage() {
                         {/* ── Left: Activity List ─────────────── */}
                         <div className="flex-1 min-w-0 space-y-4">
                             <div className="flex items-center justify-between">
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/30">
                                     {activeTab === "overall" ? "All Activity" : activeTab === "vote" ? "Vote Events" : "Post Events"}
                                 </p>
-                                <span className="text-[10px] font-black text-white/20">
+                                <span className="text-[10px] font-black text-foreground/20">
                                     {filteredActivity.length} events
                                 </span>
                             </div>
@@ -402,7 +1288,7 @@ export default function DashboardPage() {
                                             : <ImageIcon className="w-5 h-5 text-white/20" />
                                         }
                                     </div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/20">
                                         No {activeTab === "overall" ? "" : activeTab + " "}activity yet
                                     </p>
                                 </div>
@@ -416,7 +1302,7 @@ export default function DashboardPage() {
                                     {hasMore && (
                                         <button
                                             onClick={() => setPage(p => p + 1)}
-                                            className="w-full py-3 rounded-2xl bg-white/[0.03] border border-white/[0.05] text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:bg-white/[0.05] hover:text-white/60 transition-all"
+                                            className="w-full py-3 rounded-2xl bg-white/[0.03] border border-white/[0.05] text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40 hover:bg-white/[0.05] hover:text-foreground/60 transition-all"
                                         >
                                             Load More
                                         </button>
@@ -429,11 +1315,15 @@ export default function DashboardPage() {
                         <div className="lg:w-[300px] xl:w-[320px] flex-shrink-0 space-y-4">
 
                             {/* ── Level Card ─────────────────────── */}
-                            <div className={cn(
-                                "relative overflow-hidden rounded-[24px] border p-5",
-                                tier.border, tier.glow,
-                                "bg-gradient-to-br from-white/[0.04] to-transparent"
-                            )}>
+                            <button
+                                onClick={() => setShowLevelModal(true)}
+                                className={cn(
+                                    "relative overflow-hidden rounded-[24px] border p-5 w-full text-left cursor-pointer",
+                                    "hover:brightness-110 active:scale-[0.99] transition-all duration-200",
+                                    tier.border, tier.glow,
+                                    "bg-gradient-to-br from-white/[0.04] to-transparent"
+                                )}
+                            >
                                 {/* Background glow blob */}
                                 <div className={cn("absolute -top-8 -right-8 w-32 h-32 rounded-full blur-[60px] opacity-40", tier.bg)} />
 
@@ -441,7 +1331,7 @@ export default function DashboardPage() {
                                     {/* Tier badge + level */}
                                     <div className="flex items-start justify-between mb-4">
                                         <div>
-                                            <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/30 mb-1">Current Rank</p>
+                                            <p className="text-[9px] font-black uppercase tracking-[0.25em] text-foreground/30 mb-1">Current Rank</p>
                                             <div className="flex items-baseline gap-2">
                                                 <span className={cn("font-display text-5xl leading-none tracking-tight", tier.color)}>
                                                     {xpLevel}
@@ -458,8 +1348,8 @@ export default function DashboardPage() {
 
                                     {/* XP total */}
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="text-[9px] font-black uppercase tracking-widest text-white/30">Total XP</span>
-                                        <span className="font-display text-lg text-white tracking-tight">{xp.toLocaleString()}</span>
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-foreground/30">Total XP</span>
+                                        <span className="font-display text-lg text-foreground tracking-tight">{xp.toLocaleString()}</span>
                                     </div>
 
                                     {/* XP progress bar */}
@@ -472,7 +1362,7 @@ export default function DashboardPage() {
                                                 transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
                                             />
                                         </div>
-                                        <div className="flex justify-between text-[9px] font-black text-white/25">
+                                        <div className="flex justify-between text-[9px] font-black text-foreground/25">
                                             <span>{(xp % 1000).toLocaleString()} / 1000 XP</span>
                                             <span>{xpToNext.toLocaleString()} to Lv.{xpLevel + 1}</span>
                                         </div>
@@ -498,15 +1388,21 @@ export default function DashboardPage() {
                                         })}
                                     </div>
                                 </div>
-                            </div>
+
+                                {/* Click hint */}
+                                <div className="relative z-10 mt-3 flex items-center gap-1 opacity-40">
+                                    <ArrowUpRight className={cn("w-3 h-3", tier.color)} />
+                                    <span className={cn("text-[8px] font-black uppercase tracking-widest", tier.color)}>View level details</span>
+                                </div>
+                            </button>
 
                             {/* ── Achievements ───────────────────── */}
                             <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] overflow-hidden">
                                 <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/[0.05]">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">
                                         {activeTab === "vote" ? "Vote" : activeTab === "post" ? "Post" : ""} Achievements
                                     </span>
-                                    <span className="text-[9px] font-black text-white/20">
+                                    <span className="text-[9px] font-black text-foreground/20">
                                         {achievements.filter(a => a.current >= a.target).length}/{achievements.length}
                                     </span>
                                 </div>
@@ -555,7 +1451,7 @@ export default function DashboardPage() {
                                                         <div className="flex items-center justify-between gap-1 mb-0.5">
                                                             <span className={cn(
                                                                 "text-[10px] font-black truncate",
-                                                                done ? a.color : pct > 0 ? "text-white/60" : "text-white/25"
+                                                                done ? a.color : pct > 0 ? "text-foreground/60" : "text-foreground/25"
                                                             )}>
                                                                 {a.label}
                                                             </span>
@@ -576,7 +1472,7 @@ export default function DashboardPage() {
                                                                         style={{ width: `${pct}%` }}
                                                                     />
                                                                 </div>
-                                                                <p className={cn("text-[9px] font-medium", pct > 0 ? "text-white/30" : "text-white/15")}>
+                                                                <p className={cn("text-[9px] font-medium", pct > 0 ? "text-foreground/30" : "text-foreground/15")}>
                                                                     {a.current}/{a.target}
                                                                 </p>
                                                             </>
@@ -587,14 +1483,12 @@ export default function DashboardPage() {
                                         );
                                     })}
 
-                                    {achievements.length > 4 && (
-                                        <button
-                                            onClick={() => setShowAllAchievements(v => !v)}
-                                            className="w-full py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05] text-[9px] font-black uppercase tracking-[0.2em] text-white/30 hover:bg-white/[0.06] hover:text-white/50 transition-all"
-                                        >
-                                            {showAllAchievements ? "Show Less" : `Show All ${achievements.length}`}
-                                        </button>
-                                    )}
+                                    <button
+                                        onClick={() => setShowMilestonesModal(true)}
+                                        className="w-full py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05] text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 hover:bg-white/[0.06] hover:text-foreground/50 transition-all"
+                                    >
+                                        Show All Milestones
+                                    </button>
                                 </div>
                             </div>
 
@@ -603,6 +1497,22 @@ export default function DashboardPage() {
 
                 </main>
             </SidebarLayout>
+
+            {/* ── Level Breakdown Modal ─────────────────── */}
+            <LevelBreakdownModal
+                open={showLevelModal}
+                onClose={() => setShowLevelModal(false)}
+                xp={xp}
+                xpLevel={xpLevel}
+            />
+
+            {/* ── Milestones Modal ──────────────────────── */}
+            <MilestonesModal
+                open={showMilestonesModal}
+                onClose={() => setShowMilestonesModal(false)}
+                stats={stats}
+                streak={user?.currentStreak ?? 0}
+            />
         </div>
     );
 }

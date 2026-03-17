@@ -14,6 +14,12 @@ export default function BrandDashboardLayout({
     const pathname = usePathname();
     const isPendingPage = pathname === "/brand/pending";
 
+    // Public brand profile — no auth guard, no brand chrome
+    const isBrandPublicProfile = /^\/brand\/(?!dashboard|events|create-event|wallet|settings|analytics|insights|milestones|financials|notifications|pending)([\w-]+)$/.test(pathname);
+    if (isBrandPublicProfile) {
+        return <>{children}</>;
+    }
+
     return (
         <AuthGuard>
             <div className="min-h-screen bg-background flex">
