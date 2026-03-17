@@ -70,19 +70,19 @@ export default function BrandNotificationsPage() {
     });
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 font-sans">
             {/* Header */}
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <div className="flex items-center gap-3 mb-1">
-                        <h1 className="font-display text-4xl text-white uppercase tracking-tight">Notifications</h1>
+                        <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight">Notifications</h1>
                         {unreadCount > 0 && (
                             <span className="bg-primary text-primary-foreground text-xs font-black px-2.5 py-1 rounded-full border border-primary/20">
                                 {unreadCount} New
                             </span>
                         )}
                     </div>
-                    <p className="text-[11px] font-black text-white/30 uppercase tracking-[0.2em]">Manage your brand updates, rewards, and insights.</p>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Manage your brand updates, rewards, and insights.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     {unreadCount > 0 && (

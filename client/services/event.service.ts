@@ -41,8 +41,8 @@ export interface Event {
     preferredGender?: string;
     ageGroup?: string;
     tagline?: string;
-    hashtags?: string[];
     regions?: string[];
+    submissionGuidelines?: string;
     brand?: {
         id: string;
         name: string;
@@ -83,6 +83,7 @@ export interface Event {
         title: string;
         content?: string;
         imageCid?: string;
+        imageUrl?: string;
         order: number;
         voteCount: number;
         finalRank?: number;
@@ -104,6 +105,7 @@ export interface CreateEventRequest {
     postingStart?: string;
     postingEnd?: string;
     imageCid?: string;
+    imageUrl?: string;
     samples?: string[];
     allowSubmissions?: boolean;
     allowVoting?: boolean;
@@ -144,6 +146,7 @@ export interface UpdateEventRequest {
     postingStart?: string;
     postingEnd?: string;
     imageCid?: string;
+    imageUrl?: string;
     allowSubmissions?: boolean;
     allowVoting?: boolean;
     autoTransition?: boolean;

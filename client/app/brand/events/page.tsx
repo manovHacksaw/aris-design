@@ -116,12 +116,12 @@ export default function BrandCampaignsPage() {
         key === "all" ? events.length : events.filter(e => e.status === key).length;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 font-sans">
             {/* Header */}
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-4xl font-black text-foreground tracking-tighter mb-2">Campaigns</h1>
-                    <p className="text-[11px] font-black text-foreground/30 uppercase tracking-[0.2em]">Manage your active and past campaigns.</p>
+                    <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight mb-1">Campaigns</h1>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Manage your active and past campaigns.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="relative hidden md:block">

@@ -4,6 +4,14 @@ import path from "path";
 const nextConfig: NextConfig = {
   serverExternalPackages: ["pino", "pino-pretty", "thread-stream"],
   transpilePackages: ["@pqina/pintura", "@pqina/react-pintura"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+      },
+    ],
+  },
   async redirects() {
     return [
       {

@@ -1,10 +1,4 @@
-/**
- * mintUsdc.ts — Mint test USDC on Polygon Amoy
- *
- * Usage:
- *   TO=0xYourAddress AMOUNT=500 bun run src/scripts/mintUsdc.ts
- *   — or edit TO / AMOUNT below.
- */
+
 
 import { createWalletClient, createPublicClient, http, parseUnits, formatUnits } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';

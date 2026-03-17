@@ -55,6 +55,7 @@ export interface CreateEventRequest {
   postingStart?: string; // ISO 8601, required for post_and_vote
   postingEnd?: string; // ISO 8601, required for post_and_vote
   imageCid?: string; // IPFS CID
+  imageUrl?: string; // Cloudinary URL
   allowSubmissions?: boolean;
   allowVoting?: boolean;
   autoTransition?: boolean;
@@ -85,6 +86,7 @@ export interface CreateEventRequest {
     title: string;
     content?: string;   // For TEXT proposals
     imageCid?: string;  // For IMAGE proposals
+    imageUrl?: string;  // For Cloudinary images
     order?: number;
   }>;
 }
@@ -99,6 +101,7 @@ export interface UpdateEventRequest {
   postingStart?: string; // ISO 8601
   postingEnd?: string; // ISO 8601
   imageCid?: string;
+  imageUrl?: string;
   allowSubmissions?: boolean;
   allowVoting?: boolean;
   autoTransition?: boolean;

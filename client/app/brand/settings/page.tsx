@@ -18,12 +18,14 @@ import {
   Link as LinkIcon,
   ChevronRight,
   Info,
+  Sparkles,
 } from "lucide-react";
 import { useUser } from "@/context/UserContext";
 import { useAuth } from "@/context/AuthContext";
 import { upsertBrandProfile } from "@/services/brand.service";
 import { uploadToPinata, validateImageFile } from "@/lib/pinata-upload";
 import { cn } from "@/lib/utils";
+import { BrandImageGeneratorModal } from "@/components/create/BrandImageGeneratorModal";
 
 const CATEGORIES = [
   "Fashion & Apparel", "Technology", "Automotive", "Food & Beverage",
@@ -69,6 +71,7 @@ export default function BrandSettingsPage() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [aiModalOpen, setAiModalOpen] = useState(false);
 
   useEffect(() => {
     if (!user || seeded.current) return;
@@ -96,6 +99,21 @@ export default function BrandSettingsPage() {
       setLogoPreview(user.avatarUrl);
     }
   }, [user]);
+
+  async function handleAiLogoGenerated(file: File, preview: string) {
+    setLogoPreview(preview);
+    setIsUploadingLogo(true);
+    try {
+      const { imageUrl: uploadedLogoUrl } = await uploadToPinata(file);
+      setLogoUrl(uploadedLogoUrl);
+      setLogoPreview(uploadedLogoUrl);
+    } catch {
+      showToast("error", "Logo upload failed. Try again.");
+      setLogoPreview(null);
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  }
 
   async function handleLogoSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -198,62 +216,33 @@ export default function BrandSettingsPage() {
 
   if (userLoading && !user) {
     return (
-      <div className="max-w-[1200px] mx-auto py-8 space-y-10 pb-24 animate-pulse">
-        {/* Header Skeleton */}
+      <div className="font-sans max-w-[1200px] mx-auto py-8 space-y-10 pb-24 animate-pulse">
         <div className="px-4 md:px-0 space-y-3">
           <div className="h-10 bg-white/[0.04] rounded-xl w-48" />
           <div className="h-4 bg-white/[0.04] rounded-lg w-64" />
         </div>
-
-        <div className="grid lg:grid-cols-[280px_1fr] gap-8 px-4 md:px-0 mt-6">
-          {/* Navigation Sidebar Skeleton */}
+        <div className="grid lg:grid-cols-[280px_1fr] gap-8 px-4 md:px-0">
           <aside className="space-y-2">
             {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-14 bg-white/[0.04] border border-white/[0.02] rounded-2xl w-full" />
+              <div key={i} className="h-14 bg-secondary rounded-2xl" />
             ))}
           </aside>
-
-          {/* Content Area Skeleton */}
-          <div className="space-y-8">
-            <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] overflow-hidden shadow-sm">
-              <div className="p-8 space-y-10">
-                {/* Logo Section */}
-                <div className="flex flex-col sm:flex-row items-center gap-8">
-                  <div className="w-28 h-28 rounded-full border-4 border-background bg-white/[0.04] shrink-0" />
-                  <div className="space-y-3 w-full max-w-[200px] flex flex-col items-center sm:items-start">
-                    <div className="h-6 bg-white/[0.04] rounded-lg w-32" />
-                    <div className="h-3 bg-white/[0.04] rounded-lg w-full" />
-                    <div className="h-3 bg-white/[0.04] rounded-lg w-40" />
-                    <div className="flex gap-3">
-                        <div className="h-10 bg-white/[0.04] rounded-xl w-32 mt-4" />
-                        <div className="h-10 bg-white/[0.04] rounded-xl w-24 mt-4" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="h-[1px] bg-white/[0.04]" />
-
-                {/* Form Fields */}
-                <div className="grid md:grid-cols-2 gap-8">
-                  <div className="space-y-2">
-                    <div className="h-3 bg-white/[0.04] rounded-lg w-20 ml-1" />
-                    <div className="h-14 bg-white/[0.04] border border-white/[0.02] rounded-2xl w-full" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-3 bg-white/[0.04] rounded-lg w-20 ml-1" />
-                    <div className="h-14 bg-white/[0.04] border border-white/[0.02] rounded-2xl w-full" />
-                  </div>
-                  <div className="md:col-span-2 space-y-2">
-                    <div className="h-3 bg-white/[0.04] rounded-lg w-24 ml-1" />
-                    <div className="h-32 bg-white/[0.04] border border-white/[0.02] rounded-2xl w-full" />
-                  </div>
-                </div>
-
-                {/* Save Button */}
-                <div className="flex justify-end pt-4">
-                  <div className="h-14 w-40 bg-white/[0.04] border border-white/[0.02] rounded-2xl" />
-                </div>
+          <div className="bg-card border border-border/60 rounded-[32px] p-8 space-y-8">
+            <div className="flex flex-col sm:flex-row items-center gap-8">
+              <div className="w-28 h-28 rounded-full bg-secondary shrink-0" />
+              <div className="space-y-3 w-full max-w-[200px]">
+                <div className="h-6 bg-secondary rounded-lg w-32" />
+                <div className="h-3 bg-secondary rounded-lg w-full" />
+                <div className="h-10 bg-secondary rounded-xl w-32 mt-4" />
               </div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-8">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className={cn("space-y-2", i === 3 ? "md:col-span-2" : "")}>
+                  <div className="h-3 bg-secondary rounded-lg w-20 ml-1" />
+                  <div className={cn("rounded-2xl w-full bg-secondary", i === 3 ? "h-32" : "h-14")} />
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -262,7 +251,7 @@ export default function BrandSettingsPage() {
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto py-8 space-y-10 pb-24 text-white font-sans selection:bg-primary/30">
+    <div className="font-sans max-w-[1200px] mx-auto py-8 space-y-10 pb-24">
       {/* Toast */}
       {toast && (
         <div
@@ -291,7 +280,7 @@ export default function BrandSettingsPage() {
         </p>
       </div>
 
-      <div className="grid lg:grid-cols-[280px_1fr] gap-8 px-4 md:px-0 mt-6">
+      <div className="grid lg:grid-cols-[280px_1fr] gap-8 px-4 md:px-0">
         {/* Navigation Sidebar */}
         <aside className="space-y-2">
           {settingsSections.map((section) => (
@@ -299,15 +288,20 @@ export default function BrandSettingsPage() {
               key={section.id}
               onClick={() => setActiveSection(section.id)}
               className={cn(
-                  "w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all group",
-                  activeSection === section.id
-                      ? "bg-white text-black shadow-lg shadow-white/10"
-                      : "bg-white/[0.02] border border-white/[0.04] text-white/40 hover:bg-white/[0.06] hover:text-white"
+                "w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-sm font-black transition-all group",
+                activeSection === section.id
+                  ? "bg-foreground text-background shadow-lg shadow-foreground/10"
+                  : "bg-card/50 text-foreground/40 hover:bg-secondary hover:text-foreground"
               )}
             >
               <section.icon className={cn("w-5 h-5", activeSection === section.id ? "" : "opacity-40")} />
               <span className="flex-1 text-left">{section.label}</span>
-              <ChevronRight className={cn("w-4 h-4 transition-transform", activeSection === section.id ? "translate-x-1" : "opacity-0")} />
+              <ChevronRight
+                className={cn(
+                  "w-4 h-4 transition-transform",
+                  activeSection === section.id ? "translate-x-1" : "opacity-0"
+                )}
+              />
             </button>
           ))}
         </aside>
@@ -319,7 +313,7 @@ export default function BrandSettingsPage() {
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] overflow-hidden"
+              className="bg-card border border-border/60 rounded-[32px] overflow-hidden shadow-sm"
             >
               <div className="p-8 space-y-10">
                 {/* Logo Upload */}
@@ -335,50 +329,43 @@ export default function BrandSettingsPage() {
                     className="relative group cursor-pointer"
                     onClick={() => !isUploadingLogo && fileInputRef.current?.click()}
                   >
-                    <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-white/[0.1] bg-white/[0.05] shadow-xl">
-                        {logoPreview ? (
-                          <img
-                            src={logoPreview}
-                            alt="Brand logo"
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                            <span className="text-primary text-4xl font-display uppercase">{logoInitial}</span>
-                          </div>
-                        )}
+                    <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-background shadow-xl">
+                      {isUploadingLogo ? (
+                        <div className="w-full h-full bg-primary/20 flex items-center justify-center">
+                          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                        </div>
+                      ) : logoPreview ? (
+                        <img
+                          src={logoPreview}
+                          alt="Brand logo"
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                          <span className="text-primary text-4xl font-black uppercase">{logoInitial}</span>
+                        </div>
+                      )}
                     </div>
-                    <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      {isUploadingLogo
-                        ? <Loader2 className="w-8 h-8 text-white animate-spin" />
-                        : <Camera className="w-8 h-8 text-white" />
-                      }
-                    </div>
+                    {!isUploadingLogo && (
+                      <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Camera className="w-8 h-8 text-white" />
+                      </div>
+                    )}
                   </div>
                   <div className="text-center sm:text-left">
-                    <h3 className="font-display text-2xl text-white uppercase tracking-tight mb-2">Brand Logo</h3>
-                    <p className="text-[11px] font-black text-white/30 uppercase tracking-widest mb-1">
-                      JPEG, PNG, WebP — max 5 MB
+                    <h3 className="text-xl font-black text-foreground mb-2">Brand Logo</h3>
+                    <p className="text-[11px] font-black text-foreground/30 uppercase tracking-widest mb-1">
+                      Click the logo to upload · JPEG, PNG, WebP — max 5 MB
                     </p>
-                    <p className="text-[10px] text-white/20 mb-4">Stored permanently on IPFS via Pinata</p>
-                    <div className="flex gap-3 justify-center sm:justify-start">
-                        <button
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={isUploadingLogo}
-                          className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.1] hover:bg-white/[0.08] hover:border-white/[0.2] text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {isUploadingLogo ? <><Loader2 className="w-3 h-3 animate-spin" /> Uploading…</> : "Upload Logo"}
-                        </button>
-                        {logoPreview && (
-                            <button
-                                onClick={handleRemoveLogo}
-                                disabled={isUploadingLogo}
-                                className="flex items-center gap-1.5 bg-red-500/10 text-red-400 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500/20 transition-colors disabled:opacity-50"
-                            >
-                                <X className="w-3 h-3" /> Remove
-                            </button>
-                        )}
-                    </div>
+                    <p className="text-[10px] text-foreground/25 mb-4">Stored permanently on IPFS via Pinata</p>
+                    <button
+                      onClick={() => setAiModalOpen(true)}
+                      disabled={isUploadingLogo}
+                      className="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Generate with AI
+                    </button>
                   </div>
                 </div>
 
@@ -395,7 +382,7 @@ export default function BrandSettingsPage() {
                       value={brandName}
                       onChange={(e) => setBrandName(e.target.value)}
                       placeholder="Your brand name"
-                      className="w-full bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.15] focus:border-white/[0.3] rounded-[16px] px-5 py-4 text-sm font-medium text-white placeholder:text-white/20 focus:outline-none transition-all"
+                      className="w-full bg-secondary/50 border border-border/60 rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none focus:border-primary/40 transition-colors"
                     />
                   </div>
                   <div className="space-y-2">
@@ -408,7 +395,7 @@ export default function BrandSettingsPage() {
                       onChange={(e) => setTagline(e.target.value)}
                       placeholder="e.g. Just Do It"
                       maxLength={80}
-                      className="w-full bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.15] focus:border-white/[0.3] rounded-[16px] px-5 py-4 text-sm font-medium text-white placeholder:text-white/20 focus:outline-none transition-all"
+                      className="w-full bg-secondary/50 border border-border/60 rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none focus:border-primary/40 transition-colors"
                     />
                   </div>
                   <div className="md:col-span-2 space-y-2">
@@ -421,7 +408,7 @@ export default function BrandSettingsPage() {
                       placeholder="Tell creators what your brand is about..."
                       maxLength={200}
                       rows={4}
-                      className="w-full bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.15] focus:border-white/[0.3] rounded-[16px] px-5 py-4 text-sm font-medium text-white placeholder:text-white/20 focus:outline-none transition-all resize-none"
+                      className="w-full bg-secondary/50 border border-border/60 rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none focus:border-primary/40 transition-colors resize-none"
                     />
                     <p className="text-[10px] text-white/20 text-right font-black uppercase tracking-widest">{description.length}/200</p>
                   </div>
@@ -431,15 +418,13 @@ export default function BrandSettingsPage() {
                   <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex items-center gap-2 bg-white hover:bg-white/90 text-black px-8 py-4 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-60 mt-4"
+                    className="flex items-center gap-2 bg-foreground text-background px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-foreground/90 transition-all active:scale-95 shadow-lg shadow-foreground/10 disabled:opacity-60"
                   >
                     {isSaving ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : saved ? (
                       <Check className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <Save className="w-4 h-4" />
-                    )}
+                    ) : null}
                     {saved ? "Saved!" : "Save Changes"}
                   </button>
                 </div>
@@ -452,7 +437,7 @@ export default function BrandSettingsPage() {
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] overflow-hidden"
+              className="bg-card border border-border/60 rounded-[32px] overflow-hidden shadow-sm"
             >
               <div className="p-8 space-y-8">
                 <div>
@@ -469,7 +454,6 @@ export default function BrandSettingsPage() {
                         {label}
                       </label>
                       <div className="relative">
-                        <Globe className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 pointer-events-none" />
                         <input
                           type="url"
                           value={socialLinks[key] ?? ""}
@@ -477,8 +461,11 @@ export default function BrandSettingsPage() {
                             setSocialLinks((prev) => ({ ...prev, [key]: e.target.value }))
                           }
                           placeholder={placeholder}
-                          className="w-full pl-12 pr-5 bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.15] focus:border-white/[0.3] rounded-[16px] py-4 text-sm font-medium text-white placeholder:text-white/20 focus:outline-none transition-all"
+                          className="w-full bg-secondary/50 border border-border/60 rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none focus:border-primary/40 transition-colors placeholder:text-foreground/20"
                         />
+                        <div className="absolute right-5 top-1/2 -translate-y-1/2">
+                          <Globe className="w-4 h-4 text-foreground/20" />
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -488,7 +475,7 @@ export default function BrandSettingsPage() {
                   <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex items-center gap-2 bg-white hover:bg-white/90 text-black px-8 py-4 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-60 mt-4"
+                    className="flex items-center gap-2 bg-foreground text-background px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-foreground/90 transition-all active:scale-95 shadow-lg shadow-foreground/10 disabled:opacity-60"
                   >
                     {isSaving ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -507,10 +494,10 @@ export default function BrandSettingsPage() {
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] overflow-hidden"
+              className="bg-card border border-border/60 rounded-[32px] overflow-hidden shadow-sm"
             >
-              <div className="p-8 space-y-10">
-                <div className="flex items-center gap-3 mb-6">
+              <div className="p-8 space-y-8">
+                <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
                     <Tag className="w-5 h-5 text-primary" />
                   </div>
@@ -530,10 +517,10 @@ export default function BrandSettingsPage() {
                         key={cat}
                         onClick={() => toggleCategory(cat)}
                         className={cn(
-                          "px-4 py-2 border rounded-xl text-xs font-bold transition-all",
+                          "px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer",
                           selected
-                            ? "bg-primary/10 border-primary/30 text-white"
-                            : "bg-white/[0.03] border-white/[0.08] text-white/60 hover:text-white hover:bg-white/[0.06]"
+                            ? "bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary"
+                            : "bg-secondary/50 hover:bg-primary/10 hover:border-primary/30 border border-border/60 text-foreground"
                         )}
                       >
                         {cat}
@@ -552,7 +539,7 @@ export default function BrandSettingsPage() {
                   <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex items-center gap-2 bg-white hover:bg-white/90 text-black px-8 py-4 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-60 mt-4"
+                    className="flex items-center gap-2 bg-foreground text-background px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-foreground/90 transition-all active:scale-95 shadow-lg shadow-foreground/10 disabled:opacity-60"
                   >
                     {isSaving ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -573,7 +560,7 @@ export default function BrandSettingsPage() {
               animate={{ opacity: 1, x: 0 }}
               className="space-y-6"
             >
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] overflow-hidden p-8 space-y-6">
+              <div className="bg-card border border-border/60 rounded-[32px] p-8 space-y-6 shadow-sm">
                 <div className="flex items-center gap-3">
                   <h3 className="font-display text-2xl text-white uppercase tracking-tight">Account Info</h3>
                   <span className="ml-2 text-[9px] bg-white/[0.06] text-white/40 border border-white/[0.08] px-3 py-1 rounded-full font-black uppercase tracking-widest">
@@ -594,7 +581,7 @@ export default function BrandSettingsPage() {
                       <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">
                         {label}
                       </label>
-                      <div className="w-full bg-white/[0.02] border border-white/[0.04] rounded-[16px] px-5 py-4 text-sm font-medium text-white/40 cursor-not-allowed break-all">
+                      <div className="w-full bg-secondary/30 border border-border/40 rounded-2xl px-5 py-4 text-sm font-bold text-foreground/40 cursor-not-allowed break-all">
                         {value}
                       </div>
                     </div>
@@ -605,8 +592,8 @@ export default function BrandSettingsPage() {
                     <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">
                       Wallet Address
                     </label>
-                    <div className="w-full bg-white/[0.02] border border-white/[0.04] flex items-center gap-3 rounded-[16px] px-5 py-4">
-                      <span className="flex-1 text-sm font-medium text-white/50 font-mono break-all cursor-not-allowed">
+                    <div className="flex items-center gap-3 bg-secondary/30 border border-border/40 rounded-2xl px-5 py-4">
+                      <span className="flex-1 text-sm font-bold text-foreground/40 font-mono break-all">
                         {user.walletAddress
                           ? `${user.walletAddress.slice(0, 8)}…${user.walletAddress.slice(-6)}`
                           : "—"}
@@ -629,9 +616,9 @@ export default function BrandSettingsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-4 bg-white/[0.03] rounded-[16px] border border-white/[0.08] mt-6">
-                  <Info className="w-4 h-4 text-white/30 mt-0.5 shrink-0" />
-                  <p className="text-[11px] text-white/40 font-medium leading-relaxed">
+                <div className="flex items-start gap-3 p-4 bg-secondary/30 border border-border/40 rounded-2xl">
+                  <Info className="w-4 h-4 text-foreground/30 mt-0.5 shrink-0" />
+                  <p className="text-[11px] text-foreground/40 font-medium leading-relaxed">
                     Account details are managed by your authentication provider and cannot be changed here.
                     Contact support if you need to update your email or wallet.
                   </p>
@@ -641,6 +628,14 @@ export default function BrandSettingsPage() {
           )}
         </div>
       </div>
+
+      {/* AI Logo Generator Modal */}
+      <BrandImageGeneratorModal
+        isOpen={aiModalOpen}
+        onClose={() => setAiModalOpen(false)}
+        onAddToOption={handleAiLogoGenerated}
+        brandId={user?.ownedBrands?.[0]?.id ?? ""}
+      />
     </div>
   );
 }

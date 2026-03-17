@@ -235,6 +235,7 @@ model Proposal {
   updatedAt DateTime     @updatedAt
   content   String?
   imageCid  String?
+  imageUrl  String?
   event     Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
   votes     Vote[]
 
