@@ -110,6 +110,7 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [usdcBalance, setUsdcBalance] = useState<bigint | null>(null);
+  const [countdown, setCountdown] = useState(6);
   const launched = useRef(false);
 
   const reset = () => {
@@ -117,6 +118,7 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
     setError(null);
     setTxHash(null);
     setUsdcBalance(null);
+    setCountdown(6);
     launched.current = false;
   };
 
@@ -127,6 +129,20 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
     runLaunch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  // Auto-redirect 6 s after success
+  useEffect(() => {
+    if (step !== 3 || error) return;
+    setCountdown(6);
+    const interval = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) { clearInterval(interval); onSuccess(); return 0; }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, error]);
 
   async function runLaunch() {
     try {
@@ -449,9 +465,10 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             onClick={onSuccess}
-            className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:opacity-90 transition-opacity"
+            className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
           >
             View Dashboard
+            <span className="text-xs font-normal opacity-70">({countdown}s)</span>
           </motion.button>
         )}
         {isFailed && (
