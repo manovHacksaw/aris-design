@@ -75,6 +75,17 @@ interface FormData {
 }
 
 // ── Small utility components ───────────────────────────────────────────────────
+function InfoTooltip({ text }: { text: string }) {
+    return (
+        <span className="relative inline-flex items-center group ml-1.5 align-middle">
+            <Info className="w-3.5 h-3.5 text-muted-foreground/50 cursor-default hover:text-muted-foreground transition-colors" />
+            <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 rounded-xl bg-card border border-border px-3 py-2 text-xs text-muted-foreground shadow-xl opacity-0 group-hover:opacity-100 transition-opacity z-[100] leading-relaxed backdrop-blur-none" style={{ isolation: "isolate" }}>
+                {text}
+            </span>
+        </span>
+    );
+}
+
 function Label({ children, optional }: { children: React.ReactNode; optional?: boolean }) {
     return (
         <label className="block text-sm font-semibold text-foreground mb-1.5">
@@ -117,11 +128,15 @@ export default function CreateEventPage() {
     const { user } = useUser();
     const [currentStep, setCurrentStep] = useState(0);
     const [modalOpen, setModalOpen] = useState(false);
+    const [confirmOpen, setConfirmOpen] = useState(false);
     const [direction, setDirection] = useState(1);
     const [proposalAiLoading, setProposalAiLoading] = useState(false);
     const [availableCredit, setAvailableCredit] = useState(0);
     const [aiGeneratorProposalIdx, setAiGeneratorProposalIdx] = useState<number | null>(null);
     const proposalFileRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+    const bannerInputRef = useRef<HTMLInputElement | null>(null);
+    const [bannerGeneratorOpen, setBannerGeneratorOpen] = useState(false);
 
     const [form, setForm] = useState<FormData>({
         type: "vote",
@@ -169,7 +184,10 @@ export default function CreateEventPage() {
     const creatorPool = isPost ? CREATOR_RATE * pCount : 0;
     const platformFee = (isPost ? FEE_POST : FEE_VOTE) * pCount;
     const basePool = BASE_RATE * pCount;
-    const totalLocked = basePool + effectiveTop + creatorPool + platformFee;
+    const leaderboardNum = parseFloat(form.leaderboardPool) || 0;
+    const minLeaderboard = isPost ? basePool : 0;
+    const effectiveLeaderboard = isPost ? Math.max(leaderboardNum, minLeaderboard) : 0;
+    const totalLocked = basePool + effectiveTop + creatorPool + effectiveLeaderboard + platformFee;
 
     // ── Date helpers ──────────────────────────────────────────────────────────
     const toDatetimeLocal = (d: Date): string => {
@@ -197,6 +215,18 @@ export default function CreateEventPage() {
 
     const applyPreset = (hours: number) => {
         const base = form.startImmediately ? new Date() : (form.startDate ? new Date(form.startDate) : new Date());
+        const end = new Date(base.getTime() + hours * 3600000);
+        set({ endDate: toDatetimeLocal(end) });
+    };
+
+    const applyPostingPreset = (hours: number) => {
+        const base = form.startImmediately ? new Date() : (form.startDate ? new Date(form.startDate) : new Date());
+        const end = new Date(base.getTime() + hours * 3600000);
+        set({ postingEndDate: toDatetimeLocal(end) });
+    };
+
+    const applyVotingPreset = (hours: number) => {
+        const base = form.postingEndDate ? new Date(form.postingEndDate) : (form.startImmediately ? new Date() : (form.startDate ? new Date(form.startDate) : new Date()));
         const end = new Date(base.getTime() + hours * 3600000);
         set({ endDate: toDatetimeLocal(end) });
     };
@@ -254,8 +284,18 @@ export default function CreateEventPage() {
                 if (form.description.trim().length < 20) return "Description must be at least 20 characters.";
                 if (!form.domain || form.domain === "Other") return "Please enter your domain.";
                 if (!form.startImmediately && !form.startDate) return "Please set a start date.";
-                if (!form.endDate) return "Please set an end date.";
-                {
+                if (isPost) {
+                    if (!form.postingEndDate) return "Please set a posting end date.";
+                    if (!form.endDate) return "Please set a voting end date.";
+                    const s = form.startImmediately ? new Date() : new Date(form.startDate);
+                    const p = new Date(form.postingEndDate);
+                    const e = new Date(form.endDate);
+                    if (isNaN(p.getTime()) || p <= s) return "Posting end date must be after start date.";
+                    if (p.getTime() - s.getTime() < 10 * 60000) return "Post duration must be at least 10 minutes.";
+                    if (isNaN(e.getTime()) || e <= p) return "Voting end date must be after posting end date.";
+                    if (e.getTime() - p.getTime() < 10 * 60000) return "Vote duration must be at least 10 minutes.";
+                } else {
+                    if (!form.endDate) return "Please set an end date.";
                     const s = form.startImmediately ? new Date() : new Date(form.startDate);
                     const e = new Date(form.endDate);
                     if (isNaN(e.getTime()) || e <= s) return "End date must be after start date.";
@@ -266,6 +306,7 @@ export default function CreateEventPage() {
                 if (!form.maxParticipants || parseInt(form.maxParticipants) < 10) return "Minimum 10 participants required.";
                 if (parseInt(form.maxParticipants) > 100_000) return "Maximum 100,000 participants.";
                 if (!form.topPrize || parseFloat(form.topPrize) < minTop) return `Top prize must be at least $${minTop.toFixed(2)}.`;
+                if (isPost && (!form.leaderboardPool || parseFloat(form.leaderboardPool) < minLeaderboard)) return `Leaderboard pool must be at least $${minLeaderboard.toFixed(2)}.`;
                 return null;
             case "content":
                 if (form.proposals.filter((p) => p.title.trim()).length < 2) return "At least 2 voting options are required.";
@@ -412,53 +453,260 @@ export default function CreateEventPage() {
                             </button>
 
                             {/* Date pickers */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <span className="block text-xs font-semibold text-muted-foreground mb-1.5">Start Date & Time</span>
-                                    <Input
-                                        type="datetime-local"
-                                        value={form.startImmediately ? nowDatetimeLocal() : form.startDate}
-                                        min={nowDatetimeLocal()}
-                                        disabled={form.startImmediately}
-                                        onChange={(e) => set({ startDate: e.target.value })}
-                                        className={cn(form.startImmediately && "opacity-40 cursor-not-allowed")}
-                                    />
-                                </div>
-                                <div>
-                                    <span className="block text-xs font-semibold text-muted-foreground mb-1.5">End Date & Time</span>
-                                    <Input
-                                        type="datetime-local"
-                                        value={form.endDate}
-                                        min={form.startImmediately ? nowDatetimeLocal() : (form.startDate || nowDatetimeLocal())}
-                                        onChange={(e) => set({ endDate: e.target.value })}
-                                    />
-                                </div>
-                            </div>
+                            {isPost ? (
+                                <div className="space-y-4">
+                                    {/* Row 1: Start + Posting End */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <span className="block text-xs font-semibold text-muted-foreground mb-1.5">Start Date & Time</span>
+                                            <Input
+                                                type="datetime-local"
+                                                value={form.startImmediately ? nowDatetimeLocal() : form.startDate}
+                                                min={nowDatetimeLocal()}
+                                                disabled={form.startImmediately}
+                                                onChange={(e) => set({ startDate: e.target.value })}
+                                                className={cn(form.startImmediately && "opacity-40 cursor-not-allowed")}
+                                            />
+                                        </div>
+                                        <div>
+                                            <span className="flex items-center text-xs font-semibold text-orange-400 mb-1.5">
+                                                Posting End Date & Time
+                                                <InfoTooltip text="Creators can submit their posts until this time. Once posting ends, voting begins automatically." />
+                                            </span>
+                                            <Input
+                                                type="datetime-local"
+                                                value={form.postingEndDate}
+                                                min={form.startImmediately ? nowDatetimeLocal() : (form.startDate || nowDatetimeLocal())}
+                                                onChange={(e) => set({ postingEndDate: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
 
-                            {/* Duration computed display */}
-                            {(() => {
-                                const label = computeDurationLabel(form.startImmediately ? "" : form.startDate, form.endDate);
-                                return label ? (
-                                    <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                                        <Clock className="w-3.5 h-3.5" />
-                                        Duration: <span className="text-foreground font-semibold">{label}</span>
-                                    </p>
-                                ) : null;
-                            })()}
+                                    {/* Posting duration + presets */}
+                                    {(() => {
+                                        const label = computeDurationLabel(form.startImmediately ? "" : form.startDate, form.postingEndDate);
+                                        return (
+                                            <div className="space-y-1.5">
+                                                {label && (
+                                                    <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                                        <Clock className="w-3.5 h-3.5 text-orange-400" />
+                                                        Post Duration: <span className="text-orange-400 font-semibold">{label}</span>
+                                                    </p>
+                                                )}
+                                                <div className="flex gap-2 flex-wrap">
+                                                    {[1, 6, 24, 48, 72, 168].map((h) => (
+                                                        <button
+                                                            key={h}
+                                                            onClick={() => applyPostingPreset(h)}
+                                                            className="px-3 py-1.5 rounded-xl text-xs font-bold border border-border text-muted-foreground hover:border-orange-400/50 hover:text-orange-400 transition-all"
+                                                        >
+                                                            {h >= 24 ? `${h / 24}d` : `${h}h`}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
 
-                            {/* Quick-select preset chips */}
-                            <div className="flex gap-2 flex-wrap">
-                                {[1, 6, 24, 48, 72, 168].map((h) => (
-                                    <button
-                                        key={h}
-                                        onClick={() => applyPreset(h)}
-                                        className="px-3 py-2 rounded-xl text-xs font-bold border border-border text-muted-foreground hover:border-accent/50 hover:text-accent transition-all"
-                                    >
-                                        {h >= 24 ? `${h / 24}d` : `${h}h`}
-                                    </button>
-                                ))}
-                            </div>
+                                    {/* Voting End */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <span className="flex items-center text-xs font-semibold text-lime-400 mb-1.5">
+                                                Voting End Date & Time
+                                                <InfoTooltip text="Audience votes on submitted posts during this period. When voting ends, the event closes and winners are determined." />
+                                            </span>
+                                            <Input
+                                                type="datetime-local"
+                                                value={form.endDate}
+                                                min={form.postingEndDate || (form.startImmediately ? nowDatetimeLocal() : (form.startDate || nowDatetimeLocal()))}
+                                                onChange={(e) => set({ endDate: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Voting duration + presets */}
+                                    {(() => {
+                                        const voteLabel = computeDurationLabel(form.postingEndDate, form.endDate);
+                                        const totalLabel = computeDurationLabel(form.startImmediately ? "" : form.startDate, form.endDate);
+                                        return (
+                                            <div className="space-y-1.5">
+                                                {voteLabel && (
+                                                    <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                                        <Clock className="w-3.5 h-3.5 text-lime-400" />
+                                                        Vote Duration: <span className="text-lime-400 font-semibold">{voteLabel}</span>
+                                                    </p>
+                                                )}
+                                                <div className="flex gap-2 flex-wrap">
+                                                    {[1, 6, 24, 48, 72, 168].map((h) => (
+                                                        <button
+                                                            key={h}
+                                                            onClick={() => applyVotingPreset(h)}
+                                                            className="px-3 py-1.5 rounded-xl text-xs font-bold border border-border text-muted-foreground hover:border-lime-400/50 hover:text-lime-400 transition-all"
+                                                        >
+                                                            {h >= 24 ? `${h / 24}d` : `${h}h`}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                {totalLabel && (
+                                                    <p className="text-xs text-muted-foreground flex items-center gap-1.5 pt-1 border-t border-border">
+                                                        <Clock className="w-3.5 h-3.5" />
+                                                        Total Duration: <span className="text-foreground font-semibold">{totalLabel}</span>
+                                                    </p>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <span className="block text-xs font-semibold text-muted-foreground mb-1.5">Start Date & Time</span>
+                                            <Input
+                                                type="datetime-local"
+                                                value={form.startImmediately ? nowDatetimeLocal() : form.startDate}
+                                                min={nowDatetimeLocal()}
+                                                disabled={form.startImmediately}
+                                                onChange={(e) => set({ startDate: e.target.value })}
+                                                className={cn(form.startImmediately && "opacity-40 cursor-not-allowed")}
+                                            />
+                                        </div>
+                                        <div>
+                                            <span className="flex items-center text-xs font-semibold text-muted-foreground mb-1.5">
+                                                End Date & Time
+                                                <InfoTooltip text="When voting ends, the event closes and winners are determined." />
+                                            </span>
+                                            <Input
+                                                type="datetime-local"
+                                                value={form.endDate}
+                                                min={form.startImmediately ? nowDatetimeLocal() : (form.startDate || nowDatetimeLocal())}
+                                                onChange={(e) => set({ endDate: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Duration computed display */}
+                                    {(() => {
+                                        const label = computeDurationLabel(form.startImmediately ? "" : form.startDate, form.endDate);
+                                        return label ? (
+                                            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                                <Clock className="w-3.5 h-3.5" />
+                                                Duration: <span className="text-foreground font-semibold">{label}</span>
+                                            </p>
+                                        ) : null;
+                                    })()}
+
+                                    {/* Quick-select preset chips */}
+                                    <div className="flex gap-2 flex-wrap">
+                                        {[1, 6, 24, 48, 72, 168].map((h) => (
+                                            <button
+                                                key={h}
+                                                onClick={() => applyPreset(h)}
+                                                className="px-3 py-2 rounded-xl text-xs font-bold border border-border text-muted-foreground hover:border-accent/50 hover:text-accent transition-all"
+                                            >
+                                                {h >= 24 ? `${h / 24}d` : `${h}h`}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
                         </div>
+
+                        {/* Banner upload */}
+                        <div>
+                            <label className="flex items-center text-sm font-semibold text-foreground mb-1.5">
+                                Event Banner
+                                <InfoTooltip text="This image appears as the event banner visible to participants. Recommended: 16:9 ratio, JPEG or PNG, max 5 MB." />
+                                <span className="ml-1.5 text-xs font-normal text-muted-foreground">(optional)</span>
+                            </label>
+
+                            {bannerPreview ? (
+                                <div className="relative w-full rounded-2xl overflow-hidden border border-border group" style={{ aspectRatio: "16/9" }}>
+                                    <img src={bannerPreview} alt="Banner preview" className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setBannerGeneratorOpen(true)}
+                                            className="flex items-center gap-1.5 px-4 py-2 bg-primary/20 backdrop-blur-sm border border-primary/40 rounded-xl text-xs font-bold text-primary hover:bg-primary/30 transition-all"
+                                        >
+                                            <Sparkles className="w-3.5 h-3.5" /> Regenerate
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => bannerInputRef.current?.click()}
+                                            className="flex items-center gap-1.5 px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-xs font-bold text-white hover:bg-white/20 transition-all"
+                                        >
+                                            <Upload className="w-3.5 h-3.5" /> Upload
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                URL.revokeObjectURL(bannerPreview);
+                                                setBannerPreview(null);
+                                                set({ coverImage: null });
+                                            }}
+                                            className="flex items-center gap-1.5 px-4 py-2 bg-red-500/20 backdrop-blur-sm border border-red-500/30 rounded-xl text-xs font-bold text-red-400 hover:bg-red-500/30 transition-all"
+                                        >
+                                            <X className="w-3.5 h-3.5" /> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="w-full rounded-2xl border-2 border-dashed border-border bg-secondary/30" style={{ aspectRatio: "16/9" }}>
+                                    <div className="flex flex-col items-center justify-center gap-4 h-full py-8">
+                                        <div className="flex gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setBannerGeneratorOpen(true)}
+                                                className="flex items-center gap-2 px-5 py-3 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-2xl text-sm font-bold transition-all hover:scale-105"
+                                            >
+                                                <Sparkles className="w-4 h-4" /> Generate with AI
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => bannerInputRef.current?.click()}
+                                                className="flex items-center gap-2 px-5 py-3 bg-secondary hover:bg-secondary/70 border border-border rounded-2xl text-sm font-bold text-muted-foreground hover:text-foreground transition-all hover:scale-105"
+                                            >
+                                                <Upload className="w-4 h-4" /> Upload
+                                            </button>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground/50">16:9 · JPEG, PNG · Max 5 MB</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            <input
+                                ref={bannerInputRef}
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                className="hidden"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    if (file.size > 5 * 1024 * 1024) { toast.error("Banner must be under 5 MB"); return; }
+                                    if (bannerPreview) URL.revokeObjectURL(bannerPreview);
+                                    setBannerPreview(URL.createObjectURL(file));
+                                    set({ coverImage: file });
+                                    e.target.value = "";
+                                }}
+                            />
+                        </div>
+
+                        {/* Banner AI generator modal */}
+                        <BrandImageGeneratorModal
+                            isOpen={bannerGeneratorOpen}
+                            onClose={() => setBannerGeneratorOpen(false)}
+                            onAddToOption={(file, preview) => {
+                                if (bannerPreview) URL.revokeObjectURL(bannerPreview);
+                                setBannerPreview(preview);
+                                set({ coverImage: file });
+                                setBannerGeneratorOpen(false);
+                            }}
+                            brandId={user?.ownedBrands?.[0]?.id ?? ""}
+                            eventTitle={form.title}
+                            eventDescription={form.description}
+                            optionLabel="Event Banner (16:9)"
+                        />
                     </div>
                 );
 
@@ -466,8 +714,12 @@ export default function CreateEventPage() {
                 return (
                     <div className="space-y-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            {/* Max Participants */}
                             <div>
-                                <Label>Max Participants</Label>
+                                <label className="flex items-center text-sm font-semibold text-foreground mb-1.5">
+                                    Max Participants
+                                    <InfoTooltip text="The maximum number of people who can participate. All pool sizes are calculated from this number. Min 10 · Max 100,000." />
+                                </label>
                                 <Input
                                     type="number" min={10} max={100000} placeholder="e.g. 500"
                                     value={form.maxParticipants}
@@ -476,8 +728,16 @@ export default function CreateEventPage() {
                                 <p className="text-xs text-muted-foreground mt-1">Min 10 · Max 100,000</p>
                             </div>
 
+                            {/* Base Reward (auto) */}
                             <div>
-                                <Label>Base Reward per {isPost ? "Submission" : "Vote"} (auto)</Label>
+                                <label className="flex items-center text-sm font-semibold text-foreground mb-1.5">
+                                    Base Reward per {isPost ? "Submission" : "Vote"} (auto)
+                                    <InfoTooltip text={
+                                        isPost
+                                            ? `Fixed at $${CREATOR_RATE.toFixed(3)} per creator submission. Formula: Base Pool = $${CREATOR_RATE.toFixed(3)} × Max Participants. Paid out to every creator who submits a valid post.`
+                                            : `Fixed at $${BASE_RATE.toFixed(3)} per vote cast. Formula: Base Pool = $${BASE_RATE.toFixed(3)} × Max Participants. Distributed evenly among all voters at event end.`
+                                    } />
+                                </label>
                                 <div className="relative">
                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
                                     <Input
@@ -486,12 +746,39 @@ export default function CreateEventPage() {
                                         className="pl-8 opacity-60 cursor-not-allowed"
                                     />
                                 </div>
-                                <p className="text-xs text-muted-foreground mt-1">Fixed platform rate</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    {pCount > 0 ? `Base pool = $${basePool.toFixed(2)}` : "Fixed platform rate"}
+                                </p>
                             </div>
                         </div>
 
+                        {/* Voter Base Reward — shown for post type separately */}
+                        {isPost && (
+                            <div>
+                                <label className="flex items-center text-sm font-semibold text-foreground mb-1.5">
+                                    Voter Base Reward (auto)
+                                    <InfoTooltip text={`Fixed at $${BASE_RATE.toFixed(3)} per vote cast. Formula: Voter Pool = $${BASE_RATE.toFixed(3)} × Max Participants. Distributed among all voters who vote on submitted posts.`} />
+                                </label>
+                                <div className="relative">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                                    <Input value={BASE_RATE.toFixed(3)} readOnly className="pl-8 opacity-60 cursor-not-allowed" />
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    {pCount > 0 ? `Voter pool = $${(BASE_RATE * pCount).toFixed(2)}` : "Fixed platform rate"}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Top Prize Pool */}
                         <div>
-                            <Label>Top Prize Pool (USDC)</Label>
+                            <label className="flex items-center text-sm font-semibold text-foreground mb-1.5">
+                                Top Prize Pool (USDC)
+                                <InfoTooltip text={
+                                    isPost
+                                        ? `Bonus pool rewarding voters who voted for the top-ranked creator posts. Formula: min = $${BASE_RATE.toFixed(3)} × Max Participants. Distributed among voters of top-performing posts.`
+                                        : `Bonus pool distributed among voters who voted for the top-ranked options. Formula: min = $${BASE_RATE.toFixed(3)} × Max Participants. The more you set, the bigger the incentive to vote correctly.`
+                                } />
+                            </label>
                             <div className="relative max-w-sm">
                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
                                 <Input
@@ -502,8 +789,40 @@ export default function CreateEventPage() {
                                     className="pl-8"
                                 />
                             </div>
-                            {pCount > 0 && <p className="text-xs text-muted-foreground mt-1">Minimum: ${minTop.toFixed(2)}</p>}
+                            {pCount > 0 && <p className="text-xs text-muted-foreground mt-1">Minimum: ${minTop.toFixed(2)} ($0.030 × {pCount})</p>}
                         </div>
+
+                        {/* Leaderboard Pool — post type only */}
+                        {isPost && (
+                            <div>
+                                <label className="flex items-center text-sm font-semibold text-foreground mb-1.5">
+                                    Leaderboard Pool (USDC)
+                                    <InfoTooltip text={`Rewards the top 3 creators ranked by votes received.\n\n🥇 1st place → 50%\n🥈 2nd place → 35%\n🥉 3rd place → 15%\n\nFormula: min = $${BASE_RATE.toFixed(3)} × Max Participants = $${minLeaderboard.toFixed(2)}`} />
+                                </label>
+                                <div className="relative max-w-sm">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                                    <Input
+                                        type="number" min={minLeaderboard} step={0.01}
+                                        placeholder={minLeaderboard > 0 ? minLeaderboard.toFixed(2) : "0.00"}
+                                        value={form.leaderboardPool}
+                                        onChange={(e) => set({ leaderboardPool: e.target.value })}
+                                        className="pl-8"
+                                    />
+                                </div>
+                                {pCount > 0 && (
+                                    <div className="mt-2 space-y-0.5">
+                                        <p className="text-xs text-muted-foreground">Minimum: ${minLeaderboard.toFixed(2)} ($0.030 × {pCount})</p>
+                                        {leaderboardNum >= minLeaderboard && leaderboardNum > 0 && (
+                                            <div className="flex gap-4 text-xs text-muted-foreground pt-1">
+                                                <span>🥇 ${(leaderboardNum * 0.50).toFixed(2)}</span>
+                                                <span>🥈 ${(leaderboardNum * 0.35).toFixed(2)}</span>
+                                                <span>🥉 ${(leaderboardNum * 0.15).toFixed(2)}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Refund Credit */}
                         {availableCredit > 0 && (
@@ -527,22 +846,44 @@ export default function CreateEventPage() {
                         {/* Cost summary */}
                         {pCount > 0 && (
                             <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 space-y-2">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Cost Breakdown</p>
                                 <div className="flex justify-between text-sm text-muted-foreground">
-                                    <span>Base pool ({pCount} × ${BASE_RATE.toFixed(3)})</span>
-                                    <span className="font-mono">${basePool.toFixed(2)}</span>
+                                    <span className="flex items-center gap-1">
+                                        {isPost ? "Creator base pool" : "Voter base pool"}
+                                        <InfoTooltip text={isPost ? `$${CREATOR_RATE.toFixed(3)} × ${pCount} participants` : `$${BASE_RATE.toFixed(3)} × ${pCount} participants`} />
+                                    </span>
+                                    <span className="font-mono">${(isPost ? creatorPool : basePool).toFixed(2)}</span>
                                 </div>
+                                {isPost && (
+                                    <div className="flex justify-between text-sm text-muted-foreground">
+                                        <span className="flex items-center gap-1">
+                                            Voter base pool
+                                            <InfoTooltip text={`$${BASE_RATE.toFixed(3)} × ${pCount} participants`} />
+                                        </span>
+                                        <span className="font-mono">${basePool.toFixed(2)}</span>
+                                    </div>
+                                )}
                                 <div className="flex justify-between text-sm text-muted-foreground">
-                                    <span>Top prize</span>
+                                    <span className="flex items-center gap-1">
+                                        Top prize pool
+                                        <InfoTooltip text="Rewards voters who picked the top-ranked content." />
+                                    </span>
                                     <span className="font-mono">${effectiveTop.toFixed(2)}</span>
                                 </div>
                                 {isPost && (
                                     <div className="flex justify-between text-sm text-muted-foreground">
-                                        <span>Creator pool</span>
-                                        <span className="font-mono">${creatorPool.toFixed(2)}</span>
+                                        <span className="flex items-center gap-1">
+                                            Leaderboard pool
+                                            <InfoTooltip text="Split 50/35/15 among the top 3 creators by votes received." />
+                                        </span>
+                                        <span className="font-mono">${effectiveLeaderboard.toFixed(2)}</span>
                                     </div>
                                 )}
                                 <div className="flex justify-between text-sm text-muted-foreground">
-                                    <span>Platform fee</span>
+                                    <span className="flex items-center gap-1">
+                                        Platform fee
+                                        <InfoTooltip text={`$${(isPost ? FEE_POST : FEE_VOTE).toFixed(3)} × ${pCount} participants`} />
+                                    </span>
                                     <span className="font-mono">${platformFee.toFixed(2)}</span>
                                 </div>
                                 <div className="border-t border-primary/20 pt-2 flex justify-between font-black text-foreground">
@@ -692,7 +1033,10 @@ export default function CreateEventPage() {
                                 onClick={() => goTo(basicsIdx)}
                                 className="relative rounded-[24px] overflow-hidden h-[220px] md:h-[260px] border border-white/[0.05] transition-all hover:border-accent/50 cursor-pointer group mb-5"
                             >
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-accent/10" />
+                                {bannerPreview
+                                    ? <img src={bannerPreview} alt="Banner" className="absolute inset-0 w-full h-full object-cover" />
+                                    : <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-accent/10" />
+                                }
                                 <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-black/10" />
                                 <div className="absolute inset-0 p-6 flex flex-col justify-between">
                                     {/* Phase badge */}
@@ -1166,7 +1510,7 @@ export default function CreateEventPage() {
                                 const err = validateStep(i);
                                 if (err) { toast.error(`Step ${i + 1}: ${err}`); return; }
                             }
-                            setModalOpen(true);
+                            setConfirmOpen(true);
                         }}
                         className="pointer-events-auto flex items-center gap-2 px-8 py-3.5 bg-primary text-primary-foreground rounded-2xl text-sm font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30 hover:bg-accent group"
                     >
@@ -1174,6 +1518,53 @@ export default function CreateEventPage() {
                     </button>
                 )}
             </div>
+
+            {/* ── Confirm Launch Dialog ───────────────────────────────────────── */}
+            <AnimatePresence>
+                {confirmOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setConfirmOpen(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.92, opacity: 0, y: 16 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.92, opacity: 0, y: 16 }}
+                            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                            className="bg-card border border-border rounded-3xl p-8 max-w-sm w-full shadow-2xl"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mx-auto mb-5">
+                                <Rocket className="w-7 h-7 text-primary" />
+                            </div>
+                            <h2 className="text-xl font-black text-foreground text-center mb-2">Confirm Launch</h2>
+                            <p className="text-sm text-muted-foreground text-center mb-1">
+                                You're about to launch <span className="text-foreground font-semibold">{form.title || "your event"}</span>.
+                            </p>
+                            <p className="text-xs text-muted-foreground text-center mb-7">
+                                This will lock funds and make the event live. This action cannot be undone.
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setConfirmOpen(false)}
+                                    className="flex-1 py-3 rounded-2xl border border-border text-sm font-bold text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => { setConfirmOpen(false); setModalOpen(true); }}
+                                    className="flex-1 py-3 rounded-2xl bg-primary text-primary-foreground text-sm font-black hover:bg-accent transition-all shadow-lg shadow-primary/30 flex items-center justify-center gap-2"
+                                >
+                                    <Rocket className="w-4 h-4" /> Launch
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <LaunchStepModal
                 open={modalOpen}
