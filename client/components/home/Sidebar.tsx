@@ -65,7 +65,7 @@ export default function Sidebar() {
 
             <motion.aside
                 className={cn(
-                    "fixed left-0 top-0 h-screen bg-[#111111] border-r border-white/5 flex flex-col z-50 overflow-hidden",
+                    "fixed left-0 top-0 h-screen bg-card border-r border-border flex flex-col z-50 overflow-hidden",
                     // Mobile styles: fixed inset-y-0 left-0 transform transition-transform
                     // Desktop styles: hidden md:flex
                     isMobileOpen ? "translate-x-0 w-[240px]" : "-translate-x-full md:translate-x-0",
@@ -84,13 +84,13 @@ export default function Sidebar() {
                 <div className={cn("flex items-center pt-8 pb-6 h-[88px]", isCollapsed ? "justify-center" : "pl-6 pr-3")}>
                     <Link href="/home" className="flex items-center group">
                         <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center transition-transform duration-150 group-hover:scale-105 active:scale-95">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-foreground">
                                 <path d="M12 4L4 18H20L12 4Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </div>
                         <span
                             className={cn(
-                                "text-xl font-black tracking-[0.15em] text-white uppercase overflow-hidden transition-all duration-150 ease-out whitespace-nowrap",
+                                "text-xl font-black tracking-[0.15em] text-foreground uppercase overflow-hidden transition-all duration-150 ease-out whitespace-nowrap",
                                 showExpanded ? "opacity-100 w-auto ml-4" : "opacity-0 w-0 ml-0"
                             )}
                         >
@@ -134,7 +134,7 @@ export default function Sidebar() {
                                 className={cn(
                                     "group flex items-center w-full py-2 rounded-xl",
                                     isCollapsed ? "justify-center" : "pl-3",
-                                    "text-white/50 hover:bg-white/5 hover:text-white",
+                                    "text-foreground/50 hover:bg-foreground/5 hover:text-foreground",
                                     "transition-colors duration-150 ease-out"
                                 )}
                             >
@@ -165,7 +165,7 @@ export default function Sidebar() {
                                 className={cn(
                                     "group relative flex items-center w-full py-2 rounded-xl",
                                     isCollapsed ? "justify-center" : "pl-3",
-                                    "text-white/50 hover:bg-white/5 hover:text-red-400",
+                                    "text-foreground/50 hover:bg-foreground/5 hover:text-red-400",
                                     "transition-colors duration-150 ease-out"
                                 )}
                             >
@@ -194,7 +194,7 @@ export default function Sidebar() {
                                 className={cn(
                                     "group flex items-center w-full py-2 rounded-xl",
                                     isCollapsed ? "justify-center" : "pl-3",
-                                    "text-white/50 hover:bg-white/5 hover:text-white",
+                                    "text-foreground/50 hover:bg-foreground/5 hover:text-foreground",
                                     "transition-colors duration-150 ease-out"
                                 )}
                                 aria-label={showExpanded ? "Collapse sidebar" : "Expand sidebar"}

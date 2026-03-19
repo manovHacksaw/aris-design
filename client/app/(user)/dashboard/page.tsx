@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import SidebarLayout from "@/components/home/SidebarLayout";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -27,9 +28,12 @@ type TabType = "overall" | "vote" | "post";
 
 interface ActivityItem {
     id: string;
+    eventId?: string;
     type: "vote" | "post";
     title: string;
     brand: string;
+    brandLogoUrl?: string;
+    domain?: string;
     date: string;
     status: string;
     rank?: number | null;
@@ -342,7 +346,7 @@ const MILESTONE_CATEGORIES: MilestoneCategory[] = [
     },
     {
         id: "activity",
-        label: "Activity",
+        label: "Streaks",
         icon: Flame,
         color: "text-orange-400",
         xp: [10, 25, 50, 100, 250, 500],
@@ -697,80 +701,87 @@ function ViewAllPanel({
 
 // ─── Activity Row ────────────────────────────────────────────────
 
-function ActivityRow({ item, index }: { item: ActivityItem; index: number }) {
+// ─── Status dot config ───────────────────────────────────────────
+
+function statusConfig(status: string) {
+    if (status === "voting")    return { dot: "bg-emerald-400", label: "Voting",    text: "text-emerald-400" };
+    if (status === "posting")   return { dot: "bg-blue-400",    label: "Posting",   text: "text-blue-400" };
+    if (status === "scheduled") return { dot: "bg-yellow-400",  label: "Scheduled", text: "text-yellow-400" };
+    if (status === "completed") return { dot: "bg-white/20",    label: "Done",      text: "text-white/30" };
+    return                             { dot: "bg-white/15",    label: status,      text: "text-white/25" };
+}
+
+function ActivityRow({ item, index, isLast }: { item: ActivityItem; index: number; isLast: boolean }) {
     const isPost = item.type === "post";
+    const router = useRouter();
+    const sc = statusConfig(item.status);
+
     return (
         <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.04 }}
-            className="flex items-center gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08] transition-all group cursor-pointer"
+            onClick={() => (item.eventId || item.id) && router.push(`/events/${item.eventId || item.id}`)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: index * 0.03, duration: 0.2 }}
+            className={cn(
+                "group flex items-center gap-4 px-1 py-3 cursor-pointer transition-colors duration-100",
+                "hover:bg-white/[0.025] rounded-lg -mx-1",
+                !isLast && "border-b border-white/[0.04]"
+            )}
         >
-            {/* Thumbnail */}
-            <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-white/[0.05] border border-white/[0.06]">
+            {/* LEFT — Avatar / thumbnail */}
+            <div className="shrink-0 w-8 h-8 rounded-lg overflow-hidden bg-white/[0.06]">
                 {item.imageUrl ? (
                     <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                ) : item.brandLogoUrl ? (
+                    <img src={item.brandLogoUrl} alt={item.brand} className="w-full h-full object-cover" />
                 ) : (
-                    <div className={cn("w-full h-full flex items-center justify-center", isPost ? "bg-lime-500/10" : "bg-blue-500/10")}>
-                        {isPost
-                            ? <ImageIcon className="w-5 h-5 text-lime-400/50" />
-                            : <MousePointerClick className="w-5 h-5 text-blue-400/50" />
-                        }
+                    <div className={cn(
+                        "w-full h-full flex items-center justify-center text-[10px] font-black",
+                        isPost ? "bg-lime-500/10 text-lime-400/60" : "bg-blue-500/10 text-blue-400/60"
+                    )}>
+                        {item.brand.charAt(0).toUpperCase()}
                     </div>
                 )}
             </div>
 
-            {/* Info */}
+            {/* CENTER — Three content lines */}
             <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className={cn("text-[9px] font-black uppercase tracking-widest", isPost ? "text-lime-400/70" : "text-blue-400/70")}>
-                        {isPost ? "Post" : "Vote"}
-                    </span>
-                    <span className="text-white/20 text-[9px]">·</span>
-                    <span className="text-[9px] font-bold text-white/30 uppercase tracking-wide truncate">{item.brand}</span>
-                </div>
-                <h4 className="text-sm font-black text-white truncate tracking-tight">{item.title}</h4>
-                <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <Calendar className="w-3 h-3 text-white/20" />
-                    <span className="text-[10px] text-white/30 font-medium">{item.date}</span>
-                    {isPost && item.votesReceived !== undefined && (
-                        <>
-                            <span className="text-white/15">·</span>
-                            <ThumbsUp className="w-3 h-3 text-white/20" />
-                            <span className="text-[10px] text-white/30 font-medium">{item.votesReceived.toLocaleString()} votes</span>
-                        </>
+                {/* Line 1: Title */}
+                <p className="text-[13px] font-semibold text-white/90 truncate leading-tight tracking-[-0.01em]">
+                    {item.title}
+                </p>
+
+                {/* Line 2: Brand · Category · Type */}
+                <p className="text-[11px] text-white/35 font-medium mt-0.5 truncate">
+                    <span className="text-white/50 font-semibold">{item.brand}</span>
+                    {item.domain && <><span className="mx-1.5 text-white/15">·</span><span>{item.domain}</span></>}
+                    <span className="mx-1.5 text-white/15">·</span>
+                    <span className={isPost ? "text-lime-400/50" : "text-blue-400/50"}>{isPost ? "Post" : "Vote"}</span>
+                </p>
+
+                {/* Line 3: Metadata */}
+                <p className="text-[10px] text-white/20 font-medium mt-0.5">
+                    {item.date}
+                    {isPost && item.votesReceived !== undefined && item.votesReceived > 0 && (
+                        <><span className="mx-1.5 text-white/10">·</span>{item.votesReceived.toLocaleString()} votes</>
                     )}
                     {!isPost && item.votesCast !== undefined && item.votesCast > 0 && (
-                        <>
-                            <span className="text-white/15">·</span>
-                            <span className="text-[10px] text-white/30 font-medium">{item.votesCast} cast</span>
-                        </>
+                        <><span className="mx-1.5 text-white/10">·</span>{item.votesCast} cast</>
                     )}
-                </div>
+                    {item.rank && (
+                        <><span className="mx-1.5 text-white/10">·</span>Rank #{item.rank}</>
+                    )}
+                    {!!item.earnings && item.earnings > 0 && (
+                        <><span className="mx-1.5 text-white/10">·</span><span className="text-lime-400/70">${item.earnings.toFixed(2)}</span></>
+                    )}
+                </p>
             </div>
 
-            {/* Right: status/rank + earnings */}
-            <div className="flex flex-col items-end gap-1.5 shrink-0">
-                {item.rank ? (
-                    <RankBadge rank={item.rank} />
-                ) : (
-                    <span className={cn(
-                        "text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border",
-                        ["posting", "voting", "scheduled"].includes(item.status)
-                            ? "bg-lime-400/10 text-lime-400 border-lime-400/20"
-                            : "bg-white/[0.04] text-white/30 border-white/[0.06]"
-                    )}>
-                        {item.status}
-                    </span>
-                )}
-                {!!item.earnings && item.earnings > 0 && (
-                    <span className="text-[10px] font-black text-lime-400">${item.earnings.toFixed(2)}</span>
-                )}
-                {isPost && !!item.xpEarned && item.xpEarned > 0 && (
-                    <span className="text-[9px] font-black text-yellow-400/70">+{item.xpEarned} XP</span>
-                )}
+            {/* RIGHT — Status dot + label */}
+            <div className="shrink-0 flex items-center gap-1.5 min-w-[72px] justify-end">
+                <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", sc.dot)} />
+                <span className={cn("text-[10px] font-medium capitalize", sc.text)}>{sc.label}</span>
             </div>
-            <ArrowUpRight className="w-4 h-4 text-white/10 group-hover:text-white/30 transition-colors shrink-0" />
         </motion.div>
     );
 }
@@ -847,9 +858,12 @@ export default function DashboardPage() {
 
             setPostEvents((submissions as any[]).map((s: any) => ({
                 id: s.id,
+                eventId: s.event?.id,
                 type: "post" as const,
                 title: s.event?.title || "Untitled Event",
                 brand: s.event?.brand?.name || "Unknown",
+                brandLogoUrl: s.event?.brand?.logoCid ? `https://gateway.pinata.cloud/ipfs/${s.event.brand.logoCid}` : (s.event?.brand?.logoUrl || undefined),
+                domain: s.event?.category,
                 date: s.createdAt
                     ? new Date(s.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
                     : "—",
@@ -863,9 +877,12 @@ export default function DashboardPage() {
 
             setVoteEvents((votedEvents as any[]).map((e: any) => ({
                 id: e.id,
+                eventId: e.id,
                 type: "vote" as const,
                 title: e.title || "Untitled Event",
                 brand: e.brand?.name || "Unknown",
+                brandLogoUrl: e.brand?.logoCid ? `https://gateway.pinata.cloud/ipfs/${e.brand.logoCid}` : (e.brand?.logoUrl || undefined),
+                domain: e.category,
                 date: e.endTime
                     ? new Date(e.endTime).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
                     : "—",
@@ -1010,6 +1027,16 @@ export default function DashboardPage() {
         });
     })();
 
+    // Events vs Earnings (last 8 events participated, chronological)
+    const eventsEarningsData = [...allActivity]
+        .slice(0, 8)
+        .reverse()
+        .map(item => ({
+            label: item.title.length > 14 ? item.title.slice(0, 14) + "…" : item.title,
+            earnings: item.earnings || 0,
+            xp: item.xpEarned || 0,
+        }));
+
     const xp = user?.xp || 0;
     const xpLevel = Math.floor(xp / 1000) + 1;
     const xpProgress = (xp % 1000) / 10;
@@ -1087,161 +1114,6 @@ export default function DashboardPage() {
                         </div>
                     )}
 
-                    {/* ── Charts ─────────────────────────────── */}
-                    {!loading && (
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-                            {/* XP Growth (cumulative area chart) */}
-                            <div className="lg:col-span-2 bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div>
-                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">XP Growth</p>
-                                        <p className="text-[9px] font-bold text-foreground/25 mt-0.5">Last 14 days</p>
-                                    </div>
-                                    <span className="text-[10px] font-black text-yellow-400">
-                                        +{xpAreaData.reduce((s, d) => s + d.xp, 0).toLocaleString()} XP
-                                    </span>
-                                </div>
-                                <ResponsiveContainer width="100%" height={140}>
-                                    <AreaChart data={xpCumulativeData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                                        <defs>
-                                            <linearGradient id="xpGrad" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="0%" stopColor="#A78BFA" stopOpacity={0.35} />
-                                                <stop offset="100%" stopColor="#A78BFA" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                                        <XAxis
-                                            dataKey="label"
-                                            tick={{ fontSize: 8, fill: "rgba(255,255,255,0.25)", fontWeight: 700 }}
-                                            tickLine={false} axisLine={false}
-                                            interval={2}
-                                        />
-                                        <YAxis tick={{ fontSize: 8, fill: "rgba(255,255,255,0.2)", fontWeight: 700 }} tickLine={false} axisLine={false} />
-                                        <Tooltip
-                                            contentStyle={{ background: "hsl(var(--card))", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 11, fontWeight: 700 }}
-                                            labelStyle={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}
-                                            formatter={(val: any, name: any) => [
-                                                name === "xp" ? `${Number(val).toLocaleString()} XP` : `+${val} XP`,
-                                                name === "xp" ? "Total XP" : "Daily Earned"
-                                            ]}
-                                        />
-                                        <Area type="monotone" dataKey="xp" stroke="#A78BFA" strokeWidth={2} fill="url(#xpGrad)" dot={false} activeDot={{ r: 4, fill: "#A78BFA" }} />
-                                        <Area type="monotone" dataKey="daily" stroke="#60A5FA" strokeWidth={1.5} fill="none" strokeDasharray="3 3" dot={false} activeDot={{ r: 3, fill: "#60A5FA" }} />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                                <div className="flex items-center gap-4 mt-2">
-                                    <div className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-[#A78BFA] rounded" /><span className="text-[9px] font-bold text-foreground/30">Cumulative</span></div>
-                                    <div className="flex items-center gap-1.5"><span className="w-3 border-t border-dashed border-[#60A5FA]" /><span className="text-[9px] font-bold text-foreground/30">Daily</span></div>
-                                </div>
-                            </div>
-
-                            {/* XP by Source */}
-                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
-                                <div className="mb-4">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">XP by Source</p>
-                                    <p className="text-[9px] font-bold text-foreground/25 mt-0.5">All time breakdown</p>
-                                </div>
-                                {xpByType.length === 0 ? (
-                                    <p className="text-[10px] text-foreground/20 font-bold text-center py-8">No XP data yet</p>
-                                ) : (
-                                    <div className="space-y-3">
-                                        {xpByType.slice(0, 5).map((src) => {
-                                            const totalXpAllSrc = xpByType.reduce((s, d) => s + d.amount, 0);
-                                            const pct = totalXpAllSrc > 0 ? (src.amount / totalXpAllSrc) * 100 : 0;
-                                            return (
-                                                <div key={src.label}>
-                                                    <div className="flex items-center justify-between mb-1">
-                                                        <span className="text-[10px] font-black text-foreground/60">{src.label}</span>
-                                                        <span className="text-[10px] font-black" style={{ color: src.color }}>+{src.amount.toLocaleString()}</span>
-                                                    </div>
-                                                    <div className="h-1.5 bg-foreground/[0.06] rounded-full overflow-hidden">
-                                                        <motion.div
-                                                            initial={{ width: 0 }}
-                                                            animate={{ width: `${pct}%` }}
-                                                            transition={{ duration: 0.8, ease: "easeOut" }}
-                                                            className="h-full rounded-full"
-                                                            style={{ background: src.color }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Follower Growth */}
-                            <div className="lg:col-span-2 bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div>
-                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Follower Growth</p>
-                                        <p className="text-[9px] font-bold text-foreground/25 mt-0.5">Last 30 days</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[10px] font-black text-pink-400">{stats?.subscribers ?? 0} total</p>
-                                        <p className="text-[9px] font-bold text-foreground/30">
-                                            +{followerGrowthData.reduce((s, d) => s + d.new, 0)} this month
-                                        </p>
-                                    </div>
-                                </div>
-                                {followers.length === 0 ? (
-                                    <div className="h-[120px] flex items-center justify-center">
-                                        <p className="text-[10px] font-bold text-foreground/20">No follower data yet</p>
-                                    </div>
-                                ) : (
-                                    <ResponsiveContainer width="100%" height={120}>
-                                        <AreaChart data={followerGrowthData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                                            <defs>
-                                                <linearGradient id="followerGrad" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="0%" stopColor="#F472B6" stopOpacity={0.35} />
-                                                    <stop offset="100%" stopColor="#F472B6" stopOpacity={0} />
-                                                </linearGradient>
-                                            </defs>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                                            <XAxis dataKey="label" tick={{ fontSize: 8, fill: "rgba(255,255,255,0.25)", fontWeight: 700 }} tickLine={false} axisLine={false} interval={5} />
-                                            <YAxis tick={{ fontSize: 8, fill: "rgba(255,255,255,0.2)", fontWeight: 700 }} tickLine={false} axisLine={false} allowDecimals={false} />
-                                            <Tooltip
-                                                contentStyle={{ background: "hsl(var(--card))", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 11, fontWeight: 700 }}
-                                                labelStyle={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}
-                                                formatter={(val: any, name: any) => [val, name === "followers" ? "Total Followers" : "New Today"]}
-                                            />
-                                            <Area type="monotone" dataKey="followers" stroke="#F472B6" strokeWidth={2} fill="url(#followerGrad)" dot={false} activeDot={{ r: 4, fill: "#F472B6" }} />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
-                                )}
-                            </div>
-
-                            {/* Activity bar chart */}
-                            <div className="lg:col-span-1 bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div>
-                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Activity</p>
-                                        <p className="text-[9px] font-bold text-foreground/25 mt-0.5">By week</p>
-                                    </div>
-                                    <div className="flex flex-col gap-1 items-end">
-                                        <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#60A5FA]" /><span className="text-[8px] font-bold text-foreground/40">Votes</span></div>
-                                        <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#A3E635]" /><span className="text-[8px] font-bold text-foreground/40">Posts</span></div>
-                                    </div>
-                                </div>
-                                <ResponsiveContainer width="100%" height={120}>
-                                    <BarChart data={activityData.slice(-6)} barGap={2} margin={{ top: 0, right: 2, left: -24, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                                        <XAxis dataKey="label" tick={{ fontSize: 7, fill: "rgba(255,255,255,0.25)", fontWeight: 700 }} tickLine={false} axisLine={false} />
-                                        <YAxis tick={{ fontSize: 7, fill: "rgba(255,255,255,0.2)", fontWeight: 700 }} tickLine={false} axisLine={false} allowDecimals={false} />
-                                        <Tooltip
-                                            contentStyle={{ background: "hsl(var(--card))", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 11, fontWeight: 700 }}
-                                            labelStyle={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}
-                                        />
-                                        <Bar dataKey="votes" fill="#60A5FA" radius={[3, 3, 0, 0]} maxBarSize={16} />
-                                        <Bar dataKey="posts" fill="#A3E635" radius={[3, 3, 0, 0]} maxBarSize={16} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-
-                        </div>
-                    )}
-
                     {/* ── Tabs ───────────────────────────────── */}
                     <div className="flex items-center gap-1.5 border-t border-white/[0.05] pt-6">
                         {tabs.map((tab) => (
@@ -1275,40 +1147,65 @@ export default function DashboardPage() {
                             </div>
 
                             {loading ? (
-                                <div className="space-y-2">
+                                <div className="divide-y divide-white/[0.04]">
                                     {Array.from({ length: 5 }).map((_, i) => (
-                                        <div key={i} className="h-[76px] rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+                                        <div key={i} className="flex items-center gap-4 py-3">
+                                            <div className="w-8 h-8 rounded-lg bg-white/[0.05] animate-pulse shrink-0" />
+                                            <div className="flex-1 space-y-1.5">
+                                                <div className="h-3 bg-white/[0.05] rounded animate-pulse w-2/3" />
+                                                <div className="h-2.5 bg-white/[0.03] rounded animate-pulse w-1/2" />
+                                            </div>
+                                        </div>
                                     ))}
                                 </div>
                             ) : filteredActivity.length === 0 ? (
-                                <div className="py-20 text-center bg-white/[0.02] rounded-[24px] border border-dashed border-white/[0.07]">
-                                    <div className="w-12 h-12 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
-                                        {activeTab === "vote"
-                                            ? <MousePointerClick className="w-5 h-5 text-white/20" />
-                                            : <ImageIcon className="w-5 h-5 text-white/20" />
-                                        }
-                                    </div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/20">
+                                <div className="py-16 text-center">
+                                    <p className="text-[11px] text-white/20 font-medium">
                                         No {activeTab === "overall" ? "" : activeTab + " "}activity yet
                                     </p>
                                 </div>
-                            ) : (
-                                <>
-                                    <div className="space-y-2">
-                                        {paginatedActivity.map((item, i) => (
-                                            <ActivityRow key={item.id + i} item={item} index={i} />
+                            ) : (() => {
+                                // Date grouping
+                                const now = new Date();
+                                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                                const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+
+                                const groups: { label: string; items: typeof paginatedActivity }[] = [];
+                                const groupMap: Record<string, typeof paginatedActivity> = {};
+
+                                paginatedActivity.forEach(item => {
+                                    const d = new Date(item.date);
+                                    const itemDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                                    const label =
+                                        itemDay.getTime() === today.getTime() ? "Today" :
+                                        itemDay.getTime() === yesterday.getTime() ? "Yesterday" : "Earlier";
+                                    if (!groupMap[label]) { groupMap[label] = []; groups.push({ label, items: groupMap[label] }); }
+                                    groupMap[label].push(item);
+                                });
+
+                                return (
+                                    <div className="space-y-5">
+                                        {groups.map(({ label, items }) => (
+                                            <div key={label}>
+                                                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20 mb-2 px-1">{label}</p>
+                                                <div className="bg-white/[0.015] rounded-xl px-3">
+                                                    {items.map((item, i) => (
+                                                        <ActivityRow key={item.id + i} item={item} index={i} isLast={i === items.length - 1} />
+                                                    ))}
+                                                </div>
+                                            </div>
                                         ))}
+                                        {hasMore && (
+                                            <button
+                                                onClick={() => setPage(p => p + 1)}
+                                                className="w-full py-2.5 text-[10px] font-medium text-white/25 hover:text-white/50 transition-colors"
+                                            >
+                                                Load more
+                                            </button>
+                                        )}
                                     </div>
-                                    {hasMore && (
-                                        <button
-                                            onClick={() => setPage(p => p + 1)}
-                                            className="w-full py-3 rounded-2xl bg-white/[0.03] border border-white/[0.05] text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40 hover:bg-white/[0.05] hover:text-foreground/60 transition-all"
-                                        >
-                                            Load More
-                                        </button>
-                                    )}
-                                </>
-                            )}
+                                );
+                            })()}
                         </div>
 
                         {/* ── Right: Gamified XP & Achievements ── */}
@@ -1492,8 +1389,250 @@ export default function DashboardPage() {
                                 </div>
                             </div>
 
+                            {/* ── XP History Feed ─────────────────── */}
+                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] overflow-hidden">
+                                <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/[0.05]">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">XP History</span>
+                                    <span className="text-[9px] font-black text-foreground/20">{transactions.length} entries</span>
+                                </div>
+                                <div className="p-3 space-y-1">
+                                    {transactions.length === 0 ? (
+                                        <p className="text-[10px] text-foreground/20 font-bold text-center py-6">No XP earned yet</p>
+                                    ) : (
+                                        transactions.slice(0, 8).map((tx) => {
+                                            const typeMap: Record<string, { icon: React.ElementType; color: string; bg: string; label: string }> = {
+                                                VOTE_CAST:     { icon: ThumbsUp,  color: "text-blue-400",   bg: "bg-blue-400/10",   label: "Vote cast" },
+                                                SUBMISSION:    { icon: ImageIcon, color: "text-lime-400",   bg: "bg-lime-400/10",   label: "Post submitted" },
+                                                LOGIN_STREAK:  { icon: Flame,     color: "text-orange-400", bg: "bg-orange-400/10", label: "Login streak" },
+                                                MILESTONE:     { icon: Trophy,    color: "text-purple-400", bg: "bg-purple-400/10", label: "Milestone" },
+                                                REFERRAL:      { icon: Users,     color: "text-pink-400",   bg: "bg-pink-400/10",   label: "Referral" },
+                                            };
+                                            const meta = typeMap[tx.type] ?? { icon: Zap, color: "text-yellow-400", bg: "bg-yellow-400/10", label: tx.type };
+                                            const Icon = meta.icon;
+                                            const elapsed = Date.now() - new Date(tx.createdAt).getTime();
+                                            const relTime = elapsed < 3600000
+                                                ? `${Math.floor(elapsed / 60000)}m ago`
+                                                : elapsed < 86400000
+                                                    ? `${Math.floor(elapsed / 3600000)}h ago`
+                                                    : `${Math.floor(elapsed / 86400000)}d ago`;
+                                            return (
+                                                <div key={tx.id} className="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-white/[0.03] transition-colors">
+                                                    <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", meta.bg)}>
+                                                        <Icon className={cn("w-3.5 h-3.5", meta.color)} />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-[11px] font-black text-foreground/70 truncate">
+                                                            {tx.description || meta.label}
+                                                        </p>
+                                                        <p className="text-[9px] text-foreground/30 font-medium">{relTime}</p>
+                                                    </div>
+                                                    <span className={cn("text-[11px] font-black shrink-0", tx.amount > 0 ? "text-yellow-400" : "text-red-400")}>
+                                                        {tx.amount > 0 ? "+" : ""}{tx.amount} XP
+                                                    </span>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            </div>
+
                         </div>
                     </div>
+
+                    {/* ── Graphs & Insights ───────────────────── */}
+                    {!loading && (
+                        <div className="space-y-4 pt-2">
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/30">Graphs &amp; Insights</p>
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+                            {/* XP Growth (cumulative area chart) */}
+                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">XP Growth</p>
+                                        <p className="text-[9px] font-bold text-foreground/25 mt-0.5">Last 14 days</p>
+                                    </div>
+                                    <span className="text-[10px] font-black text-yellow-400">
+                                        +{xpAreaData.reduce((s, d) => s + d.xp, 0).toLocaleString()} XP
+                                    </span>
+                                </div>
+                                <ResponsiveContainer width="100%" height={140}>
+                                    <AreaChart data={xpCumulativeData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="xpGrad" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stopColor="#A78BFA" stopOpacity={0.35} />
+                                                <stop offset="100%" stopColor="#A78BFA" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                                        <XAxis
+                                            dataKey="label"
+                                            tick={{ fontSize: 8, fill: "rgba(255,255,255,0.25)", fontWeight: 700 }}
+                                            tickLine={false} axisLine={false}
+                                            interval={2}
+                                        />
+                                        <YAxis tick={{ fontSize: 8, fill: "rgba(255,255,255,0.2)", fontWeight: 700 }} tickLine={false} axisLine={false} />
+                                        <Tooltip
+                                            contentStyle={{ background: "hsl(var(--card))", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 11, fontWeight: 700 }}
+                                            labelStyle={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}
+                                            formatter={(val: any, name: any) => [
+                                                name === "xp" ? `${Number(val).toLocaleString()} XP` : `+${val} XP`,
+                                                name === "xp" ? "Total XP" : "Daily Earned"
+                                            ]}
+                                        />
+                                        <Area type="monotone" dataKey="xp" stroke="#A78BFA" strokeWidth={2} fill="url(#xpGrad)" dot={false} activeDot={{ r: 4, fill: "#A78BFA" }} />
+                                        <Area type="monotone" dataKey="daily" stroke="#60A5FA" strokeWidth={1.5} fill="none" strokeDasharray="3 3" dot={false} activeDot={{ r: 3, fill: "#60A5FA" }} />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                                <div className="flex items-center gap-4 mt-2">
+                                    <div className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-[#A78BFA] rounded" /><span className="text-[9px] font-bold text-foreground/30">Cumulative</span></div>
+                                    <div className="flex items-center gap-1.5"><span className="w-3 border-t border-dashed border-[#60A5FA]" /><span className="text-[9px] font-bold text-foreground/30">Daily</span></div>
+                                </div>
+                            </div>
+
+                            {/* XP by Source */}
+                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
+                                <div className="mb-4">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">XP by Source</p>
+                                    <p className="text-[9px] font-bold text-foreground/25 mt-0.5">All time breakdown</p>
+                                </div>
+                                {xpByType.length === 0 ? (
+                                    <p className="text-[10px] text-foreground/20 font-bold text-center py-8">No XP data yet</p>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {xpByType.slice(0, 5).map((src) => {
+                                            const totalXpAllSrc = xpByType.reduce((s, d) => s + d.amount, 0);
+                                            const pct = totalXpAllSrc > 0 ? (src.amount / totalXpAllSrc) * 100 : 0;
+                                            return (
+                                                <div key={src.label}>
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <span className="text-[10px] font-black text-foreground/60">{src.label}</span>
+                                                        <span className="text-[10px] font-black" style={{ color: src.color }}>+{src.amount.toLocaleString()}</span>
+                                                    </div>
+                                                    <div className="h-1.5 bg-foreground/[0.06] rounded-full overflow-hidden">
+                                                        <motion.div
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${pct}%` }}
+                                                            transition={{ duration: 0.8, ease: "easeOut" }}
+                                                            className="h-full rounded-full"
+                                                            style={{ background: src.color }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Follower Growth */}
+                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Follower Growth</p>
+                                        <p className="text-[9px] font-bold text-foreground/25 mt-0.5">Last 30 days</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-black text-pink-400">{stats?.subscribers ?? 0} total</p>
+                                        <p className="text-[9px] font-bold text-foreground/30">
+                                            +{followerGrowthData.reduce((s, d) => s + d.new, 0)} this month
+                                        </p>
+                                    </div>
+                                </div>
+                                {followers.length === 0 ? (
+                                    <div className="h-[120px] flex items-center justify-center">
+                                        <p className="text-[10px] font-bold text-foreground/20">No follower data yet</p>
+                                    </div>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height={120}>
+                                        <AreaChart data={followerGrowthData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                                            <defs>
+                                                <linearGradient id="followerGrad" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stopColor="#F472B6" stopOpacity={0.35} />
+                                                    <stop offset="100%" stopColor="#F472B6" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                                            <XAxis dataKey="label" tick={{ fontSize: 8, fill: "rgba(255,255,255,0.25)", fontWeight: 700 }} tickLine={false} axisLine={false} interval={5} />
+                                            <YAxis tick={{ fontSize: 8, fill: "rgba(255,255,255,0.2)", fontWeight: 700 }} tickLine={false} axisLine={false} allowDecimals={false} />
+                                            <Tooltip
+                                                contentStyle={{ background: "hsl(var(--card))", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 11, fontWeight: 700 }}
+                                                labelStyle={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}
+                                                formatter={(val: any, name: any) => [val, name === "followers" ? "Total Followers" : "New Today"]}
+                                            />
+                                            <Area type="monotone" dataKey="followers" stroke="#F472B6" strokeWidth={2} fill="url(#followerGrad)" dot={false} activeDot={{ r: 4, fill: "#F472B6" }} />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                )}
+                            </div>
+
+                            {/* Events vs Earnings */}
+                            <div className="lg:col-span-2 bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Events vs Earnings</p>
+                                        <p className="text-[9px] font-bold text-foreground/25 mt-0.5">Last 8 events</p>
+                                    </div>
+                                    <span className="text-[10px] font-black text-lime-400">
+                                        ${eventsEarningsData.reduce((s, d) => s + d.earnings, 0).toFixed(2)} earned
+                                    </span>
+                                </div>
+                                {eventsEarningsData.length === 0 ? (
+                                    <div className="h-[120px] flex items-center justify-center">
+                                        <p className="text-[10px] font-bold text-foreground/20">No event data yet</p>
+                                    </div>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height={120}>
+                                        <BarChart data={eventsEarningsData} barGap={4} margin={{ top: 0, right: 4, left: -20, bottom: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                                            <XAxis dataKey="label" tick={{ fontSize: 7, fill: "rgba(255,255,255,0.25)", fontWeight: 700 }} tickLine={false} axisLine={false} />
+                                            <YAxis tick={{ fontSize: 7, fill: "rgba(255,255,255,0.2)", fontWeight: 700 }} tickLine={false} axisLine={false} allowDecimals={false} />
+                                            <Tooltip
+                                                contentStyle={{ background: "hsl(var(--card))", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 11, fontWeight: 700 }}
+                                                labelStyle={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}
+                                                formatter={(val: any, name: any) => [name === "earnings" ? `$${Number(val).toFixed(2)}` : `${val} XP`, name === "earnings" ? "Earned (USDC)" : "XP Earned"]}
+                                            />
+                                            <Bar dataKey="earnings" fill="#A3E635" radius={[3, 3, 0, 0]} maxBarSize={20} />
+                                            <Bar dataKey="xp" fill="#A78BFA" radius={[3, 3, 0, 0]} maxBarSize={20} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                )}
+                                <div className="flex items-center gap-4 mt-2">
+                                    <div className="flex items-center gap-1.5"><span className="w-3 h-2 bg-[#A3E635] rounded-sm" /><span className="text-[9px] font-bold text-foreground/30">Earnings (USDC)</span></div>
+                                    <div className="flex items-center gap-1.5"><span className="w-3 h-2 bg-[#A78BFA] rounded-sm" /><span className="text-[9px] font-bold text-foreground/30">XP Earned</span></div>
+                                </div>
+                            </div>
+
+                            {/* Activity bar chart */}
+                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Activity</p>
+                                        <p className="text-[9px] font-bold text-foreground/25 mt-0.5">By week</p>
+                                    </div>
+                                    <div className="flex flex-col gap-1 items-end">
+                                        <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#60A5FA]" /><span className="text-[8px] font-bold text-foreground/40">Votes</span></div>
+                                        <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#A3E635]" /><span className="text-[8px] font-bold text-foreground/40">Posts</span></div>
+                                    </div>
+                                </div>
+                                <ResponsiveContainer width="100%" height={120}>
+                                    <BarChart data={activityData.slice(-6)} barGap={2} margin={{ top: 0, right: 2, left: -24, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                                        <XAxis dataKey="label" tick={{ fontSize: 7, fill: "rgba(255,255,255,0.25)", fontWeight: 700 }} tickLine={false} axisLine={false} />
+                                        <YAxis tick={{ fontSize: 7, fill: "rgba(255,255,255,0.2)", fontWeight: 700 }} tickLine={false} axisLine={false} allowDecimals={false} />
+                                        <Tooltip
+                                            contentStyle={{ background: "hsl(var(--card))", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 11, fontWeight: 700 }}
+                                            labelStyle={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}
+                                        />
+                                        <Bar dataKey="votes" fill="#60A5FA" radius={[3, 3, 0, 0]} maxBarSize={16} />
+                                        <Bar dataKey="posts" fill="#A3E635" radius={[3, 3, 0, 0]} maxBarSize={16} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+
+                            </div>
+                        </div>
+                    )}
 
                 </main>
             </SidebarLayout>

@@ -74,10 +74,10 @@ export default function Register() {
   }, [isConnected, isOnboarded, isInitialized, walletLoading, authLoading, role, router]);
 
   return (
-    <div className="flex min-h-screen bg-background text-white font-sans selection:bg-primary/30">
+    <div className="flex min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
       {/* Top Hero Image */}
       <div className="absolute top-0 left-0 w-full h-[50vh] z-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-background/90 to-background z-10" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-background z-10" />
         <AnimatePresence mode="wait">
           <motion.img
             key={selectedRole}
@@ -104,10 +104,10 @@ export default function Register() {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="text-center mb-10 space-y-3"
         >
-          <h1 className="text-4xl font-bold text-white tracking-tight drop-shadow-md">
+          <h1 className="text-4xl font-bold text-foreground tracking-tight drop-shadow-md">
             Choose your path
           </h1>
-          <p className="text-white/60 text-base font-medium leading-relaxed max-w-lg mx-auto">
+          <p className="text-foreground/60 text-base font-medium leading-relaxed max-w-lg mx-auto">
             Join as a creator to verify your attention and earn real rewards,{" "}
             <br className="hidden md:block" /> or sign up as a brand to launch
             immense campaigns and grow your audience.
@@ -147,7 +147,7 @@ export default function Register() {
               "w-full py-4 rounded-[16px] font-bold text-lg transition-all duration-150 ease-out shadow-[0_10px_30px_rgba(0,0,0,0.25)] flex items-center justify-center gap-3",
               selectedRole && !isConnecting && isInitialized && !walletLoading && !authLoading
                 ? "bg-primary text-white hover:bg-primary/90 hover:-translate-y-[1px] cursor-pointer"
-                : "bg-card text-white/20 cursor-not-allowed border border-border"
+                : "bg-card text-foreground/20 cursor-not-allowed border border-border"
             )}
           >
             {!isInitialized || walletLoading || authLoading ? (
@@ -170,7 +170,7 @@ export default function Register() {
         </motion.div>
 
         {/* Already have account */}
-        <p className="text-white/40 text-sm text-center">
+        <p className="text-foreground/40 text-sm text-center">
           Already have an account?{" "}
           <button
             onClick={() => connect()}

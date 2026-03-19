@@ -593,6 +593,23 @@ export class EventService {
     ]);
     const totalParticipants = participantSet.size;
 
+    // Strip vote counts for non-completed events — users and brand owners
+    // cannot see individual or total vote counts until the event ends.
+    if (event.status !== EventStatus.COMPLETED) {
+      if ((event as any)._count) (event as any)._count.votes = 0;
+      if ((event as any).eventAnalytics) (event as any).eventAnalytics.totalVotes = 0;
+      (event as any).proposals = ((event as any).proposals || []).map((p: any) => ({
+        ...p,
+        voteCount: 0,
+        _count: p._count ? { ...p._count, votes: 0 } : p._count,
+      }));
+      submissions = submissions.map((s: any) => ({
+        ...s,
+        voteCount: 0,
+        _count: s._count ? { ...s._count, votes: 0 } : s._count,
+      }));
+    }
+
     // If userId is provided, check for user's votes and submissions
     if (userId) {
       const [userVotes, userSubmission] = await Promise.all([

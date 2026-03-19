@@ -35,7 +35,7 @@ export default function SidebarItem({
                 // Active/Hover states
                 isActive
                     ? "bg-[#6366F1] text-white border border-white/10 shadow-[1px_1px_0px_0px_#FFFFFF]"
-                    : "text-white/50 hover:bg-white/5 hover:text-white",
+                    : "text-foreground/50 hover:bg-foreground/5 hover:text-foreground",
                 // Rounded
                 "rounded-xl"
             )}
@@ -53,7 +53,7 @@ export default function SidebarItem({
                 ) : isActive && ActiveIcon ? (
                     <ActiveIcon
                         size={18}
-                        className="transition-colors duration-150 text-white"
+                        className="transition-colors duration-150 text-foreground"
                     />
                 ) : Icon ? (
                     <Icon
@@ -61,8 +61,8 @@ export default function SidebarItem({
                         className={cn(
                             "transition-colors duration-150",
                             isActive
-                                ? "text-white"
-                                : "text-white/40 group-hover:text-white"
+                                ? "text-foreground"
+                                : "text-foreground/40 group-hover:text-foreground"
                         )}
                     />
                 ) : null}
@@ -71,7 +71,7 @@ export default function SidebarItem({
             <span
                 className={cn(
                     "whitespace-nowrap overflow-hidden transition-all duration-150 ease-out text-base",
-                    isActive ? "font-black text-white" : "font-semibold",
+                    isActive ? "font-black text-white" : "font-semibold text-foreground",
                     showExpanded ? "opacity-100 w-auto ml-3" : "opacity-0 w-0 ml-0"
                 )}
             >

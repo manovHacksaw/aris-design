@@ -57,7 +57,13 @@
       "Bash(cat /home/manov/Desktop/code/aris-design/client/app/\\\\\\(user\\\\\\)/activity/page.tsx 2>/dev/null || echo \"empty\")",
       "Bash(which cast:*)",
       "Bash(cast send:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(cat:*)",
+      "Bash(sed:*)",
+      "Bash(perl:*)",
+      "Bash(PIMLICO_API_KEY=pim_EUHoE84PA87vUFGYGNemv2 npx tsx src/scripts/recoverUsers.ts 2>&1)",
+      "Bash(PIMLICO_API_KEY=pim_Q4eNC7jUqJX851hdnJVrs5 npx tsx src/scripts/recoverUsers.ts 2>&1)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }

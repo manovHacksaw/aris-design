@@ -8,8 +8,8 @@ import { createPublicClient, http } from 'viem';
 
 const prisma = new PrismaClient();
 
-const REWARDS_VAULT = '0x9a30294499b8784b80096b6C6Dd87456972eCA70';
-const RPC_URL = 'https://rpc-amoy.polygon.technology';
+const REWARDS_VAULT = (process.env.REWARDS_VAULT_ADDRESS || '0x34C5A617e32c84BC9A54c862723FA5538f42F221') as `0x${string}`;
+const RPC_URL = process.env.RPC_URL || 'https://rpc-amoy.polygon.technology';
 
 const client = createPublicClient({
   chain: {
@@ -23,7 +23,7 @@ const client = createPublicClient({
 
 const ABI = [{
   inputs: [{ name: 'user', type: 'address' }],
-  name: 'getAccumulatedRewards',
+  name: 'getUserClaimableBalance',
   outputs: [{ name: '', type: 'uint256' }],
   stateMutability: 'view',
   type: 'function',
@@ -43,7 +43,7 @@ async function getOnChainBalance(address: string): Promise<number> {
     const balance = await client.readContract({
       address: REWARDS_VAULT,
       abi: ABI,
-      functionName: 'getAccumulatedRewards',
+      functionName: 'getUserClaimableBalance',
       args: [address as `0x${string}`],
     });
     return Number(balance) / 1e6;

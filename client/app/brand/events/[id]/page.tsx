@@ -515,7 +515,13 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         if (!socket || !id) return;
         socket.emit("join-event", id);
         const handleVoteUpdate = ({ submissionId, delta }: { submissionId: string; delta: number }) => {
-            setSubmissions((prev) => prev.map((s) => s.id === submissionId ? { ...s, _count: { votes: (s._count?.votes ?? 0) + delta } } : s));
+            // Only update live counts when the event is completed (votes visible)
+            setEvent((prev) => {
+                if (prev?.status === "completed") {
+                    setSubmissions((subs) => subs.map((s) => s.id === submissionId ? { ...s, _count: { votes: (s._count?.votes ?? 0) + delta } } : s));
+                }
+                return prev;
+            });
             setOptimisticVoteDelta((prev) => (prev === submissionId ? null : prev));
         };
         const handlePresenceUpdate = ({ activeCount }: { activeCount: number }) => setActiveViewers(activeCount);
@@ -799,6 +805,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                     onVote={() => handleVote(sub.id)}
                                                     disabled={!!votedSubmissionId || (event.eventType !== "vote_only" && sub.userId === user?.id)}
                                                     optionIndex={event.eventType === "vote_only" ? idx : undefined}
+                                                    showVoteCount={false}
                                                 />
                                             </motion.div>
                                         ))}
@@ -817,7 +824,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                     {enrichedSubmissions.length > 0 ? (
                                         <div className={gridView ? "grid grid-cols-2 md:grid-cols-3 gap-4" : "flex flex-col gap-3"}>
                                             {sortedSubmissions.map((sub) => (
-                                                <PostSubmissionCard key={sub.id} submission={toPostSubmission(sub, user?.id)} />
+                                                <PostSubmissionCard key={sub.id} submission={toPostSubmission(sub, user?.id)} showVoteCount={false} />
                                             ))}
                                         </div>
                                     ) : (
@@ -903,7 +910,7 @@ function CompletedView({ event, submissions, currentUserId, gridView }: {
                                         <Icon className={cn("w-3 h-3", medalColors[i])} />
                                         {i === 0 ? "Winner" : `#${i + 1}`}
                                     </div>
-                                    <PostSubmissionCard submission={toPostSubmission(sub, currentUserId)} />
+                                    <PostSubmissionCard submission={toPostSubmission(sub, currentUserId)} showVoteCount={true} />
                                 </div>
                             );
                         })}
@@ -916,7 +923,7 @@ function CompletedView({ event, submissions, currentUserId, gridView }: {
                         All Participants ({others.length})
                     </h3>
                     <div className={gridView ? "grid grid-cols-2 lg:grid-cols-3 gap-4" : "flex flex-col gap-3"}>
-                        {others.map((sub) => <PostSubmissionCard key={sub.id} submission={toPostSubmission(sub, currentUserId)} />)}
+                        {others.map((sub) => <PostSubmissionCard key={sub.id} submission={toPostSubmission(sub, currentUserId)} showVoteCount={true} />)}
                     </div>
                 </div>
             )}

@@ -13,6 +13,8 @@ export interface Brand {
   contactEmail: string | null;
   isActive: boolean;
   isVerified: boolean;
+  isOwner?: boolean;
+  followerCount?: number;
   level: number;
   eventsCreated: number;
   uniqueParticipants: number;
@@ -26,6 +28,7 @@ export interface Brand {
     contactRole: string;
     phoneNumber: string;
   } | null;
+  events?: any[];
   createdAt: string;
   updatedAt: string;
 }
@@ -55,7 +58,11 @@ export async function getBrandAnalyticsOverview(): Promise<any> {
 }
 
 export async function getBrandById(id: string): Promise<Brand> {
-  return apiRequest<Brand>(`/brands/${id}`);
+  return apiRequest<Brand>(`/brands/public/${id}`);
+}
+
+export async function getPublicBrandProfile(identifier: string): Promise<Brand> {
+  return apiRequest<Brand>(`/brands/public/${identifier}`);
 }
 
 export async function getAllBrands(params?: { limit?: number; offset?: number }): Promise<{ success: boolean; brands: Brand[]; total: number }> {
@@ -63,5 +70,5 @@ export async function getAllBrands(params?: { limit?: number; offset?: number })
   if (params?.limit) searchParams.set("limit", params.limit.toString());
   if (params?.offset) searchParams.set("offset", params.offset.toString());
   const qs = searchParams.toString();
-  return apiRequest<{ success: boolean; brands: Brand[] ; total: number }>(`/brands${qs ? `?${qs}` : ""}`);
+  return apiRequest<{ success: boolean; brands: Brand[]; total: number }>(`/brands${qs ? `?${qs}` : ""}`);
 }

@@ -99,9 +99,15 @@ export class AuthService {
         if (!user) {
             // Create new user
             const isVerificationEnabled = process.env.ENABLE_VERIFICATION === 'true';
+            // Don't use walletAddress if it equals eoaAddress — that means the smart wallet
+            // wasn't ready yet and the client sent the embedded EOA as the smart account.
+            const walletIsSmartAccount = targetWalletAddress && targetWalletAddress !== targetEoaAddress;
+            if (targetWalletAddress && !walletIsSmartAccount) {
+                console.warn(`⚠️ AuthService: walletAddress ${targetWalletAddress} equals eoaAddress on new user — storing null for walletAddress until smart account is available.`);
+            }
             // If the wallet is already taken, this new user gets NO wallet link initially (or a placeholder)
             // to avoid unique constraint violations. They can link a wallet later if it's freed.
-            let creationWallet = targetWalletAddress;
+            let creationWallet = walletIsSmartAccount ? targetWalletAddress : undefined;
             if (targetWalletAddress) {
                 const existingWalletUser = await prisma.user.findUnique({ where: { walletAddress: targetWalletAddress } });
                 if (existingWalletUser) {
@@ -139,12 +145,21 @@ export class AuthService {
                 }
             })();
         } else {
+            // Only treat walletAddress as a smart account if it differs from eoaAddress.
+            // If they're the same the client sent the embedded EOA wallet instead of the
+            // smart account (smart wallet not ready yet) — don't overwrite a previously
+            // saved smart account address with an EOA.
+            const isSmartAccount = targetWalletAddress && targetWalletAddress !== targetEoaAddress;
+            if (targetWalletAddress && !isSmartAccount) {
+                console.warn(`⚠️ AuthService: walletAddress ${targetWalletAddress} equals eoaAddress — skipping walletAddress update for user ${user.id} to avoid overwriting smart account.`);
+            }
+
             // Update last login, sync wallet addresses, and backfill avatarUrl
             user = await prisma.user.update({
                 where: { id: user.id },
                 data: {
                     lastLoginAt: new Date(),
-                    ...(targetWalletAddress ? { walletAddress: targetWalletAddress } : {}),
+                    ...(isSmartAccount ? { walletAddress: targetWalletAddress } : {}),
                     ...(targetEoaAddress ? { eoaAddress: targetEoaAddress } : {}),
                     ...(avatarUrl && !user.avatarUrl ? { avatarUrl } : {}),
                 },

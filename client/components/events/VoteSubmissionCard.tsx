@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check, Vote, ImageIcon } from "lucide-react";
+import { Check, Vote, ImageIcon, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VoteSubmission } from "@/types/events";
 import { formatCount } from "@/lib/eventUtils";
@@ -11,17 +11,21 @@ import { useState } from "react";
 interface VoteSubmissionCardProps {
     submission: VoteSubmission;
     isVoted: boolean;
+    isPending?: boolean;
     disabled: boolean;
     onVote: () => void;
     optionIndex?: number;
+    showVoteCount?: boolean;
 }
 
 export default function VoteSubmissionCard({
     submission,
     isVoted,
+    isPending = false,
     disabled,
     onVote,
     optionIndex,
+    showVoteCount = false,
 }: VoteSubmissionCardProps) {
     const [imgError, setImgError] = useState(false);
 
@@ -41,8 +45,10 @@ export default function VoteSubmissionCard({
                 "border-2",
                 isVoted
                     ? "border-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.15)]"
-                    : "border-transparent hover:border-white/20",
-                disabled && !isVoted && "opacity-40 cursor-default",
+                    : isPending
+                        ? "border-lime-400/70 shadow-[0_0_0_4px_rgba(163,230,53,0.12)]"
+                        : "border-transparent hover:border-white/20",
+                disabled && !isVoted && !isPending && "opacity-40 cursor-default",
                 !disabled && "hover:shadow-2xl"
             )}
         >
@@ -126,18 +132,25 @@ export default function VoteSubmissionCard({
 
                 {/* Bottom: vote count + vote button */}
                 <div className="absolute bottom-0 inset-x-0 p-4 flex items-end justify-between">
-                    <div className="flex items-center gap-1.5 drop-shadow-md">
-                        <Vote className={cn("w-3.5 h-3.5", (!submission.textContent || submission.mediaType === "text") ? "text-white/60" : "text-foreground/60")} />
-                        <span className={cn("text-xs font-black", (!submission.textContent || submission.mediaType === "text") ? "text-white/80" : "text-foreground/80")}>
-                            {formatCount(submission.voteCount)}
-                        </span>
-                    </div>
+                    {showVoteCount && (
+                        <div className="flex items-center gap-1.5 drop-shadow-md">
+                            <Vote className={cn("w-3.5 h-3.5", (!submission.textContent || submission.mediaType === "text") ? "text-white/60" : "text-foreground/60")} />
+                            <span className={cn("text-xs font-black", (!submission.textContent || submission.mediaType === "text") ? "text-white/80" : "text-foreground/80")}>
+                                {formatCount(submission.voteCount)}
+                            </span>
+                        </div>
+                    )}
 
                     {/* Vote CTA */}
                     {isVoted ? (
-                        <div className="flex items-center gap-2 bg-primary px-4 py-2 rounded-full shadow-lg">
-                            <Check className="w-3.5 h-3.5 text-white" />
-                            <span className="text-[11px] font-black text-white uppercase tracking-wider">Voted</span>
+                        <div className="flex items-center gap-2 bg-lime-400 px-4 py-2 rounded-full shadow-lg">
+                            <Check className="w-3.5 h-3.5 text-black" />
+                            <span className="text-[11px] font-black text-black uppercase tracking-wider">Voted</span>
+                        </div>
+                    ) : isPending ? (
+                        <div className="flex items-center gap-2 bg-lime-400 px-4 py-2 rounded-full shadow-lg">
+                            <Circle className="w-2.5 h-2.5 fill-black text-black" />
+                            <span className="text-[11px] font-black text-black uppercase tracking-wider">Selected</span>
                         </div>
                     ) : (
                         <div className={cn(
@@ -147,15 +160,18 @@ export default function VoteSubmissionCard({
                                 : "bg-white/15 backdrop-blur-md border border-white/20 hover:bg-primary hover:border-primary group-hover:scale-105"
                         )}>
                             <span className="text-[11px] font-black text-white uppercase tracking-wider">
-                                {disabled ? "Closed" : "Vote"}
+                                {submission.isOwn ? "My Content" : "Vote"}
                             </span>
                         </div>
                     )}
                 </div>
 
-                {/* Voted overlay */}
+                {/* Voted / Pending overlay */}
                 {isVoted && (
                     <div className="absolute inset-0 bg-primary/10 pointer-events-none" />
+                )}
+                {isPending && (
+                    <div className="absolute inset-0 bg-lime-400/8 pointer-events-none" />
                 )}
             </div>
         </motion.div>

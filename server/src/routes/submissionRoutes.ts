@@ -7,13 +7,13 @@ import {
     getUserSubmission,
     checkIfUserHasSubmitted,
 } from '../controllers/submissionController.js';
-import { authenticateJWT } from '../middlewares/authMiddleware.js';
+import { authenticateJWT, authenticateOptional } from '../middlewares/authMiddleware.js';
 import { apiCacheHeaders } from '../middlewares/cacheMiddleware.js';
 
 const router = Router({ mergeParams: true });
 
 // GET /api/events/:eventId/submissions
-router.get('/', apiCacheHeaders, getSubmissionsByEvent);
+router.get('/', authenticateOptional, apiCacheHeaders, getSubmissionsByEvent);
 
 // GET /api/events/:eventId/submissions/has-submitted
 router.get('/has-submitted', authenticateJWT, checkIfUserHasSubmitted);

@@ -8,9 +8,10 @@ import Link from "next/link";
 import SidebarLayout from "@/components/home/SidebarLayout";
 import BottomNav from "@/components/BottomNav";
 import { getBrandById, Brand } from "@/services/brand.service";
-import { getEvents } from "@/services/event.service";
+import { getSubscriptionStatus, subscribeToBrand, unsubscribeFromBrand } from "@/services/subscription.service";
 import type { Event } from "@/services/event.service";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/context/UserContext";
 
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
@@ -39,32 +40,40 @@ function SocialLink({ href, icon: Icon, label }: { href: string; icon: any; labe
 export default function BrandPublicPage() {
     const params = useParams();
     const router = useRouter();
-    const id = params.id as string;
+    const identifier = params.identifier as string;
 
     const [brand, setBrand] = useState<Brand | null>(null);
-    const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
     const [notFound, setNotFound] = useState(false);
     const [subscribed, setSubscribed] = useState(false);
     const [activeTab, setActiveTab] = useState<"events" | "about">("events");
+    const { user: currentUser } = useUser();
 
     useEffect(() => {
-        if (!id) return;
+        if (!identifier) return;
         setLoading(true);
-        Promise.allSettled([
-            getBrandById(id),
-            getEvents({ brandId: id, limit: 20 }),
-        ]).then(([brandRes, eventsRes]) => {
-            if (brandRes.status === "fulfilled") {
-                setBrand(brandRes.value);
-            } else {
-                setNotFound(true);
+        getBrandById(identifier).then(data => {
+            setBrand(data);
+            if (currentUser) {
+                getSubscriptionStatus(data.id).then(setSubscribed);
             }
-            if (eventsRes.status === "fulfilled") {
-                setEvents(eventsRes.value.events || []);
-            }
+        }).catch(() => {
+            setNotFound(true);
         }).finally(() => setLoading(false));
-    }, [id]);
+    }, [identifier, currentUser]);
+
+    const handleToggleSubscribe = async () => {
+        if (!brand || !currentUser) return;
+        const prev = subscribed;
+        setSubscribed(!prev);
+
+        try {
+            if (prev) await unsubscribeFromBrand(brand.id);
+            else await subscribeToBrand(brand.id);
+        } catch {
+            setSubscribed(prev);
+        }
+    };
 
     if (loading) {
         return (
@@ -95,9 +104,10 @@ export default function BrandPublicPage() {
             ? `${PINATA_GW}/${brand.logoCid}`
             : null;
 
+    const bEvents = brand.events || [];
     const socialLinks = brand.socialLinks ?? {};
-    const activeEvents = events.filter(e => e.status === "posting" || e.status === "voting");
-    const pastEvents = events.filter(e => e.status === "completed");
+    const activeEvents = bEvents.filter((e: any) => e.status === "posting" || e.status === "voting");
+    const pastEvents = bEvents.filter((e: any) => e.status === "completed");
 
     return (
         <div className="min-h-screen bg-background text-foreground font-sans">
@@ -156,17 +166,26 @@ export default function BrandPublicPage() {
 
                                     {/* Actions + social */}
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <button
-                                            onClick={() => setSubscribed(p => !p)}
-                                            className={cn(
-                                                "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all",
-                                                subscribed
-                                                    ? "bg-foreground/5 border-border text-foreground/50 hover:bg-red-500/10 hover:text-red-400 hover:border-red-400/20"
-                                                    : "bg-primary border-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90"
-                                            )}
-                                        >
-                                            {subscribed ? <><BellOff className="w-3.5 h-3.5" /> Subscribed</> : <><Bell className="w-3.5 h-3.5" /> Subscribe</>}
-                                        </button>
+                                        {brand.isOwner ? (
+                                            <Link
+                                                href="/brand/settings"
+                                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-foreground/5 border border-border text-foreground hover:bg-foreground/10 transition-all"
+                                            >
+                                                Edit Profile
+                                            </Link>
+                                        ) : (
+                                            <button
+                                                onClick={() => setSubscribed(p => !p)}
+                                                className={cn(
+                                                    "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all",
+                                                    subscribed
+                                                        ? "bg-foreground/5 border-border text-foreground/50 hover:bg-red-500/10 hover:text-red-400 hover:border-red-400/20"
+                                                        : "bg-primary border-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90"
+                                                )}
+                                            >
+                                                {subscribed ? <><BellOff className="w-3.5 h-3.5" /> Subscribed</> : <><Bell className="w-3.5 h-3.5" /> Subscribe</>}
+                                            </button>
+                                        )}
                                         {socialLinks.twitter && <SocialLink href={socialLinks.twitter} icon={Twitter} label="Twitter" />}
                                         {socialLinks.instagram && <SocialLink href={socialLinks.instagram} icon={Instagram} label="Instagram" />}
                                         {brand.websiteUrl && <SocialLink href={brand.websiteUrl} icon={Globe} label="Website" />}
@@ -178,7 +197,7 @@ export default function BrandPublicPage() {
                             <div className="flex flex-wrap gap-6 mt-6 pt-5 border-t border-border">
                                 <div>
                                     <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30 mb-0.5">Events</p>
-                                    <p className="text-2xl font-black text-foreground">{brand.eventsCreated ?? events.length}</p>
+                                    <p className="text-2xl font-black text-foreground">{brand.eventsCreated ?? bEvents.length}</p>
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30 mb-0.5">Participants</p>
@@ -222,24 +241,24 @@ export default function BrandPublicPage() {
                                 <section>
                                     <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30 mb-4">Live Now</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                                        {activeEvents.map(ev => <EventCard key={ev.id} event={ev} />)}
+                                        {activeEvents.map((ev: any) => <EventCard key={ev.id} event={ev} />)}
                                     </div>
                                 </section>
                             )}
 
                             {/* All events */}
-                            {events.filter(e => e.status !== "posting" && e.status !== "voting").length > 0 && (
+                            {bEvents.filter((e: any) => e.status !== "posting" && e.status !== "voting").length > 0 && (
                                 <section>
                                     <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30 mb-4">
                                         {activeEvents.length > 0 ? "Past Events" : "Events"}
                                     </p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                                        {events.filter(e => e.status !== "posting" && e.status !== "voting").map(ev => <EventCard key={ev.id} event={ev} />)}
+                                        {bEvents.filter((e: any) => e.status !== "posting" && e.status !== "voting").map((ev: any) => <EventCard key={ev.id} event={ev} />)}
                                     </div>
                                 </section>
                             )}
 
-                            {events.length === 0 && (
+                            {bEvents.length === 0 && (
                                 <div className="flex flex-col items-center justify-center py-24 gap-4 text-foreground/20">
                                     <Calendar className="w-10 h-10" />
                                     <p className="text-[11px] font-black uppercase tracking-widest">No events yet</p>

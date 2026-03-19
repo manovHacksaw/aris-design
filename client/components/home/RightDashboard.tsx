@@ -160,15 +160,15 @@ export default function RightDashboard() {
       </Link>
 
       {/* 2. Wallet Card */}
-      <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-[32px] p-6 shadow-lg flex flex-col relative overflow-hidden">
+      <div className="bg-card border border-border rounded-[32px] p-6 shadow-sm flex flex-col relative overflow-hidden">
 
         {/* Balance */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
             <Image src="/usdc.png" alt="USDC" width={36} height={36} className="rounded-full" />
             <div className="flex items-baseline gap-2">
-              <h3 className="text-4xl font-black text-white tracking-tight">${balance}</h3>
-              <span className="text-lg font-bold text-white/30">USDC</span>
+              <h3 className="text-4xl font-black text-foreground tracking-tight">${balance}</h3>
+              <span className="text-lg font-bold text-foreground/40">USDC</span>
             </div>
           </div>
           <p className="text-[11px] font-bold text-[#60A5FA] mt-2">+$2.20 from last week</p>
@@ -176,24 +176,24 @@ export default function RightDashboard() {
 
         {/* Action Buttons */}
         <div className="flex gap-3">
-          <button className="flex-1 flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-sm font-black text-white/70 transition-all active:scale-[0.98]">
+          <button className="flex-1 flex items-center justify-center gap-2 py-3 bg-foreground/5 hover:bg-foreground/10 border border-border rounded-2xl text-sm font-black text-foreground/70 transition-all active:scale-[0.98]">
             <Plus size={18} />
             Top Up
           </button>
-          <button className="flex-1 flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-sm font-black text-white/70 transition-all active:scale-[0.98]">
+          <button className="flex-1 flex items-center justify-center gap-2 py-3 bg-foreground/5 hover:bg-foreground/10 border border-border rounded-2xl text-sm font-black text-foreground/70 transition-all active:scale-[0.98]">
             <Send size={18} className="-rotate-45" />
             Transfer
           </button>
         </div>
 
         {/* Address & Explorer */}
-        <div className="mt-6 pt-4 border-t border-white/[0.06] flex justify-between items-center">
+        <div className="mt-6 pt-4 border-t border-border flex justify-between items-center">
           <button
             onClick={() => {
               address && navigator.clipboard.writeText(address);
               toast.success("Address copied!");
             }}
-            className="text-[10px] font-bold text-white/30 hover:text-white transition-colors flex items-center gap-1.5"
+            className="text-[10px] font-bold text-foreground/40 hover:text-foreground transition-colors flex items-center gap-1.5"
           >
             {truncatedAddress} <Copy size={10} />
           </button>
@@ -201,7 +201,7 @@ export default function RightDashboard() {
             href={address ? `https://amoy.polygonscan.com/address/${address}` : "#"}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[10px] font-black text-white/30 hover:text-white uppercase tracking-widest flex items-center gap-1.5"
+            className="text-[10px] font-black text-foreground/40 hover:text-foreground uppercase tracking-widest flex items-center gap-1.5"
           >
             Explorer <ExternalLink size={10} />
           </a>
@@ -209,9 +209,9 @@ export default function RightDashboard() {
       </div>
 
       {/* 3. XP Tracking */}
-      <div className="bg-[#181818] border border-white/5 rounded-[28px] p-6 shadow-sm flex flex-col h-auto">
+      <div className="bg-card border border-border rounded-[28px] p-6 shadow-sm flex flex-col h-auto">
         <div className="flex items-center justify-between mb-6">
-          <span className="text-[13px] font-black text-white/90">XP Tracking</span>
+          <span className="text-[13px] font-black text-foreground">XP Tracking</span>
           <Link href="/dashboard" className="text-[11px] font-black text-[#A78BFA] hover:underline uppercase tracking-wider">
             View Dashboard
           </Link>
@@ -219,50 +219,69 @@ export default function RightDashboard() {
 
         <div className="mb-8">
           <h4 className="text-4xl font-black text-[#A78BFA] tracking-tight">{earnedToday} XP</h4>
-          <p className="text-xs font-bold text-white/30">Earned Today</p>
+          <p className="text-xs font-bold text-foreground/50">Earned Today</p>
         </div>
 
         {/* Bar chart — last 7 days */}
-        <div className="h-28 flex items-end justify-between gap-1.5 px-0.5 mb-8 relative z-10">
-          {weeklyBars.map((pct, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center justify-end h-full group/bar relative">
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md px-2 py-1 rounded text-[10px] font-black text-white opacity-0 group-hover/bar:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
-                {dailyXP[i]} XP
+        <div className="flex items-end justify-between gap-1.5 px-0.5 mb-3 relative z-10" style={{ height: "7rem" }}>
+          {weeklyBars.map((pct, i) => {
+            const dayDate = new Date();
+            dayDate.setDate(dayDate.getDate() - (6 - i));
+            return (
+              <div key={i} className="flex-1 flex flex-col items-center justify-end h-full group/bar relative">
+                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-foreground/90 backdrop-blur-md px-2 py-1 rounded text-[10px] font-black text-background opacity-0 group-hover/bar:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
+                  {dailyXP[i]} XP
+                </div>
+                <motion.div
+                  initial={{ height: 0 }}
+                  animate={{ height: `${pct || 2}%` }}
+                  className={cn(
+                    "w-full transition-all duration-300 rounded-sm",
+                    i === 6 ? "bg-[#A78BFA]" : "bg-[#A78BFA]/20"
+                  )}
+                />
               </div>
-              <motion.div
-                initial={{ height: 0 }}
-                animate={{ height: `${pct || 2}%` }}
-                className={cn(
-                  "w-full transition-all duration-300 rounded-sm",
-                  i === 6 ? "bg-[#A78BFA]" : "bg-[#A78BFA]/20"
-                )}
-              />
-            </div>
-          ))}
+            );
+          })}
+        </div>
+        {/* Day labels */}
+        <div className="flex justify-between gap-1.5 px-0.5 mb-5">
+          {weeklyBars.map((_, i) => {
+            const dayDate = new Date();
+            dayDate.setDate(dayDate.getDate() - (6 - i));
+            const dayName = dayDate.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase();
+            return (
+              <div key={i} className="flex-1 text-center">
+                <span className={cn("text-[8px] font-black tracking-wide", i === 6 ? "text-[#A78BFA]" : "text-foreground/20")}>
+                  {dayName}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
         {/* Level progress bar */}
         <div className="space-y-3">
-          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-foreground/10 rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               className="h-full bg-[#A78BFA] rounded-full"
             />
           </div>
-          <p className="text-[10px] font-bold text-white/20 text-center uppercase tracking-[0.15em]">
+          <p className="text-[10px] font-bold text-foreground/40 text-center uppercase tracking-[0.15em]">
             {progress}% to next level
           </p>
         </div>
       </div>
 
       {/* 4. Referral Card */}
-      <div className="bg-[#111111] border border-white/5 rounded-[24px] p-6 shadow-xl">
-        <h3 className="text-[17px] font-black text-white mb-1 tracking-tight">Earn with Referrals</h3>
-        <p className="text-[13px] font-medium text-white/40 mb-6">Invite friends and get 10% of their XP.</p>
+      <div className="bg-card border border-border rounded-[24px] p-6 shadow-xl">
+        <h3 className="text-[17px] font-black text-foreground mb-1 tracking-tight">Earn with Referrals</h3>
+        <p className="text-[13px] font-medium text-foreground/50 mb-6">Invite friends and get 10% of their XP.</p>
 
         <div className="flex items-center gap-2">
-          <div className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 font-mono text-[13px] text-white/60 font-bold tracking-tight truncate">
+          <div className="flex-1 bg-foreground/5 border border-border rounded-xl px-4 py-3.5 font-mono text-[13px] text-foreground/60 font-bold tracking-tight truncate">
             {referralCode}
           </div>
           <button
@@ -280,30 +299,30 @@ export default function RightDashboard() {
       {/* 5. XP History */}
       <div className="mt-2 px-2">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em]">XP History</h3>
+          <h3 className="text-[11px] font-black text-foreground/50 uppercase tracking-[0.2em]">XP History</h3>
           <Link href="/dashboard" className="text-[11px] font-black text-[#A78BFA] hover:underline uppercase tracking-widest">
             View All
           </Link>
         </div>
 
         {recentTx.length === 0 ? (
-          <div className="bg-[#181818] border border-white/5 rounded-2xl p-4 text-center">
-            <p className="text-[11px] font-bold text-white/20 uppercase tracking-wider">No XP activity yet</p>
+          <div className="bg-card border border-border rounded-2xl p-4 text-center">
+            <p className="text-[11px] font-bold text-foreground/40 uppercase tracking-wider">No XP activity yet</p>
           </div>
         ) : (
           <div className="space-y-3">
             {recentTx.map((tx) => (
               <div
                 key={tx.id}
-                className="bg-[#181818] border border-white/5 rounded-2xl p-4 flex items-center justify-between group hover:border-[#A78BFA]/20 transition-colors shadow-sm"
+                className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between group hover:border-[#A78BFA]/20 transition-colors shadow-sm"
               >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-[#A78BFA]/10 flex items-center justify-center border border-[#A78BFA]/20">
                     <Zap size={18} className="text-[#A78BFA]" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-white leading-snug">{txLabel(tx)}</p>
-                    <p className="text-[10px] font-bold text-white/20">{relativeTime(tx.createdAt)}</p>
+                    <p className="text-sm font-bold text-foreground leading-snug">{txLabel(tx)}</p>
+                    <p className="text-[10px] font-bold text-foreground/40">{relativeTime(tx.createdAt)}</p>
                   </div>
                 </div>
                 <span className={cn("text-xs font-black", tx.amount >= 0 ? "text-[#A78BFA]" : "text-red-400")}>

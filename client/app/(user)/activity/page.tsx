@@ -16,12 +16,12 @@ import type { UserStats } from "@/types/user";
 
 // ─── Tiers ───────────────────────────────────────────────────────
 const TIERS = [
-  { min: 1,  max: 2,  name: "Rookie",  color: "text-zinc-400",   bg: "bg-zinc-500/10",  bar: "bg-zinc-400"   },
-  { min: 3,  max: 5,  name: "Hustler", color: "text-blue-400",   bg: "bg-blue-500/10",  bar: "bg-blue-400"   },
-  { min: 6,  max: 9,  name: "Creator", color: "text-purple-400", bg: "bg-purple-500/10",bar: "bg-purple-400" },
-  { min: 10, max: 14, name: "Veteran", color: "text-orange-400", bg: "bg-orange-500/10",bar: "bg-orange-400" },
-  { min: 15, max: 19, name: "Elite",   color: "text-yellow-400", bg: "bg-yellow-500/10",bar: "bg-yellow-400" },
-  { min: 20, max: 999,name: "Legend",  color: "text-lime-400",   bg: "bg-lime-400/10",  bar: "bg-lime-400"   },
+  { min: 1, max: 2, name: "Rookie", color: "text-zinc-400", bg: "bg-zinc-500/10", bar: "bg-zinc-400" },
+  { min: 3, max: 5, name: "Hustler", color: "text-blue-400", bg: "bg-blue-500/10", bar: "bg-blue-400" },
+  { min: 6, max: 9, name: "Creator", color: "text-purple-400", bg: "bg-purple-500/10", bar: "bg-purple-400" },
+  { min: 10, max: 14, name: "Veteran", color: "text-orange-400", bg: "bg-orange-500/10", bar: "bg-orange-400" },
+  { min: 15, max: 19, name: "Elite", color: "text-yellow-400", bg: "bg-yellow-500/10", bar: "bg-yellow-400" },
+  { min: 20, max: 999, name: "Legend", color: "text-lime-400", bg: "bg-lime-400/10", bar: "bg-lime-400" },
 ] as const;
 
 function getTier(level: number) {
@@ -100,22 +100,22 @@ export default function ActivityPage() {
   );
   const feed = tab === "post" ? posts : tab === "vote" ? votes : allFeed;
 
-  const creationScore  = Math.min(100, (stats?.posts ?? 0) * 10);
-  const socialScore    = Math.min(100, (stats?.votesCast ?? 0) * 2);
+  const creationScore = Math.min(100, (stats?.posts ?? 0) * 10);
+  const socialScore = Math.min(100, (stats?.votesCast ?? 0) * 2);
   const communityScore = Math.min(100, (stats?.events ?? 0) * 15);
 
   return (
-    <div className="min-h-screen bg-background text-white font-sans selection:bg-primary/30">
+    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
       <SidebarLayout>
         <main className="w-full pt-6 lg:pt-10 pb-24 md:pb-12 space-y-8">
 
           {/* ── Header ── */}
           <div className="space-y-1">
-            <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-white uppercase leading-[0.92] tracking-tight">
+            <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight">
               Activity
             </h1>
-            <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">
-              Your digital footprint on Aris
+            <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em]">
+              Check your XP and rewards
             </p>
           </div>
 
@@ -129,11 +129,11 @@ export default function ActivityPage() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {[
-                { label: "Posts",          value: String(stats?.posts ?? 0),                                          icon: ImageIcon,         color: "text-lime-400"   },
-                { label: "Votes Cast",     value: String(stats?.votesCast ?? 0),                                      icon: MousePointerClick, color: "text-blue-400"   },
-                { label: "Votes Received", value: String(stats?.votesReceived ?? 0),                                  icon: ThumbsUp,          color: "text-purple-400" },
-                { label: "Events Joined",  value: String(stats?.events ?? 0),                                         icon: Trophy,            color: "text-orange-400" },
-                { label: "Earnings",       value: stats?.earnings ? `$${stats.earnings.toFixed(2)}` : "$0.00",        icon: DollarSign,        color: "text-yellow-400" },
+                { label: "Posts", value: String(stats?.posts ?? 0), icon: ImageIcon, color: "text-lime-400" },
+                { label: "Votes Cast", value: String(stats?.votesCast ?? 0), icon: MousePointerClick, color: "text-blue-400" },
+                { label: "Votes Received", value: String(stats?.votesReceived ?? 0), icon: ThumbsUp, color: "text-purple-400" },
+                { label: "Events Joined", value: String(stats?.events ?? 0), icon: Trophy, color: "text-orange-400" },
+                { label: "Earnings", value: stats?.earnings ? `$${stats.earnings.toFixed(2)}` : "$0.00", icon: DollarSign, color: "text-yellow-400" },
               ].map((s, i) => (
                 <motion.div
                   key={s.label}
@@ -146,8 +146,8 @@ export default function ActivityPage() {
                     <s.icon className={cn("w-4 h-4", s.color)} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/30 leading-none mb-1">{s.label}</p>
-                    <p className="font-display text-2xl text-white tracking-tight leading-none">{s.value}</p>
+                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-foreground/40 leading-none mb-1">{s.label}</p>
+                    <p className="font-display text-2xl text-foreground tracking-tight leading-none">{s.value}</p>
                   </div>
                 </motion.div>
               ))}
@@ -164,7 +164,7 @@ export default function ActivityPage() {
                   "px-6 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all border",
                   tab === t
                     ? "bg-white text-black border-white"
-                    : "bg-white/[0.04] text-white/40 border-white/[0.06] hover:bg-white/[0.08] hover:text-white/80"
+                    : "bg-white/[0.04] text-foreground/40 border-white/[0.06] hover:bg-white/[0.08] hover:text-foreground/80"
                 )}
               >
                 {t === "all" ? "All Activity" : t === "post" ? `Posts (${posts.length})` : `Votes (${votes.length})`}
@@ -177,7 +177,7 @@ export default function ActivityPage() {
 
             {/* ── Feed ── */}
             <div className="flex-1 min-w-0 space-y-3">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">
                 {feed.length} {tab === "all" ? "events" : tab === "post" ? "posts" : "votes"}
               </p>
 
@@ -191,11 +191,11 @@ export default function ActivityPage() {
                 <div className="py-20 text-center bg-white/[0.02] rounded-[24px] border border-dashed border-white/[0.07]">
                   <div className="w-12 h-12 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
                     {tab === "vote"
-                      ? <MousePointerClick className="w-5 h-5 text-white/20" />
-                      : <ImageIcon className="w-5 h-5 text-white/20" />
+                      ? <MousePointerClick className="w-5 h-5 text-foreground/20" />
+                      : <ImageIcon className="w-5 h-5 text-foreground/20" />
                     }
                   </div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">No activity yet</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/30">No activity yet</p>
                 </div>
               ) : (
                 feed.map((item, i) => {
@@ -228,24 +228,24 @@ export default function ActivityPage() {
                           <span className={cn("text-[9px] font-black uppercase tracking-widest", isPost ? "text-lime-400/70" : "text-blue-400/70")}>
                             {isPost ? "Post" : "Vote"}
                           </span>
-                          <span className="text-white/20 text-[9px]">·</span>
-                          <span className="text-[9px] font-black text-white/30 uppercase tracking-wide truncate">{item.brand}</span>
+                          <span className="text-foreground/30 text-[9px]">·</span>
+                          <span className="text-[9px] font-black text-foreground/40 uppercase tracking-wide truncate">{item.brand}</span>
                         </div>
-                        <h4 className="text-sm font-black text-white truncate tracking-tight">{item.title}</h4>
+                        <h4 className="text-sm font-black text-foreground truncate tracking-tight">{item.title}</h4>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <Calendar className="w-3 h-3 text-white/20" />
-                          <span className="text-[10px] text-white/30 font-black">{item.date}</span>
+                          <Calendar className="w-3 h-3 text-foreground/30" />
+                          <span className="text-[10px] text-foreground/40 font-black">{item.date}</span>
                           {isPost && item.votesReceived !== undefined && (
                             <>
-                              <span className="text-white/15">·</span>
-                              <ThumbsUp className="w-3 h-3 text-white/20" />
-                              <span className="text-[10px] text-white/30 font-black">{item.votesReceived.toLocaleString()} votes</span>
+                              <span className="text-foreground/20">·</span>
+                              <ThumbsUp className="w-3 h-3 text-foreground/30" />
+                              <span className="text-[10px] text-foreground/40 font-black">{item.votesReceived.toLocaleString()} votes</span>
                             </>
                           )}
                           {!isPost && item.votesCast !== undefined && item.votesCast > 0 && (
                             <>
-                              <span className="text-white/15">·</span>
-                              <span className="text-[10px] text-white/30 font-black">{item.votesCast} cast</span>
+                              <span className="text-foreground/20">·</span>
+                              <span className="text-[10px] text-foreground/40 font-black">{item.votesCast} cast</span>
                             </>
                           )}
                         </div>
@@ -259,7 +259,7 @@ export default function ActivityPage() {
                               <Crown className="w-2.5 h-2.5" /> #1
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-white/40 text-[9px] font-black border border-white/[0.08]">
+                            <span className="px-2 py-0.5 rounded-full bg-foreground/[0.06] text-foreground/50 text-[9px] font-black border border-foreground/[0.08]">
                               #{item.rank}
                             </span>
                           )
@@ -268,7 +268,7 @@ export default function ActivityPage() {
                             "text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border",
                             ["posting", "voting", "scheduled"].includes(item.status)
                               ? "bg-lime-400/10 text-lime-400 border-lime-400/20"
-                              : "bg-white/[0.04] text-white/30 border-white/[0.06]"
+                              : "bg-foreground/[0.04] text-foreground/40 border-foreground/[0.06]"
                           )}>
                             {item.status}
                           </span>
@@ -278,7 +278,7 @@ export default function ActivityPage() {
                         )}
                       </div>
 
-                      <ArrowUpRight className="w-4 h-4 text-white/10 group-hover:text-white/30 transition-colors shrink-0" />
+                      <ArrowUpRight className="w-4 h-4 text-foreground/10 group-hover:text-foreground/30 transition-colors shrink-0" />
                     </motion.div>
                   );
                 })
@@ -298,7 +298,7 @@ export default function ActivityPage() {
                 <div className="relative z-10">
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/30 mb-1">Current Rank</p>
+                      <p className="text-[9px] font-black uppercase tracking-[0.25em] text-foreground/40 mb-1">Current Rank</p>
                       <div className="flex items-baseline gap-2">
                         <span className={cn("font-display text-5xl leading-none tracking-tight", tier.color)}>
                           {level}
@@ -314,8 +314,8 @@ export default function ActivityPage() {
                   </div>
 
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-white/30">Total XP</span>
-                    <span className="font-display text-lg text-white tracking-tight">{xp.toLocaleString()}</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-foreground/40">Total XP</span>
+                    <span className="font-display text-lg text-foreground tracking-tight">{xp.toLocaleString()}</span>
                   </div>
 
                   <div className="space-y-1.5">
@@ -327,7 +327,7 @@ export default function ActivityPage() {
                         transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
                       />
                     </div>
-                    <div className="flex justify-between text-[9px] font-black text-white/25">
+                    <div className="flex justify-between text-[9px] font-black text-foreground/35">
                       <span>{(xp % 1000).toLocaleString()} / 1000 XP</span>
                       <span>{xpToNext.toLocaleString()} to Lv.{level + 1}</span>
                     </div>
@@ -338,22 +338,22 @@ export default function ActivityPage() {
               {/* Growth Index */}
               <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-5 space-y-5">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">Growth Index</h3>
-                  <TrendingUp className="w-3.5 h-3.5 text-white/30" />
+                  <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/50">Growth Index</h3>
+                  <TrendingUp className="w-3.5 h-3.5 text-foreground/40" />
                 </div>
 
                 <div className="space-y-4">
                   {[
-                    { label: "Creation",  value: creationScore,  bar: "bg-lime-400",   desc: `${stats?.posts ?? 0} posts`            },
-                    { label: "Voting",    value: socialScore,    bar: "bg-blue-400",   desc: `${stats?.votesCast ?? 0} votes cast`   },
-                    { label: "Community", value: communityScore, bar: "bg-purple-400", desc: `${stats?.events ?? 0} events`          },
+                    { label: "Creation", value: creationScore, bar: "bg-lime-400", desc: `${stats?.posts ?? 0} posts` },
+                    { label: "Voting", value: socialScore, bar: "bg-blue-400", desc: `${stats?.votesCast ?? 0} votes cast` },
+                    { label: "Community", value: communityScore, bar: "bg-purple-400", desc: `${stats?.events ?? 0} events` },
                   ].map(g => (
                     <div key={g.label} className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">{g.label}</span>
+                        <span className="text-[10px] font-black text-foreground/50 uppercase tracking-widest">{g.label}</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-[9px] font-black text-white/20">{g.desc}</span>
-                          <span className="text-[10px] font-black text-white/50">{g.value}%</span>
+                          <span className="text-[9px] font-black text-foreground/30">{g.desc}</span>
+                          <span className="text-[10px] font-black text-foreground/60">{g.value}%</span>
                         </div>
                       </div>
                       <div className="w-full h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
@@ -374,8 +374,8 @@ export default function ActivityPage() {
                       <Flame className="w-4 h-4 text-orange-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-black text-white">{user?.currentStreak} Day Streak</p>
-                      <p className="text-[9px] font-black text-white/30 uppercase tracking-wide mt-0.5">Keep it going</p>
+                      <p className="text-sm font-black text-foreground">{user?.currentStreak} Day Streak</p>
+                      <p className="text-[9px] font-black text-foreground/40 uppercase tracking-wide mt-0.5">Keep it going</p>
                     </div>
                   </div>
                 )}

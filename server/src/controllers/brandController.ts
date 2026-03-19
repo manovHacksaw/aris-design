@@ -393,3 +393,95 @@ export const getBrandMilestones = async (req: Request, res: Response): Promise<v
         });
     }
 };
+
+/**
+ * Get brand profile by name or ID for public view
+ * GET /api/brands/public/:identifier
+ */
+export const getPublicBrandProfile = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { identifier } = req.params;
+
+        if (!identifier) {
+            res.status(400).json({ success: false, error: 'Identifier is required' });
+            return;
+        }
+
+        const brand = await prisma.brand.findFirst({
+            where: {
+                OR: [
+                    { id: identifier },
+                    { name: { equals: identifier, mode: 'insensitive' } },
+                ],
+                isActive: true
+            },
+            include: {
+                events: {
+                    where: { isDeleted: false },
+                    orderBy: { startTime: 'desc' },
+                    take: 20
+                },
+                _count: {
+                    select: {
+                        subscriptions: true,
+                        events: { where: { isDeleted: false } }
+                    }
+                }
+            }
+        });
+
+        if (!brand) {
+            res.status(404).json({ success: false, error: 'Brand not found' });
+            return;
+        }
+
+        // Add IPFS URLs for logo
+        const transformedBrand = addBrandLogoUrls(brand);
+
+        // Sanitize sensitive info
+        const result = {
+            id: transformedBrand.id,
+            name: transformedBrand.name,
+            tagline: transformedBrand.tagline,
+            description: transformedBrand.description,
+            categories: transformedBrand.categories,
+            logoCid: transformedBrand.logoCid,
+            logoUrls: transformedBrand.logoUrls,
+            websiteUrl: transformedBrand.websiteUrl,
+            socialLinks: transformedBrand.socialLinks,
+            isVerified: transformedBrand.isVerified,
+            isOwner: (req as any).user?.id === transformedBrand.ownerId,
+            level: transformedBrand.level,
+            totalUsdcGiven: transformedBrand.totalUsdcGiven,
+            uniqueParticipants: transformedBrand.uniqueParticipants,
+            eventsCreated: transformedBrand._count.events,
+            followerCount: transformedBrand._count.subscriptions,
+            createdAt: transformedBrand.createdAt,
+            events: transformedBrand.events.map((e: any) => ({
+                id: e.id,
+                title: e.title,
+                description: e.description,
+                status: e.status,
+                eventType: e.eventType,
+                category: e.category,
+                startTime: e.startTime,
+                endTime: e.endTime,
+                imageUrl: e.imageUrl,
+                imageCid: e.imageCid,
+                baseReward: e.baseReward,
+                topReward: e.topReward,
+                leaderboardPool: e.leaderboardPool,
+                capacity: e.capacity,
+                _count: { submissions: 0 } // placeholder or fetch if needed
+            }))
+        };
+
+        res.json(result);
+    } catch (error) {
+        console.error('Error fetching public brand profile:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch brand profile'
+        });
+    }
+};

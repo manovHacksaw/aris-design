@@ -22,10 +22,10 @@ interface ExploreEvent {
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
 function statusDot(status: string) {
-    if (status === "posting") return { dot: "bg-lime-400", label: "Live · Post", text: "text-lime-400" };
-    if (status === "voting")  return { dot: "bg-blue-400",  label: "Live · Vote", text: "text-blue-400" };
+    if (status === "posting") return { dot: "bg-lime-400 animate-pulse", label: "Live · Post", text: "text-lime-400" };
+    if (status === "voting")  return { dot: "bg-blue-400 animate-pulse",  label: "Live · Vote", text: "text-blue-400" };
     if (status === "scheduled") return { dot: "bg-yellow-400", label: "Upcoming", text: "text-yellow-400" };
-    if (status === "completed") return { dot: "bg-white/25", label: "Ended", text: "text-white/30" };
+    if (status === "completed") return { dot: "bg-red-400/60", label: "Closed", text: "text-red-400/70" };
     return { dot: "bg-white/15", label: status, text: "text-white/25" };
 }
 
@@ -64,17 +64,17 @@ export default function ExploreEventCard({ event }: { event: ExploreEvent }) {
 
                     {/* TOP RIGHT — reward pills */}
                     {(hasBase || hasTop) && (
-                        <div className="absolute top-2.5 right-2.5 flex items-center gap-1">
-                            {hasBase && (
-                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-sm border border-white/[0.08] text-[9px] font-black text-white/40">
-                                    <Zap className="w-2.5 h-2.5" />
-                                    ${event.baseReward?.toFixed(2)}
-                                </span>
-                            )}
+                        <div className="absolute top-2.5 right-2.5 flex flex-col items-end gap-1">
                             {hasTop && (
-                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-lime-400/10 backdrop-blur-sm border border-lime-400/30 text-[9px] font-black text-lime-400">
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-400/15 backdrop-blur-sm border border-yellow-400/40 text-[9px] font-black text-yellow-300">
                                     <Trophy className="w-2.5 h-2.5" />
                                     ${topVal.toLocaleString()}
+                                </span>
+                            )}
+                            {hasBase && (
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-sm border border-blue-400/20 text-[9px] font-black text-blue-300/70">
+                                    <Zap className="w-2.5 h-2.5" />
+                                    ${event.baseReward?.toFixed(2)} each
                                 </span>
                             )}
                         </div>

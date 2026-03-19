@@ -8,6 +8,7 @@ import { formatCount } from "@/lib/eventUtils";
 
 interface PostSubmissionCardProps {
     submission: PostSubmission;
+    showVoteCount?: boolean;
 }
 
 const statusConfig: Record<SubmissionStatus, { label: string; className: string }> = {
@@ -17,7 +18,7 @@ const statusConfig: Record<SubmissionStatus, { label: string; className: string 
     ended: { label: "Ended", className: "bg-foreground/5 text-foreground/40" },
 };
 
-export default function PostSubmissionCard({ submission }: PostSubmissionCardProps) {
+export default function PostSubmissionCard({ submission, showVoteCount = false }: PostSubmissionCardProps) {
     const status = statusConfig[submission.status];
 
     return (
@@ -81,10 +82,12 @@ export default function PostSubmissionCard({ submission }: PostSubmissionCardPro
 
                 {/* Stats */}
                 <div className="flex items-center gap-4 text-foreground/40">
-                    <div className="flex items-center gap-1">
-                        <ThumbsUp className="w-3 h-3" />
-                        <span className="text-[10px] font-bold">{formatCount(submission.voteCount)}</span>
-                    </div>
+                    {showVoteCount && (
+                        <div className="flex items-center gap-1">
+                            <ThumbsUp className="w-3 h-3" />
+                            <span className="text-[10px] font-bold">{formatCount(submission.voteCount)}</span>
+                        </div>
+                    )}
                     <div className="flex items-center gap-1">
                         <Eye className="w-3 h-3" />
                         <span className="text-[10px] font-bold">{formatCount(submission.engagementStats.views)}</span>

@@ -197,7 +197,7 @@ export class RewardsService {
           votes: {
             include: {
               user: {
-                select: { id: true, xp: true, walletAddress: true, role: true },
+                select: { id: true, xp: true, walletAddress: true, eoaAddress: true, role: true },
               },
             },
           },
@@ -205,7 +205,7 @@ export class RewardsService {
             where: { status: 'active' },
             include: {
               user: {
-                select: { id: true, xp: true, walletAddress: true },
+                select: { id: true, xp: true, walletAddress: true, eoaAddress: true },
               },
               _count: {
                 select: { votes: true },
@@ -225,7 +225,7 @@ export class RewardsService {
       const { USDC_DECIMALS, BASE_REWARD_VOTE_ONLY, BASE_REWARD_POST_VOTE, FIRST_PLACE_BPS, SECOND_PLACE_BPS, THIRD_PLACE_BPS, BPS_DENOMINATOR } = REWARDS_CONSTANTS;
 
       // Process voter base rewards (Strictly USER role only and 20 participants cap)
-      const uniqueVoters = new Map<string, { userId: string; xp: number; walletAddress: string | null }>();
+      const uniqueVoters = new Map<string, { userId: string; xp: number; walletAddress: string | null; eoaAddress: string | null }>();
 
       // Filter only users with USER role and cap at 20 unique participants
       for (const vote of event.votes) {
@@ -238,6 +238,7 @@ export class RewardsService {
             userId: vote.userId,
             xp: vote.user.xp,
             walletAddress: vote.user.walletAddress,
+            eoaAddress: vote.user.eoaAddress,
           });
         }
       }
@@ -252,6 +253,7 @@ export class RewardsService {
           poolId: pool.id,
           userId,
           walletAddress: voter.walletAddress,
+          eoaAddress: voter.eoaAddress,
           claimType: ClaimType.BASE_VOTER,
           baseAmount,
           multiplier,
@@ -416,10 +418,13 @@ export class RewardsService {
 
       for (const claim of claimsToCreate) {
         // Validate wallet address format (must be 0x + 40 hex chars)
-        // We strictly require a 0x-prefixed 40-character hex string (Ethereum format)
-        const isValidAddr = claim.walletAddress && /^0x[a-fA-F0-9]{40}$/.test(claim.walletAddress);
+        const hasValidFormat = claim.walletAddress && /^0x[a-fA-F0-9]{40}$/.test(claim.walletAddress);
+        // Guard: if walletAddress equals eoaAddress the smart wallet wasn't loaded yet when
+        // the user last authenticated. Crediting an EOA instead of a smart account causes
+        // NoRewardsToClaim when the smart account later calls claimRewards(). Skip it.
+        const isSmartAccount = hasValidFormat && claim.walletAddress !== claim.eoaAddress;
 
-        if (isValidAddr) {
+        if (isSmartAccount) {
           usersBatch.push(claim.walletAddress!);
           const amountWei = BigInt(Math.round(claim.finalAmount * 1_000_000));
           amountsBatch.push(amountWei);
@@ -433,8 +438,12 @@ export class RewardsService {
           });
         } else {
           // Log specific failure for visibility in logs
-          const failureReason = !claim.walletAddress ? "NO_WALLET_CONNECTED" : "INVALID_WALLET_FORMAT";
-          console.error(`❌ RewardsService: Rejecting reward for user ${claim.userId} due to ${failureReason}: "${claim.walletAddress}"`);
+          const failureReason = !claim.walletAddress
+            ? "NO_WALLET_CONNECTED"
+            : !hasValidFormat
+              ? "INVALID_WALLET_FORMAT"
+              : "WALLET_IS_EOA_NOT_SMART_ACCOUNT";
+          console.error(`❌ RewardsService: Rejecting reward for user ${claim.userId} due to ${failureReason}: wallet="${claim.walletAddress}" eoa="${claim.eoaAddress}"`);
 
           notificationQueue.push({
             userId: claim.userId,
@@ -658,26 +667,56 @@ export class RewardsService {
         pool: {
           include: {
             event: {
-              select: { id: true, title: true, onChainEventId: true },
+              select: {
+                id: true, title: true, onChainEventId: true,
+                imageUrl: true, imageCid: true,
+                brand: { select: { name: true, logoCid: true } },
+              },
             },
           },
         },
       },
     });
 
+    // Fetch user's submissions/votes per event for content thumbnails
+    const eventIds = [...new Set(claims.map(c => c.pool.eventId))];
+    const [submissions, votes] = await Promise.all([
+      prisma.submission.findMany({
+        where: { userId, eventId: { in: eventIds } },
+        select: { eventId: true, imageUrl: true, imageCid: true },
+      }),
+      prisma.vote.findMany({
+        where: { userId, eventId: { in: eventIds } },
+        select: { eventId: true, submission: { select: { imageUrl: true, imageCid: true } } },
+      }),
+    ]);
+    const submissionMap = new Map(submissions.map(s => [s.eventId, s]));
+    const voteMap = new Map(votes.filter(v => v.submission).map(v => [v.eventId, v.submission!]));
+
+    const PINATA_GW = 'https://gateway.pinata.cloud/ipfs';
+    const imgUrl = (url?: string | null, cid?: string | null) =>
+      url || (cid ? `${PINATA_GW}/${cid}` : null);
+
     // Group by event
     const byEvent = new Map<string, UserClaimableRewards>();
 
     for (const claim of claims) {
       const eventId = claim.pool.eventId;
-      const eventTitle = claim.pool.event.title;
+      const ev = claim.pool.event;
 
       if (!byEvent.has(eventId)) {
+        const sub = submissionMap.get(eventId);
+        const votedSub = voteMap.get(eventId);
+        const contentSrc = sub ?? votedSub;
         byEvent.set(eventId, {
           eventId,
-          eventTitle,
+          eventTitle: ev.title,
           claims: [],
           totalClaimableUsdc: 0,
+          brandName: ev.brand?.name ?? null,
+          brandLogoUrl: imgUrl(null, ev.brand?.logoCid) ?? null,
+          eventImageUrl: imgUrl(ev.imageUrl, ev.imageCid) ?? null,
+          userContentImageUrl: contentSrc ? (imgUrl(contentSrc.imageUrl, contentSrc.imageCid) ?? null) : null,
         });
       }
 
@@ -706,15 +745,18 @@ export class RewardsService {
    */
   static async getUserClaimHistory(userId: string): Promise<UserClaimHistory> {
     const claims = await prisma.rewardClaim.findMany({
-      where: {
-        userId,
-        status: ClaimStatus.CLAIMED
-      },
+      where: { userId, status: ClaimStatus.CLAIMED },
       include: {
         pool: {
           include: {
             event: {
-              select: { id: true, title: true },
+              select: {
+                id: true,
+                title: true,
+                imageUrl: true,
+                imageCid: true,
+                brand: { select: { id: true, name: true, logoCid: true } },
+              },
             },
           },
         },
@@ -722,18 +764,49 @@ export class RewardsService {
       orderBy: { createdAt: 'desc' },
     });
 
+    // Collect unique eventIds to batch-fetch user's content per event
+    const eventIds = [...new Set(claims.map((c) => c.pool.eventId))];
+
+    // User's own submissions per event (for CREATOR / LEADERBOARD claims)
+    const submissions = await prisma.submission.findMany({
+      where: { userId, eventId: { in: eventIds } },
+      select: { eventId: true, imageUrl: true, imageCid: true },
+    });
+    const submissionByEvent = new Map(submissions.map((s) => [s.eventId, s]));
+
+    // Submissions the user voted on per event (for VOTER claims)
+    const votes = await prisma.vote.findMany({
+      where: { userId, eventId: { in: eventIds }, submissionId: { not: null } },
+      select: {
+        eventId: true,
+        submission: { select: { imageUrl: true, imageCid: true } },
+      },
+    });
+    const votedSubmissionByEvent = new Map(
+      votes.filter((v) => v.submission).map((v) => [v.eventId, v.submission!])
+    );
+
+    const PINATA_GW = 'https://gateway.pinata.cloud/ipfs';
+    const imgUrl = (url?: string | null, cid?: string | null) =>
+      url || (cid ? `${PINATA_GW}/${cid}` : null);
+
     let totalClaimedUsdc = 0;
-    let totalPendingUsdc = 0;
 
     const claimHistory: ClaimHistoryItem[] = claims.map((claim) => {
-      if (claim.status === ClaimStatus.CLAIMED) {
-        totalClaimedUsdc += claim.finalAmount;
-      }
+      totalClaimedUsdc += claim.finalAmount;
+
+      const event = claim.pool.event;
+      const isVoterClaim = claim.claimType === ClaimType.BASE_VOTER || claim.claimType === ClaimType.TOP_VOTER;
+      const contentSrc = isVoterClaim
+        ? votedSubmissionByEvent.get(event.id)
+        : submissionByEvent.get(event.id);
 
       return {
         id: claim.id,
-        eventId: claim.pool.eventId,
-        eventTitle: claim.pool.event.title,
+        eventId: event.id,
+        eventTitle: event.title,
+        brandName: event.brand?.name ?? null,
+        brandLogoUrl: imgUrl(null, event.brand?.logoCid) ?? null,
         claimType: claim.claimType,
         baseAmount: claim.baseAmount,
         multiplier: claim.multiplier,
@@ -741,13 +814,15 @@ export class RewardsService {
         status: claim.status,
         transactionHash: (claim as any).transactionHash,
         claimedAt: claim.claimedAt,
+        eventImageUrl: imgUrl(event.imageUrl, event.imageCid) ?? null,
+        contentImageUrl: imgUrl(contentSrc?.imageUrl, contentSrc?.imageCid) ?? null,
       };
     });
 
     return {
       claims: claimHistory,
       totalClaimedUsdc,
-      totalPendingUsdc,
+      totalPendingUsdc: 0,
     };
   }
 
@@ -838,11 +913,11 @@ export class RewardsService {
     userId: string,
     transactionHash: string
   ): Promise<{ claimsUpdated: number; totalAmount: number }> {
-    // Find all CREDITED claims for this user
+    // Find all claimable (PENDING or CREDITED) claims for this user
     const claims = await prisma.rewardClaim.findMany({
       where: {
         userId,
-        status: ClaimStatus.CREDITED,
+        status: { in: [ClaimStatus.PENDING, ClaimStatus.CREDITED] },
       },
     });
 

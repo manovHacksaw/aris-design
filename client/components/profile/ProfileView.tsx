@@ -17,12 +17,12 @@ import type { User, UserStats } from "@/types/user";
 
 // ─── Tiers ───────────────────────────────────────────────────────
 const TIERS = [
-  { min: 1,  max: 2,  name: "Rookie",  color: "text-zinc-400",   bg: "bg-zinc-500/10",   border: "border-zinc-500/30" },
-  { min: 3,  max: 5,  name: "Hustler", color: "text-blue-400",   bg: "bg-blue-500/10",   border: "border-blue-500/30" },
-  { min: 6,  max: 9,  name: "Creator", color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/30" },
+  { min: 1, max: 2, name: "Rookie", color: "text-zinc-400", bg: "bg-zinc-500/10", border: "border-zinc-500/30" },
+  { min: 3, max: 5, name: "Hustler", color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/30" },
+  { min: 6, max: 9, name: "Creator", color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/30" },
   { min: 10, max: 14, name: "Veteran", color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/30" },
-  { min: 15, max: 19, name: "Elite",   color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/30" },
-  { min: 20, max: 999,name: "Legend",  color: "text-lime-400",   bg: "bg-lime-400/10",   border: "border-lime-400/40" },
+  { min: 15, max: 19, name: "Elite", color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/30" },
+  { min: 20, max: 999, name: "Legend", color: "text-lime-400", bg: "bg-lime-400/10", border: "border-lime-400/40" },
 ] as const;
 
 function getTier(level: number) {
@@ -41,19 +41,19 @@ function formatK(n: number): string {
 // ─── Milestones (same set as Dashboard) ──────────────────────────
 const MILESTONES = [
   // Vote
-  { id: "v1", label: "First Vote",       desc: "Cast your very first vote",        icon: MousePointerClick, target: 1,   type: "vote", xp: 50,  color: "text-blue-400",   bg: "bg-blue-400/10",   border: "border-blue-400/20"   },
-  { id: "v2", label: "Vote x10",         desc: "Cast 10 votes total",              icon: Flame,             target: 10,  type: "vote", xp: 150, color: "text-blue-400",   bg: "bg-blue-400/10",   border: "border-blue-400/20"   },
-  { id: "v3", label: "Vote x50",         desc: "50 votes — you're a real judge",   icon: Shield,            target: 50,  type: "vote", xp: 300, color: "text-indigo-400", bg: "bg-indigo-400/10", border: "border-indigo-400/20" },
-  { id: "v4", label: "Vote x100",        desc: "Legendary curator status",         icon: Star,              target: 100, type: "vote", xp: 600, color: "text-purple-400", bg: "bg-purple-400/10", border: "border-purple-400/20" },
+  { id: "v1", label: "First Vote", desc: "Cast your very first vote", icon: MousePointerClick, target: 1, type: "vote", xp: 50, color: "text-blue-400", bg: "bg-blue-400/10", border: "border-blue-400/20" },
+  { id: "v2", label: "Vote x10", desc: "Cast 10 votes total", icon: Flame, target: 10, type: "vote", xp: 150, color: "text-blue-400", bg: "bg-blue-400/10", border: "border-blue-400/20" },
+  { id: "v3", label: "Vote x50", desc: "50 votes — you're a real judge", icon: Shield, target: 50, type: "vote", xp: 300, color: "text-indigo-400", bg: "bg-indigo-400/10", border: "border-indigo-400/20" },
+  { id: "v4", label: "Vote x100", desc: "Legendary curator status", icon: Star, target: 100, type: "vote", xp: 600, color: "text-purple-400", bg: "bg-purple-400/10", border: "border-purple-400/20" },
   // Post
-  { id: "p1", label: "First Drop",       desc: "Submit your first creation",       icon: ImageIcon,         target: 1,   type: "post", xp: 100, color: "text-lime-400",   bg: "bg-lime-400/10",   border: "border-lime-400/20"   },
-  { id: "p2", label: "5 Drops",          desc: "5 submissions and counting",       icon: Zap,               target: 5,   type: "post", xp: 300, color: "text-lime-400",   bg: "bg-lime-400/10",   border: "border-lime-400/20"   },
-  { id: "p3", label: "10 Drops",         desc: "Double digits. Serious creator.",  icon: Flame,             target: 10,  type: "post", xp: 600, color: "text-orange-400", bg: "bg-orange-400/10", border: "border-orange-400/20" },
-  { id: "p4", label: "Top Ranker",       desc: "Finish #1 in any event",           icon: Crown,             target: 1,   type: "rank", xp: 800, color: "text-yellow-400", bg: "bg-yellow-400/10", border: "border-yellow-400/20" },
+  { id: "p1", label: "First Drop", desc: "Submit your first creation", icon: ImageIcon, target: 1, type: "post", xp: 100, color: "text-lime-400", bg: "bg-lime-400/10", border: "border-lime-400/20" },
+  { id: "p2", label: "5 Drops", desc: "5 submissions and counting", icon: Zap, target: 5, type: "post", xp: 300, color: "text-lime-400", bg: "bg-lime-400/10", border: "border-lime-400/20" },
+  { id: "p3", label: "10 Drops", desc: "Double digits. Serious creator.", icon: Flame, target: 10, type: "post", xp: 600, color: "text-orange-400", bg: "bg-orange-400/10", border: "border-orange-400/20" },
+  { id: "p4", label: "Top Ranker", desc: "Finish #1 in any event", icon: Crown, target: 1, type: "rank", xp: 800, color: "text-yellow-400", bg: "bg-yellow-400/10", border: "border-yellow-400/20" },
   // All
-  { id: "a1", label: "Event Hopper",     desc: "Join 5 different events",          icon: Trophy,            target: 5,   type: "all",  xp: 200, color: "text-purple-400", bg: "bg-purple-400/10", border: "border-purple-400/20" },
-  { id: "a2", label: "Event Veteran",    desc: "Join 20 events",                   icon: TrendingUp,        target: 20,  type: "all",  xp: 500, color: "text-orange-400", bg: "bg-orange-400/10", border: "border-orange-400/20" },
-  { id: "a3", label: "Community Builder",desc: "Earn 10 followers",                icon: Users,             target: 10,  type: "subs", xp: 250, color: "text-pink-400",   bg: "bg-pink-400/10",   border: "border-pink-400/20"   },
+  { id: "a1", label: "Event Hopper", desc: "Join 5 different events", icon: Trophy, target: 5, type: "all", xp: 200, color: "text-purple-400", bg: "bg-purple-400/10", border: "border-purple-400/20" },
+  { id: "a2", label: "Event Veteran", desc: "Join 20 events", icon: TrendingUp, target: 20, type: "all", xp: 500, color: "text-orange-400", bg: "bg-orange-400/10", border: "border-orange-400/20" },
+  { id: "a3", label: "Community Builder", desc: "Earn 10 followers", icon: Users, target: 10, type: "subs", xp: 250, color: "text-pink-400", bg: "bg-pink-400/10", border: "border-pink-400/20" },
 ];
 
 type ContentFilter = "all" | "live" | "completed";
@@ -214,10 +214,10 @@ export default function ProfileView({
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <h1 className="font-display text-3xl md:text-4xl text-white uppercase tracking-tight leading-none mb-1">
+                    <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight mb-1">
                       {displayName}
                     </h1>
-                    <p className="text-[11px] font-black text-white/30 uppercase tracking-[0.2em] mb-3">
+                    <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em] mb-3">
                       @{username}
                     </p>
                     <div className="flex flex-wrap items-center gap-2">
@@ -574,8 +574,8 @@ export default function ProfileView({
                           done
                             ? cn(m.bg, m.border)
                             : pct > 0
-                            ? "bg-white/[0.04] border-white/[0.08]"
-                            : "bg-white/[0.02] border-white/[0.04]"
+                              ? "bg-white/[0.04] border-white/[0.08]"
+                              : "bg-white/[0.02] border-white/[0.04]"
                         )}
                       >
                         {done ? (

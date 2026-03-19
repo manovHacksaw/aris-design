@@ -129,10 +129,10 @@ export default function WalletPage() {
         confetti({ particleCount: 120, spread: 80, origin: { y: 0.55 }, colors: ["#3B82F6", "#10B981", "#F59E0B"] });
       } catch { }
 
-      // Refresh real balance after animation settles
-      setTimeout(() => refreshBalance(), 1400);
+      // Refresh real balance + history after animation settles
+      setTimeout(() => { refreshBalance(); fetchHistory(); }, 1400);
     },
-    [usdcBalance, refreshBalance]
+    [usdcBalance, refreshBalance, fetchHistory]
   );
 
   useEffect(() => {
@@ -179,11 +179,11 @@ export default function WalletPage() {
           {/* ── Header ── */}
           <div className="flex items-start justify-between">
             <div className="space-y-1">
-              <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-white uppercase leading-[0.92] tracking-tight">
+              <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight">
                 Wallet
               </h1>
-              <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">
-                Your on-chain assets on Polygon Amoy
+              <p className="mt-1 text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em]">
+                Manage your digital assets
               </p>
             </div>
             <button
@@ -209,32 +209,32 @@ export default function WalletPage() {
                 <div className="relative z-10 space-y-8">
                   <div className="flex justify-between items-start">
                     <div className="space-y-4">
-                      {/* POL Balance */}
-                      <div>
-                        <p className="text-[9px] font-black text-white/30 mb-1 tracking-[0.2em] uppercase">Native Balance</p>
-                        <div className="flex items-baseline gap-2">
-                          <h2 className="font-display text-5xl md:text-6xl text-white uppercase tracking-tight leading-none">
-                            {isFetchingMatic ? (
-                              <span className="text-white/20 animate-pulse">...</span>
-                            ) : polBalance}
-                          </h2>
-                          <span className="text-xl text-white/30 font-black">POL</span>
-                        </div>
-                      </div>
-
-                      {/* USDC Balance */}
+                      {/* USDC Balance — primary */}
                       <div>
                         <p className="text-[9px] font-black text-white/30 mb-1 tracking-[0.2em] uppercase">USDC Balance</p>
                         <div className="flex items-baseline gap-2">
-                          <span className="font-display text-3xl text-white/80 tracking-tight leading-none">
+                          <h2 className="font-display text-5xl md:text-6xl text-white uppercase tracking-tight leading-none">
                             {allClaimed && displayUsdc !== "0.00"
                               ? displayUsdc
                               : parseFloat(usdcBalance) > 0 ? usdcBalance : "0.00"}
-                          </span>
+                          </h2>
                           <div className="flex items-center gap-1.5 px-2 py-0.5 bg-white/[0.05] rounded-full border border-white/[0.08]">
                             <img src="/usdc.png" alt="USDC" className="w-3 h-3" />
                             <span className="text-[9px] font-black text-white/30 tracking-wider uppercase">USDC</span>
                           </div>
+                        </div>
+                      </div>
+
+                      {/* POL Balance — secondary */}
+                      <div>
+                        <p className="text-[9px] font-black text-white/30 mb-1 tracking-[0.2em] uppercase">Native Balance</p>
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-display text-2xl text-white/40 tracking-tight leading-none">
+                            {isFetchingMatic ? (
+                              <span className="text-white/20 animate-pulse">...</span>
+                            ) : polBalance}
+                          </span>
+                          <span className="text-sm text-white/20 font-black">POL</span>
                         </div>
                       </div>
                     </div>
@@ -370,16 +370,33 @@ export default function WalletPage() {
                       <div className="divide-y divide-white/[0.04]">
                         {rewards.events.map((ev) => (
                           <div key={ev.eventId} className="p-5 space-y-3">
-                            <div className="flex items-center gap-2">
-                              <Trophy className="w-3.5 h-3.5 text-white/30" />
-                              <p className="text-[9px] font-black text-white/40 uppercase tracking-widest truncate">
-                                {ev.eventTitle}
-                              </p>
-                              <span className="ml-auto text-xs font-black text-primary shrink-0">
-                                ${ev.totalClaimableUsdc.toFixed(2)}
-                              </span>
+                            {/* Event header with images */}
+                            <div className="flex items-center gap-3">
+                              {/* Event image square */}
+                              <div className="w-11 h-11 rounded-xl overflow-hidden border border-white/[0.08] bg-white/[0.04] shrink-0 flex items-center justify-center">
+                                {ev.eventImageUrl ? (
+                                  <img src={ev.eventImageUrl} alt="" className="w-full h-full object-cover" />
+                                ) : ev.userContentImageUrl ? (
+                                  <img src={ev.userContentImageUrl} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <Trophy className="w-4 h-4 text-white/20" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[11px] font-black text-white truncate leading-tight">{ev.eventTitle}</p>
+                                {ev.brandName && (
+                                  <div className="flex items-center gap-1 mt-0.5">
+                                    {ev.brandLogoUrl && (
+                                      <img src={ev.brandLogoUrl} alt="" className="w-3 h-3 rounded-full object-cover shrink-0" />
+                                    )}
+                                    <p className="text-[9px] font-black text-white/30 uppercase tracking-widest truncate">{ev.brandName}</p>
+                                  </div>
+                                )}
+                              </div>
+                              <span className="text-sm font-black text-primary shrink-0">${ev.totalClaimableUsdc.toFixed(2)}</span>
                             </div>
-                            <div className="space-y-1.5">
+                            {/* Breakdown rows */}
+                            <div className="space-y-1.5 pl-14">
                               {ev.claims.map((claim) => (
                                 <div key={claim.id} className="flex items-center justify-between">
                                   <span className="text-[10px] text-white/40 font-black uppercase tracking-wide">
@@ -388,7 +405,7 @@ export default function WalletPage() {
                                       <span className="ml-1 text-[10px] text-primary font-black">×{claim.multiplier}</span>
                                     )}
                                   </span>
-                                  <span className="text-xs font-black text-white">
+                                  <span className="text-xs font-black text-white/70">
                                     ${claim.finalAmount.toFixed(2)}
                                   </span>
                                 </div>
@@ -402,7 +419,7 @@ export default function WalletPage() {
                           <motion.button
                             whileTap={{ scale: 0.97 }}
                             onClick={() => setClaimModalOpen(true)}
-                            className="w-full py-3.5 bg-primary text-white rounded-xl font-black text-[11px] uppercase tracking-[0.2em] hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                            className="w-full py-3.5 bg-primary text-black rounded-xl font-black text-[11px] uppercase tracking-[0.2em] hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
                           >
                             <Gift className="w-4 h-4" />
                             Claim ${rewards.totalClaimableUsdc.toFixed(2)}
@@ -440,45 +457,101 @@ export default function WalletPage() {
                     <div className="flex items-center justify-center py-10">
                       <RefreshCw className="w-5 h-5 animate-spin text-white/20" />
                     </div>
-                  ) : claimHistory.length > 0 ? (
-                    <div className="divide-y divide-white/[0.04]">
-                      {claimHistory.map((entry) => (
-                        <div key={entry.id} className="flex items-center gap-4 px-5 py-4 hover:bg-white/[0.02] transition-colors">
-                          <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-                            <Gift className="w-4 h-4 text-purple-400" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-black text-white truncate">
-                              {entry.event?.title || "Reward Claim"}
-                            </p>
-                            <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mt-0.5">
-                              {CLAIM_TYPE_LABEL[entry.claimType]}
-                            </p>
-                          </div>
-                          <div className="flex flex-col items-end gap-1 shrink-0">
-                            <span className="text-sm font-black text-lime-400">
-                              +${entry.finalAmount.toFixed(2)}
-                            </span>
-                            {entry.claimedAt && (
-                              <span className="text-[9px] font-black text-white/20 uppercase tracking-wide">
-                                {new Date(entry.claimedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                              </span>
-                            )}
-                            {entry.transactionHash && (
-                              <a
-                                href={`${EXPLORER_BASE}/tx/${entry.transactionHash}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-[9px] font-black text-white/20 hover:text-primary uppercase tracking-widest flex items-center gap-0.5 transition-colors"
-                              >
-                                Tx <ExternalLink className="w-2.5 h-2.5" />
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
+                  ) : claimHistory.length > 0 ? (() => {
+                    // Group by event
+                    const groups = claimHistory.reduce<Record<string, typeof claimHistory>>((acc, entry) => {
+                      const key = entry.event?.id ?? "unknown";
+                      if (!acc[key]) acc[key] = [];
+                      acc[key].push(entry);
+                      return acc;
+                    }, {});
+                    return (
+                      <div className="divide-y divide-white/[0.04]">
+                        {Object.entries(groups).map(([eventId, entries]) => {
+                          const first = entries[0];
+                          const eventTotal = entries.reduce((s, e) => s + e.finalAmount, 0);
+                          const txHash = entries.find(e => e.transactionHash)?.transactionHash;
+                          const claimedDate = first.claimedAt
+                            ? new Date(first.claimedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                            : null;
+                          return (
+                            <div key={eventId} className="p-5 space-y-3">
+                              {/* Event header */}
+                              <div className="flex items-center gap-3">
+                                {/* Content thumbnail or brand logo */}
+                                <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/[0.08] bg-white/[0.04] shrink-0 flex items-center justify-center">
+                                  {first.eventImageUrl ? (
+                                    <img src={first.eventImageUrl} alt="" className="w-full h-full object-cover" />
+                                  ) : first.contentImageUrl ? (
+                                    <img src={first.contentImageUrl} alt="" className="w-full h-full object-cover" />
+                                  ) : first.brandLogoUrl ? (
+                                    <img src={first.brandLogoUrl} alt={first.brandName ?? ""} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <Gift className="w-5 h-5 text-purple-400" />
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[11px] font-black text-white truncate leading-tight">
+                                    {first.event?.title ?? "Reward Claim"}
+                                  </p>
+                                  {first.brandName && (
+                                    <div className="flex items-center gap-1 mt-0.5">
+                                      {first.brandLogoUrl && (
+                                        <img src={first.brandLogoUrl} alt="" className="w-3 h-3 rounded-full object-cover" />
+                                      )}
+                                      <p className="text-[9px] font-black text-white/30 uppercase tracking-widest truncate">
+                                        {first.brandName}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex flex-col items-end gap-0.5 shrink-0">
+                                  <span className="text-sm font-black text-lime-400">+${eventTotal.toFixed(2)}</span>
+                                  {claimedDate && (
+                                    <span className="text-[9px] font-black text-white/20 uppercase tracking-wide">{claimedDate}</span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Individual reward rows */}
+                              <div className="space-y-1.5 pl-[60px]">
+                                {entries.map((entry) => (
+                                  <div key={entry.id} className="flex items-center justify-between">
+                                    <span className="text-[10px] font-bold text-white/35 uppercase tracking-wide">
+                                      {CLAIM_TYPE_LABEL[entry.claimType]}
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[11px] font-black text-white/70">+${entry.finalAmount.toFixed(2)}</span>
+                                      {entry.transactionHash && (
+                                        <a
+                                          href={`${EXPLORER_BASE}/tx/${entry.transactionHash}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-[9px] font-black text-white/20 hover:text-primary flex items-center gap-0.5 transition-colors"
+                                        >
+                                          Tx <ExternalLink className="w-2.5 h-2.5" />
+                                        </a>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                                {txHash && !entries.every(e => e.transactionHash) && (
+                                  <a
+                                    href={`${EXPLORER_BASE}/tx/${txHash}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[9px] font-black text-white/20 hover:text-primary flex items-center gap-0.5 transition-colors"
+                                  >
+                                    View Tx <ExternalLink className="w-2.5 h-2.5" />
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })() : (
                     <div className="flex flex-col items-center justify-center py-16 px-6 text-center space-y-4">
                       <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center">
                         <Gift className="w-6 h-6 text-white/20" />
@@ -660,7 +733,7 @@ export default function WalletPage() {
                 </div>
               </div>
 
-           
+
               {/* How your wallet works */}
               <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 space-y-5">
                 <div className="flex items-center gap-2">
@@ -670,7 +743,7 @@ export default function WalletPage() {
                   </h3>
                 </div>
 
-                
+
 
                 <div className="space-y-4">
                   <div className="flex gap-3">
@@ -723,7 +796,7 @@ export default function WalletPage() {
                 </div>
               </div>
 
-                 {/* Coming Soon */}
+              {/* Coming Soon */}
               <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 relative overflow-hidden group">
                 <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl group-hover:bg-purple-500/20 transition-colors duration-500" />
                 <div className="relative z-10 space-y-4">

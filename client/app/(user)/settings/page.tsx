@@ -147,8 +147,10 @@ export default function SettingsPage() {
             <main className="max-w-[1200px] mx-auto py-8 space-y-10 pb-24">
                 {/* Header */}
                 <div className="px-4 md:px-0">
-                    <h1 className="text-4xl font-black text-foreground tracking-tighter mb-2">Settings</h1>
-                    <p className="text-[11px] font-black text-foreground/30 uppercase tracking-[0.2em]">Manage your profile and account preferences</p>
+                    <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight">
+                        Settings
+                    </h1>
+                    <p className="mt-1 text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em]">Manage your profile and account preferences</p>
                 </div>
 
                 <div className="grid lg:grid-cols-[280px_1fr] gap-8 px-4 md:px-0">

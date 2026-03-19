@@ -154,7 +154,7 @@ export default function Explore() {
                                 <div className="flex items-center justify-between mb-3">
                                     <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em]">Recommended Brands</p>
                                     <button
-                                        onClick={() => window.location.href = "/leaderboard"}
+                                        onClick={() => window.location.href = "/leaderboard?tab=brands"}
                                         className="text-[9px] font-black text-primary uppercase tracking-widest"
                                     >
                                         View All

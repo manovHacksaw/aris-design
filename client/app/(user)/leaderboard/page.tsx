@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import SidebarLayout from "@/components/home/SidebarLayout";
 import BottomNav from "@/components/BottomNav";
 import LeaderboardTable from "@/components/leaderboard/LeaderboardTable";
@@ -26,7 +27,9 @@ const TIMELINES: { key: TimelineKey; label: string }[] = [
 ];
 
 export default function Leaderboard() {
-    const [activeTab, setActiveTab] = useState<TabType>("users");
+    const searchParams = useSearchParams();
+    const initialTab = (searchParams.get("tab") as TabType) || "users";
+    const [activeTab, setActiveTab] = useState<TabType>(initialTab);
     const [brandDomain, setBrandDomain] = useState("ALL");
     const [eventDomain, setEventDomain] = useState("ALL");
     const [timeline, setTimeline] = useState<TimelineKey>("A");

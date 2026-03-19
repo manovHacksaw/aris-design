@@ -338,8 +338,10 @@ export class SubmissionService {
       }) as any;
 
       // Add indicator that this is the user's own submission
+      // Vote counts are hidden during POSTING phase
       return submissions.map((s: any) => ({
         ...this.addImageUrls(s),
+        _count: s._count ? { ...s._count, votes: 0 } : s._count,
         isMySubmission: true,  // Flag to show "My Submission" in UI
         canEdit: true,         // User can edit during POSTING phase
         canDelete: true,       // User can delete during POSTING phase
@@ -373,8 +375,11 @@ export class SubmissionService {
     }) as any;
 
     // Mark user's own submission and add permission flags
+    // Vote counts are only revealed after the event is completed
+    const hideVotes = event.status !== EventStatus.COMPLETED;
     return submissions.map((s: any) => ({
       ...this.addImageUrls(s),
+      _count: hideVotes && s._count ? { ...s._count, votes: 0 } : s._count,
       isMySubmission: userId ? s.userId === userId : false,
       canEdit: false,   // Cannot edit during VOTING/COMPLETED
       canDelete: false, // Cannot delete during VOTING/COMPLETED
@@ -456,6 +461,18 @@ export class SubmissionService {
       orderBy: { createdAt: 'desc' }
     });
 
-    return submissions.map((s: any) => this.addImageUrls(s));
+    return submissions.map((s: any) => {
+      const isCompleted = s.event?.status === EventStatus.COMPLETED;
+      return {
+        ...this.addImageUrls(s),
+        _count: !isCompleted && s._count ? { ...s._count, votes: 0 } : s._count,
+        event: s.event ? {
+          ...s.event,
+          eventAnalytics: s.event.eventAnalytics && !isCompleted
+            ? { ...s.event.eventAnalytics, totalVotes: 0 }
+            : s.event.eventAnalytics,
+        } : s.event,
+      };
+    });
   }
 }

@@ -23,6 +23,10 @@ export interface EventClaimGroup {
   eventTitle: string;
   claims: ClaimInfo[];
   totalClaimableUsdc: number;
+  brandName?: string | null;
+  brandLogoUrl?: string | null;
+  eventImageUrl?: string | null;
+  userContentImageUrl?: string | null;
 }
 
 export interface ClaimableRewardsResponse {
@@ -57,14 +61,46 @@ export interface ClaimHistoryEntry {
   transactionHash?: string | null;
   claimedAt?: string | null;
   event?: { title: string; id: string } | null;
+  brandName?: string | null;
+  brandLogoUrl?: string | null;
+  eventImageUrl?: string | null;
+  contentImageUrl?: string | null;
+}
+
+interface RawClaimHistoryItem {
+  id: string;
+  claimType: ClaimType;
+  finalAmount: number;
+  status: ClaimStatus;
+  transactionHash?: string | null;
+  claimedAt?: string | null;
+  eventId?: string;
+  eventTitle?: string;
+  brandName?: string | null;
+  brandLogoUrl?: string | null;
+  eventImageUrl?: string | null;
+  contentImageUrl?: string | null;
 }
 
 /** GET /api/rewards/user/history — returns all past (CLAIMED) rewards */
 export async function getRewardHistory(): Promise<ClaimHistoryEntry[]> {
-  const res = await apiRequest<{ success: boolean; data: ClaimHistoryEntry[] }>(
-    "/rewards/user/history"
-  );
-  return res.data ?? [];
+  const res = await apiRequest<{
+    success: boolean;
+    data: { claims: RawClaimHistoryItem[]; totalClaimedUsdc: number };
+  }>("/rewards/user/history");
+  return (res.data?.claims ?? []).map((c) => ({
+    id: c.id,
+    claimType: c.claimType,
+    finalAmount: c.finalAmount,
+    status: c.status,
+    transactionHash: c.transactionHash,
+    claimedAt: c.claimedAt,
+    event: c.eventId ? { id: c.eventId, title: c.eventTitle ?? "Event" } : null,
+    brandName: c.brandName,
+    brandLogoUrl: c.brandLogoUrl,
+    eventImageUrl: c.eventImageUrl,
+    contentImageUrl: c.contentImageUrl,
+  }));
 }
 
 /** POST /api/rewards/confirm-all-claims — marks all CREDITED claims as CLAIMED */

@@ -140,6 +140,10 @@ export interface UserClaimableRewards {
   eventTitle: string;
   claims: ClaimDetails[];
   totalClaimableUsdc: number;
+  brandName?: string | null;
+  brandLogoUrl?: string | null;
+  eventImageUrl?: string | null;
+  userContentImageUrl?: string | null;
 }
 
 export interface SignClaimRequest {
@@ -244,6 +248,9 @@ export interface ClaimHistoryItem {
   id: string;
   eventId: string;
   eventTitle: string;
+  brandName: string | null;
+  brandLogoUrl: string | null;
+  contentImageUrl: string | null;
   claimType: ClaimType;
   baseAmount: number;
   multiplier: number;

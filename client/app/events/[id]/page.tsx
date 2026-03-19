@@ -47,7 +47,7 @@ function avatarUrl(_: unknown, name?: string | null): string {
     return `https://ui-avatars.com/api/?name=${n}&background=2F6AFF&color=fff`;
 }
 
-function toVoteSubmission(sub: Submission): VoteSubmission {
+function toVoteSubmission(sub: Submission, currentUserId?: string | null): VoteSubmission {
     const displayName = sub.user?.displayName || sub.user?.username || "Creator";
     return {
         id: sub.id,
@@ -61,6 +61,7 @@ function toVoteSubmission(sub: Submission): VoteSubmission {
         textContent: sub.content,
         voteCount: sub._count?.votes ?? 0,
         rank: sub.rank,
+        isOwn: sub.userId === currentUserId,
     };
 }
 
@@ -224,7 +225,7 @@ function EventSidebar({
                         <div className="flex items-center gap-1.5">
                             <Users className="w-3 h-3 text-foreground/40" />
                             <span className="text-sm font-black text-foreground">
-                                {formatCount(event._count?.submissions ?? 0)}
+                                {formatCount(event.eventType === 'vote_only' ? (event._count?.votes ?? 0) : (event._count?.submissions ?? 0))}
                             </span>
                             {event.capacity && (
                                 <span className="text-[10px] text-foreground/35 font-medium">
@@ -237,7 +238,7 @@ function EventSidebar({
                         <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
                             <motion.div
                                 initial={{ width: 0 }}
-                                animate={{ width: `${Math.min(((event._count?.submissions ?? 0) / event.capacity) * 100, 100)}%` }}
+                                animate={{ width: `${Math.min(((event.eventType === 'vote_only' ? (event._count?.votes ?? 0) : (event._count?.submissions ?? 0)) / event.capacity) * 100, 100)}%` }}
                                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                                 className="h-full rounded-full bg-gradient-to-r from-[#F97316] via-[#EA580C] to-[#C2410C]"
                             />
@@ -376,32 +377,45 @@ function EventSidebar({
             {/* ── Vote status / Submit form ── */}
             {mode === "vote" && (
                 <div className={cn(
-                    "rounded-[20px] p-4 flex items-center gap-3 border",
+                    "rounded-[20px] p-4 border space-y-3",
                     votedSubmissionId
                         ? "bg-lime-400/8 border-lime-400/25"
                         : "bg-lime-400/5 border-lime-400/20"
                 )}>
-                    <div className="w-9 h-9 rounded-full bg-lime-400/15 flex items-center justify-center shrink-0">
-                        {votedSubmissionId
-                            ? <CheckCircle2 className="w-4 h-4 text-lime-400" />
-                            : <Vote className="w-4 h-4 text-lime-400" />
-                        }
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-black text-foreground">
-                            {votedSubmissionId ? "Vote cast!" : "Cast your vote"}
-                        </p>
-                        <p className="text-xs text-foreground/40 mt-0.5">
+                    {/* Top row: icon + text + thumbnail */}
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-lime-400/15 flex items-center justify-center shrink-0">
                             {votedSubmissionId
-                                ? `You voted for @${votedSub?.user?.username || "this entry"}`
-                                : "Pick your favourite entry from the grid"}
-                        </p>
+                                ? <CheckCircle2 className="w-4 h-4 text-lime-400" />
+                                : <Vote className="w-4 h-4 text-lime-400" />
+                            }
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-black text-foreground">
+                                {votedSubmissionId ? "Vote cast!" : "Cast your vote"}
+                            </p>
+                            <p className="text-xs text-foreground/40 mt-0.5">
+                                {votedSubmissionId
+                                    ? `You voted for @${votedSub?.user?.username || "this entry"}`
+                                    : "Pick your favourite entry from the grid"}
+                            </p>
+                        </div>
+                        {votedSub && (votedSub.imageUrl || votedSub.imageCid) && (
+                            <img
+                                src={votedSub.imageUrl || `${PINATA_GW}/${votedSub.imageCid}`}
+                                className="w-10 h-10 rounded-xl object-cover border-2 border-lime-400/40 shrink-0"
+                            />
+                        )}
                     </div>
-                    {votedSub && (votedSub.imageUrl || votedSub.imageCid) && (
-                        <img
-                            src={votedSub.imageUrl || `${PINATA_GW}/${votedSub.imageCid}`}
-                            className="w-10 h-10 rounded-xl object-cover border-2 border-lime-400/40 shrink-0"
-                        />
+                    {/* Results countdown — only after vote confirmed */}
+                    {votedSubmissionId && event.endTime && (
+                        <div className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-black/20 border border-lime-400/10">
+                            <div className="flex items-center gap-1.5">
+                                <Clock className="w-3 h-3 text-lime-400/60" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-lime-400/60">Results in</span>
+                            </div>
+                            <Countdown targetDate={event.endTime} label="" />
+                        </div>
                     )}
                 </div>
             )}
@@ -495,6 +509,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     const [fetchError, setFetchError] = useState<string | null>(null);
 
     const [votedSubmissionId, setVotedSubmissionId] = useState<string | null>(null);
+    const [pendingVoteId, setPendingVoteId] = useState<string | null>(null);
     const [optimisticVoteDelta, setOptimisticVoteDelta] = useState<string | null>(null);
 
     const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -589,22 +604,34 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         load();
     }, [id, user?.id]);
 
-    const handleVote = useCallback(async (submissionId: string) => {
+    // Step 1: select a submission (sets pending state only)
+    const handleVote = useCallback((submissionId: string) => {
         if (!event || votedSubmissionId) return;
         const sub = submissions.find((s) => s.id === submissionId);
         if (!sub) return;
         if (sub.userId === user?.id && event.eventType !== "vote_only") { toast.error("You can't vote for your own submission."); return; }
-        setOptimisticVoteDelta(submissionId);
-        setVotedSubmissionId(submissionId);
+        // Toggle off if clicking the already-pending card
+        setPendingVoteId((prev) => (prev === submissionId ? null : submissionId));
+    }, [event, submissions, user?.id, votedSubmissionId]);
+
+    // Step 2: confirm the pending vote (fires the API)
+    const handleConfirmVote = useCallback(async () => {
+        if (!pendingVoteId || !event) return;
+        const confirmingId = pendingVoteId;
+        setOptimisticVoteDelta(confirmingId);
+        setVotedSubmissionId(confirmingId);
+        setPendingVoteId(null);
         try {
-            if (event.eventType === "vote_only") await voteForProposals(event.id, [submissionId]);
-            else await voteOnSubmission(event.id, submissionId);
+            if (event.eventType === "vote_only") await voteForProposals(event.id, [confirmingId]);
+            else await voteOnSubmission(event.id, confirmingId);
         } catch (err: any) {
             setOptimisticVoteDelta(null);
             setVotedSubmissionId(null);
             toast.error(err?.message ?? "Failed to record vote.");
         }
-    }, [event, submissions, user?.id, votedSubmissionId]);
+    }, [pendingVoteId, event]);
+
+    const handleCancelVote = useCallback(() => setPendingVoteId(null), []);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const f = e.target.files?.[0];
@@ -693,8 +720,53 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         return (b._count?.votes || 0) - (a._count?.votes || 0); // trending = votes
     });
 
+    const pendingSub = pendingVoteId ? enrichedSubmissions.find((s) => s.id === pendingVoteId) : null;
+
     return (
         <SidebarLayout>
+            {/* ── Floating Confirm Vote Bar ── */}
+            <AnimatePresence>
+                {pendingVoteId && !votedSubmissionId && (
+                    <motion.div
+                        initial={{ y: 80, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 80, opacity: 0 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl bg-background/90 backdrop-blur-xl border border-lime-400/30 shadow-[0_8px_32px_rgba(0,0,0,0.5)] min-w-[320px] max-w-[480px]"
+                    >
+                        {/* Thumbnail */}
+                        {pendingSub && (pendingSub.imageUrl || pendingSub.imageCid) && (
+                            <img
+                                src={pendingSub.imageUrl || `${PINATA_GW}/${pendingSub.imageCid}`}
+                                className="w-10 h-10 rounded-xl object-cover border border-lime-400/30 shrink-0"
+                            />
+                        )}
+                        {/* Label */}
+                        <div className="flex-1 min-w-0">
+                            <p className="text-xs font-black text-foreground">Confirm your vote</p>
+                            <p className="text-[10px] text-foreground/40 font-medium truncate">
+                                @{pendingSub?.user?.username || "this entry"} · you can only vote once
+                            </p>
+                        </div>
+                        {/* Cancel */}
+                        <button
+                            onClick={handleCancelVote}
+                            className="px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider text-foreground/40 hover:text-foreground hover:bg-white/[0.06] transition-all shrink-0"
+                        >
+                            Cancel
+                        </button>
+                        {/* Confirm CTA */}
+                        <button
+                            onClick={handleConfirmVote}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-lime-400 hover:bg-lime-300 rounded-xl text-[11px] font-black uppercase tracking-wider text-black transition-all active:scale-[0.97] shrink-0"
+                        >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Confirm Vote
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <main className="w-full pb-24 pt-2">
                 {/* ── Breadcrumb ── */}
                 <div className="flex items-center gap-1.5 mb-4 px-0">
@@ -1106,7 +1178,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                 <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Participating</span>
                                                 <div className="flex items-center gap-1.5">
                                                     <Users className="w-3 h-3 text-foreground/40" />
-                                                    <span className="text-sm font-black text-foreground">{formatCount(event._count?.submissions ?? 0)}</span>
+                                                    <span className="text-sm font-black text-foreground">{formatCount(event.eventType === 'vote_only' ? (event._count?.votes ?? 0) : (event._count?.submissions ?? 0))}</span>
                                                     {event.capacity && <span className="text-[10px] text-foreground/35">/ {formatCount(event.capacity)}</span>}
                                                 </div>
                                             </div>
@@ -1114,7 +1186,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                 <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
                                                     <motion.div
                                                         initial={{ width: 0 }}
-                                                        animate={{ width: `${Math.min(((event._count?.submissions ?? 0) / event.capacity) * 100, 100)}%` }}
+                                                        animate={{ width: `${Math.min(((event.eventType === 'vote_only' ? (event._count?.votes ?? 0) : (event._count?.submissions ?? 0)) / event.capacity) * 100, 100)}%` }}
                                                         transition={{ duration: 0.8 }}
                                                         className="h-full rounded-full bg-gradient-to-r from-orange-500 to-orange-600"
                                                     />
@@ -1176,126 +1248,127 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                             </div>
                         </div>
                     ) : (
-                    /* ══════════════════════════════════════════════
-                       STANDARD LAYOUT — voting / completed / upcoming
-                    ══════════════════════════════════════════════ */
-                    <div className="flex flex-col lg:flex-row gap-6">
-                        {/* ── Left column ── */}
-                        <div className="flex-1 min-w-0">
-                            {/* Banner card */}
-                            <div className="relative rounded-[24px] overflow-hidden h-[220px] md:h-[260px] mb-5">
-                                <img src={coverUrl} className="w-full h-full object-cover" alt="Event" />
-                                <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-black/10" />
-                                <div className="absolute inset-0 p-6 flex flex-col justify-between">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        {event.status !== "completed" && (
-                                            <div className="bg-black/30 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-full flex items-center gap-1.5">
-                                                <Clock className="w-3 h-3 text-white/60" />
-                                                <span className="text-[10px] font-black text-white">Voting phase</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <h1 className="font-display text-3xl md:text-[2.6rem] text-white leading-tight mb-1">{event.title}</h1>
-                                        {event.description && (
-                                            <p className="text-xs text-white/60 font-medium leading-relaxed line-clamp-2 max-w-[420px] mb-4">{event.description}</p>
-                                        )}
-                                        {displayMode === "vote" && !votedSubmissionId && (
-                                            <div className="px-5 py-2.5 bg-lime-400 text-black rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-1.5 w-fit">
-                                                <ThumbsUp className="w-3.5 h-3.5" /> Vote Below
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Tab bar */}
-                            {displayMode !== "upcoming" && (
-                                <div className="flex items-center justify-between mb-5 border-b border-border/40 pb-3">
-                                    <div className="flex items-center gap-1">
-                                        {(["trending", "latest", "top"] as const).map((tab) => (
-                                            <button key={tab} onClick={() => setActiveTab(tab)}
-                                                className={cn("relative px-4 py-2 text-xs font-black uppercase tracking-[0.15em] transition-all",
-                                                    activeTab === tab ? "text-foreground" : "text-foreground/30 hover:text-foreground/60")}
-                                            >
-                                                {tab}
-                                                {activeTab === tab && <motion.div layoutId="eventTab" className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-primary" />}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground/30">
-                                            {enrichedSubmissions.length} {event.eventType === "vote_only" ? "Options" : "Submissions"}
-                                        </span>
-                                        <div className="flex border border-border/40 rounded-lg overflow-hidden">
-                                            <button onClick={() => setGridView(true)} className={cn("p-1.5 transition-colors", gridView ? "bg-white/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}><LayoutGrid className="w-3.5 h-3.5" /></button>
-                                            <button onClick={() => setGridView(false)} className={cn("p-1.5 transition-colors", !gridView ? "bg-white/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}><List className="w-3.5 h-3.5" /></button>
+                        /* ══════════════════════════════════════════════
+                           STANDARD LAYOUT — voting / completed / upcoming
+                        ══════════════════════════════════════════════ */
+                        <div className="flex flex-col lg:flex-row gap-6">
+                            {/* ── Left column ── */}
+                            <div className="flex-1 min-w-0">
+                                {/* Banner card */}
+                                <div className="relative rounded-[24px] overflow-hidden h-[220px] md:h-[260px] mb-5">
+                                    <img src={coverUrl} className="w-full h-full object-cover" alt="Event" />
+                                    <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-black/10" />
+                                    <div className="absolute inset-0 p-6 flex flex-col justify-between">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            {event.status !== "completed" && (
+                                                <div className="bg-black/30 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                                                    <Clock className="w-3 h-3 text-white/60" />
+                                                    <span className="text-[10px] font-black text-white">Voting phase</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <h1 className="font-display text-3xl md:text-[2.6rem] text-white leading-tight mb-1">{event.title}</h1>
+                                            {event.description && (
+                                                <p className="text-xs text-white/60 font-medium leading-relaxed line-clamp-2 max-w-[420px] mb-4">{event.description}</p>
+                                            )}
+                                            {displayMode === "vote" && !votedSubmissionId && (
+                                                <div className="px-5 py-2.5 bg-lime-400 text-black rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-1.5 w-fit">
+                                                    <ThumbsUp className="w-3.5 h-3.5" /> Vote Below
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
-                            )}
 
-                            {/* Content */}
-                            {displayMode === "upcoming" ? (
-                                <div className="py-16 flex flex-col items-center text-center gap-4">
-                                    <div className="w-14 h-14 rounded-3xl bg-primary/10 flex items-center justify-center">
-                                        <Clock className="w-7 h-7 text-primary" />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-xl font-black text-foreground tracking-tighter mb-1">Coming Soon</h2>
-                                        <p className="text-sm text-foreground/50 font-medium">Goes live on <strong>{new Date(event.startTime).toLocaleString()}</strong></p>
-                                    </div>
-                                </div>
-                            ) : displayMode === "completed" ? (
-                                <CompletedView event={event} submissions={enrichedSubmissions} currentUserId={user?.id} gridView={gridView} />
-                            ) : (
-                                <AnimatePresence>
-                                    <div className={gridView ? "grid grid-cols-2 md:grid-cols-3 gap-4" : "flex flex-col gap-3"}>
-                                        {sortedSubmissions.map((sub, idx) => (
-                                            <motion.div key={sub.id} layout initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2, delay: idx * 0.03 }}>
-                                                <VoteSubmissionCard
-                                                    submission={toVoteSubmission(sub)}
-                                                    isVoted={votedSubmissionId === sub.id}
-                                                    onVote={() => handleVote(sub.id)}
-                                                    disabled={!!votedSubmissionId || (event.eventType !== "vote_only" && sub.userId === user?.id)}
-                                                    optionIndex={event.eventType === "vote_only" ? idx : undefined}
-                                                    showVoteCount={false}
-                                                />
-                                            </motion.div>
-                                        ))}
-                                    </div>
-                                    {enrichedSubmissions.length === 0 && (
-                                        <div className="text-center py-20">
-                                            <p className="text-sm text-foreground/30 font-bold">{event.eventType === "vote_only" ? "No options yet" : "No entries yet"}</p>
+                                {/* Tab bar */}
+                                {displayMode !== "upcoming" && (
+                                    <div className="flex items-center justify-between mb-5 border-b border-border/40 pb-3">
+                                        <div className="flex items-center gap-1">
+                                            {(["trending", "latest", "top"] as const).map((tab) => (
+                                                <button key={tab} onClick={() => setActiveTab(tab)}
+                                                    className={cn("relative px-4 py-2 text-xs font-black uppercase tracking-[0.15em] transition-all",
+                                                        activeTab === tab ? "text-foreground" : "text-foreground/30 hover:text-foreground/60")}
+                                                >
+                                                    {tab}
+                                                    {activeTab === tab && <motion.div layoutId="eventTab" className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-primary" />}
+                                                </button>
+                                            ))}
                                         </div>
-                                    )}
-                                </AnimatePresence>
-                            )}
-                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-foreground/30">
+                                                {enrichedSubmissions.length} {event.eventType === "vote_only" ? "Options" : "Submissions"}
+                                            </span>
+                                            <div className="flex border border-border/40 rounded-lg overflow-hidden">
+                                                <button onClick={() => setGridView(true)} className={cn("p-1.5 transition-colors", gridView ? "bg-white/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}><LayoutGrid className="w-3.5 h-3.5" /></button>
+                                                <button onClick={() => setGridView(false)} className={cn("p-1.5 transition-colors", !gridView ? "bg-white/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}><List className="w-3.5 h-3.5" /></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
 
-                        {/* ── Right: Sticky sidebar ── */}
-                        <div className="lg:w-[300px] shrink-0">
-                            <div className="sticky top-6">
-                                <EventSidebar
-                                    event={event}
-                                    activeViewers={activeViewers}
-                                    mode={displayMode}
-                                    votedSubmissionId={votedSubmissionId}
-                                    votedSub={votedSub ?? undefined}
-                                    hasSubmitted={hasSubmitted}
-                                    mySubmission={mySubmission}
-                                    file={file}
-                                    preview={preview}
-                                    caption={caption}
-                                    submitting={submitting}
-                                    fileRef={fileRef}
-                                    onFileChange={handleFileChange}
-                                    onSubmit={handleSubmit}
-                                    onCaptionChange={setCaption}
-                                />
+                                {/* Content */}
+                                {displayMode === "upcoming" ? (
+                                    <div className="py-16 flex flex-col items-center text-center gap-4">
+                                        <div className="w-14 h-14 rounded-3xl bg-primary/10 flex items-center justify-center">
+                                            <Clock className="w-7 h-7 text-primary" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xl font-black text-foreground tracking-tighter mb-1">Coming Soon</h2>
+                                            <p className="text-sm text-foreground/50 font-medium">Goes live on <strong>{new Date(event.startTime).toLocaleString()}</strong></p>
+                                        </div>
+                                    </div>
+                                ) : displayMode === "completed" ? (
+                                    <CompletedView event={event} submissions={enrichedSubmissions} currentUserId={user?.id} gridView={gridView} />
+                                ) : (
+                                    <AnimatePresence>
+                                        <div className={gridView ? "grid grid-cols-2 md:grid-cols-3 gap-4" : "flex flex-col gap-3"}>
+                                            {sortedSubmissions.map((sub, idx) => (
+                                                <motion.div key={sub.id} layout initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2, delay: idx * 0.03 }}>
+                                                    <VoteSubmissionCard
+                                                        submission={toVoteSubmission(sub, user?.id)}
+                                                        isVoted={votedSubmissionId === sub.id}
+                                                        isPending={pendingVoteId === sub.id}
+                                                        onVote={() => handleVote(sub.id)}
+                                                        disabled={!!votedSubmissionId || (event.eventType !== "vote_only" && sub.userId === user?.id)}
+                                                        optionIndex={event.eventType === "vote_only" ? idx : undefined}
+                                                        showVoteCount={false}
+                                                    />
+                                                </motion.div>
+                                            ))}
+                                        </div>
+                                        {enrichedSubmissions.length === 0 && (
+                                            <div className="text-center py-20">
+                                                <p className="text-sm text-foreground/30 font-bold">{event.eventType === "vote_only" ? "No options yet" : "No entries yet"}</p>
+                                            </div>
+                                        )}
+                                    </AnimatePresence>
+                                )}
+                            </div>
+
+                            {/* ── Right: Sticky sidebar ── */}
+                            <div className="lg:w-[300px] shrink-0">
+                                <div className="sticky top-6">
+                                    <EventSidebar
+                                        event={event}
+                                        activeViewers={activeViewers}
+                                        mode={displayMode}
+                                        votedSubmissionId={votedSubmissionId}
+                                        votedSub={votedSub ?? undefined}
+                                        hasSubmitted={hasSubmitted}
+                                        mySubmission={mySubmission}
+                                        file={file}
+                                        preview={preview}
+                                        caption={caption}
+                                        submitting={submitting}
+                                        fileRef={fileRef}
+                                        onFileChange={handleFileChange}
+                                        onSubmit={handleSubmit}
+                                        onCaptionChange={setCaption}
+                                    />
+                                </div>
                             </div>
                         </div>
-                    </div>
                     )
                 ) : null}
             </main>

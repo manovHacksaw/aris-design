@@ -21,10 +21,10 @@ function formatRelativeTime(isoString: string): string {
 }
 
 const ICON_MAP: Record<string, { icon: React.ElementType; color: string; bg: string; border: string }> = {
-    social:  { icon: UserPlus,    color: "text-primary",    bg: "bg-primary/10",    border: "border-primary/20"    },
-    event:   { icon: Zap,         color: "text-yellow-400", bg: "bg-yellow-400/10", border: "border-yellow-400/20" },
-    reward:  { icon: Star,        color: "text-lime-400",   bg: "bg-lime-400/10",   border: "border-lime-400/20"   },
-    system:  { icon: CheckCircle2,color: "text-green-400",  bg: "bg-green-400/10",  border: "border-green-400/20"  },
+    social: { icon: UserPlus, color: "text-primary", bg: "bg-primary/10", border: "border-primary/20" },
+    event: { icon: Zap, color: "text-yellow-400", bg: "bg-yellow-400/10", border: "border-yellow-400/20" },
+    reward: { icon: Star, color: "text-lime-400", bg: "bg-lime-400/10", border: "border-lime-400/20" },
+    system: { icon: CheckCircle2, color: "text-green-400", bg: "bg-green-400/10", border: "border-green-400/20" },
 };
 
 function NotificationIcon({ type }: { type: string }) {
@@ -49,11 +49,11 @@ export default function NotificationsPage() {
     }, [unreadCount, isLoading, markAllAsRead]);
 
     const filtered = notifications.filter(n => {
-        if (filter === "all")     return true;
-        if (filter === "social")  return n.type === "social";
-        if (filter === "events")  return n.type === "event";
+        if (filter === "all") return true;
+        if (filter === "social") return n.type === "social";
+        if (filter === "events") return n.type === "event";
         if (filter === "rewards") return n.type === "reward";
-        if (filter === "system")  return n.type === "system";
+        if (filter === "system") return n.type === "system";
         return true;
     });
 
@@ -65,10 +65,10 @@ export default function NotificationsPage() {
                     {/* ── Header ──────────────────────────── */}
                     <div className="flex items-end justify-between gap-4">
                         <div className="space-y-1">
-                            <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-white uppercase leading-[0.92] tracking-tight">
+                            <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight">
                                 Notifications
                             </h1>
-                            <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">
+                            <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em]">
                                 Stay updated with your latest interactions
                             </p>
                         </div>
@@ -92,7 +92,7 @@ export default function NotificationsPage() {
                                     "px-6 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
                                     filter === f
                                         ? "bg-white text-black border-white"
-                                        : "bg-white/[0.04] text-white/40 border-white/[0.06] hover:bg-white/[0.08] hover:text-white/80"
+                                        : "bg-white/[0.04] text-foreground/40 border-white/[0.06] hover:bg-white/[0.08] hover:text-foreground/80"
                                 )}
                             >
                                 {f}
@@ -103,7 +103,7 @@ export default function NotificationsPage() {
                     {/* ── Loading ──────────────────────────── */}
                     {isLoading && (
                         <div className="flex items-center justify-center py-20">
-                            <Loader2 className="w-6 h-6 animate-spin text-white/20" />
+                            <Loader2 className="w-6 h-6 animate-spin text-foreground/20" />
                         </div>
                     )}
 
@@ -131,14 +131,14 @@ export default function NotificationsPage() {
 
                                     {/* Content */}
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-black text-white tracking-tight leading-snug mb-0.5">
+                                        <p className="text-sm font-black text-foreground tracking-tight leading-snug mb-0.5">
                                             {n.title}
                                         </p>
-                                        <p className="text-xs text-white/50 font-medium leading-relaxed">
+                                        <p className="text-xs text-foreground/60 font-medium leading-relaxed">
                                             {n.message}
                                         </p>
                                         <div className="flex items-center gap-2 mt-2">
-                                            <span className="text-[10px] font-black text-white/25 uppercase tracking-widest">
+                                            <span className="text-[10px] font-black text-foreground/40 uppercase tracking-widest">
                                                 {formatRelativeTime(n.createdAt)}
                                             </span>
                                             {!n.isRead && (
@@ -150,12 +150,12 @@ export default function NotificationsPage() {
                             )) : (
                                 <div className="py-24 text-center bg-white/[0.02] rounded-[24px] border border-dashed border-white/[0.07]">
                                     <div className="w-12 h-12 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
-                                        <Bell className="w-5 h-5 text-white/20" />
+                                        <Bell className="w-5 h-5 text-foreground/20" />
                                     </div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/30">
                                         No notifications yet
                                     </p>
-                                    <p className="text-[10px] text-white/15 font-medium mt-1 uppercase tracking-wider">
+                                    <p className="text-[10px] text-foreground/25 font-medium mt-1 uppercase tracking-wider">
                                         We'll notify you when something happens
                                     </p>
                                 </div>

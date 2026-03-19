@@ -35,7 +35,7 @@ export default function ExploreSidebar({
                     title="Recommended Brands"
                     items={brands}
                     type="brand"
-                    onViewAll={() => router.push("/leaderboard")}
+                    onViewAll={() => router.push("/leaderboard?tab=brands")}
                 />
             )}
 

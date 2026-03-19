@@ -39,6 +39,7 @@ export interface VoteSubmission {
     voteCount: number;
     rank?: number;
     isSelected?: boolean;
+    isOwn?: boolean;
 }
 
 export interface PostSubmission {
