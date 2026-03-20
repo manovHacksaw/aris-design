@@ -316,6 +316,20 @@ export async function getDetailedEventAnalytics(id: string): Promise<any> {
     return apiRequest<any>(`/analytics/events/${id}/detailed`);
 }
 
+export async function getEventParticipants(eventId: string): Promise<Array<{
+    id: string;
+    displayName?: string | null;
+    username?: string | null;
+    avatarUrl?: string | null;
+    profilePicCid?: string | null;
+}>> {
+    const response = await apiRequest<{ success: boolean; participants: any[] }>(
+        `/events/${eventId}/participants`
+    );
+    if (!response.success) throw new Error('Failed to fetch participants');
+    return response.participants;
+}
+
 export async function getMyVotes(eventId: string): Promise<any[]> {
     const response = await apiRequest<{ success: boolean; votes: any[] }>(
         `/events/${eventId}/my-votes`

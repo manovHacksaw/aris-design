@@ -6,7 +6,7 @@ import {
     Clock, Trophy, Users, ChevronLeft, Share2, ImageIcon, CheckCircle2, Loader2,
     AlertCircle, Crown, Medal, Info, Upload, PlusCircle, Vote, ChevronRight,
     Twitter, Instagram, Globe, ExternalLink, LayoutGrid, List, ThumbsUp, Coins,
-    ShieldCheck, Tag, Sparkles, Wand2, RefreshCw, X
+    ShieldCheck, Tag, Sparkles, Wand2, RefreshCw, X, ZoomIn
 } from "lucide-react";
 import { calculateTotalPool } from "@/lib/eventUtils";
 import Link from "next/link";
@@ -168,6 +168,7 @@ function EventSidebar({
     onFileChange,
     onSubmit,
     onCaptionChange,
+    isBrand,
 }: {
     event: Event;
     activeViewers: number;
@@ -178,6 +179,7 @@ function EventSidebar({
     hasSubmitted?: boolean;
     mySubmission?: Submission | null;
     file?: File | null;
+    isBrand?: boolean;
     preview?: string | null;
     caption?: string;
     submitting?: boolean;
@@ -420,7 +422,7 @@ function EventSidebar({
             </div>
 
             {/* ── Vote status / Submit form ── */}
-            {mode === "vote" && (
+            {mode === "vote" && !isBrand && (
                 <div className={cn(
                     "rounded-[20px] p-4 border space-y-3",
                     votedSubmissionId
@@ -465,7 +467,7 @@ function EventSidebar({
                 </div>
             )}
 
-            {mode === "post" && !hasSubmitted && fileRef && (
+            {mode === "post" && !hasSubmitted && fileRef && !isBrand && (
                 <div className="bg-white/[0.03] border border-white/[0.08] rounded-[24px] overflow-hidden">
                     <div className="px-5 pt-5 pb-3 border-b border-border/30 flex items-center gap-3">
                         <div className="w-7 h-7 rounded-xl bg-orange-500/10 flex items-center justify-center">
@@ -490,6 +492,12 @@ function EventSidebar({
                                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                                         <span className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-black text-white">Change</span>
                                     </div>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setLightboxOpen(true); }}
+                                        className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors z-10"
+                                    >
+                                        <ZoomIn className="w-3.5 h-3.5 text-white" />
+                                    </button>
                                 </>
                             ) : (
                                 <div className="flex flex-col items-center gap-2 p-4 text-center">
@@ -519,7 +527,7 @@ function EventSidebar({
                 </div>
             )}
 
-            {mode === "post" && hasSubmitted && (
+            {mode === "post" && hasSubmitted && !isBrand && (
                 <div className="bg-orange-500/8 border border-orange-500/25 rounded-[20px] p-4 flex items-center gap-3">
                     <div className="w-9 h-9 rounded-2xl bg-orange-500/15 flex items-center justify-center shrink-0">
                         <CheckCircle2 className="w-4 h-4 text-orange-400" />
@@ -569,6 +577,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     // Post submission form state (lifted up so sidebar can use it)
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
+    const [lightboxOpen, setLightboxOpen] = useState(false);
     const [caption, setCaption] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [pinturaOpen, setPinturaOpen] = useState(false);
@@ -792,6 +801,8 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
     const votedSub = votedSubmissionId ? enrichedSubmissions.find((s) => s.id === votedSubmissionId) : null;
     const previewSub = previewSubmissionId ? enrichedSubmissions.find((s) => s.id === previewSubmissionId) : null;
+
+    const isBrand = user?.role === "BRAND_OWNER";
 
     const displayMode: "post" | "vote" | "completed" | "upcoming" =
         event?.status === "completed" ? "completed"
@@ -1028,9 +1039,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         <Link href="/home" className="text-xs font-black text-primary hover:underline">Back to home</Link>
                     </div>
                 ) : event ? (
-                    displayMode === "post" ? (
+                    displayMode === "post" && !isBrand ? (
                         /* ══════════════════════════════════════════════
-                           POSTING PHASE — upload-focused layout
+                           POSTING PHASE — upload-focused layout (users only)
                         ══════════════════════════════════════════════ */
                         <div className="flex flex-col lg:flex-row gap-6">
 
@@ -1152,6 +1163,13 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                                     className="absolute top-3 left-3 w-7 h-7 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-red-500/80 transition-colors z-10"
                                                                 >
                                                                     <X className="w-3.5 h-3.5 text-white" />
+                                                                </button>
+                                                                {/* View full size button */}
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); setLightboxOpen(true); }}
+                                                                    className="absolute top-3 right-3 w-7 h-7 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors z-10"
+                                                                >
+                                                                    <ZoomIn className="w-3.5 h-3.5 text-white" />
                                                                 </button>
                                                             </>
                                                         ) : (
@@ -1484,7 +1502,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                             {event.description && (
                                                 <p className="text-xs text-white/60 font-medium leading-relaxed line-clamp-2 max-w-[420px] mb-4">{event.description}</p>
                                             )}
-                                            {displayMode === "vote" && !votedSubmissionId && (
+                                            {displayMode === "vote" && !votedSubmissionId && !isBrand && (
                                                 <div className="px-5 py-2.5 bg-lime-400 text-black rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-1.5 w-fit">
                                                     <ThumbsUp className="w-3.5 h-3.5" /> Vote Below
                                                 </div>
@@ -1588,6 +1606,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                         onFileChange={handleFileChange}
                                         onSubmit={handleSubmit}
                                         onCaptionChange={setCaption}
+                                        isBrand={isBrand}
                                     />
                                 </div>
                             </div>
@@ -1595,6 +1614,37 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                     )
                 ) : null}
             </main>
+
+            {/* Image lightbox */}
+            <AnimatePresence>
+                {lightboxOpen && preview && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 backdrop-blur-md"
+                        onClick={() => setLightboxOpen(false)}
+                    >
+                        <motion.img
+                            src={preview}
+                            alt="Preview full size"
+                            initial={{ scale: 0.92, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.92, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="max-w-[90vw] max-h-[90vh] object-contain rounded-2xl shadow-2xl"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                        <button
+                            onClick={() => setLightboxOpen(false)}
+                            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors"
+                        >
+                            <X className="w-4 h-4 text-white" />
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </SidebarLayout>
     );
 }

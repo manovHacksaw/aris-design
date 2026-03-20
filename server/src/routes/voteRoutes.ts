@@ -4,10 +4,14 @@ import {
     voteForProposals,
     getUserVotesForEvent,
     checkIfUserHasVoted,
+    getEventParticipants,
 } from '../controllers/voteController.js';
 import { authenticateJWT } from '../middlewares/authMiddleware.js';
 
 const router = Router({ mergeParams: true });
+
+// GET /api/events/:eventId/participants
+router.get('/participants', getEventParticipants);
 
 // GET /api/events/:eventId/my-votes
 router.get('/my-votes', authenticateJWT, getUserVotesForEvent);
