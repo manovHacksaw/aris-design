@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { VoteService } from '../services/voteService.js';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware.js';
 import { VoteForProposalsRequest, VoteForSubmissionRequest } from '../types/vote.js';
+import { prisma } from '../lib/prisma.js';
 
 /**
  * Vote for a submission (POST_VOTE events)
@@ -88,6 +89,41 @@ export const getUserVotesForEvent = async (req: AuthenticatedRequest, res: Respo
             success: false,
             error: 'Internal server error',
         });
+    }
+};
+
+/**
+ * Get distinct participants (voters) for an event
+ * GET /api/events/:eventId/participants
+ */
+export const getEventParticipants = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
+    try {
+        const { eventId } = req.params;
+        const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+
+        const votes = await prisma.vote.findMany({
+            where: { eventId },
+            distinct: ['userId'],
+            take: limit,
+            orderBy: { createdAt: 'asc' },
+            select: {
+                userId: true,
+                user: {
+                    select: {
+                        id: true,
+                        displayName: true,
+                        username: true,
+                        avatarUrl: true,
+                        profilePicCid: true,
+                    },
+                },
+            },
+        });
+
+        return res.status(200).json({ success: true, participants: votes.map((v) => v.user) });
+    } catch (error: any) {
+        console.error('Error in getEventParticipants:', error);
+        return res.status(500).json({ success: false, error: 'Internal server error' });
     }
 };
 

@@ -14,6 +14,7 @@ import SpotifyEventCard from "@/components/home/SpotifyEventCard";
 import CreateHero from "@/components/create/CreateHero";
 import GalleryTabs from "@/components/create/GalleryTabs";
 import { cn } from "@/lib/utils";
+import { ScrollIndicator } from "@/components/ui/ScrollIndicator";
 
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
@@ -210,6 +211,8 @@ export default function Create() {
                             <p className="text-[10px] text-white/20 font-medium">Check back soon for new challenges</p>
                         </div>
                     )}
+
+                    <ScrollIndicator bottomOffset={72} />
                 </main>
 
                 <div className="md:hidden">

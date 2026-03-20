@@ -4,11 +4,12 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import {
     ChevronLeft, ChevronRight, Info, Rocket, Sparkles, Loader2, Plus, Minus,
     Users, Trophy, Clock, ThumbsUp, Wallet, AlertCircle, RefreshCw,
-    Upload, Pencil, X,
+    Upload, Pencil, X, LayoutGrid, List, Tag, Vote, PlusCircle, ShieldCheck, ImageIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { ScrollIndicator } from "@/components/ui/ScrollIndicator";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import LaunchStepModal, { type LaunchFormData } from "@/components/brand/LaunchStepModal";
@@ -137,6 +138,8 @@ export default function CreateEventPage() {
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
     const bannerInputRef = useRef<HTMLInputElement | null>(null);
     const [bannerGeneratorOpen, setBannerGeneratorOpen] = useState(false);
+    const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+    const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
     const [form, setForm] = useState<FormData>({
         type: "vote",
@@ -622,7 +625,12 @@ export default function CreateEventPage() {
 
                             {bannerPreview ? (
                                 <div className="relative w-full rounded-2xl overflow-hidden border border-border group" style={{ aspectRatio: "16/9" }}>
-                                    <img src={bannerPreview} alt="Banner preview" className="w-full h-full object-cover" />
+                                    <img
+                                        src={bannerPreview}
+                                        alt="Banner preview"
+                                        className="w-full h-full object-cover cursor-zoom-in"
+                                        onClick={() => setLightboxSrc(bannerPreview)}
+                                    />
                                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                                         <button
                                             type="button"
@@ -933,7 +941,8 @@ export default function CreateEventPage() {
                                             <img
                                                 src={p.mediaPreview}
                                                 alt={`Option ${idx + 1}`}
-                                                className="w-16 h-16 rounded-xl object-cover border border-border"
+                                                className="w-16 h-16 rounded-xl object-cover border border-border cursor-zoom-in"
+                                                onClick={() => setLightboxSrc(p.mediaPreview!)}
                                             />
                                             <button
                                                 onClick={() => removeProposalMedia(idx)}
@@ -1011,27 +1020,53 @@ export default function CreateEventPage() {
                     </div>
                 );
 
-            case "review": {
-                const filledProposals = form.proposals.filter((p) => p.title.trim());
-                const netDeposit = Math.max(0, totalLocked - (form.useRefundCredit ? form.refundCreditAmount : 0));
+            case "review":
+                return null;
+        }
+    };
 
-                // Step indices for edit navigation
-                const typeIdx = visibleSteps.findIndex(s => s.id === "type");
-                const basicsIdx = visibleSteps.findIndex(s => s.id === "basics");
-                const rewardsIdx = visibleSteps.findIndex(s => s.id === "rewards");
-                const contentIdx = visibleSteps.findIndex(s => s.id === "content");
+    // ── Review / Launch full-page preview ─────────────────────────────────────
+    const launchData: LaunchFormData = {
+        ...form,
+        postingEndDate: "",
+        proposals: form.proposals.filter((p) => p.title.trim()),
+        category: form.domain,
+    } as LaunchFormData & { category: string };
 
-                const goTo = (idx: number) => { setDirection(-1); setCurrentStep(idx); };
+    const isLastStep = currentStep === visibleSteps.length - 1;
 
-                return (
-                    <div className="flex flex-col lg:flex-row gap-6 w-full text-left">
+    if (isLastStep) {
+        const filledProposals = form.proposals.filter((p) => p.title.trim());
+        const netDeposit = Math.max(0, totalLocked - (form.useRefundCredit ? form.refundCreditAmount : 0));
+        const basicsIdx = visibleSteps.findIndex(s => s.id === "basics");
+        const rewardsIdx = visibleSteps.findIndex(s => s.id === "rewards");
+        const contentIdx = visibleSteps.findIndex(s => s.id === "content");
+        const goTo = (idx: number) => { setDirection(-1); setCurrentStep(idx); };
+
+        return (
+            <div className="min-h-screen w-full bg-background font-sans overflow-y-auto">
+                {/* ── Top bar ── */}
+                <div className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 sm:px-6 py-4 bg-background/80 backdrop-blur-xl border-b border-border/30">
+                    <button
+                        onClick={goBack}
+                        className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
+                    >
+                        <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
+                        <span className="text-xs font-black tracking-widest uppercase">Back</span>
+                    </button>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Preview — What users will see</span>
+                    <div className="w-16" />
+                </div>
+
+                {/* ── Page body — mirrors events/[id]/page layout ── */}
+                <main className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 pb-32 pt-20">
+                    <div className="flex flex-col lg:flex-row gap-6">
                         {/* ── Left column ── */}
                         <div className="flex-1 min-w-0">
-
                             {/* Banner — click to edit basics */}
                             <div
                                 onClick={() => goTo(basicsIdx)}
-                                className="relative rounded-[24px] overflow-hidden h-[220px] md:h-[260px] border border-white/[0.05] transition-all hover:border-accent/50 cursor-pointer group mb-5"
+                                className="relative rounded-[24px] overflow-hidden h-[220px] md:h-[260px] mb-5 border border-white/[0.05] cursor-pointer group"
                             >
                                 {bannerPreview
                                     ? <img src={bannerPreview} alt="Banner" className="absolute inset-0 w-full h-full object-cover" />
@@ -1039,18 +1074,24 @@ export default function CreateEventPage() {
                                 }
                                 <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-black/10" />
                                 <div className="absolute inset-0 p-6 flex flex-col justify-between">
-                                    {/* Phase badge */}
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <div className="bg-black/30 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-full flex items-center gap-1.5">
-                                            <Clock className="w-3 h-3 text-white/60" />
+                                        <div className={cn(
+                                            "backdrop-blur-md border px-2.5 py-1 rounded-full flex items-center gap-1.5",
+                                            isPost
+                                                ? "bg-orange-500/80 border-orange-400/30"
+                                                : "bg-black/30 border-white/10"
+                                        )}>
+                                            <Clock className="w-3 h-3 text-white" />
                                             <span className="text-[10px] font-black text-white">
-                                                {isPost ? "Posting" : "Voting"} phase
+                                                {isPost ? "Posting Open" : "Voting phase"}
                                             </span>
                                         </div>
                                     </div>
-                                    {/* Title & CTA */}
                                     <div>
-                                        <h1 className="font-display text-3xl md:text-[2.6rem] text-white leading-tight mb-1 group-hover:text-accent transition-colors">
+                                        {form.title && (
+                                            <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mb-0.5">{user?.username ?? "Your Brand"}</p>
+                                        )}
+                                        <h1 className="font-display text-3xl md:text-[2.6rem] text-white leading-tight mb-1">
                                             {form.title || "Untitled Event"}
                                         </h1>
                                         {form.description && (
@@ -1058,7 +1099,7 @@ export default function CreateEventPage() {
                                                 {form.description}
                                             </p>
                                         )}
-                                        <div className="flex items-center gap-3 pointer-events-none opacity-50">
+                                        <div className="flex items-center gap-3">
                                             {isPost ? (
                                                 <div className="px-5 py-2.5 bg-orange-500 text-white rounded-full text-xs font-black uppercase tracking-widest">
                                                     Submit Entry
@@ -1081,7 +1122,7 @@ export default function CreateEventPage() {
                                 </div>
                             </div>
 
-                            {/* Tab bar mock */}
+                            {/* Tab bar */}
                             <div className="flex items-center justify-between mb-5 border-b border-border/40 pb-3">
                                 <div className="flex items-center gap-1">
                                     {(["trending", "latest", "top"] as const).map((tab) => (
@@ -1100,43 +1141,25 @@ export default function CreateEventPage() {
                                     </span>
                                     <div className="flex border border-border/40 rounded-lg overflow-hidden">
                                         <button className="p-1.5 bg-white/10 text-foreground">
-                                            <div className="w-3.5 h-3.5 border border-current rounded-[2px]" />
+                                            <LayoutGrid className="w-3.5 h-3.5" />
                                         </button>
                                         <button className="p-1.5 text-foreground/30">
-                                            <div className="w-3.5 h-3.5 flex flex-col gap-0.5">
-                                                <div className="h-0.5 bg-current rounded" />
-                                                <div className="h-0.5 bg-current rounded" />
-                                                <div className="h-0.5 bg-current rounded" />
-                                            </div>
+                                            <List className="w-3.5 h-3.5" />
                                         </button>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Content area — vote options or empty post panel */}
+                            {/* Content area */}
                             {isPost ? (
-                                <div
-                                    onClick={() => goTo(basicsIdx)}
-                                    className="py-16 flex flex-col items-center text-center gap-4 border border-dashed border-white/[0.08] rounded-2xl group hover:border-[#A78BFA]/40 transition-colors cursor-pointer relative"
-                                >
-                                    <div className="w-14 h-14 rounded-3xl bg-primary/10 flex items-center justify-center group-hover:bg-[#A78BFA]/20 transition-colors">
-                                        <Clock className="w-7 h-7 text-primary group-hover:text-[#A78BFA] transition-colors" />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-xl font-black text-foreground tracking-tighter mb-1 group-hover:text-[#A78BFA] transition-colors">Coming Soon</h2>
-                                        <p className="text-sm text-foreground/50 font-medium">
-                                            Submissions will appear here once the event goes live
-                                        </p>
-                                    </div>
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none rounded-2xl">
-                                        <div className="bg-black/80 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2 border border-white/20 shadow-2xl">
-                                            <Pencil className="w-4 h-4 text-white" />
-                                            <span className="text-xs font-black text-white">EDIT BASICS</span>
-                                        </div>
-                                    </div>
+                                /* Post event: submissions placeholder */
+                                <div className="py-20 flex flex-col items-center justify-center text-center gap-3 border border-dashed border-border/30 rounded-[24px]">
+                                    <Users className="w-8 h-8 text-foreground/15" />
+                                    <p className="text-sm font-black text-foreground/30">User submissions will appear here</p>
+                                    <p className="text-xs text-foreground/20">once the event goes live</p>
                                 </div>
                             ) : (
-                                /* Vote options */
+                                /* Vote event: vote options */
                                 <div
                                     onClick={() => contentIdx >= 0 && goTo(contentIdx)}
                                     className="cursor-pointer group relative"
@@ -1147,38 +1170,35 @@ export default function CreateEventPage() {
                                                 <ThumbsUp className="w-7 h-7 text-lime-400/60 group-hover:text-lime-400 transition-colors" />
                                             </div>
                                             <div>
-                                                <h2 className="text-xl font-black text-foreground tracking-tighter mb-1 group-hover:text-lime-400 transition-colors">No Options Yet</h2>
+                                                <h2 className="text-xl font-black text-foreground tracking-tighter mb-1">No Options Yet</h2>
                                                 <p className="text-sm text-foreground/50 font-medium">Go back to add vote options</p>
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="space-y-2">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Vote Options</span>
-                                                <span className="text-[10px] font-black text-lime-400/70 bg-lime-400/10 px-2 py-0.5 rounded-full border border-lime-400/20">
-                                                    {filledProposals.length} options
-                                                </span>
-                                            </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             {filledProposals.map((p, i) => (
-                                                <div key={i} className="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3 hover:border-lime-400/20 transition-colors">
+                                                <div key={i} className="relative rounded-[20px] bg-white/[0.03] border border-white/[0.06] overflow-hidden group/card hover:border-lime-400/20 transition-colors">
                                                     {p.mediaPreview ? (
-                                                        <img src={p.mediaPreview} alt={p.title} className="w-12 h-12 rounded-xl object-cover shrink-0 border border-white/10" />
+                                                        <div className="relative w-full aspect-[4/3] overflow-hidden">
+                                                            <img src={p.mediaPreview} alt={p.title} className="w-full h-full object-cover" />
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                                        </div>
                                                     ) : (
-                                                        <div className="w-12 h-12 rounded-xl bg-lime-400/10 flex items-center justify-center shrink-0 border border-lime-400/15">
-                                                            <span className="text-xs font-black text-lime-400">{i + 1}</span>
+                                                        <div className="w-full aspect-[4/3] bg-lime-400/5 flex items-center justify-center border-b border-white/[0.04]">
+                                                            <span className="text-4xl font-black text-lime-400/20">{i + 1}</span>
                                                         </div>
                                                     )}
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-bold text-foreground truncate">{p.title}</p>
-                                                        <div className="mt-1.5 h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
+                                                    <div className="p-4">
+                                                        <p className="text-sm font-bold text-foreground mb-3 truncate">{p.title}</p>
+                                                        <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden mb-2">
                                                             <div className="h-full rounded-full bg-gradient-to-r from-lime-400/60 to-lime-400/30" style={{ width: "0%" }} />
                                                         </div>
-                                                        <p className="text-[10px] text-foreground/30 mt-1 font-medium">0 votes</p>
-                                                    </div>
-                                                    <div className="shrink-0 opacity-40 pointer-events-none">
-                                                        <div className="px-3 py-1.5 bg-lime-400/10 border border-lime-400/20 rounded-full flex items-center gap-1">
-                                                            <ThumbsUp className="w-3 h-3 text-lime-400" />
-                                                            <span className="text-[10px] font-black text-lime-400">Vote</span>
+                                                        <div className="flex items-center justify-between">
+                                                            <p className="text-[10px] text-foreground/30 font-medium">0 votes</p>
+                                                            <div className="px-3 py-1.5 bg-lime-400/10 border border-lime-400/20 rounded-full flex items-center gap-1 opacity-60">
+                                                                <ThumbsUp className="w-3 h-3 text-lime-400" />
+                                                                <span className="text-[10px] font-black text-lime-400">Vote</span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1186,7 +1206,7 @@ export default function CreateEventPage() {
                                         </div>
                                     )}
                                     {contentIdx >= 0 && (
-                                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3 pointer-events-none">
+                                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none rounded-[20px]">
                                             <div className="bg-black/80 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2 border border-white/20 shadow-2xl">
                                                 <Pencil className="w-4 h-4 text-white" />
                                                 <span className="text-xs font-black text-white">EDIT OPTIONS</span>
@@ -1195,17 +1215,79 @@ export default function CreateEventPage() {
                                     )}
                                 </div>
                             )}
+
+                            {/* Rules / About section (mirrors event detail page) */}
+                            <div
+                                onClick={() => goTo(basicsIdx)}
+                                className="mt-6 rounded-[24px] border border-border/40 bg-white/[0.02] p-5 space-y-5 cursor-pointer group relative"
+                            >
+                                {/* Eligibility */}
+                                <div>
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <ShieldCheck className="w-3.5 h-3.5 text-foreground/40" />
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Eligibility</p>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        <span className={cn("text-[10px] font-bold px-3 py-1.5 rounded-full border", isPost ? "bg-orange-500/10 text-orange-400 border-orange-500/20" : "bg-lime-400/10 text-lime-400 border-lime-400/20")}>
+                                            Open to All Users
+                                        </span>
+                                        {isPost && (
+                                            <span className="text-[10px] font-bold px-3 py-1.5 rounded-full bg-foreground/5 text-foreground/50 border border-border/40">
+                                                1 Submission / User
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                {/* Rules */}
+                                <div>
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <Info className="w-3.5 h-3.5 text-foreground/40" />
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40">{isPost ? "Submission Rules" : "Voting Guidelines"}</p>
+                                    </div>
+                                    <ol className="space-y-2.5">
+                                        {(isPost ? [
+                                            "Upload a high-res image (JPEG or PNG, max 5 MB).",
+                                            "Aspect ratio: 4:5 or 1:1 preferred.",
+                                            "Add an optional caption to describe your work.",
+                                            "One submission per participant — make it count.",
+                                            "No offensive, copyrighted content.",
+                                        ] : [
+                                            "Browse all entries in the grid below.",
+                                            "Click the vote button on your favourite entry.",
+                                            "You can only cast one vote — choose wisely!",
+                                        ]).map((rule, i) => (
+                                            <li key={i} className="flex gap-3 text-sm text-foreground/60 leading-relaxed">
+                                                <span className={cn("w-5 h-5 rounded-full font-black text-[9px] flex items-center justify-center shrink-0 mt-0.5", isPost ? "bg-orange-500/10 border border-orange-500/20 text-orange-400" : "bg-lime-400/10 text-lime-400")}>
+                                                    {i + 1}
+                                                </span>
+                                                {rule}
+                                            </li>
+                                        ))}
+                                    </ol>
+                                </div>
+                                {form.description && (
+                                    <div className="pt-4 border-t border-border/30">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-2">About This Event</p>
+                                        <p className="text-sm text-foreground/60 leading-relaxed">{form.description}</p>
+                                    </div>
+                                )}
+                                {/* Edit overlay */}
+                                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-[24px] pointer-events-none">
+                                    <div className="bg-black/80 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2 border border-white/20 shadow-2xl">
+                                        <Pencil className="w-4 h-4 text-white" />
+                                        <span className="text-xs font-black text-white">EDIT BASICS</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* ── Right sidebar ── */}
+                        {/* ── Right sidebar — mirrors EventSidebar ── */}
                         <div className="lg:w-[300px] shrink-0 space-y-4">
-
-                            {/* Event info card — click to edit type/basics */}
+                            {/* Event info card */}
                             <div
                                 onClick={() => goTo(basicsIdx)}
                                 className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5 relative group cursor-pointer hover:border-[#A78BFA]/40 transition-all"
                             >
-                                {/* Brand row */}
                                 <div className="flex items-center gap-3 mb-4">
                                     <div className="w-10 h-10 rounded-xl bg-[#A78BFA]/10 flex items-center justify-center">
                                         <span className="text-xs font-black text-[#A78BFA]">{user?.username?.[0]?.toUpperCase() ?? "B"}</span>
@@ -1216,21 +1298,18 @@ export default function CreateEventPage() {
                                     </div>
                                     {form.domain && (
                                         <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#A78BFA]/10 border border-[#A78BFA]/20 shrink-0">
+                                            <Tag className="w-2.5 h-2.5 text-[#A78BFA]/70" />
                                             <span className="text-[9px] font-black uppercase tracking-widest text-[#A78BFA]/80">{form.domain}</span>
                                         </div>
                                     )}
                                 </div>
-
-                                {/* Countdown mock */}
                                 <div className={cn(
                                     "flex items-center justify-between py-3 px-3 rounded-[12px] border mt-1",
                                     isPost ? "bg-orange-500/8 border-orange-500/20" : "bg-lime-400/5 border-lime-400/20"
                                 )}>
                                     <div className="flex items-center gap-1.5">
                                         <Clock className={cn("w-3 h-3", isPost ? "text-orange-400" : "text-lime-400")} />
-                                        <span className={cn("text-[10px] font-black uppercase tracking-widest",
-                                            isPost ? "text-orange-400/80" : "text-lime-400/80"
-                                        )}>
+                                        <span className={cn("text-[10px] font-black uppercase tracking-widest", isPost ? "text-orange-400/80" : "text-lime-400/80")}>
                                             {isPost ? "Posting Ends In" : "Voting Ends In"}
                                         </span>
                                     </div>
@@ -1244,8 +1323,6 @@ export default function CreateEventPage() {
                                         ))}
                                     </div>
                                 </div>
-
-                                {/* Participants */}
                                 <div className="py-3 border-t border-border/30 mt-4">
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Participating</span>
@@ -1264,12 +1341,12 @@ export default function CreateEventPage() {
                                 </div>
                             </div>
 
-                            {/* Rewards + Guidelines card — click to edit rewards */}
+                            {/* Rewards card */}
                             <div
                                 onClick={() => goTo(rewardsIdx)}
                                 className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5 relative group cursor-pointer hover:border-[#A78BFA]/40 transition-all"
                             >
-                                {/* Vote & Earn — vote_only only */}
+                                {/* Vote & Earn */}
                                 {!isPost && (
                                     <div className="mb-4 bg-lime-400/8 border border-lime-400/20 rounded-[14px] p-3.5 flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-full bg-lime-400/15 flex items-center justify-center shrink-0">
@@ -1281,19 +1358,13 @@ export default function CreateEventPage() {
                                         </div>
                                     </div>
                                 )}
-
-                                {/* Rewards pool header */}
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-2">
                                         <Trophy className="w-4 h-4 text-[#A78BFA]" />
                                         <span className="text-sm font-black text-foreground">Rewards Pool</span>
                                     </div>
-                                    <span className="text-[9px] bg-[#A78BFA]/10 text-[#A78BFA] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border border-[#A78BFA]/20">
-                                        Guaranteed
-                                    </span>
+                                    <span className="text-[9px] bg-[#A78BFA]/10 text-[#A78BFA] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border border-[#A78BFA]/20">Guaranteed</span>
                                 </div>
-
-                                {/* Grand prize */}
                                 {effectiveTop > 0 && (
                                     <div className="bg-[#A78BFA]/5 border border-[#A78BFA]/15 rounded-[14px] p-4 mb-3">
                                         <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Grand-Prize Winner</p>
@@ -1301,68 +1372,67 @@ export default function CreateEventPage() {
                                         <p className="text-[10px] text-foreground/40 font-medium">USDC</p>
                                     </div>
                                 )}
-
-                                {/* Per vote/submission */}
+                                {isPost && effectiveLeaderboard > 0 && (
+                                    <div className="mb-4">
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Leaderboard Pool</p>
+                                        <p className="text-xl font-black text-foreground">${effectiveLeaderboard.toLocaleString()}</p>
+                                        <p className="text-[10px] text-foreground/40">USDC</p>
+                                    </div>
+                                )}
                                 <div className="mb-4">
                                     <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Per {isPost ? "Submission" : "Vote"}</p>
                                     <p className="text-lg font-black text-foreground">${(isPost ? CREATOR_RATE : BASE_RATE).toFixed(3)}</p>
                                 </div>
-
-                                {/* Eligibility (post only) */}
-                                {isPost && (
-                                    <div className="pb-4 mb-4 border-b border-border/40">
-                                        <div className="flex items-center gap-1.5 mb-2.5">
-                                            <span className="text-[9px] font-black uppercase tracking-widest text-foreground/40">Eligibility</span>
-                                        </div>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-orange-500/10 text-orange-400/80 border border-orange-500/15">Open to All Users</span>
-                                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-foreground/5 text-foreground/50 border border-border/40">1 Submission / User</span>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Guidelines */}
-                                <div className={cn(!isPost && "pt-4 border-t border-border/40")}>
+                                {/* Voting guidelines */}
+                                <div className="pt-4 border-t border-border/40">
                                     <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-3">
                                         {isPost ? "Posting Rules" : "Voting Guidelines"}
                                     </p>
                                     <ol className="space-y-2.5">
-                                        {(isPost
-                                            ? ["Upload a high-res image (JPEG or PNG, max 5 MB).", "Aspect ratio: 4:5 or 1:1 preferred.", "One submission per participant — make it count.", "No offensive, copyrighted content."]
-                                            : ["Browse all entries in the grid below.", "Click the vote button on your favourite entry.", "You can only cast one vote — choose wisely!"]
-                                        ).map((rule, i) => (
+                                        {(isPost ? [
+                                            "Upload a high-res image (JPEG or PNG, max 5 MB).",
+                                            "Aspect ratio: 4:5 or 1:1 preferred.",
+                                            "One submission per participant.",
+                                        ] : [
+                                            "Browse all entries in the grid below.",
+                                            "Click the vote button on your favourite entry.",
+                                            "You can only cast one vote — choose wisely!",
+                                        ]).map((rule, i) => (
                                             <li key={i} className="flex gap-2.5 text-xs text-foreground/60">
-                                                <span className={cn(
-                                                    "w-4 h-4 rounded-full font-black text-[9px] flex items-center justify-center shrink-0 mt-0.5",
-                                                    isPost ? "bg-orange-500/10 text-orange-400" : "bg-lime-400/10 text-lime-400"
-                                                )}>{i + 1}</span>
+                                                <span className={cn("w-4 h-4 rounded-full font-black text-[9px] flex items-center justify-center shrink-0 mt-0.5", isPost ? "bg-orange-500/10 text-orange-400" : "bg-lime-400/10 text-lime-400")}>
+                                                    {i + 1}
+                                                </span>
                                                 {rule}
                                             </li>
                                         ))}
                                     </ol>
                                 </div>
-
                                 <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-[#A78BFA]/20 p-2 rounded-full">
                                     <Pencil className="w-3 h-3 text-[#A78BFA]" />
                                 </div>
                             </div>
 
-                            {/* Vote status / Submit form mock (disabled) */}
-                            {!isPost ? (
-                                <div className="rounded-[20px] p-4 flex items-center gap-3 border bg-lime-400/5 border-lime-400/20 opacity-50 pointer-events-none">
-                                    <div className="w-9 h-9 rounded-full bg-lime-400/15 flex items-center justify-center shrink-0">
-                                        <ThumbsUp className="w-4 h-4 text-lime-400" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-black text-foreground">Cast your vote</p>
-                                        <p className="text-xs text-foreground/40 mt-0.5">Pick your favourite entry from the grid</p>
+                            {/* Vote status panel (vote events only) */}
+                            {!isPost && (
+                                <div className="rounded-[20px] p-4 border bg-lime-400/5 border-lime-400/20 space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-full bg-lime-400/15 flex items-center justify-center shrink-0">
+                                            <Vote className="w-4 h-4 text-lime-400" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-black text-foreground">Cast your vote</p>
+                                            <p className="text-xs text-foreground/40 mt-0.5">Pick your favourite entry from the grid</p>
+                                        </div>
                                     </div>
                                 </div>
-                            ) : (
-                                <div className="bg-white/[0.03] border border-white/[0.08] rounded-[24px] overflow-hidden opacity-50 pointer-events-none">
+                            )}
+
+                            {/* Post entry panel (post events only) */}
+                            {isPost && (
+                                <div className="bg-white/[0.03] border border-white/[0.08] rounded-[24px] overflow-hidden">
                                     <div className="px-5 pt-5 pb-3 border-b border-border/30 flex items-center gap-3">
                                         <div className="w-7 h-7 rounded-xl bg-orange-500/10 flex items-center justify-center">
-                                            <Plus className="w-3.5 h-3.5 text-orange-400" />
+                                            <PlusCircle className="w-3.5 h-3.5 text-orange-400" />
                                         </div>
                                         <div>
                                             <h3 className="text-sm font-black text-foreground">Post Your Entry</h3>
@@ -1370,16 +1440,13 @@ export default function CreateEventPage() {
                                         </div>
                                     </div>
                                     <div className="p-4 space-y-3">
-                                        <div className="relative border-2 border-dashed rounded-[16px] flex flex-col items-center justify-center border-border/40 h-[120px]">
-                                            <div className="flex flex-col items-center gap-2 p-4 text-center">
-                                                <Upload className="w-5 h-5 text-foreground/30" />
-                                                <p className="text-xs font-black text-foreground/50">Drop image or click</p>
-                                                <p className="text-[9px] text-foreground/20 uppercase tracking-widest font-bold">JPEG · PNG · max 5 MB</p>
-                                            </div>
+                                        <div className="border-2 border-dashed border-border/40 rounded-[16px] h-[120px] flex flex-col items-center justify-center gap-2">
+                                            <Upload className="w-5 h-5 text-foreground/30" />
+                                            <p className="text-xs font-black text-foreground/50">Drop image or click</p>
+                                            <p className="text-[9px] text-foreground/20 uppercase tracking-widest font-bold">JPEG · PNG · max 5 MB</p>
                                         </div>
-                                        <textarea readOnly placeholder="Caption… (optional)" rows={2}
-                                            className="w-full bg-secondary/40 border border-border/40 rounded-xl px-3 py-2.5 text-xs text-foreground placeholder:text-foreground/30 resize-none focus:outline-none" />
-                                        <button disabled className="w-full py-3.5 bg-foreground text-background rounded-[14px] text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 opacity-30">
+                                        <div className="h-[60px] bg-foreground/5 border border-border/40 rounded-xl" />
+                                        <button disabled className="w-full py-3.5 bg-foreground/30 text-background rounded-[14px] text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2">
                                             <Upload className="w-3.5 h-3.5" /> Submit Entry
                                         </button>
                                     </div>
@@ -1395,20 +1462,116 @@ export default function CreateEventPage() {
                             )}
                         </div>
                     </div>
-                );
-            }
-        }
-    };
+                </main>
 
-    // ── Build LaunchFormData ───────────────────────────────────────────────────
-    const launchData: LaunchFormData = {
-        ...form,
-        postingEndDate: "",
-        proposals: form.proposals.filter((p) => p.title.trim()),
-        category: form.domain,
-    } as LaunchFormData & { category: string };
+                {/* ── Bottom action bar ── */}
+                <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-center gap-4 px-6 py-5 bg-background/90 backdrop-blur-xl border-t border-border/30">
+                    <button
+                        onClick={goBack}
+                        className="flex items-center gap-2 px-6 py-3.5 rounded-2xl border-2 border-border text-sm font-bold hover:bg-secondary hover:border-accent/40 hover:text-accent transition-all group"
+                    >
+                        <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" /> Back
+                    </button>
+                    <button
+                        onClick={() => {
+                            for (let i = 0; i < visibleSteps.length; i++) {
+                                const err = validateStep(i);
+                                if (err) { toast.error(`Step ${i + 1}: ${err}`); return; }
+                            }
+                            setConfirmOpen(true);
+                        }}
+                        className="flex items-center gap-2 px-10 py-3.5 bg-primary text-primary-foreground rounded-2xl text-sm font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30 hover:bg-accent group"
+                    >
+                        Launch <Rocket className="w-4 h-4 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 ml-1" />
+                    </button>
+                </div>
 
-    const isLastStep = currentStep === visibleSteps.length - 1;
+                {/* ── Confirm Launch Dialog ── */}
+                <AnimatePresence>
+                    {confirmOpen && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                            onClick={() => setConfirmOpen(false)}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.92, opacity: 0, y: 16 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.92, opacity: 0, y: 16 }}
+                                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                                className="bg-card border border-border rounded-3xl p-8 max-w-sm w-full shadow-2xl"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mx-auto mb-5">
+                                    <Rocket className="w-7 h-7 text-primary" />
+                                </div>
+                                <h2 className="text-xl font-black text-foreground text-center mb-2">Confirm Launch</h2>
+                                <p className="text-sm text-muted-foreground text-center mb-1">
+                                    You're about to launch <span className="text-foreground font-semibold">{form.title || "your event"}</span>.
+                                </p>
+                                <p className="text-xs text-muted-foreground text-center mb-7">
+                                    This will lock funds and make the event live. This action cannot be undone.
+                                </p>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setConfirmOpen(false)}
+                                        className="flex-1 py-3 rounded-2xl border border-border text-sm font-bold text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={() => { setConfirmOpen(false); setModalOpen(true); }}
+                                        className="flex-1 py-3 rounded-2xl bg-primary text-primary-foreground text-sm font-black hover:bg-accent transition-all shadow-lg shadow-primary/30 flex items-center justify-center gap-2"
+                                    >
+                                        <Rocket className="w-4 h-4" /> Launch
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Lightbox */}
+                <AnimatePresence>
+                    {lightboxSrc && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+                            onClick={() => setLightboxSrc(null)}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.88, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.88, opacity: 0 }}
+                                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                                className="relative max-w-4xl w-full max-h-[90vh] flex items-center justify-center"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <img src={lightboxSrc} alt="Preview" className="max-w-full max-h-[85vh] rounded-2xl object-contain shadow-2xl border border-white/10" />
+                                <button
+                                    onClick={() => setLightboxSrc(null)}
+                                    className="absolute -top-3 -right-3 w-8 h-8 bg-black/70 border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-black/90 transition-colors"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <LaunchStepModal
+                    open={modalOpen}
+                    form={launchData}
+                    onClose={() => setModalOpen(false)}
+                    onSuccess={() => router.push("/brand/dashboard")}
+                />
+            </div>
+        );
+    }
 
     return (
         <div className="h-screen w-full bg-background flex flex-col relative overflow-hidden font-sans">
@@ -1452,10 +1615,13 @@ export default function CreateEventPage() {
             </div>
 
             {/* Main Content */}
-            <div className={cn(
-                "flex-1 flex flex-col items-center justify-start px-3 sm:px-4 md:px-6 lg:px-8 pt-24 md:pt-32 pb-32 md:pb-40 w-full mx-auto z-10 overflow-y-auto no-scrollbar",
-                isLastStep ? "max-w-[1400px]" : "max-w-3xl"
-            )}>
+            <div
+                ref={scrollContainerRef}
+                className={cn(
+                    "flex-1 flex flex-col items-center justify-start px-3 sm:px-4 md:px-6 lg:px-8 pt-24 md:pt-32 pb-32 md:pb-40 w-full mx-auto z-10 overflow-y-auto no-scrollbar",
+                    isLastStep ? "max-w-[1400px]" : "max-w-3xl"
+                )}
+            >
                 <AnimatePresence mode="wait" custom={direction}>
                     <motion.div
                         key={currentStep}
@@ -1489,6 +1655,7 @@ export default function CreateEventPage() {
                         </div>
                     </motion.div>
                 </AnimatePresence>
+                <ScrollIndicator scrollRef={scrollContainerRef} />
             </div>
 
             {/* Bottom Bar */}
@@ -1572,6 +1739,40 @@ export default function CreateEventPage() {
                 onClose={() => setModalOpen(false)}
                 onSuccess={() => router.push("/brand/dashboard")}
             />
+
+            {/* ── Image Lightbox ─────────────────────────────────────────────── */}
+            <AnimatePresence>
+                {lightboxSrc && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+                        onClick={() => setLightboxSrc(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.88, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.88, opacity: 0 }}
+                            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                            className="relative max-w-4xl w-full max-h-[90vh] flex items-center justify-center"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <img
+                                src={lightboxSrc}
+                                alt="Preview"
+                                className="max-w-full max-h-[85vh] rounded-2xl object-contain shadow-2xl border border-white/10"
+                            />
+                            <button
+                                onClick={() => setLightboxSrc(null)}
+                                className="absolute -top-3 -right-3 w-8 h-8 bg-black/70 border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-black/90 transition-colors"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
