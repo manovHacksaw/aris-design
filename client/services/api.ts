@@ -32,7 +32,10 @@ export async function apiRequest<T>(
   options: RequestInit & { noCache?: boolean } = {},
   timeout = 30000
 ): Promise<T> {
-  const token = await getAuthToken();
+  const token = await Promise.race([
+    getAuthToken(),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
+  ]);
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
 

@@ -86,6 +86,27 @@ function toPostSubmission(sub: Submission, currentUserId?: string | null): PostS
     };
 }
 
+function mapVoteOnlyProposalsToSubmissions(event: Event): Submission[] {
+    return (event.proposals || []).map((p) => ({
+        id: p.id,
+        userId: event.brandId,
+        eventId: event.id,
+        imageCid: p.imageCid,
+        imageUrl: p.imageUrl,
+        content: p.title + (p.content ? `\n${p.content}` : ""),
+        user: {
+            id: event.brandId,
+            username: event.brand?.name || "brand",
+            displayName: event.brand?.name || "Brand",
+            avatarUrl: event.brand?.logoUrl || (event.brand?.logoCid ? `${PINATA_GW}/${event.brand.logoCid}` : undefined),
+        },
+        _count: { votes: p.voteCount || 0 },
+        rank: p.finalRank,
+        createdAt: event.createdAt,
+        updatedAt: event.createdAt,
+    }));
+}
+
 // ─── Social link helpers ─────────────────────────────────────────────────────
 
 const SOCIAL_SLOTS = [
@@ -133,6 +154,7 @@ function SocialLinks({ links }: { links?: Record<string, string> }) {
 function EventSidebar({
     event,
     activeViewers,
+    participantCount,
     mode,
     votedSubmissionId,
     votedSub,
@@ -149,6 +171,7 @@ function EventSidebar({
 }: {
     event: Event;
     activeViewers: number;
+    participantCount: number;
     mode: "post" | "vote" | "completed" | "upcoming";
     votedSubmissionId?: string | null;
     votedSub?: Submission | null;
@@ -218,33 +241,55 @@ function EventSidebar({
                     </div>
                 )}
 
-                {/* Participants */}
-                <div className="py-3 border-t border-border/30">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Participating</span>
-                        <div className="flex items-center gap-1.5">
-                            <Users className="w-3 h-3 text-foreground/40" />
-                            <span className="text-sm font-black text-foreground">
-                                {formatCount(event.eventType === 'vote_only' ? (event._count?.votes ?? 0) : (event._count?.submissions ?? 0))}
-                            </span>
-                            {event.capacity && (
-                                <span className="text-[10px] text-foreground/35 font-medium">
-                                    / {formatCount(event.capacity)}
-                                </span>
-                            )}
+                {/* Participants / Posting rules */}
+                {mode === "post" ? (
+                    <div className="py-3 border-t border-border/30 space-y-2">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">How It Works</span>
+                        <div className="flex items-start gap-2.5 mt-2">
+                            <div className="w-5 h-5 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                                <Upload className="w-2.5 h-2.5 text-orange-400" />
+                            </div>
+                            <p className="text-[11px] text-foreground/60 leading-snug">
+                                <span className="font-black text-foreground/80">One post per user.</span> Submit your best creative entry before time runs out.
+                            </p>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                            <div className="w-5 h-5 rounded-lg bg-lime-400/10 border border-lime-400/20 flex items-center justify-center shrink-0 mt-0.5">
+                                <Vote className="w-2.5 h-2.5 text-lime-400" />
+                            </div>
+                            <p className="text-[11px] text-foreground/60 leading-snug">
+                                <span className="font-black text-foreground/80">Voters are participants.</span> Participant count tracks votes cast — not posts — during the voting phase.
+                            </p>
                         </div>
                     </div>
-                    {event.capacity && (
-                        <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
-                            <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${Math.min(((event.eventType === 'vote_only' ? (event._count?.votes ?? 0) : (event._count?.submissions ?? 0)) / event.capacity) * 100, 100)}%` }}
-                                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                                className="h-full rounded-full bg-gradient-to-r from-[#F97316] via-[#EA580C] to-[#C2410C]"
-                            />
+                ) : (
+                    <div className="py-3 border-t border-border/30">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Participating</span>
+                            <div className="flex items-center gap-1.5">
+                                <Users className="w-3 h-3 text-foreground/40" />
+                                <span className="text-sm font-black text-foreground">
+                                    {formatCount(participantCount)}
+                                </span>
+                                {event.capacity && (
+                                    <span className="text-[10px] text-foreground/35 font-medium">
+                                        / {formatCount(event.capacity)}
+                                    </span>
+                                )}
+                            </div>
                         </div>
-                    )}
-                </div>
+                        {event.capacity && (
+                            <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
+                                <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${Math.min((participantCount / event.capacity) * 100, 100)}%` }}
+                                    transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                                    className="h-full rounded-full bg-gradient-to-r from-[#F97316] via-[#EA580C] to-[#C2410C]"
+                                />
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Active viewers */}
                 {activeViewers > 0 && (
@@ -344,9 +389,9 @@ function EventSidebar({
                     <ol className="space-y-2.5">
                         {(mode === "vote"
                             ? [
-                                "Browse all entries in the grid below.",
-                                "Click the vote button on your favourite entry.",
-                                "You can only cast one vote — choose wisely!",
+                                "Tap any image to open full-screen preview.",
+                                "Click the Vote button on your favourite entry.",
+                                "Confirm your vote in the bottom bar (one vote only).",
                             ]
                             : (event.submissionGuidelines
                                 ? event.submissionGuidelines.split("\n").filter(Boolean)
@@ -511,10 +556,15 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     const [votedSubmissionId, setVotedSubmissionId] = useState<string | null>(null);
     const [pendingVoteId, setPendingVoteId] = useState<string | null>(null);
     const [optimisticVoteDelta, setOptimisticVoteDelta] = useState<string | null>(null);
+    const [previewSubmissionId, setPreviewSubmissionId] = useState<string | null>(null);
 
     const [hasSubmitted, setHasSubmitted] = useState(false);
     const [mySubmission, setMySubmission] = useState<Submission | null>(null);
     const [activeViewers, setActiveViewers] = useState<number>(0);
+    const [participantCount, setParticipantCount] = useState<number>(0);
+    // Tracks whether we've already applied an optimistic +1 for the current user's vote,
+    // so the echoed socket broadcast doesn't double-count it.
+    const optimisticParticipantPending = useRef(false);
 
     // Post submission form state (lifted up so sidebar can use it)
     const [file, setFile] = useState<File | null>(null);
@@ -539,31 +589,39 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         if (!socket || !id) return;
         socket.emit("join-event", id);
         const handleVoteUpdate = ({ submissionId, delta }: { submissionId: string; delta: number }) => {
-            // Only update live counts when the event is completed (votes visible)
-            setEvent((prev) => {
-                if (prev?.status === "completed") {
-                    setSubmissions((subs) => subs.map((s) => s.id === submissionId ? { ...s, _count: { votes: (s._count?.votes ?? 0) + delta } } : s));
-                }
-                return prev;
-            });
+            setSubmissions((subs) => subs.map((s) => s.id === submissionId ? { ...s, _count: { votes: (s._count?.votes ?? 0) + delta } } : s));
             setOptimisticVoteDelta((prev) => (prev === submissionId ? null : prev));
         };
         const handlePresenceUpdate = ({ activeCount }: { activeCount: number }) => setActiveViewers(activeCount);
+        const handleParticipantUpdate = ({ delta }: { delta: number }) => {
+            if (optimisticParticipantPending.current) {
+                optimisticParticipantPending.current = false;
+                // Already counted optimistically — skip the echo
+            } else {
+                setParticipantCount((c) => c + delta);
+            }
+        };
         socket.on("vote-update", handleVoteUpdate);
         socket.on("presence-update", handlePresenceUpdate);
+        socket.on("participant-update", handleParticipantUpdate);
         return () => {
             socket.emit("leave-event", id);
             socket.off("vote-update", handleVoteUpdate);
             socket.off("presence-update", handlePresenceUpdate);
+            socket.off("participant-update", handleParticipantUpdate);
         };
     }, [socket, id]);
+
 
     useEffect(() => {
         async function load() {
             try {
                 setLoading(true);
+                setFetchError(null);
                 const ev = await getEventById(id, !!user?.id);
                 setEvent(ev);
+                setParticipantCount(ev._count?.votes ?? 0);
+
                 if (ev.hasVoted && ev.userVotes?.length) {
                     const vote = ev.userVotes[0];
                     setVotedSubmissionId(vote.submissionId || vote.proposalId || null);
@@ -573,27 +631,26 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                 if (ev.hasSubmitted) {
                     setHasSubmitted(true);
                     if (ev.userSubmission) setMySubmission(ev.userSubmission as Submission);
+                } else {
+                    setHasSubmitted(false);
+                    setMySubmission(null);
                 }
+
                 if (ev.status === "posting" || ev.status === "voting" || ev.status === "completed") {
                     if (ev.eventType === "post_and_vote") {
-                        const res = await getEventSubmissions(id, { sortBy: "votes", limit: 50 });
-                        setSubmissions(res.submissions);
+                        setSubmissions(ev.submissions || []);
+
+                        try {
+                            const res = await getEventSubmissions(id, { sortBy: "votes", limit: 50 });
+                            setSubmissions(res.submissions);
+                        } catch (submissionError) {
+                            console.error("Failed to refresh event submissions:", submissionError);
+                        }
                     } else if (ev.eventType === "vote_only" && ev.proposals) {
-                        const proposalsAsSubs = ev.proposals.map((p) => ({
-                            id: p.id,
-                            userId: ev.brandId,
-                            eventId: ev.id,
-                            imageCid: p.imageCid,
-                            imageUrl: p.imageUrl,
-                            content: p.title + (p.content ? `\n${p.content}` : ""),
-                            user: { name: ev.brand?.name || "Brand", username: ev.brand?.name || "brand", profilePicCid: ev.brand?.logoCid },
-                            _count: { votes: p.voteCount || 0 },
-                            rank: p.finalRank,
-                            createdAt: ev.createdAt,
-                            updatedAt: ev.createdAt,
-                        }));
-                        setSubmissions(proposalsAsSubs as any[]);
+                        setSubmissions(mapVoteOnlyProposalsToSubmissions(ev));
                     }
+                } else {
+                    setSubmissions([]);
                 }
             } catch (err: any) {
                 setFetchError(err?.message ?? "Failed to load event");
@@ -618,20 +675,45 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     const handleConfirmVote = useCallback(async () => {
         if (!pendingVoteId || !event) return;
         const confirmingId = pendingVoteId;
+        // Optimistic: immediately lock voted state + increment counts
         setOptimisticVoteDelta(confirmingId);
         setVotedSubmissionId(confirmingId);
         setPendingVoteId(null);
+        optimisticParticipantPending.current = true;
+        setParticipantCount((c) => c + 1);
         try {
             if (event.eventType === "vote_only") await voteForProposals(event.id, [confirmingId]);
             else await voteOnSubmission(event.id, confirmingId);
+            setPreviewSubmissionId(null);
+            try {
+                const confetti = (await import("canvas-confetti")).default;
+                confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 }, colors: ["#84cc16", "#a3e635", "#3B82F6", "#ffffff"] });
+            } catch { }
         } catch (err: any) {
+            // Roll back optimistic updates
             setOptimisticVoteDelta(null);
             setVotedSubmissionId(null);
+            optimisticParticipantPending.current = false;
+            setParticipantCount((c) => c - 1);
             toast.error(err?.message ?? "Failed to record vote.");
         }
     }, [pendingVoteId, event]);
 
     const handleCancelVote = useCallback(() => setPendingVoteId(null), []);
+
+    const handleShareSubmission = useCallback(async (submissionId: string) => {
+        const shareUrl = `${window.location.origin}/events/${id}?submission=${submissionId}`;
+        try {
+            if (navigator.share) {
+                await navigator.share({ title: event?.title || "Aris Event", url: shareUrl });
+            } else if (navigator.clipboard) {
+                await navigator.clipboard.writeText(shareUrl);
+                toast.success("Submission link copied");
+            }
+        } catch {
+            // user cancelled share
+        }
+    }, [id, event?.title]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const f = e.target.files?.[0];
@@ -705,8 +787,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         ...sub,
         _count: { votes: (sub._count?.votes ?? 0) + (optimisticVoteDelta === sub.id ? 1 : 0) },
     }));
+    // participantCount is tracked as state — initialized from event._count.votes,
+    // updated optimistically on vote confirm and via 'participant-update' socket event.
 
     const votedSub = votedSubmissionId ? enrichedSubmissions.find((s) => s.id === votedSubmissionId) : null;
+    const previewSub = previewSubmissionId ? enrichedSubmissions.find((s) => s.id === previewSubmissionId) : null;
 
     const displayMode: "post" | "vote" | "completed" | "upcoming" =
         event?.status === "completed" ? "completed"
@@ -766,6 +851,134 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* ── Fullscreen submission preview ── */}
+            <AnimatePresence>
+                {previewSub && event && (() => {
+                    const previewIdx = sortedSubmissions.findIndex(s => s.id === previewSub.id);
+                    const hasPrev = previewIdx > 0;
+                    const hasNext = previewIdx < sortedSubmissions.length - 1;
+                    const goTo = (idx: number) => setPreviewSubmissionId(sortedSubmissions[idx].id);
+                    return (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[60] bg-black/92 backdrop-blur-sm flex items-center justify-center p-4 md:p-8"
+                        onKeyDown={(e) => {
+                            if (e.key === "ArrowLeft" && hasPrev) goTo(previewIdx - 1);
+                            if (e.key === "ArrowRight" && hasNext) goTo(previewIdx + 1);
+                            if (e.key === "Escape") setPreviewSubmissionId(null);
+                        }}
+                        tabIndex={-1}
+                        ref={(el) => el?.focus()}
+                    >
+                        <button type="button" onClick={() => setPreviewSubmissionId(null)}
+                            className="absolute top-4 right-4 md:top-6 md:right-6 w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors z-10">
+                            <X className="w-4 h-4" />
+                        </button>
+
+                        {/* Prev */}
+                        {hasPrev && (
+                            <button type="button" onClick={() => goTo(previewIdx - 1)}
+                                className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors z-10">
+                                <ChevronLeft className="w-5 h-5" />
+                            </button>
+                        )}
+
+                        {/* Next */}
+                        {hasNext && (
+                            <button type="button" onClick={() => goTo(previewIdx + 1)}
+                                className="absolute right-16 md:right-20 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors z-10">
+                                <ChevronRight className="w-5 h-5" />
+                            </button>
+                        )}
+
+                        {/* Counter */}
+                        <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/10 border border-white/10">
+                            <span className="text-[11px] font-black text-white/50">{previewIdx + 1} / {sortedSubmissions.length}</span>
+                        </div>
+
+                        <div className="w-full max-w-[960px] flex flex-col md:flex-row gap-6 items-center md:items-stretch max-h-[90vh]">
+                            {/* Image */}
+                            <div className="flex-1 flex items-center justify-center min-h-0">
+                                <img
+                                    src={previewSub.imageUrl || `${PINATA_GW}/${previewSub.imageCid}`}
+                                    alt="Submission preview"
+                                    className="max-w-full max-h-[75vh] md:max-h-[80vh] object-contain rounded-[18px] border border-white/15"
+                                />
+                            </div>
+
+                            {/* Details panel */}
+                            <div className="w-full md:w-[260px] shrink-0 flex flex-col gap-3">
+                                {/* Caption */}
+                                {previewSub.content && (
+                                    <div className="bg-white/[0.04] border border-white/[0.08] rounded-[16px] p-4">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2">Caption</p>
+                                        <p className="text-sm text-white/80 leading-relaxed">{previewSub.content}</p>
+                                    </div>
+                                )}
+
+                                {/* Guaranteed reward */}
+                                {(event.baseReward ?? 0) > 0 && (
+                                    <div className="bg-lime-400/8 border border-lime-400/20 rounded-[16px] p-4">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-lime-400/60 mb-1">Vote & Earn</p>
+                                        <p className="text-2xl font-black text-lime-400">${event.baseReward?.toFixed(2)}</p>
+                                        <p className="text-[11px] text-white/40 mt-0.5">Guaranteed per vote, paid on completion</p>
+                                    </div>
+                                )}
+
+                                {/* Top prize */}
+                                {(event.topReward ?? event.leaderboardPool ?? 0) > 0 && (
+                                    <div className="bg-[#A78BFA]/8 border border-[#A78BFA]/20 rounded-[16px] p-4">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-[#A78BFA]/60 mb-1">Top Prize Pool</p>
+                                        <p className="text-2xl font-black text-[#A78BFA]">${(event.topReward ?? event.leaderboardPool ?? 0).toFixed(2)}</p>
+                                        <p className="text-[11px] text-white/40 mt-0.5 leading-snug">
+                                            If this entry wins most votes, you become eligible for the grand prize
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Actions */}
+                                <div className="mt-auto flex flex-col gap-2 pt-1">
+                                    {!votedSubmissionId && !(event.eventType !== "vote_only" && previewSub.userId === user?.id) && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                handleVote(previewSub.id);
+                                                setPreviewSubmissionId(null);
+                                            }}
+                                            className="w-full py-3.5 rounded-[14px] bg-lime-400 text-black text-sm font-black uppercase tracking-widest hover:bg-lime-300 transition-colors"
+                                        >
+                                            Vote for This
+                                        </button>
+                                    )}
+                                    {votedSubmissionId === previewSub.id && (
+                                        <div className="w-full py-3.5 rounded-[14px] bg-lime-400/15 border border-lime-400/30 flex items-center justify-center gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-lime-400" />
+                                            <span className="text-sm font-black text-lime-400 uppercase tracking-widest">Voted</span>
+                                        </div>
+                                    )}
+                                    {votedSubmissionId && votedSubmissionId !== previewSub.id && (
+                                        <div className="w-full py-3.5 rounded-[14px] bg-white/5 border border-white/10 text-center">
+                                            <span className="text-xs font-black text-white/30 uppercase tracking-widest">Vote already cast</span>
+                                        </div>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => handleShareSubmission(previewSub.id)}
+                                        className="w-full py-3 rounded-[14px] border border-white/15 text-white/60 text-xs font-black uppercase tracking-widest hover:bg-white/5 transition-colors"
+                                    >
+                                        Share
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                    );
+                })()}
+            </AnimatePresence>
+
 
             <main className="w-full pb-24 pt-2">
                 {/* ── Breadcrumb ── */}
@@ -1172,26 +1385,25 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                             </div>
                                         )}
 
-                                        {/* Participants */}
-                                        <div className="py-3 border-t border-border/30">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Participating</span>
-                                                <div className="flex items-center gap-1.5">
-                                                    <Users className="w-3 h-3 text-foreground/40" />
-                                                    <span className="text-sm font-black text-foreground">{formatCount(event.eventType === 'vote_only' ? (event._count?.votes ?? 0) : (event._count?.submissions ?? 0))}</span>
-                                                    {event.capacity && <span className="text-[10px] text-foreground/35">/ {formatCount(event.capacity)}</span>}
+                                        {/* Posting rules (no participant count during posting) */}
+                                        <div className="py-3 border-t border-border/30 space-y-2">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">How It Works</span>
+                                            <div className="flex items-start gap-2.5 mt-2">
+                                                <div className="w-5 h-5 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                                                    <Upload className="w-2.5 h-2.5 text-orange-400" />
                                                 </div>
+                                                <p className="text-[11px] text-foreground/60 leading-snug">
+                                                    <span className="font-black text-foreground/80">One post per user.</span> Submit your best creative entry before time runs out.
+                                                </p>
                                             </div>
-                                            {event.capacity && (
-                                                <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
-                                                    <motion.div
-                                                        initial={{ width: 0 }}
-                                                        animate={{ width: `${Math.min(((event.eventType === 'vote_only' ? (event._count?.votes ?? 0) : (event._count?.submissions ?? 0)) / event.capacity) * 100, 100)}%` }}
-                                                        transition={{ duration: 0.8 }}
-                                                        className="h-full rounded-full bg-gradient-to-r from-orange-500 to-orange-600"
-                                                    />
+                                            <div className="flex items-start gap-2.5">
+                                                <div className="w-5 h-5 rounded-lg bg-lime-400/10 border border-lime-400/20 flex items-center justify-center shrink-0 mt-0.5">
+                                                    <Vote className="w-2.5 h-2.5 text-lime-400" />
                                                 </div>
-                                            )}
+                                                <p className="text-[11px] text-foreground/60 leading-snug">
+                                                    <span className="font-black text-foreground/80">Voters are participants.</span> Participant count tracks votes cast — not posts — during the voting phase.
+                                                </p>
+                                            </div>
                                         </div>
 
                                         {/* Viewers */}
@@ -1322,17 +1534,27 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                     <CompletedView event={event} submissions={enrichedSubmissions} currentUserId={user?.id} gridView={gridView} />
                                 ) : (
                                     <AnimatePresence>
-                                        <div className={gridView ? "grid grid-cols-2 md:grid-cols-3 gap-4" : "flex flex-col gap-3"}>
+                                        <div className={gridView ? "grid grid-cols-2 md:grid-cols-3 gap-4" : "flex flex-col gap-4"}>
                                             {sortedSubmissions.map((sub, idx) => (
-                                                <motion.div key={sub.id} layout initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2, delay: idx * 0.03 }}>
+                                                <motion.div
+                                                    key={sub.id}
+                                                    layout
+                                                    initial={{ opacity: 0, scale: 0.92 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    transition={{ duration: 0.2, delay: idx * 0.03 }}
+                                                    className={!gridView ? "w-full max-w-[760px] mx-auto" : undefined}
+                                                >
                                                     <VoteSubmissionCard
                                                         submission={toVoteSubmission(sub, user?.id)}
                                                         isVoted={votedSubmissionId === sub.id}
                                                         isPending={pendingVoteId === sub.id}
                                                         onVote={() => handleVote(sub.id)}
+                                                        onOpenImage={() => setPreviewSubmissionId(sub.id)}
                                                         disabled={!!votedSubmissionId || (event.eventType !== "vote_only" && sub.userId === user?.id)}
                                                         optionIndex={event.eventType === "vote_only" ? idx : undefined}
                                                         showVoteCount={false}
+                                                        listView={!gridView}
+                                                        hideCreator={event.eventType === "vote_only"}
                                                     />
                                                 </motion.div>
                                             ))}
@@ -1352,6 +1574,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                     <EventSidebar
                                         event={event}
                                         activeViewers={activeViewers}
+                                        participantCount={participantCount}
                                         mode={displayMode}
                                         votedSubmissionId={votedSubmissionId}
                                         votedSub={votedSub ?? undefined}

@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { VoteService } from '../services/voteService.js';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware.js';
 import { VoteForProposalsRequest, VoteForSubmissionRequest } from '../types/vote.js';
+import { broadcastToEvent } from '../socket/index.js';
 
 /**
  * Vote for a submission (POST_VOTE events)
@@ -18,6 +19,9 @@ export const voteForSubmission = async (req: AuthenticatedRequest, res: Response
 
         const data: VoteForSubmissionRequest = { submissionId };
         const vote = await VoteService.voteForSubmission(eventId, userId, data);
+
+        broadcastToEvent(eventId, 'vote-update', { submissionId, delta: 1 });
+        broadcastToEvent(eventId, 'participant-update', { delta: 1 });
 
         res.status(201).json({
             success: true,
@@ -48,6 +52,12 @@ export const voteForProposals = async (req: AuthenticatedRequest, res: Response)
         }
 
         const votes = await VoteService.voteForProposals(eventId, userId, data);
+
+        if (votes.length > 0) {
+            const proposalId = votes[0].proposalId;
+            if (proposalId) broadcastToEvent(eventId, 'vote-update', { submissionId: proposalId, delta: 1 });
+            broadcastToEvent(eventId, 'participant-update', { delta: 1 });
+        }
 
         res.status(201).json({
             success: true,
