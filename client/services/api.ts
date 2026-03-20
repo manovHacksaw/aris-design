@@ -29,17 +29,19 @@ export async function getAuthToken(): Promise<string | null> {
 
 export async function apiRequest<T>(
   endpoint: string,
-  options: RequestInit & { noCache?: boolean } = {},
+  options: RequestInit & { noCache?: boolean; skipAuth?: boolean } = {},
   timeout = 30000
 ): Promise<T> {
-  const token = await Promise.race([
-    getAuthToken(),
-    new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
-  ]);
+  const token = options.skipAuth
+    ? null
+    : await Promise.race([
+        getAuthToken(),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
+      ]);
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
 
-  const { noCache, ...fetchOptions } = options;
+  const { noCache, skipAuth: _skipAuth, ...fetchOptions } = options;
 
   try {
     const headers = new Headers(options.headers);

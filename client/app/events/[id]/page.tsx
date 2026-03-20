@@ -107,6 +107,18 @@ function mapVoteOnlyProposalsToSubmissions(event: Event): Submission[] {
     }));
 }
 
+function deriveSubmissionsFromEvent(event: Event): Submission[] {
+    if (!(event.status === "posting" || event.status === "voting" || event.status === "completed")) {
+        return [];
+    }
+
+    if (event.eventType === "post_and_vote") {
+        return event.submissions || [];
+    }
+
+    return mapVoteOnlyProposalsToSubmissions(event);
+}
+
 // ─── Social link helpers ─────────────────────────────────────────────────────
 
 const SOCIAL_SLOTS = [
@@ -590,8 +602,6 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     const [aiRefining, setAiRefining] = useState(false);
     const [aiImageUrl, setAiImageUrl] = useState<string | null>(null);
 
-    // Tabs
-    const [activeTab, setActiveTab] = useState<"trending" | "latest" | "top">("trending");
     const [gridView, setGridView] = useState(true);
 
     useEffect(() => {
@@ -627,42 +637,61 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
             try {
                 setLoading(true);
                 setFetchError(null);
-                const ev = await getEventById(id, !!user?.id);
-                setEvent(ev);
-                setParticipantCount(ev._count?.votes ?? 0);
+                const publicEvent = await getEventById(id, { skipAuth: true });
+                setEvent(publicEvent);
+                setParticipantCount(publicEvent._count?.votes ?? 0);
+                setSubmissions(deriveSubmissionsFromEvent(publicEvent));
+                setVotedSubmissionId(null);
+                setHasSubmitted(false);
+                setMySubmission(null);
 
-                if (ev.hasVoted && ev.userVotes?.length) {
-                    const vote = ev.userVotes[0];
-                    setVotedSubmissionId(vote.submissionId || vote.proposalId || null);
-                } else {
-                    setVotedSubmissionId(null);
-                }
-                if (ev.hasSubmitted) {
-                    setHasSubmitted(true);
-                    if (ev.userSubmission) setMySubmission(ev.userSubmission as Submission);
-                } else {
-                    setHasSubmitted(false);
-                    setMySubmission(null);
-                }
-
-                if (ev.status === "posting" || ev.status === "voting" || ev.status === "completed") {
-                    if (ev.eventType === "post_and_vote") {
-                        setSubmissions(ev.submissions || []);
-
-                        try {
-                            const res = await getEventSubmissions(id, { sortBy: "votes", limit: 50 });
-                            setSubmissions(res.submissions);
-                        } catch (submissionError) {
-                            console.error("Failed to refresh event submissions:", submissionError);
-                        }
-                    } else if (ev.eventType === "vote_only" && ev.proposals) {
-                        setSubmissions(mapVoteOnlyProposalsToSubmissions(ev));
+                if (publicEvent.eventType === "post_and_vote") {
+                    try {
+                        const res = await getEventSubmissions(id, { sortBy: "votes", limit: 50 });
+                        setSubmissions(res.submissions);
+                    } catch (submissionError) {
+                        console.error("Failed to refresh event submissions:", submissionError);
                     }
-                } else {
-                    setSubmissions([]);
+                }
+
+                if (user?.id) {
+                    try {
+                        const authedEvent = await getEventById(id, { noCache: true });
+                        setEvent(authedEvent);
+                        setParticipantCount((prev) => prev || authedEvent._count?.votes || 0);
+                        setSubmissions((current) => {
+                            if (current.length > 0 && authedEvent.eventType === "post_and_vote") {
+                                return current;
+                            }
+                            return deriveSubmissionsFromEvent(authedEvent);
+                        });
+
+                        if (authedEvent.hasVoted && authedEvent.userVotes?.length) {
+                            const vote = authedEvent.userVotes[0];
+                            setVotedSubmissionId(vote.submissionId || vote.proposalId || null);
+                        } else {
+                            setVotedSubmissionId(null);
+                        }
+
+                        if (authedEvent.hasSubmitted) {
+                            setHasSubmitted(true);
+                            setMySubmission((authedEvent.userSubmission as Submission) || null);
+                        } else {
+                            setHasSubmitted(false);
+                            setMySubmission(null);
+                        }
+                    } catch (authRefreshError) {
+                        console.error("Failed to refresh personalized event state:", authRefreshError);
+                    }
                 }
             } catch (err: any) {
-                setFetchError(err?.message ?? "Failed to load event");
+                // Only surface the error if we have no event data yet.
+                // The effect re-runs when user?.id resolves; a timeout on that
+                // second fetch should not wipe the already-loaded content.
+                setEvent((prev) => {
+                    if (!prev) setFetchError(err?.message ?? "Failed to load event");
+                    return prev;
+                });
             } finally {
                 setLoading(false);
             }
@@ -810,11 +839,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                 : event?.status === "voting" || event?.eventType === "vote_only" ? "vote"
                     : "upcoming";
 
-    const sortedSubmissions = [...enrichedSubmissions].sort((a, b) => {
-        if (activeTab === "top") return (b._count?.votes || 0) - (a._count?.votes || 0);
-        if (activeTab === "latest") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        return (b._count?.votes || 0) - (a._count?.votes || 0); // trending = votes
-    });
+    const sortedSubmissions = [...enrichedSubmissions].sort((a, b) => (b._count?.votes || 0) - (a._count?.votes || 0));
 
     const pendingSub = pendingVoteId ? enrichedSubmissions.find((s) => s.id === pendingVoteId) : null;
 
@@ -1511,28 +1536,15 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                     </div>
                                 </div>
 
-                                {/* Tab bar */}
+                                {/* Count + View toggle */}
                                 {displayMode !== "upcoming" && (
-                                    <div className="flex items-center justify-between mb-5 border-b border-border/40 pb-3">
-                                        <div className="flex items-center gap-1">
-                                            {(["trending", "latest", "top"] as const).map((tab) => (
-                                                <button key={tab} onClick={() => setActiveTab(tab)}
-                                                    className={cn("relative px-4 py-2 text-xs font-black uppercase tracking-[0.15em] transition-all",
-                                                        activeTab === tab ? "text-foreground" : "text-foreground/30 hover:text-foreground/60")}
-                                                >
-                                                    {tab}
-                                                    {activeTab === tab && <motion.div layoutId="eventTab" className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-primary" />}
-                                                </button>
-                                            ))}
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-foreground/30">
-                                                {enrichedSubmissions.length} {event.eventType === "vote_only" ? "Options" : "Submissions"}
-                                            </span>
-                                            <div className="flex border border-border/40 rounded-lg overflow-hidden">
-                                                <button onClick={() => setGridView(true)} className={cn("p-1.5 transition-colors", gridView ? "bg-white/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}><LayoutGrid className="w-3.5 h-3.5" /></button>
-                                                <button onClick={() => setGridView(false)} className={cn("p-1.5 transition-colors", !gridView ? "bg-white/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}><List className="w-3.5 h-3.5" /></button>
-                                            </div>
+                                    <div className="flex items-center justify-between mb-5">
+                                        <span className="text-[11px] font-black uppercase tracking-widest text-foreground/40">
+                                            {enrichedSubmissions.length} {event.eventType === "vote_only" ? "Options" : "Submissions"}
+                                        </span>
+                                        <div className="flex border border-border/40 rounded-lg overflow-hidden">
+                                            <button onClick={() => setGridView(true)} className={cn("p-1.5 transition-colors", gridView ? "bg-white/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}><LayoutGrid className="w-3.5 h-3.5" /></button>
+                                            <button onClick={() => setGridView(false)} className={cn("p-1.5 transition-colors", !gridView ? "bg-white/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}><List className="w-3.5 h-3.5" /></button>
                                         </div>
                                     </div>
                                 )}
