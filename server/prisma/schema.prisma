@@ -36,6 +36,7 @@ model User {
   role                    UserRole  @default(USER)
   level                   Int       @default(1)
   referralCode            String?   @unique
+  region                  String?   // north | south | east | west (India)
 
   @@index([email])
 

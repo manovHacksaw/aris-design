@@ -522,14 +522,14 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                 const ev = await getEventById(id, true);
                 setEvent(ev);
                 // Fetch real participants (voters) for the sidebar
-                if (ev.status !== "upcoming") {
+                if (ev.status === "posting" || ev.status === "voting" || ev.status === "completed") {
                     try {
                         const p = await getEventParticipants(id);
                         setParticipants(p);
                     } catch { /* non-fatal */ }
                 }
 
-                if (ev.eventType === "post_and_vote") {
+                if (ev.eventType === "post_and_vote" && (ev.status === "posting" || ev.status === "voting" || ev.status === "completed")) {
                     const res = await getEventSubmissions(id, { sortBy: "recent", limit: 100 });
                     setSubmissions(res.submissions);
                 } else if (ev.eventType === "vote_only" && ev.proposals) {

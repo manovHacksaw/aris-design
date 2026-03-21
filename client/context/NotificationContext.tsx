@@ -87,17 +87,18 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             const token = localStorage.getItem("authToken");
             if (!token) return;
 
-            const response = await fetch(`${API_URL}/notifications/${notificationId}/read`, {
+            // Optimistically update state first, only decrement if it was unread
+            setNotifications((prev) => {
+                const target = prev.find((n) => n.id === notificationId);
+                if (!target || target.isRead) return prev; // already read, no-op
+                setUnreadCount((c) => Math.max(0, c - 1));
+                return prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n));
+            });
+
+            await fetch(`${API_URL}/notifications/${notificationId}/read`, {
                 method: "PATCH",
                 headers: { Authorization: `Bearer ${token}` },
             });
-
-            if (response.ok) {
-                setNotifications((prev) =>
-                    prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
-                );
-                setUnreadCount((prev) => Math.max(0, prev - 1));
-            }
         } catch (error) {
             console.error("Failed to mark notification as read:", error);
         }

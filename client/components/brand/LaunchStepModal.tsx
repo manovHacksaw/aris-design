@@ -34,6 +34,8 @@ export interface LaunchFormData {
   rules: string;
   hashtags: string[];
   regions?: string[];
+  preferredGender?: string;
+  ageGroup?: string;
   contentType: string[];
   maxParticipants: string;
   baseReward: string;
@@ -110,7 +112,6 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [usdcBalance, setUsdcBalance] = useState<bigint | null>(null);
-  const [countdown, setCountdown] = useState(6);
   const launched = useRef(false);
 
   const reset = () => {
@@ -118,7 +119,6 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
     setError(null);
     setTxHash(null);
     setUsdcBalance(null);
-    setCountdown(6);
     launched.current = false;
   };
 
@@ -130,17 +130,10 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  // Auto-redirect 6 s after success
+  // Redirect immediately on success
   useEffect(() => {
-    if (step !== 3 || error) return;
-    setCountdown(6);
-    const interval = setInterval(() => {
-      setCountdown((c) => {
-        if (c <= 1) { clearInterval(interval); onSuccess(); return 0; }
-        return c - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
+    if (step < STEPS.length || error) return;
+    onSuccess();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, error]);
 
@@ -303,8 +296,8 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
         moderationRules: form.moderationRules,
         hashtags: form.hashtags,
         regions: form.regions,
-        preferredGender: (form as any).preferredGender,
-        ageGroup: (form as any).ageGroup,
+        preferredGender: form.preferredGender,
+        ageGroup: form.ageGroup,
         samples: form.type === "post" ? [] : undefined,
         proposals: form.type === "vote"
           ? (uploadedProposals.length >= 2
@@ -359,7 +352,7 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
     }
   }
 
-  const isSuccess = step === 3 && !error;
+  const isSuccess = step >= STEPS.length && !error;
   const isFailed = !!error;
 
   if (!open) return null;
@@ -471,7 +464,6 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
             className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
           >
             View Dashboard
-            <span className="text-xs font-normal opacity-70">({countdown}s)</span>
           </motion.button>
         )}
         {isFailed && (

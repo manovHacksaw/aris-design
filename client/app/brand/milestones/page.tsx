@@ -6,6 +6,8 @@ import { useUser } from "@/context/UserContext";
 import { cn } from "@/lib/utils";
 import { Megaphone, Users, Coins, CheckCircle, Clock, Flame } from "lucide-react";
 import { motion } from "framer-motion";
+import MilestonesTableModal from "@/components/brand/MilestonesTableModal";
+import MilestonesProgressModal from "@/components/brand/MilestonesProgressModal";
 
 const OVERALL_LEVELS = [
     { level: 1, discount: 1, tokens: 10000, events: 3, participants: 1000 },
@@ -44,6 +46,8 @@ export default function MilestonesPage() {
     const { user } = useUser();
     const [data, setData] = useState<MilestoneData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [tiersModalOpen, setTiersModalOpen] = useState(false);
+    const [progressModalOpen, setProgressModalOpen] = useState(false);
 
     const activeBrand = user?.ownedBrands?.[0];
     const brandName = activeBrand?.name || "Your Brand";
@@ -67,80 +71,57 @@ export default function MilestonesPage() {
     if (loading) {
         return (
             <div className="w-full pb-20 space-y-6">
-                <style dangerouslySetInnerHTML={{ __html: `
-                    @keyframes shimmer {
-                        0% { transform: translateX(-100%); }
-                        100% { transform: translateX(100%); }
-                    }
-                `}} />
-                
                 {/* Brand Header Skeleton */}
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
                     className="mb-8"
                 >
                     <div className="flex items-center gap-3 mb-4">
-                        <div className="h-12 w-80 bg-foreground/5 rounded-2xl relative overflow-hidden">
-                            <div className="absolute inset-0 animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-foreground/5 to-transparent" />
-                        </div>
-                        <div className="h-8 w-24 bg-foreground/5 rounded-full relative overflow-hidden">
-                            <div className="absolute inset-0 animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-foreground/5 to-transparent" />
-                        </div>
+                        <div className="h-12 w-80 bg-white/[0.05] rounded-2xl animate-pulse" />
+                        <div className="h-8 w-24 bg-white/[0.05] rounded-full animate-pulse" />
                     </div>
                     <div className="space-y-2">
-                        <div className="h-4 w-full max-w-2xl bg-foreground/5 rounded-lg relative overflow-hidden">
-                            <div className="absolute inset-0 animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-foreground/5 to-transparent" />
-                        </div>
-                        <div className="h-4 w-2/3 max-w-md bg-foreground/5 rounded-lg relative overflow-hidden">
-                            <div className="absolute inset-0 animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-foreground/5 to-transparent" />
-                        </div>
+                        <div className="h-4 w-full max-w-2xl bg-white/[0.03] rounded-lg animate-pulse" />
+                        <div className="h-4 w-2/3 max-w-md bg-white/[0.03] rounded-lg animate-pulse" />
                     </div>
                 </motion.div>
 
                 {/* Row 1: Metrics & Timeline */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.5, delay: 0.2 }}
                         className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6"
                     >
                         {[...Array(4)].map((_, i) => (
-                            <div key={i} className="h-[160px] bg-card border border-border rounded-[28px] relative overflow-hidden">
-                                <div className="absolute inset-0 animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-foreground/5 to-transparent" />
-                            </div>
+                            <div key={i} className="h-[160px] bg-white/[0.03] border border-white/[0.06] rounded-[28px] animate-pulse" />
                         ))}
                     </motion.div>
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.5, delay: 0.3 }}
-                        className="lg:col-span-4 h-full min-h-[300px] bg-card border border-border rounded-[32px] relative overflow-hidden"
-                    >
-                        <div className="absolute inset-0 animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-foreground/5 to-transparent" />
-                    </motion.div>
+                        className="lg:col-span-4 h-full min-h-[300px] bg-white/[0.03] border border-white/[0.06] rounded-[32px] animate-pulse"
+                    />
                 </div>
 
                 {/* Row 2: Table & Upgrade */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: 0.4 }}
-                        className="lg:col-span-8 min-h-[450px] bg-card border border-border rounded-[28px] relative overflow-hidden"
-                    >
-                        <div className="absolute inset-0 animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-foreground/5 to-transparent" />
-                    </motion.div>
-                    <motion.div 
+                        className="lg:col-span-8 min-h-[450px] bg-white/[0.03] border border-white/[0.06] rounded-[28px] animate-pulse"
+                    />
+                    <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.5, delay: 0.5 }}
-                        className="lg:col-span-4 min-h-[450px] bg-card border border-border rounded-[28px] relative overflow-hidden"
-                    >
-                        <div className="absolute inset-0 animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-foreground/5 to-transparent" />
-                    </motion.div>
+                        className="lg:col-span-4 min-h-[450px] bg-white/[0.03] border border-white/[0.06] rounded-[28px] animate-pulse"
+                    />
                 </div>
             </div>
         );
@@ -173,24 +154,24 @@ export default function MilestonesPage() {
                     <h1 className="font-display text-[2.5rem] sm:text-[3rem] md:text-[4rem] text-foreground uppercase leading-[0.92] tracking-tight">
                         {brandName} Milestones
                     </h1>
-                    <div className="flex items-center gap-1 px-3 py-1 bg-orange-500/10 border border-orange-500/30 rounded-full">
+                    <div className="flex items-center gap-1 px-3 py-1 bg-lime-400/10 border border-lime-400/30 rounded-full">
                         <motion.div
-                            animate={{ 
+                            animate={{
                                 scale: [1, 1.2, 1],
                                 rotate: [-5, 5, -5]
                             }}
-                            transition={{ 
+                            transition={{
                                 duration: 1.5,
                                 repeat: Infinity,
                                 ease: "easeInOut"
                             }}
                         >
-                            <Flame className="w-5 h-5 text-orange-500 fill-[#FFF]" />
+                            <Flame className="w-5 h-5 text-lime-400" />
                         </motion.div>
-                        <span className="text-[10px] sm:text-[11px] font-black text-orange-500 uppercase tracking-[0.2em]">Lv. {overallLevel}</span>
+                        <span className="text-[10px] sm:text-[11px] font-black text-lime-400 uppercase tracking-[0.2em]">Lv. {overallLevel}</span>
                     </div>
                 </div>
-                <p className="text-[10px] sm:text-[11px] font-black text-foreground/40 uppercase tracking-[0.2em] max-w-2xl leading-relaxed mt-3">
+                <p className="text-[10px] sm:text-[11px] font-black text-foreground/30 uppercase tracking-[0.2em] max-w-2xl leading-relaxed mt-3">
                     {brandDesc}
                 </p>
             </div>
@@ -200,82 +181,88 @@ export default function MilestonesPage() {
 
                 {/* Top Left: 4 Data Metric Cards */}
                 <div className="lg:col-span-8 grid grid-cols-2 md:grid-cols-2 gap-3 sm:gap-6">
-                    {/* Card 1: Orange Hero Card (Discount Reward) */}
-                    <div className="bg-orange-500 rounded-[28px] p-4 sm:p-8 text-white flex flex-col justify-center min-h-[140px] sm:min-h-[160px] shadow-sm relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-700" />
-                        <h2 className="font-display text-[3rem] lg:text-[4.5rem] text-white uppercase tracking-tight leading-none mb-1 sm:mb-2">{currentReward}%</h2>
-                        <p className="text-[9px] sm:text-[10px] font-black text-white/70 uppercase tracking-[0.2em]">Reward Discount</p>
+                    {/* Card 1: Lime Hero Card (Discount Reward) */}
+                    <div onClick={() => setProgressModalOpen(true)} className="bg-lime-400 rounded-[28px] p-4 sm:p-8 flex flex-col justify-center min-h-[140px] sm:min-h-[160px] relative overflow-hidden group cursor-pointer">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-black/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-700" />
+                        <h2 className="font-display text-[3rem] lg:text-[4.5rem] text-black uppercase tracking-tight leading-none mb-1 sm:mb-2">{currentReward}%</h2>
+                        <p className="text-[9px] sm:text-[10px] font-black text-black/60 uppercase tracking-[0.2em]">Reward Discount</p>
                     </div>
 
                     {/* Card 2: Tokens Minted */}
-                    <div className="bg-card border border-border rounded-[28px] p-4 sm:p-8 text-foreground flex flex-col justify-center min-h-[140px] sm:min-h-[160px] shadow-sm hover:border-foreground/20 transition-colors cursor-default">
+                    <div onClick={() => setProgressModalOpen(true)} className="bg-white/[0.03] border border-white/[0.06] rounded-[28px] p-4 sm:p-8 flex flex-col justify-center min-h-[140px] sm:min-h-[160px] hover:bg-white/[0.05] hover:border-white/[0.1] transition-all cursor-pointer">
                         <h2 className="font-display text-[2rem] sm:text-[3rem] lg:text-[4rem] text-foreground tracking-tight leading-none mb-1 sm:mb-2">${data.usdcDistributed.toLocaleString(undefined, { maximumFractionDigits: 1 })}</h2>
-                        <p className="text-[9px] sm:text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">Tokens Minted</p>
+                        <p className="text-[9px] sm:text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em]">Tokens Minted</p>
                     </div>
 
                     {/* Card 3: Events Created */}
-                    <div className="bg-card border border-border rounded-[28px] p-4 sm:p-8 text-foreground flex flex-col justify-center min-h-[140px] sm:min-h-[160px] shadow-sm hover:border-foreground/20 transition-colors cursor-default">
+                    <div onClick={() => setProgressModalOpen(true)} className="bg-white/[0.03] border border-white/[0.06] rounded-[28px] p-4 sm:p-8 flex flex-col justify-center min-h-[140px] sm:min-h-[160px] hover:bg-white/[0.05] hover:border-white/[0.1] transition-all cursor-pointer">
                         <h2 className="font-display text-[2.5rem] sm:text-[3rem] lg:text-[4rem] text-foreground tracking-tight leading-none mb-1 sm:mb-2">{data.eventsCreated.toLocaleString()}</h2>
-                        <p className="text-[9px] sm:text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">Events Created</p>
+                        <p className="text-[9px] sm:text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em]">Events Created</p>
                     </div>
 
                     {/* Card 4: Participants */}
-                    <div className="bg-card border border-border rounded-[28px] p-4 sm:p-8 text-foreground flex flex-col justify-center min-h-[140px] sm:min-h-[160px] shadow-sm hover:border-foreground/20 transition-colors cursor-default">
+                    <div onClick={() => setProgressModalOpen(true)} className="bg-white/[0.03] border border-white/[0.06] rounded-[28px] p-4 sm:p-8 flex flex-col justify-center min-h-[140px] sm:min-h-[160px] hover:bg-white/[0.05] hover:border-white/[0.1] transition-all cursor-pointer">
                         <h2 className="font-display text-[2.5rem] sm:text-[3rem] lg:text-[4rem] text-foreground tracking-tight leading-none mb-1 sm:mb-2">{data.uniqueParticipants.toLocaleString()}</h2>
-                        <p className="text-[9px] sm:text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">Participants</p>
+                        <p className="text-[9px] sm:text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em]">Participants</p>
                     </div>
                 </div>
 
                 {/* Top Right: Overall Brand Level & Timeline */}
-                <div className="lg:col-span-4 bg-card border border-border rounded-[32px] p-5 lg:p-6 flex flex-col shadow-sm relative min-h-[300px]">
+                <div
+                    onClick={() => setTiersModalOpen(true)}
+                    className="lg:col-span-4 bg-white/[0.03] border border-white/[0.06] rounded-[32px] p-5 lg:p-6 flex flex-col relative min-h-[300px] cursor-pointer hover:border-white/[0.12] hover:bg-white/[0.05] transition-all group"
+                >
                     <div className="flex items-center justify-between gap-2 mb-2 relative z-10 w-full pr-1">
-                        <h3 className="font-display text-2xl text-foreground uppercase tracking-tight truncate">
+                        <h3 className="font-display text-2xl text-foreground uppercase tracking-tight truncate group-hover:text-lime-400 transition-colors">
                             Global Milestones Tiers
                         </h3>
-                        <div className="shrink-0 px-3 py-1 bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-[0_4px_10px_rgba(255,107,0,0.3)]">
-                            Lv. {overallLevel}
+                        <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-[9px] font-black text-foreground/20 uppercase tracking-widest hidden group-hover:inline transition-all">View all</span>
+                            <div className="px-3 py-1 bg-lime-400 text-black text-[10px] font-black uppercase tracking-widest rounded-full shadow-[0_4px_10px_rgba(163,230,53,0.3)]">
+                                Lv. {overallLevel}
+                            </div>
                         </div>
                     </div>
 
                     <div className="relative flex-1 flex flex-col justify-center mt-2 w-full">
                         {/* Timeline line */}
-                        <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-foreground/10 z-0 -translate-y-1/2" />
+                        <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-white/[0.06] z-0 -translate-y-1/2" />
 
                         {/* Horizontal scrollable wrapper */}
                         <div className="flex items-center overflow-x-auto scrollbar-hide -mx-5 px-5 w-[calc(100%+40px)] relative z-10 snap-x snap-mandatory py-6">
                             <div className="flex gap-4 items-center">
-                                {TIMELINE_LEVELS.map((tier, idx) => {
+                                {TIMELINE_LEVELS.map((tier) => {
                                     const isCurrent = overallLevel === tier.level;
-                                    
+
                                     return (
                                         <div key={tier.level} className="shrink-0 snap-center">
                                             <div className={cn(
                                                 "w-[120px] md:w-[140px] p-4 rounded-[24px] flex flex-col items-center justify-center transition-all duration-300 relative",
-                                                isCurrent 
-                                                    ? "bg-card border-[2px] border-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.2)] min-h-[110px]" 
-                                                    : "bg-card border border-border min-h-[150px] "
+                                                isCurrent
+                                                    ? "bg-white/[0.05] border-[2px] border-lime-400 shadow-[0_0_20px_rgba(163,230,53,0.2)] min-h-[110px]"
+                                                    : "bg-white/[0.03] border border-white/[0.06] min-h-[150px]"
                                             )}>
                                                 <h4 className={cn(
-                                                    "text-[10px] sm:text-[10px] font-black uppercase tracking-widest uppercase tracking-[0.15em] mb-2",
-                                                    isCurrent ? "text-orange-500" : "text-foreground/40"
+                                                    "text-[10px] font-black uppercase tracking-[0.15em] mb-2",
+                                                    isCurrent ? "text-lime-400" : "text-foreground/30"
                                                 )}>
                                                     LEVEL {tier.level}
                                                 </h4>
-                                                
+
                                                 <div className={cn(
                                                     "flex items-baseline mb-2",
-                                                    isCurrent ? "text-orange-500" : "text-foreground"
+                                                    isCurrent ? "text-lime-400" : "text-foreground"
                                                 )}>
                                                     <span className="font-display text-[4rem] tracking-tight leading-none">{tier.discount}</span>
-                                                    <span className="font-display text-2xl text-foreground/50 ml-1">%</span>
+                                                    <span className="font-display text-2xl text-foreground/30 ml-1">%</span>
                                                 </div>
 
                                                 {!isCurrent && tier.unlocks && (
                                                     <div className="mt-5 flex flex-col items-center text-center px-1">
-                                                        <span className="text-[10px] font-black tracking-widest text-foreground mb-1.5 opacity-90">
+                                                        <span className="text-[10px] font-black tracking-widest text-foreground/30 mb-1.5">
                                                             UNLOCKS
                                                         </span>
-                                                        <span className="text-[11px] font-bold text-foreground/50 leading-tight">
+                                                        <span className="text-[11px] font-bold text-foreground/40 leading-tight">
                                                             {tier.unlocks}
                                                         </span>
                                                     </div>
@@ -295,36 +282,36 @@ export default function MilestonesPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
                 {/* Bottom Left: Detailed Sub-Milestones Table */}
-                <div className="lg:col-span-8 bg-card border border-border rounded-[28px] p-6 lg:p-8 shadow-sm overflow-hidden flex flex-col">
+                <div className="lg:col-span-8 bg-white/[0.03] border border-white/[0.06] rounded-[28px] p-6 lg:p-8 overflow-hidden flex flex-col">
                     <h3 className="font-display text-2xl lg:text-3xl text-foreground uppercase tracking-tight mb-6">Milestone Requirements Data</h3>
 
                     <div className="overflow-x-auto w-full pb-4">
                         <table className="w-full text-left min-w-[500px]">
                             <thead>
-                                <tr className="border-b border-border text-foreground/40">
-                                    <th className="pb-4 text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">Category</th>
-                                    <th className="pb-4 text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] text-center">Current Value</th>
-                                    <th className="pb-4 text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] text-center">Required Target</th>
-                                    <th className="pb-4 text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] text-right">Category Status</th>
+                                <tr className="border-b border-white/[0.06]">
+                                    <th className="pb-4 text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em]">Category</th>
+                                    <th className="pb-4 text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em] text-center">Current Value</th>
+                                    <th className="pb-4 text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em] text-center">Required Target</th>
+                                    <th className="pb-4 text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em] text-right">Category Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {/* Tokens Row */}
-                                <tr className="border-b border-border/50 last:border-0 hover:bg-foreground/5 transition-colors group">
+                                <tr className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.03] transition-colors group">
                                     <td className="py-6 font-black text-foreground text-[11px] uppercase tracking-widest flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-500 group-hover:scale-105 transition-transform">
+                                        <div className="w-12 h-12 rounded-2xl bg-lime-400/10 flex items-center justify-center text-lime-400 group-hover:scale-105 transition-transform">
                                             <Coins className="w-6 h-6" />
                                         </div>
                                         Tokens Minted
                                     </td>
                                     <td className="py-6 font-mono font-black text-center text-lg text-foreground/80">{data.usdcDistributed.toLocaleString(undefined, { maximumFractionDigits: 1 })}</td>
-                                    <td className="py-6 font-mono font-black text-foreground/50 text-base text-center">
+                                    <td className="py-6 font-mono font-black text-foreground/30 text-base text-center">
                                         {OVERALL_LEVELS[Math.min(usdcDistributedLevel, 6)].tokens.toLocaleString()}
                                     </td>
                                     <td className="py-6 text-right">
                                         <span className={cn(
-                                            "inline-flex items-center px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full border shadow-sm",
-                                            usdcDistributedLevel >= 7 ? "bg-orange-500 border-orange-500 text-white" : "bg-foreground/5 text-foreground border-border/50"
+                                            "inline-flex items-center px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full border",
+                                            usdcDistributedLevel >= 7 ? "bg-lime-400 border-lime-400 text-black" : "bg-white/[0.04] text-foreground/50 border-white/[0.06]"
                                         )}>
                                             {usdcDistributedLevel >= 7 ? "MAXED" : `LVL ${usdcDistributedLevel}`}
                                         </span>
@@ -332,21 +319,21 @@ export default function MilestonesPage() {
                                 </tr>
 
                                 {/* Events Row */}
-                                <tr className="border-b border-border/50 last:border-0 hover:bg-foreground/5 transition-colors group">
+                                <tr className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.03] transition-colors group">
                                     <td className="py-6 font-black text-foreground text-[11px] uppercase tracking-widest flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-500 group-hover:scale-105 transition-transform">
+                                        <div className="w-12 h-12 rounded-2xl bg-lime-400/10 flex items-center justify-center text-lime-400 group-hover:scale-105 transition-transform">
                                             <Megaphone className="w-6 h-6" />
                                         </div>
                                         Events Created
                                     </td>
                                     <td className="py-6 font-mono font-black text-center text-lg text-foreground/80">{data.eventsCreated.toLocaleString()}</td>
-                                    <td className="py-6 font-mono font-black text-foreground/50 text-base text-center">
+                                    <td className="py-6 font-mono font-black text-foreground/30 text-base text-center">
                                         {OVERALL_LEVELS[Math.min(eventsCreatedLevel, 6)].events.toLocaleString()}
                                     </td>
                                     <td className="py-6 text-right">
                                         <span className={cn(
-                                            "inline-flex items-center px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full border shadow-sm",
-                                            eventsCreatedLevel >= 7 ? "bg-orange-500 border-orange-500 text-white" : "bg-foreground/5 text-foreground border-border/50"
+                                            "inline-flex items-center px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full border",
+                                            eventsCreatedLevel >= 7 ? "bg-lime-400 border-lime-400 text-black" : "bg-white/[0.04] text-foreground/50 border-white/[0.06]"
                                         )}>
                                             {eventsCreatedLevel >= 7 ? "MAXED" : `LVL ${eventsCreatedLevel}`}
                                         </span>
@@ -354,21 +341,21 @@ export default function MilestonesPage() {
                                 </tr>
 
                                 {/* Participants Row */}
-                                <tr className="border-b border-border/50 last:border-0 hover:bg-foreground/5 transition-colors group">
+                                <tr className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.03] transition-colors group">
                                     <td className="py-6 font-black text-foreground text-[11px] uppercase tracking-widest flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-500 group-hover:scale-105 transition-transform">
+                                        <div className="w-12 h-12 rounded-2xl bg-lime-400/10 flex items-center justify-center text-lime-400 group-hover:scale-105 transition-transform">
                                             <Users className="w-6 h-6" />
                                         </div>
                                         Unique Participants
                                     </td>
                                     <td className="py-6 font-mono font-black text-center text-lg text-foreground/80">{data.uniqueParticipants.toLocaleString()}</td>
-                                    <td className="py-6 font-mono font-black text-foreground/50 text-base text-center">
+                                    <td className="py-6 font-mono font-black text-foreground/30 text-base text-center">
                                         {OVERALL_LEVELS[Math.min(uniqueParticipantsLevel, 6)].participants.toLocaleString()}
                                     </td>
                                     <td className="py-6 text-right">
                                         <span className={cn(
-                                            "inline-flex items-center px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full border shadow-sm",
-                                            uniqueParticipantsLevel >= 7 ? "bg-orange-500 border-orange-500 text-white" : "bg-foreground/5 text-foreground border-border/50"
+                                            "inline-flex items-center px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full border",
+                                            uniqueParticipantsLevel >= 7 ? "bg-lime-400 border-lime-400 text-black" : "bg-white/[0.04] text-foreground/50 border-white/[0.06]"
                                         )}>
                                             {uniqueParticipantsLevel >= 7 ? "MAXED" : `LVL ${uniqueParticipantsLevel}`}
                                         </span>
@@ -380,38 +367,38 @@ export default function MilestonesPage() {
                 </div>
 
                 {/* Bottom Right: Upgrade Info Modal-style Container */}
-                <div className="lg:col-span-4 bg-card border border-border rounded-[28px] overflow-hidden relative shadow-sm h-full flex flex-col group">
+                <div className="lg:col-span-4 bg-white/[0.03] border border-white/[0.06] rounded-[28px] overflow-hidden relative h-full flex flex-col group">
                     {/* Top Hero Section of the card */}
-                    <div className="bg-orange-500 p-8 text-white relative flex-shrink-0 z-10 transition-colors duration-500">
+                    <div className="bg-lime-400 p-8 relative flex-shrink-0 z-10">
                         {/* Decorative glow inside header */}
-                        <div className="absolute top-0 right-0 p-24 bg-white/20 blur-[60px] rounded-full -z-10 translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+                        <div className="absolute top-0 right-0 p-24 bg-black/10 blur-[60px] rounded-full -z-10 translate-x-1/2 -translate-y-1/2 pointer-events-none" />
 
                         <div className="flex justify-between items-start mb-6">
-                            <h3 className="font-bold text-white/90 text-[10px] tracking-[0.2em] uppercase">Upgrade Unlock</h3>
-                            <span className="bg-black/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">Target Level {Math.min(overallLevel + 1, 7)}</span>
+                            <h3 className="font-bold text-black/70 text-[10px] tracking-[0.2em] uppercase">Upgrade Unlock</h3>
+                            <span className="bg-black/15 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase text-black">Target Level {Math.min(overallLevel + 1, 7)}</span>
                         </div>
 
-                        <h1 className="font-display text-[4rem] text-white uppercase tracking-tight leading-none mb-1 flex items-end">
+                        <h1 className="font-display text-[4rem] text-black uppercase tracking-tight leading-none mb-1 flex items-end">
                             {targetTier.discount}<span className="text-4xl pb-1">%</span>
                         </h1>
-                        <p className="font-black text-white text-[11px] uppercase tracking-widest opacity-90 mt-2">Discount Reward on Fees</p>
+                        <p className="font-black text-black/70 text-[11px] uppercase tracking-widest mt-2">Discount Reward on Fees</p>
                     </div>
 
                     {/* Bottom Tasks Section */}
-                    <div className="p-8 flex-1 bg-card flex flex-col justify-start">
-                        <p className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] mb-6">Path to Unlock Level {Math.min(overallLevel + 1, 7)}</p>
+                    <div className="p-8 flex-1 flex flex-col justify-start">
+                        <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-6">Path to Unlock Level {Math.min(overallLevel + 1, 7)}</p>
 
                         <ul className="space-y-5">
                             <li className="flex items-center gap-4">
                                 <div className={cn("shrink-0 w-8 h-8 rounded-full flex items-center justify-center border",
                                     data.usdcDistributed >= targetTier.tokens
-                                        ? "bg-orange-500 border-orange-500 shadow-sm"
-                                        : "bg-foreground/5 border-border"
+                                        ? "bg-lime-400 border-lime-400"
+                                        : "bg-white/[0.04] border-white/[0.08]"
                                 )}>
-                                    {data.usdcDistributed >= targetTier.tokens ? <CheckCircle className="w-4 h-4 text-foreground" /> : <Clock className="w-4 h-4 text-foreground/40" />}
+                                    {data.usdcDistributed >= targetTier.tokens ? <CheckCircle className="w-4 h-4 text-black" /> : <Clock className="w-4 h-4 text-foreground/30" />}
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className={cn("text-[11px] font-black uppercase tracking-widest", data.usdcDistributed >= targetTier.tokens ? "text-foreground" : "text-foreground/40")}>
+                                    <span className={cn("text-[11px] font-black uppercase tracking-widest", data.usdcDistributed >= targetTier.tokens ? "text-foreground" : "text-foreground/30")}>
                                         {targetTier.tokens.toLocaleString()} Tokens Minted
                                     </span>
                                 </div>
@@ -419,13 +406,13 @@ export default function MilestonesPage() {
                             <li className="flex items-center gap-4">
                                 <div className={cn("shrink-0 w-8 h-8 rounded-full flex items-center justify-center border",
                                     data.eventsCreated >= targetTier.events
-                                        ? "bg-orange-500 border-orange-500 shadow-sm"
-                                        : "bg-foreground/5 border-border"
+                                        ? "bg-lime-400 border-lime-400"
+                                        : "bg-white/[0.04] border-white/[0.08]"
                                 )}>
-                                    {data.eventsCreated >= targetTier.events ? <CheckCircle className="w-4 h-4 text-foreground" /> : <Clock className="w-4 h-4 text-foreground/40" />}
+                                    {data.eventsCreated >= targetTier.events ? <CheckCircle className="w-4 h-4 text-black" /> : <Clock className="w-4 h-4 text-foreground/30" />}
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className={cn("text-[11px] font-black uppercase tracking-widest", data.eventsCreated >= targetTier.events ? "text-foreground" : "text-foreground/40")}>
+                                    <span className={cn("text-[11px] font-black uppercase tracking-widest", data.eventsCreated >= targetTier.events ? "text-foreground" : "text-foreground/30")}>
                                         {targetTier.events.toLocaleString()} Events Created
                                     </span>
                                 </div>
@@ -433,13 +420,13 @@ export default function MilestonesPage() {
                             <li className="flex items-center gap-4">
                                 <div className={cn("shrink-0 w-8 h-8 rounded-full flex items-center justify-center border",
                                     data.uniqueParticipants >= targetTier.participants
-                                        ? "bg-orange-500 border-orange-500 shadow-sm"
-                                        : "bg-foreground/5 border-border"
+                                        ? "bg-lime-400 border-lime-400"
+                                        : "bg-white/[0.04] border-white/[0.08]"
                                 )}>
-                                    {data.uniqueParticipants >= targetTier.participants ? <CheckCircle className="w-4 h-4 text-foreground" /> : <Clock className="w-4 h-4 text-foreground/40" />}
+                                    {data.uniqueParticipants >= targetTier.participants ? <CheckCircle className="w-4 h-4 text-black" /> : <Clock className="w-4 h-4 text-foreground/30" />}
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className={cn("text-[11px] font-black uppercase tracking-widest", data.uniqueParticipants >= targetTier.participants ? "text-foreground" : "text-foreground/40")}>
+                                    <span className={cn("text-[11px] font-black uppercase tracking-widest", data.uniqueParticipants >= targetTier.participants ? "text-foreground" : "text-foreground/30")}>
                                         {targetTier.participants.toLocaleString()} Participants
                                     </span>
                                 </div>
@@ -449,6 +436,22 @@ export default function MilestonesPage() {
                 </div>
 
             </div>
+
+            <MilestonesTableModal
+                open={tiersModalOpen}
+                onClose={() => setTiersModalOpen(false)}
+                overallLevel={overallLevel}
+            />
+
+            <MilestonesProgressModal
+                open={progressModalOpen}
+                onClose={() => setProgressModalOpen(false)}
+                overallLevel={overallLevel}
+                eventsCreated={data.eventsCreated}
+                uniqueParticipants={data.uniqueParticipants}
+                usdcDistributed={data.usdcDistributed}
+                currentReward={currentReward}
+            />
         </div>
     );
 }

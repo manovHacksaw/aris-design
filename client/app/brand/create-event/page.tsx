@@ -50,6 +50,11 @@ const STEPS = [
 
 interface Proposal { title: string; order: number; media?: File; mediaPreview?: string; }
 
+const AGE_GROUPS = ["All Ages", "18-24", "25-34", "35-44", "45-54", "55-64", "65+"] as const;
+const GENDERS = ["All", "M", "F"] as const;
+const REGIONS = ["north", "south", "east", "west"] as const;
+const REGION_LABELS: Record<string, string> = { north: "North", south: "South", east: "East", west: "West" };
+
 interface FormData {
     type: "post" | "vote";
     title: string;
@@ -60,6 +65,10 @@ interface FormData {
     topPrize: string;
     leaderboardPool: string;
     proposals: Proposal[];
+    // Demographic targeting
+    preferredGender: string;
+    ageGroup: string;
+    regions: string[];
     // fields required by LaunchFormData but set to defaults
     tagline: string;
     startImmediately: boolean;
@@ -151,6 +160,9 @@ export default function CreateEventPage() {
         topPrize: "",
         leaderboardPool: "",
         proposals: [{ title: "", order: 0 }, { title: "", order: 1 }],
+        preferredGender: "All",
+        ageGroup: "All Ages",
+        regions: [],
         tagline: "",
         startImmediately: true,
         startDate: "",
@@ -615,6 +627,94 @@ export default function CreateEventPage() {
                             )}
                         </div>
 
+                        {/* ── Audience Targeting ────────────────────────────────────── */}
+                        <div className="rounded-2xl border border-border bg-secondary/20 p-4 space-y-4">
+                            <div className="flex items-center gap-2">
+                                <Users className="w-4 h-4 text-primary" />
+                                <span className="text-sm font-black text-foreground">Audience Targeting</span>
+                                <InfoTooltip text="Only participants matching these demographics will be allowed to join this event. Leave at defaults to allow everyone." />
+                                <span className="ml-auto text-xs font-normal text-muted-foreground">(optional)</span>
+                            </div>
+
+                            {/* Gender */}
+                            <div>
+                                <Label>Gender</Label>
+                                <div className="flex gap-2 flex-wrap">
+                                    {GENDERS.map((g) => (
+                                        <button
+                                            key={g}
+                                            type="button"
+                                            onClick={() => set({ preferredGender: g })}
+                                            className={cn(
+                                                "px-4 py-2 rounded-full text-sm font-semibold border transition-all",
+                                                form.preferredGender === g
+                                                    ? "border-primary bg-primary/10 text-primary"
+                                                    : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                                            )}
+                                        >
+                                            {g === "All" ? "All Genders" : g === "M" ? "Male" : "Female"}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Age Group */}
+                            <div>
+                                <Label>Age Group</Label>
+                                <div className="flex gap-2 flex-wrap">
+                                    {AGE_GROUPS.map((a) => (
+                                        <button
+                                            key={a}
+                                            type="button"
+                                            onClick={() => set({ ageGroup: a })}
+                                            className={cn(
+                                                "px-4 py-2 rounded-full text-sm font-semibold border transition-all",
+                                                form.ageGroup === a
+                                                    ? "border-primary bg-primary/10 text-primary"
+                                                    : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                                            )}
+                                        >
+                                            {a}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Region */}
+                            <div>
+                                <Label>Region (India)</Label>
+                                <div className="flex gap-2 flex-wrap">
+                                    {REGIONS.map((r) => {
+                                        const active = form.regions.includes(r);
+                                        return (
+                                            <button
+                                                key={r}
+                                                type="button"
+                                                onClick={() =>
+                                                    set({
+                                                        regions: active
+                                                            ? form.regions.filter((x) => x !== r)
+                                                            : [...form.regions, r],
+                                                    })
+                                                }
+                                                className={cn(
+                                                    "px-4 py-2 rounded-full text-sm font-semibold border transition-all",
+                                                    active
+                                                        ? "border-primary bg-primary/10 text-primary"
+                                                        : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                                                )}
+                                            >
+                                                {REGION_LABELS[r]}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                {form.regions.length === 0 && (
+                                    <p className="text-xs text-muted-foreground/60 mt-1.5">No region selected — all regions allowed</p>
+                                )}
+                            </div>
+                        </div>
+
                         {/* Banner upload */}
                         <div>
                             <label className="flex items-center text-sm font-semibold text-foreground mb-1.5">
@@ -725,7 +825,7 @@ export default function CreateEventPage() {
                             {/* Max Participants */}
                             <div>
                                 <label className="flex items-center text-sm font-semibold text-foreground mb-1.5">
-                                    Max Participants
+                                    Max Voters
                                     <InfoTooltip text="The maximum number of people who can participate. All pool sizes are calculated from this number. Min 10 · Max 100,000." />
                                 </label>
                                 <Input
@@ -1044,23 +1144,22 @@ export default function CreateEventPage() {
         const goTo = (idx: number) => { setDirection(-1); setCurrentStep(idx); };
 
         return (
-            <div className="min-h-screen w-full bg-background font-sans overflow-y-auto">
-                {/* ── Top bar ── */}
-                <div className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 sm:px-6 py-4 bg-background/80 backdrop-blur-xl border-b border-border/30">
-                    <button
-                        onClick={goBack}
-                        className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
-                    >
-                        <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
-                        <span className="text-xs font-black tracking-widest uppercase">Back</span>
-                    </button>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Preview — What users will see</span>
-                    <div className="w-16" />
-                </div>
+            <div className="min-h-screen w-full bg-background font-sans">
+                {/* ── Page body — exact copy of events/[id]/page layout ── */}
+                <main className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 pb-24 pt-2">
+                    {/* ── Breadcrumb — mirrors events/[id]/page ── */}
+                    <div className="flex items-center gap-1.5 mb-4 px-0">
+                        <button onClick={goBack} className="text-xs text-foreground/40 hover:text-foreground transition-colors">Back</button>
+                        <ChevronRight className="w-3 h-3 text-foreground/20" />
+                        <span className="text-xs text-foreground/60 font-medium truncate max-w-[260px]">
+                            {form.title || "Untitled Event"}
+                        </span>
+                        <div className="ml-auto">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-primary/60 bg-primary/10 px-3 py-1 rounded-full border border-primary/20">Preview</span>
+                        </div>
+                    </div>
 
-                {/* ── Page body — mirrors events/[id]/page layout ── */}
-                <main className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 pb-32 pt-20">
-                    <div className="flex flex-col lg:flex-row gap-6">
+                    <div className="flex flex-col lg:flex-row gap-6 items-start">
                         {/* ── Left column ── */}
                         <div className="flex-1 min-w-0">
                             {/* Banner — click to edit basics */}
@@ -1122,7 +1221,110 @@ export default function CreateEventPage() {
                                 </div>
                             </div>
 
-                            {/* Tab bar */}
+                            {/* Post event: upload hero — exact copy of posting phase layout */}
+                            {isPost ? (
+                                <>
+                                    {/* Submit Your Entry card */}
+                                    <div className="rounded-[24px] border border-border/40 bg-white/[0.02] overflow-hidden mb-5">
+                                        {/* Header */}
+                                        <div className="px-5 pt-5 pb-4 border-b border-border/30 flex items-center gap-3">
+                                            <div className="w-9 h-9 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+                                                <Upload className="w-4 h-4 text-orange-400" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h2 className="text-sm font-black text-foreground">Submit Your Entry</h2>
+                                                <p className="text-[10px] text-foreground/40 font-medium">Upload or generate an image to compete for the reward pool</p>
+                                            </div>
+                                            {/* Mode toggle — static preview */}
+                                            <div className="flex items-center bg-foreground/5 border border-border/40 rounded-xl p-0.5 shrink-0">
+                                                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500 text-white text-[10px] font-black uppercase tracking-wider">
+                                                    <Upload className="w-3 h-3" /> Upload
+                                                </div>
+                                                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-foreground/40 text-[10px] font-black uppercase tracking-wider">
+                                                    <Sparkles className="w-3 h-3" /> AI
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="p-5 space-y-4">
+                                            {/* Upload zone */}
+                                            <div className="border-2 border-dashed border-border/40 hover:border-orange-500/50 rounded-[20px] h-[220px] md:h-[280px] flex flex-col items-center justify-center gap-3 p-6 text-center transition-colors">
+                                                <div className="w-16 h-16 rounded-3xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
+                                                    <ImageIcon className="w-7 h-7 text-orange-400" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-black text-foreground/70">Drop your image here</p>
+                                                    <p className="text-xs text-foreground/40 font-medium mt-1">or click to browse</p>
+                                                </div>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    {["JPEG", "PNG", "WEBP"].map(fmt => (
+                                                        <span key={fmt} className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-foreground/5 border border-border/40 text-foreground/30">{fmt}</span>
+                                                    ))}
+                                                    <span className="text-[9px] font-bold text-foreground/25">· max 5 MB</span>
+                                                </div>
+                                            </div>
+                                            {/* Caption */}
+                                            <div className="w-full bg-secondary/40 border border-border/40 rounded-xl px-4 py-3 text-sm text-foreground/30">
+                                                Add a caption to describe your entry… (optional)
+                                            </div>
+                                            {/* Submit CTA */}
+                                            <button disabled className="w-full py-4 bg-orange-500/30 text-white rounded-[14px] text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2.5 cursor-not-allowed">
+                                                <Upload className="w-4 h-4" /> Submit Entry
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Rules & Eligibility */}
+                                    <div
+                                        onClick={() => goTo(basicsIdx)}
+                                        className="rounded-[24px] border border-border/40 bg-white/[0.02] p-5 space-y-5 cursor-pointer group relative"
+                                    >
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <ShieldCheck className="w-3.5 h-3.5 text-foreground/40" />
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Eligibility</p>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                <span className="text-[10px] font-bold px-3 py-1.5 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20">Open to All Users</span>
+                                                <span className="text-[10px] font-bold px-3 py-1.5 rounded-full bg-foreground/5 text-foreground/50 border border-border/40">1 Submission / User</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <Info className="w-3.5 h-3.5 text-foreground/40" />
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Submission Rules</p>
+                                            </div>
+                                            <ol className="space-y-3">
+                                                {[
+                                                    "Upload a high-resolution image (JPEG or PNG, max 5 MB).",
+                                                    "Preferred aspect ratio: 4:5 or 1:1.",
+                                                    "Add an optional caption to describe your work.",
+                                                    "One submission per participant — make it count.",
+                                                    "No offensive or copyrighted content.",
+                                                ].map((rule, i) => (
+                                                    <li key={i} className="flex gap-3 text-sm text-foreground/60 leading-relaxed">
+                                                        <span className="w-5 h-5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 font-black text-[9px] flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                                                        {rule}
+                                                    </li>
+                                                ))}
+                                            </ol>
+                                        </div>
+                                        {form.description && (
+                                            <div className="pt-4 border-t border-border/30">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-2">About This Event</p>
+                                                <p className="text-sm text-foreground/60 leading-relaxed">{form.description}</p>
+                                            </div>
+                                        )}
+                                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-[24px] pointer-events-none">
+                                            <div className="bg-black/80 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2 border border-white/20 shadow-2xl">
+                                                <Pencil className="w-4 h-4 text-white" />
+                                                <span className="text-xs font-black text-white">EDIT BASICS</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                            <>
+                            {/* Tab bar — vote events only */}
                             <div className="flex items-center justify-between mb-5 border-b border-border/40 pb-3">
                                 <div className="flex items-center gap-1">
                                     {(["trending", "latest", "top"] as const).map((tab) => (
@@ -1137,7 +1339,7 @@ export default function CreateEventPage() {
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <span className="text-[10px] font-black uppercase tracking-widest text-foreground/30">
-                                        {isPost ? "0 Submissions" : `${filledProposals.length} Options`}
+                                        {`${filledProposals.length} Options`}
                                     </span>
                                     <div className="flex border border-border/40 rounded-lg overflow-hidden">
                                         <button className="p-1.5 bg-white/10 text-foreground">
@@ -1150,116 +1352,83 @@ export default function CreateEventPage() {
                                 </div>
                             </div>
 
-                            {/* Content area */}
-                            {isPost ? (
-                                /* Post event: submissions placeholder */
-                                <div className="py-20 flex flex-col items-center justify-center text-center gap-3 border border-dashed border-border/30 rounded-[24px]">
-                                    <Users className="w-8 h-8 text-foreground/15" />
-                                    <p className="text-sm font-black text-foreground/30">User submissions will appear here</p>
-                                    <p className="text-xs text-foreground/20">once the event goes live</p>
-                                </div>
-                            ) : (
-                                /* Vote event: vote options */
-                                <div
-                                    onClick={() => contentIdx >= 0 && goTo(contentIdx)}
-                                    className="cursor-pointer group relative"
-                                >
-                                    {filledProposals.length === 0 ? (
-                                        <div className="py-16 flex flex-col items-center text-center gap-4 border border-dashed border-lime-400/20 rounded-2xl hover:border-lime-400/40 transition-colors">
-                                            <div className="w-14 h-14 rounded-3xl bg-lime-400/10 flex items-center justify-center group-hover:bg-lime-400/20 transition-colors">
-                                                <ThumbsUp className="w-7 h-7 text-lime-400/60 group-hover:text-lime-400 transition-colors" />
-                                            </div>
-                                            <div>
-                                                <h2 className="text-xl font-black text-foreground tracking-tighter mb-1">No Options Yet</h2>
-                                                <p className="text-sm text-foreground/50 font-medium">Go back to add vote options</p>
-                                            </div>
+                            {/* Vote options */}
+                            <div onClick={() => contentIdx >= 0 && goTo(contentIdx)} className="cursor-pointer group relative">
+                                {filledProposals.length === 0 ? (
+                                    <div className="py-16 flex flex-col items-center text-center gap-4 border border-dashed border-lime-400/20 rounded-2xl hover:border-lime-400/40 transition-colors">
+                                        <div className="w-14 h-14 rounded-3xl bg-lime-400/10 flex items-center justify-center group-hover:bg-lime-400/20 transition-colors">
+                                            <ThumbsUp className="w-7 h-7 text-lime-400/60 group-hover:text-lime-400 transition-colors" />
                                         </div>
-                                    ) : (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            {filledProposals.map((p, i) => (
-                                                <div key={i} className="relative rounded-[20px] bg-white/[0.03] border border-white/[0.06] overflow-hidden group/card hover:border-lime-400/20 transition-colors">
-                                                    {p.mediaPreview ? (
-                                                        <div className="relative w-full aspect-[4/3] overflow-hidden">
-                                                            <img src={p.mediaPreview} alt={p.title} className="w-full h-full object-cover" />
-                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                                                        </div>
-                                                    ) : (
-                                                        <div className="w-full aspect-[4/3] bg-lime-400/5 flex items-center justify-center border-b border-white/[0.04]">
-                                                            <span className="text-4xl font-black text-lime-400/20">{i + 1}</span>
-                                                        </div>
-                                                    )}
-                                                    <div className="p-4">
-                                                        <p className="text-sm font-bold text-foreground mb-3 truncate">{p.title}</p>
-                                                        <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden mb-2">
-                                                            <div className="h-full rounded-full bg-gradient-to-r from-lime-400/60 to-lime-400/30" style={{ width: "0%" }} />
-                                                        </div>
-                                                        <div className="flex items-center justify-between">
-                                                            <p className="text-[10px] text-foreground/30 font-medium">0 votes</p>
-                                                            <div className="px-3 py-1.5 bg-lime-400/10 border border-lime-400/20 rounded-full flex items-center gap-1 opacity-60">
-                                                                <ThumbsUp className="w-3 h-3 text-lime-400" />
-                                                                <span className="text-[10px] font-black text-lime-400">Vote</span>
-                                                            </div>
+                                        <div>
+                                            <h2 className="text-xl font-black text-foreground tracking-tighter mb-1">No Options Yet</h2>
+                                            <p className="text-sm text-foreground/50 font-medium">Go back to add vote options</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {filledProposals.map((p, i) => (
+                                            <div key={i} className="relative rounded-[20px] bg-white/[0.03] border border-white/[0.06] overflow-hidden group/card hover:border-lime-400/20 transition-colors">
+                                                {p.mediaPreview ? (
+                                                    <div className="relative w-full aspect-[4/3] overflow-hidden">
+                                                        <img src={p.mediaPreview} alt={p.title} className="w-full h-full object-cover" />
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-full aspect-[4/3] bg-lime-400/5 flex items-center justify-center border-b border-white/[0.04]">
+                                                        <span className="text-4xl font-black text-lime-400/20">{i + 1}</span>
+                                                    </div>
+                                                )}
+                                                <div className="p-4">
+                                                    <p className="text-sm font-bold text-foreground mb-3 truncate">{p.title}</p>
+                                                    <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden mb-2">
+                                                        <div className="h-full rounded-full bg-gradient-to-r from-lime-400/60 to-lime-400/30" style={{ width: "0%" }} />
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <p className="text-[10px] text-foreground/30 font-medium">0 votes</p>
+                                                        <div className="px-3 py-1.5 bg-lime-400/10 border border-lime-400/20 rounded-full flex items-center gap-1 opacity-60">
+                                                            <ThumbsUp className="w-3 h-3 text-lime-400" />
+                                                            <span className="text-[10px] font-black text-lime-400">Vote</span>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                    {contentIdx >= 0 && (
-                                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none rounded-[20px]">
-                                            <div className="bg-black/80 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2 border border-white/20 shadow-2xl">
-                                                <Pencil className="w-4 h-4 text-white" />
-                                                <span className="text-xs font-black text-white">EDIT OPTIONS</span>
                                             </div>
+                                        ))}
+                                    </div>
+                                )}
+                                {contentIdx >= 0 && (
+                                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none rounded-[20px]">
+                                        <div className="bg-black/80 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2 border border-white/20 shadow-2xl">
+                                            <Pencil className="w-4 h-4 text-white" />
+                                            <span className="text-xs font-black text-white">EDIT OPTIONS</span>
                                         </div>
-                                    )}
-                                </div>
-                            )}
+                                    </div>
+                                )}
+                            </div>
 
-                            {/* Rules / About section (mirrors event detail page) */}
-                            <div
-                                onClick={() => goTo(basicsIdx)}
-                                className="mt-6 rounded-[24px] border border-border/40 bg-white/[0.02] p-5 space-y-5 cursor-pointer group relative"
-                            >
-                                {/* Eligibility */}
+                            {/* Voting guidelines + about */}
+                            <div onClick={() => goTo(basicsIdx)} className="mt-6 rounded-[24px] border border-border/40 bg-white/[0.02] p-5 space-y-5 cursor-pointer group relative">
                                 <div>
                                     <div className="flex items-center gap-2 mb-3">
                                         <ShieldCheck className="w-3.5 h-3.5 text-foreground/40" />
                                         <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Eligibility</p>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
-                                        <span className={cn("text-[10px] font-bold px-3 py-1.5 rounded-full border", isPost ? "bg-orange-500/10 text-orange-400 border-orange-500/20" : "bg-lime-400/10 text-lime-400 border-lime-400/20")}>
-                                            Open to All Users
-                                        </span>
-                                        {isPost && (
-                                            <span className="text-[10px] font-bold px-3 py-1.5 rounded-full bg-foreground/5 text-foreground/50 border border-border/40">
-                                                1 Submission / User
-                                            </span>
-                                        )}
+                                        <span className="text-[10px] font-bold px-3 py-1.5 rounded-full bg-lime-400/10 text-lime-400 border border-lime-400/20">Open to All Users</span>
                                     </div>
                                 </div>
-                                {/* Rules */}
                                 <div>
                                     <div className="flex items-center gap-2 mb-3">
                                         <Info className="w-3.5 h-3.5 text-foreground/40" />
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40">{isPost ? "Submission Rules" : "Voting Guidelines"}</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Voting Guidelines</p>
                                     </div>
                                     <ol className="space-y-2.5">
-                                        {(isPost ? [
-                                            "Upload a high-res image (JPEG or PNG, max 5 MB).",
-                                            "Aspect ratio: 4:5 or 1:1 preferred.",
-                                            "Add an optional caption to describe your work.",
-                                            "One submission per participant — make it count.",
-                                            "No offensive, copyrighted content.",
-                                        ] : [
+                                        {[
                                             "Browse all entries in the grid below.",
                                             "Click the vote button on your favourite entry.",
                                             "You can only cast one vote — choose wisely!",
-                                        ]).map((rule, i) => (
+                                        ].map((rule, i) => (
                                             <li key={i} className="flex gap-3 text-sm text-foreground/60 leading-relaxed">
-                                                <span className={cn("w-5 h-5 rounded-full font-black text-[9px] flex items-center justify-center shrink-0 mt-0.5", isPost ? "bg-orange-500/10 border border-orange-500/20 text-orange-400" : "bg-lime-400/10 text-lime-400")}>
-                                                    {i + 1}
-                                                </span>
+                                                <span className="w-5 h-5 rounded-full font-black text-[9px] flex items-center justify-center shrink-0 mt-0.5 bg-lime-400/10 text-lime-400">{i + 1}</span>
                                                 {rule}
                                             </li>
                                         ))}
@@ -1271,7 +1440,6 @@ export default function CreateEventPage() {
                                         <p className="text-sm text-foreground/60 leading-relaxed">{form.description}</p>
                                     </div>
                                 )}
-                                {/* Edit overlay */}
                                 <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-[24px] pointer-events-none">
                                     <div className="bg-black/80 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2 border border-white/20 shadow-2xl">
                                         <Pencil className="w-4 h-4 text-white" />
@@ -1279,10 +1447,13 @@ export default function CreateEventPage() {
                                     </div>
                                 </div>
                             </div>
+                            </>
+                        )}
                         </div>
 
                         {/* ── Right sidebar — mirrors EventSidebar ── */}
-                        <div className="lg:w-[300px] shrink-0 space-y-4">
+                        <div className="lg:w-[300px] shrink-0">
+                        <div className="sticky top-6 space-y-4">
                             {/* Event info card */}
                             <div
                                 onClick={() => goTo(basicsIdx)}
@@ -1427,32 +1598,6 @@ export default function CreateEventPage() {
                                 </div>
                             )}
 
-                            {/* Post entry panel (post events only) */}
-                            {isPost && (
-                                <div className="bg-white/[0.03] border border-white/[0.08] rounded-[24px] overflow-hidden">
-                                    <div className="px-5 pt-5 pb-3 border-b border-border/30 flex items-center gap-3">
-                                        <div className="w-7 h-7 rounded-xl bg-orange-500/10 flex items-center justify-center">
-                                            <PlusCircle className="w-3.5 h-3.5 text-orange-400" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-sm font-black text-foreground">Post Your Entry</h3>
-                                            <p className="text-[10px] text-foreground/40 font-medium">Upload your image to enter</p>
-                                        </div>
-                                    </div>
-                                    <div className="p-4 space-y-3">
-                                        <div className="border-2 border-dashed border-border/40 rounded-[16px] h-[120px] flex flex-col items-center justify-center gap-2">
-                                            <Upload className="w-5 h-5 text-foreground/30" />
-                                            <p className="text-xs font-black text-foreground/50">Drop image or click</p>
-                                            <p className="text-[9px] text-foreground/20 uppercase tracking-widest font-bold">JPEG · PNG · max 5 MB</p>
-                                        </div>
-                                        <div className="h-[60px] bg-foreground/5 border border-border/40 rounded-xl" />
-                                        <button disabled className="w-full py-3.5 bg-foreground/30 text-background rounded-[14px] text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2">
-                                            <Upload className="w-3.5 h-3.5" /> Submit Entry
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
                             {/* Wallet balance warning */}
                             {totalLocked > 0 && balance !== undefined && parseFloat(balance) < netDeposit && (
                                 <div className="flex items-center gap-2 text-yellow-500 text-xs font-semibold bg-yellow-500/10 px-4 py-3 rounded-xl border border-yellow-500/20">
@@ -1461,11 +1606,12 @@ export default function CreateEventPage() {
                                 </div>
                             )}
                         </div>
+                        </div>
                     </div>
                 </main>
 
                 {/* ── Bottom action bar ── */}
-                <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-center gap-4 px-6 py-5 bg-background/90 backdrop-blur-xl border-t border-border/30">
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3">
                     <button
                         onClick={goBack}
                         className="flex items-center gap-2 px-6 py-3.5 rounded-2xl border-2 border-border text-sm font-bold hover:bg-secondary hover:border-accent/40 hover:text-accent transition-all group"

@@ -10,6 +10,60 @@ import { EventStatus } from '../types/event.js';
 import { XpService } from './xpService.js';
 import { EventService } from './eventService.js';
 
+// ---------------------------------------------------------------------------
+// Demographic eligibility helpers (duplicated from submissionService for isolation)
+// ---------------------------------------------------------------------------
+
+function getAgeGroupLabel(dateOfBirth: Date | null): string {
+  if (!dateOfBirth) return 'unknown';
+  const age = Math.floor((Date.now() - dateOfBirth.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+  if (age < 18) return 'under_18';
+  if (age <= 24) return '18_24';
+  if (age <= 34) return '25_34';
+  if (age <= 44) return '35_44';
+  if (age <= 54) return '45_54';
+  if (age <= 64) return '55_64';
+  return '65_plus';
+}
+
+function enforceEventDemographics(
+  event: { preferredGender: string | null; ageGroup: string | null; regions: string[] },
+  user: { gender: string | null; dateOfBirth: Date | null; region: string | null }
+): void {
+  const genderFilter = (event.preferredGender ?? 'All').trim();
+  if (genderFilter !== 'All') {
+    const userGender = (user.gender ?? '').trim().toUpperCase();
+    if (userGender !== genderFilter.toUpperCase()) {
+      throw new Error('You do not meet the gender requirement for this event');
+    }
+  }
+
+  const ageFilter = (event.ageGroup ?? 'All Ages').trim();
+  if (ageFilter !== 'All Ages') {
+    const ageGroupLabel = getAgeGroupLabel(user.dateOfBirth);
+    if (ageGroupLabel === 'unknown') {
+      throw new Error('Your date of birth is required to participate in this event');
+    }
+    const normalisedFilter = ageFilter.replace('-', '_').replace('+', '_plus');
+    if (ageGroupLabel !== normalisedFilter) {
+      throw new Error('You do not meet the age requirement for this event');
+    }
+  }
+
+  if (event.regions && event.regions.length > 0) {
+    const userRegion = (user.region ?? '').trim().toLowerCase();
+    if (!userRegion) {
+      throw new Error('Your region is required to participate in this event');
+    }
+    const allowed = event.regions.map((r) => r.trim().toLowerCase());
+    if (!allowed.includes(userRegion)) {
+      throw new Error('You do not meet the region requirement for this event');
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+
 export class VoteService {
     /**
      * Vote for a submission (POST_VOTE events)
@@ -76,6 +130,14 @@ export class VoteService {
         if (submission.userId === userId) {
             throw new Error('You cannot vote for your own submission');
         }
+
+        // 7. Demographic eligibility check
+        const voter = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { gender: true, dateOfBirth: true, region: true },
+        });
+        if (!voter) throw new Error('User not found');
+        enforceEventDemographics(event, voter);
 
         // 8. Create vote and update analytics/stats in transaction
         const { vote, shouldClose } = await prisma.$transaction(async (tx) => {
@@ -277,6 +339,14 @@ export class VoteService {
         if (proposalIds.length > 1) {
             throw new Error('You can only vote for 1 proposal.');
         }
+
+        // 8. Demographic eligibility check
+        const voter = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { gender: true, dateOfBirth: true, region: true },
+        });
+        if (!voter) throw new Error('User not found');
+        enforceEventDemographics(event, voter);
 
         // 9. Create votes in transaction
         const result = await prisma.$transaction(async (tx) => {
