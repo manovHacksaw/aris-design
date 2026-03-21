@@ -220,8 +220,19 @@ export async function getEvents(filters?: EventFilters): Promise<EventListRespon
     return apiRequest<EventListResponse>(queryString ? `/events?${queryString}` : '/events');
 }
 
-export async function getEventById(id: string, noCache?: boolean): Promise<Event> {
-    const response = await apiRequest<EventResponse>(`/events/${id}`, { noCache });
+export interface GetEventByIdOptions {
+    noCache?: boolean;
+    skipAuth?: boolean;
+}
+
+export async function getEventById(
+    id: string,
+    options?: boolean | GetEventByIdOptions
+): Promise<Event> {
+    const resolvedOptions: GetEventByIdOptions =
+        typeof options === "boolean" ? { noCache: options } : (options || {});
+
+    const response = await apiRequest<EventResponse>(`/events/${id}`, resolvedOptions);
     if (!response.success || !response.event) {
         throw new Error(response.error || 'Event not found');
     }

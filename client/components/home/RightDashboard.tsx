@@ -8,7 +8,6 @@ import {
   Share2,
   Wallet,
   Zap,
-  Plus,
   Send,
 } from "lucide-react";
 import Link from "next/link";
@@ -176,10 +175,6 @@ export default function RightDashboard() {
 
         {/* Action Buttons */}
         <div className="flex gap-3">
-          <button className="flex-1 flex items-center justify-center gap-2 py-3 bg-foreground/5 hover:bg-foreground/10 border border-border rounded-2xl text-sm font-black text-foreground/70 transition-all active:scale-[0.98]">
-            <Plus size={18} />
-            Top Up
-          </button>
           <button className="flex-1 flex items-center justify-center gap-2 py-3 bg-foreground/5 hover:bg-foreground/10 border border-border rounded-2xl text-sm font-black text-foreground/70 transition-all active:scale-[0.98]">
             <Send size={18} className="-rotate-45" />
             Transfer
