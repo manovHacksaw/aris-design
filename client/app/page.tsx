@@ -7,8 +7,21 @@ import EventsTabFeed from "@/components/home/EventsTabFeed";
 import BottomNav from "@/components/BottomNav";
 import AuthGuard from "@/components/auth/AuthGuard";
 import RightDashboard from "@/components/home/RightDashboard";
+import PlatformTour from "@/components/tour/PlatformTour";
+import { useEffect } from "react";
+import { perfLog, perfNow } from "@/lib/perf";
 
 export default function Home() {
+  useEffect(() => {
+    const start = perfNow();
+    perfLog("home", "mounted");
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        perfLog("home", `first painted frame in ${(perfNow() - start).toFixed(1)}ms`);
+      });
+    });
+  }, []);
+
   return (
     <AuthGuard>
       <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
@@ -38,6 +51,7 @@ export default function Home() {
             <BottomNav />
           </div>
         </SidebarLayout>
+        <PlatformTour />
       </div>
     </AuthGuard>
   );

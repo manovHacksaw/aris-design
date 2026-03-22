@@ -11,6 +11,7 @@ import React, {
 import { io, Socket } from "socket.io-client";
 import { useUser } from "./UserContext";
 import { SOCKET_URL, getAuthToken } from "@/services/api";
+import { perfLog, perfNow } from "@/lib/perf";
 
 type SocketContextType = {
     socket: Socket | null;
@@ -28,6 +29,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
     const connect = useCallback(async () => {
         if (socket?.connected) return;
+        const start = perfNow();
 
         const token = await getAuthToken();
         if (!token) return;
@@ -43,6 +45,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
         newSocket.on("connect", () => {
             console.log("✅ Socket connected:", newSocket.id);
+            perfLog("socket", `connected in ${(perfNow() - start).toFixed(1)}ms`);
             setIsConnected(true);
         });
 
@@ -74,8 +77,14 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         if (isLoading) return;
-        if (user && !socket) connect();
-        if (!user && socket) disconnect();
+        if (user && !socket) {
+            const timer = setTimeout(() => connect(), 1200);
+            return () => clearTimeout(timer);
+        }
+        if (!user && socket) {
+            const timer = setTimeout(() => disconnect(), 0);
+            return () => clearTimeout(timer);
+        }
     }, [user, isLoading, socket, connect, disconnect]);
 
     useEffect(() => {

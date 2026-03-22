@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma.js';
 import { LoginStreakService } from './loginStreakService.js';
+import { XpService } from './xpService.js';
 
 export class UserService {
     /**
@@ -240,11 +241,27 @@ export class UserService {
         if (preferredCategories !== undefined) updateData.preferredCategories = preferredCategories;
         if (isOnboarded !== undefined) {
             updateData.isOnboarded = isOnboarded;
-            // Auto-generate referral code on first onboarding completion
+            // Auto-generate referral code and grant welcome XP on first onboarding completion
             if (isOnboarded === true) {
-                const currentUser = await prisma.user.findUnique({ where: { id: userId }, select: { referralCode: true } });
+                const currentUser = await prisma.user.findUnique({ where: { id: userId }, select: { referralCode: true, isOnboarded: true } });
                 if (!currentUser?.referralCode) {
                     updateData.referralCode = `ARIS-${userId.slice(0, 6).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+                }
+                // Grant welcome XP only if this is the first time completing onboarding
+                if (!currentUser?.isOnboarded) {
+                    // Fire-and-forget after the update — we need the updated user xp, so do after save
+                    setImmediate(async () => {
+                        try {
+                            await XpService.grantXp({
+                                userId,
+                                amount: 10,
+                                type: 'MILESTONE',
+                                description: 'Welcome to Aris!',
+                            });
+                        } catch (e) {
+                            console.warn('[updateProfile] Welcome XP grant failed:', e);
+                        }
+                    });
                 }
             }
         }
@@ -352,11 +369,11 @@ export class UserService {
                     where: { userId },
                     _sum: { voteCount: true },
                 }),
-                // 6. Events Participated
-                prisma.vote.findMany({
+                // 6. Events Participated (count distinct eventIds without loading rows)
+                prisma.vote.groupBy({
+                    by: ['eventId'],
                     where: { userId },
-                    select: { eventId: true },
-                    distinct: ['eventId'],
+                    _count: { eventId: true },
                 }),
                 // 7. Reward Claims
                 prisma.rewardClaim.aggregate({
@@ -596,6 +613,18 @@ export class UserService {
                 },
             }),
         ]);
+
+        // Also grant XP bonus to the referred user for using a referral code
+        try {
+            await XpService.grantXp({
+                userId: referredId,
+                amount: 5,
+                type: 'REFERRAL',
+                description: 'Joined with a referral code',
+            });
+        } catch (e) {
+            console.warn('[applyReferral] Referred-user XP grant failed:', e);
+        }
 
         return { success: true };
     }

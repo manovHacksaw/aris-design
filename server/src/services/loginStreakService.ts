@@ -41,84 +41,52 @@ export class LoginStreakService {
   static async recordDailyLogin(userId: string): Promise<StreakResult> {
     const today = this.getUtcMidnight();
 
-    // Use transaction to ensure consistency
-    const streakData = await prisma.$transaction(async (tx) => {
-      // Get or create streak record
-      let streak = await tx.userLoginStreak.findUnique({
-        where: { userId },
+    // Avoid interactive transactions (unsupported by PgBouncer transaction-mode pooling).
+    // Sequential reads + upsert are safe here: the worst-case race is two simultaneous
+    // pings on the same day, both of which will be caught by isSameUtcDay early-return.
+    const streak = await prisma.userLoginStreak.findUnique({ where: { userId } });
+
+    if (!streak) {
+      // First login ever — create record
+      await prisma.userLoginStreak.create({
+        data: { userId, currentStreak: 1, longestStreak: 1, lastLoginDate: today },
       });
-
-      if (!streak) {
-        // First login ever - create streak record
-        streak = await tx.userLoginStreak.create({
-          data: {
-            userId,
-            currentStreak: 1,
-            longestStreak: 1,
-            lastLoginDate: today,
-          },
-        });
-
-        return {
-          currentStreak: 1,
-          longestStreak: 1,
-          isNewDay: true,
-          previousStreak: 0,
-          streakBroken: false,
-        };
+      const streakData = { currentStreak: 1, longestStreak: 1, isNewDay: true, previousStreak: 0, streakBroken: false };
+      let newMilestonesClaimed: ClaimedMilestone[] = [];
+      try {
+        newMilestonesClaimed = await XpService.checkAndClaimMilestones(userId, MilestoneCategory.LOGIN_STREAK, 1);
+      } catch (error) {
+        console.error('Failed to check login streak milestones:', error);
       }
+      return { ...streakData, newMilestonesClaimed };
+    }
 
-      // Check if already logged in today (idempotent)
-      if (this.isSameUtcDay(streak.lastLoginDate, today)) {
-        // Same day - no streak update needed
-        return {
-          currentStreak: streak.currentStreak,
-          longestStreak: streak.longestStreak,
-          isNewDay: false,
-          previousStreak: streak.currentStreak,
-          streakBroken: false,
-        };
-      }
-
-      // New day - check if streak continues or breaks
-      const isConsecutive = this.isConsecutiveDay(today, streak.lastLoginDate);
-      const previousStreak = streak.currentStreak;
-
-      let newStreak: number;
-      let streakBroken: boolean;
-
-      if (isConsecutive) {
-        // Streak continues
-        newStreak = streak.currentStreak + 1;
-        streakBroken = false;
-      } else {
-        // Streak breaks - start fresh
-        newStreak = 1;
-        streakBroken = true;
-      }
-
-      const newLongest = Math.max(newStreak, streak.longestStreak);
-
-      // Update streak record
-      await tx.userLoginStreak.update({
-        where: { userId },
-        data: {
-          currentStreak: newStreak,
-          longestStreak: newLongest,
-          lastLoginDate: today,
-        },
-      });
-
+    // Idempotent: already logged in today
+    if (this.isSameUtcDay(streak.lastLoginDate, today)) {
       return {
-        currentStreak: newStreak,
-        longestStreak: newLongest,
-        isNewDay: true,
-        previousStreak,
-        streakBroken,
+        currentStreak: streak.currentStreak,
+        longestStreak: streak.longestStreak,
+        isNewDay: false,
+        previousStreak: streak.currentStreak,
+        streakBroken: false,
+        newMilestonesClaimed: [],
       };
+    }
+
+    // New day — compute new streak values
+    const isConsecutive = this.isConsecutiveDay(today, streak.lastLoginDate);
+    const previousStreak = streak.currentStreak;
+    const newStreak = isConsecutive ? streak.currentStreak + 1 : 1;
+    const newLongest = Math.max(newStreak, streak.longestStreak);
+
+    await prisma.userLoginStreak.update({
+      where: { userId },
+      data: { currentStreak: newStreak, longestStreak: newLongest, lastLoginDate: today },
     });
 
-    // After transaction, check milestones (outside transaction for performance)
+    const streakData = { currentStreak: newStreak, longestStreak: newLongest, isNewDay: true, previousStreak, streakBroken: !isConsecutive };
+
+    // Check milestones after the update
     let newMilestonesClaimed: ClaimedMilestone[] = [];
 
     if (streakData.isNewDay) {

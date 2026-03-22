@@ -2,21 +2,15 @@
 
 import { useState } from "react";
 import {
-  PenTool, DollarSign, Trophy, Compass, Sparkles,
-  Heart, BookOpen, Users, Coffee, ChevronLeft, ArrowRight, Check,
+  Vote, PenTool, Blocks, Compass, ChevronLeft, ArrowRight, Check,
 } from "lucide-react";
 import { toast } from "sonner";
 
 const GOALS = [
-  { id: "create",    label: "Create & grow",         desc: "Build a following through content",   Icon: PenTool },
-  { id: "earn",      label: "Earn rewards",           desc: "Monetize creativity and attention",   Icon: DollarSign },
-  { id: "compete",   label: "Vote & compete",         desc: "Participate in challenges",           Icon: Trophy },
-  { id: "discover",  label: "Discover creators",      desc: "Find trending talent and content",    Icon: Compass },
-  { id: "brand",     label: "Build personal brand",   desc: "Establish your identity online",      Icon: Sparkles },
-  { id: "support",   label: "Support brands",         desc: "Back your favourite campaigns",       Icon: Heart },
-  { id: "web3",      label: "Learn Web3",             desc: "Experiment with crypto and NFTs",     Icon: BookOpen },
-  { id: "social",    label: "Social & community",     desc: "Connect with like-minded people",     Icon: Users },
-  { id: "browse",    label: "Passive browsing",       desc: "Explore at my own pace",              Icon: Coffee },
+  { id: "voter", label: "Voter", desc: "Vote on submissions and shape rankings", Icon: Vote },
+  { id: "creator", label: "Creator", desc: "Create and submit content to campaigns", Icon: PenTool },
+  { id: "web3_enthusiast", label: "Web3 Enthusiast", desc: "Explore on-chain rewards and wallet features", Icon: Blocks },
+  { id: "explorer", label: "Explorer", desc: "Discover brands, domains, and creators", Icon: Compass },
 ] as const;
 
 export interface IntentData {
@@ -45,10 +39,10 @@ export default function StepIntent({ initial, onNext, onBack }: Props) {
   return (
     <div className="space-y-5">
       <div className="space-y-1">
-        <p className="text-xs font-bold text-primary/80 uppercase tracking-widest">Step 2 of 8</p>
-        <h1 className="text-2xl font-black text-foreground tracking-tighter">Your Goals</h1>
+        <p className="text-xs font-bold text-primary/80 uppercase tracking-widest">Step 3 of 7</p>
+        <h1 className="text-2xl font-black text-foreground tracking-tighter">What Is Your Interest?</h1>
         <p className="text-sm text-foreground/40">
-          What do you want to do on Aris? <span className="text-foreground/60 font-semibold">Pick all that apply.</span>
+          Pick one or more options so we can tailor your onboarding.
         </p>
       </div>
 

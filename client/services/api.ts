@@ -1,3 +1,5 @@
+import { perfLog, perfNow } from "@/lib/perf";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 export const SOCKET_URL = API_BASE_URL.replace("/api", "");
@@ -32,12 +34,18 @@ export async function apiRequest<T>(
   options: RequestInit & { noCache?: boolean; skipAuth?: boolean } = {},
   timeout = 30000
 ): Promise<T> {
-  const token = options.skipAuth
-    ? null
-    : await Promise.race([
+  const reqStart = perfNow();
+  let token: string | null = null;
+  if (!options.skipAuth) {
+    try {
+      token = await Promise.race([
         getAuthToken(),
-        new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 200)),
       ]);
+    } catch {
+      token = null;
+    }
+  }
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
 
@@ -62,6 +70,11 @@ export async function apiRequest<T>(
     clearTimeout(id);
     const data = await response.json();
 
+    perfLog("api", `${endpoint} ${response.status} in ${(perfNow() - reqStart).toFixed(1)}ms`, {
+      method: (fetchOptions.method || "GET").toString(),
+      authed: !!token,
+    });
+
     if (!response.ok) {
       throw new ApiError(
         data?.error || data?.message || `Request failed (${response.status})`,
@@ -73,6 +86,10 @@ export async function apiRequest<T>(
     return data as T;
   } catch (err: any) {
     clearTimeout(id);
+    perfLog("api", `${endpoint} failed in ${(perfNow() - reqStart).toFixed(1)}ms`, {
+      method: (fetchOptions.method || "GET").toString(),
+      error: err?.message || "unknown",
+    });
     if (err.name === "AbortError") throw new ApiError("Request timed out", 408);
     throw err;
   }

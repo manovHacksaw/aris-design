@@ -48,6 +48,7 @@ export interface PostSubmission {
     media: string;
     textContent?: string;
     voteCount: number;
+    rank?: number;
     status: SubmissionStatus;
     isAiAssisted?: boolean;
     isOwn?: boolean;

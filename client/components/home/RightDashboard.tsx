@@ -6,9 +6,14 @@ import {
   Copy,
   ExternalLink,
   Share2,
-  Wallet,
-  Zap,
   Send,
+  ThumbsUp,
+  ImageIcon,
+  Trophy,
+  UserPlus,
+  Star,
+  Sparkles,
+  type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -25,6 +30,8 @@ import {
   type FullXpStatus,
   type XpTransactionSummary,
 } from "@/services/xp.service";
+import { getRewardHistory } from "@/services/reward.service";
+import { perfLog, perfNow } from "@/lib/perf";
 
 function buildDailyXP(transactions: XpTransactionSummary[], days = 7): number[] {
   const buckets: number[] = Array(days).fill(0);
@@ -39,33 +46,89 @@ function buildDailyXP(transactions: XpTransactionSummary[], days = 7): number[] 
   return buckets;
 }
 
-function relativeTime(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
+function relativeTime(dateStr: string, nowMs = Date.now()): string {
+  const diff = nowMs - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
+  if (mins <= 0) return "Just now";
   if (mins < 60) return `${mins || 1}m ago`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-function txLabel(tx: XpTransactionSummary): string {
-  if (tx.description) return tx.description;
-  switch (tx.type) {
-    case "LOGIN_STREAK": return "Login streak bonus";
-    case "SUBMISSION": return "Post submitted";
-    case "VOTE_CAST": return "Vote cast";
-    case "MILESTONE": return "Milestone reached";
-    case "REFERRAL": return "Referral bonus";
-    default: return "XP earned";
+interface TxStyle {
+  icon: LucideIcon;
+  color: string;
+  bg: string;
+  border: string;
+  glow: string;
+}
+
+const TX_STYLES: Record<string, TxStyle> = {
+  LOGIN_STREAK: { icon: Flame,    color: "text-orange-400", bg: "bg-orange-400/10", border: "border-orange-400/25", glow: "group-hover:shadow-[0_0_12px_rgba(251,146,60,0.15)]" },
+  VOTE_CAST:    { icon: ThumbsUp, color: "text-blue-400",   bg: "bg-blue-400/10",   border: "border-blue-400/25",   glow: "group-hover:shadow-[0_0_12px_rgba(96,165,250,0.15)]" },
+  SUBMISSION:   { icon: ImageIcon, color: "text-lime-400",  bg: "bg-lime-400/10",   border: "border-lime-400/25",   glow: "group-hover:shadow-[0_0_12px_rgba(163,230,53,0.15)]" },
+  MILESTONE:    { icon: Trophy,   color: "text-[#B6FF60]", bg: "bg-[#B6FF60]/10", border: "border-[#B6FF60]/25", glow: "group-hover:shadow-[0_0_12px_rgba(182,255,96,0.16)]" },
+  REFERRAL:     { icon: UserPlus, color: "text-pink-400",   bg: "bg-pink-400/10",   border: "border-pink-400/25",   glow: "group-hover:shadow-[0_0_12px_rgba(244,114,182,0.15)]" },
+  default:      { icon: Sparkles, color: "text-[#A78BFA]",  bg: "bg-[#A78BFA]/10",  border: "border-[#A78BFA]/25",  glow: "group-hover:shadow-[0_0_12px_rgba(167,139,250,0.15)]" },
+};
+
+function toHuman(key: string): string {
+  return key.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function txConfig(tx: XpTransactionSummary): { style: TxStyle; label: string; sub: string } {
+  const style = TX_STYLES[tx.type] ?? TX_STYLES.default;
+
+  // Parse backend milestone descriptions like "TOP_VOTES milestone: reached 10"
+  const milestoneMatch = tx.description?.match(/^([A-Z0-9_]+)\s+milestone:\s+reached\s+(\d+)/i);
+  if (milestoneMatch) {
+    const key = milestoneMatch[1];
+    const val = milestoneMatch[2];
+    const milestoneStyleByKey: Record<string, TxStyle> = {
+      TOP_VOTES: TX_STYLES.MILESTONE,
+      VOTES_CAST: TX_STYLES.VOTE_CAST,
+      TOP_3_CONTENT: TX_STYLES.default,
+      LOGIN_STREAK: TX_STYLES.LOGIN_STREAK,
+    };
+    const milestoneStyle = milestoneStyleByKey[key] ?? TX_STYLES.MILESTONE;
+    const labels: Record<string, { label: string; sub: string }> = {
+      TOP_VOTES:     { label: "Top Votes Champion",  sub: `Your content got voted ${val} times!` },
+      VOTES_CAST:    { label: "Active Voter",         sub: `You've cast ${val} votes!` },
+      TOP_3_CONTENT: { label: "Podium Regular",       sub: `Landed in top 3, ${val} times!` },
+      LOGIN_STREAK:  { label: "Streak Achiever",      sub: `Hit a ${val}-day login streak!` },
+    };
+    const found = labels[key];
+    return { style: milestoneStyle, label: found?.label ?? `${toHuman(key)} Milestone`, sub: found?.sub ?? `Reached ${val}` };
   }
+
+  // Pure SCREAMING_SNAKE_CASE description
+  if (tx.description && /^[A-Z][A-Z0-9_]+$/.test(tx.description)) {
+    return { style, label: toHuman(tx.description), sub: relativeTime(tx.createdAt) };
+  }
+
+  // Fallback to description or type-based label
+  const labels: Record<string, { label: string; sub: string }> = {
+    LOGIN_STREAK: { label: "Login Streak Bonus",  sub: "Keep it up — daily XP!" },
+    SUBMISSION:   { label: "Post Submitted",       sub: "Entry accepted — good luck!" },
+    VOTE_CAST:    { label: "Vote Cast",            sub: "Thanks for participating!" },
+    MILESTONE:    { label: "Milestone Unlocked",   sub: "You hit a new milestone!" },
+    REFERRAL:     { label: "Referral Bonus",       sub: "A friend joined via your code!" },
+  };
+  const fallback = labels[tx.type] ?? { label: tx.description ?? "XP Earned", sub: "" };
+  return { style, label: fallback.label, sub: fallback.sub };
 }
 
 export default function RightDashboard() {
-  const { user, stats } = useUser();
+  const { user } = useUser();
   const { balance, address } = useWallet();
   const [copied, setCopied] = useState(false);
   const [xpStatus, setXpStatus] = useState<FullXpStatus | null>(null);
   const [transactions, setTransactions] = useState<XpTransactionSummary[]>([]);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const [xpLoading, setXpLoading] = useState(true);
+  const [weeklyUsdcChange, setWeeklyUsdcChange] = useState<number | null>(null);
+  const [weeklyUsdcLoaded, setWeeklyUsdcLoaded] = useState(false);
 
   const truncatedAddress = address
     ? `${address.slice(0, 4)}...${address.slice(-4)}`
@@ -75,10 +138,8 @@ export default function RightDashboard() {
   const longestStreak = xpStatus?.streak?.longest ?? null;
   const referralCode = xpStatus?.referralStats?.referralCode ?? user?.referralCode ?? "—";
   const { progress } = xpForNextLevel(user?.xp ?? 0);
-  const totalEarnings = stats?.earnings ?? 0;
-
   const earnedToday = transactions
-    .filter((tx) => Date.now() - new Date(tx.createdAt).getTime() < 86400000)
+    .filter((tx) => nowMs - new Date(tx.createdAt).getTime() < 86400000)
     .reduce((sum, tx) => sum + tx.amount, 0);
 
   const dailyXP = buildDailyXP(transactions, 7);
@@ -87,23 +148,87 @@ export default function RightDashboard() {
 
   useEffect(() => {
     let cancelled = false;
-    async function load() {
+    async function loadStatus() {
+      const start = perfNow();
       try {
-        const [status, txRes] = await Promise.all([
-          getXpStatus(),
-          getXpTransactions(50, 0),
-        ]);
+        const status = await getXpStatus();
         if (!cancelled) {
           setXpStatus(status);
-          setTransactions(txRes.transactions);
+          setTransactions(status.recentTransactions || []);
+          setXpLoading(false);
         }
+        perfLog("right-dashboard", `xp status loaded in ${(perfNow() - start).toFixed(1)}ms`, {
+          tx: status.recentTransactions?.length ?? 0,
+        });
       } catch {
-        // graceful degradation
+        if (!cancelled) setXpLoading(false);
       }
     }
-    load();
-    loginPing().catch(() => { });
-    return () => { cancelled = true; };
+
+    loadStatus();
+
+    async function loadWeeklyUsdcChange() {
+      try {
+        const history = await getRewardHistory();
+        const now = Date.now();
+        const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+        const weeklyDelta = history.reduce((sum, entry) => {
+          if (!entry.claimedAt) return sum;
+          const claimedAtMs = new Date(entry.claimedAt).getTime();
+          if (Number.isNaN(claimedAtMs) || claimedAtMs < weekAgo || claimedAtMs > now) return sum;
+          return sum + Number(entry.finalAmount || 0);
+        }, 0);
+        if (!cancelled) {
+          setWeeklyUsdcChange(weeklyDelta);
+          setWeeklyUsdcLoaded(true);
+        }
+      } catch {
+        if (!cancelled) {
+          setWeeklyUsdcChange(null);
+          setWeeklyUsdcLoaded(true);
+        }
+      }
+    }
+
+    loadWeeklyUsdcChange();
+
+    // Defer non-critical calls to reduce first-load fan-out.
+    const deferred = setTimeout(() => {
+      loginPing().catch(() => { });
+      getXpTransactions(50, 0)
+        .then((txRes) => {
+          if (!cancelled) setTransactions(txRes.transactions);
+          perfLog("right-dashboard", "deferred xp transactions loaded", {
+            tx: txRes.transactions.length,
+          });
+        })
+        .catch(() => { });
+    }, 1200);
+
+    // Re-fetch status after onboarding XP grants settle.
+    const retry = setTimeout(() => {
+      getXpStatus()
+        .then((status) => {
+          if (!cancelled) {
+            setXpStatus(status);
+            if ((status.recentTransactions?.length ?? 0) > 0) {
+              setTransactions(status.recentTransactions);
+            }
+          }
+        })
+        .catch(() => { });
+    }, 3500);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(deferred);
+      clearTimeout(retry);
+    };
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => setNowMs(Date.now()), 60000);
+    return () => clearInterval(timer);
   }, []);
 
   const handleCopy = () => {
@@ -115,6 +240,14 @@ export default function RightDashboard() {
   };
 
   const recentTx = transactions.slice(0, 4);
+  const weeklyUsdcText = weeklyUsdcChange === null
+    ? "Last-week change unavailable"
+    : `${weeklyUsdcChange >= 0 ? "+" : "-"}$${Math.abs(weeklyUsdcChange).toFixed(2)} from last week`;
+  const weeklyUsdcTextClass = weeklyUsdcChange === null
+    ? "text-foreground/40"
+    : weeklyUsdcChange < 0
+      ? "text-red-400"
+      : "text-[#60A5FA]";
 
   return (
     <div className="flex flex-col gap-4 sticky top-6 pb-10">
@@ -170,7 +303,14 @@ export default function RightDashboard() {
               <span className="text-lg font-bold text-foreground/40">USDC</span>
             </div>
           </div>
-          <p className="text-[11px] font-bold text-[#60A5FA] mt-2">+$2.20 from last week</p>
+          {!weeklyUsdcLoaded ? (
+            <div
+              className="mt-2 h-[14px] w-[150px] rounded bg-foreground/10 animate-pulse"
+              aria-label="Loading weekly USDC change"
+            />
+          ) : (
+            <p className={cn("text-[11px] font-bold mt-2", weeklyUsdcTextClass)}>{weeklyUsdcText}</p>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -185,7 +325,7 @@ export default function RightDashboard() {
         <div className="mt-6 pt-4 border-t border-border flex justify-between items-center">
           <button
             onClick={() => {
-              address && navigator.clipboard.writeText(address);
+              if (address) navigator.clipboard.writeText(address);
               toast.success("Address copied!");
             }}
             className="text-[10px] font-bold text-foreground/40 hover:text-foreground transition-colors flex items-center gap-1.5"
@@ -212,62 +352,102 @@ export default function RightDashboard() {
           </Link>
         </div>
 
-        <div className="mb-8">
-          <h4 className="text-4xl font-black text-[#A78BFA] tracking-tight">{earnedToday} XP</h4>
-          <p className="text-xs font-bold text-foreground/50">Earned Today</p>
-        </div>
-
-        {/* Bar chart — last 7 days */}
-        <div className="flex items-end justify-between gap-1.5 px-0.5 mb-3 relative z-10" style={{ height: "7rem" }}>
-          {weeklyBars.map((pct, i) => {
-            const dayDate = new Date();
-            dayDate.setDate(dayDate.getDate() - (6 - i));
-            return (
-              <div key={i} className="flex-1 flex flex-col items-center justify-end h-full group/bar relative">
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-foreground/90 backdrop-blur-md px-2 py-1 rounded text-[10px] font-black text-background opacity-0 group-hover/bar:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
-                  {dailyXP[i]} XP
+        {xpLoading ? (
+          <div className="space-y-5 animate-pulse">
+            {/* XP number skeleton */}
+            <div className="space-y-2">
+              <div className="h-9 w-28 rounded-lg bg-white/5 border border-white/8 backdrop-blur-sm" />
+              <div className="h-3 w-20 rounded bg-white/5" />
+            </div>
+            {/* Bar chart skeleton */}
+            <div className="flex items-end justify-between gap-1.5 px-0.5" style={{ height: "7rem" }}>
+              {[40, 60, 30, 75, 50, 85, 100].map((h, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
+                  <div
+                    className="w-full rounded-sm border border-white/8"
+                    style={{
+                      height: `${h}%`,
+                      background: "linear-gradient(to top, rgba(167,139,250,0.12), rgba(167,139,250,0.04))",
+                      backdropFilter: "blur(4px)",
+                    }}
+                  />
                 </div>
+              ))}
+            </div>
+            {/* Day labels skeleton */}
+            <div className="flex justify-between gap-1.5 px-0.5">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <div key={i} className="flex-1 flex justify-center">
+                  <div className="h-2 w-5 rounded bg-white/5" />
+                </div>
+              ))}
+            </div>
+            {/* Progress bar skeleton */}
+            <div className="space-y-2">
+              <div className="h-1.5 w-full rounded-full bg-white/5 border border-white/5" />
+              <div className="h-2.5 w-24 rounded bg-white/5 mx-auto" />
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="mb-8">
+              <h4 className="text-4xl font-black text-[#A78BFA] tracking-tight">{earnedToday} XP</h4>
+              <p className="text-xs font-bold text-foreground/50">Earned Today</p>
+            </div>
+
+            {/* Bar chart — last 7 days */}
+            <div className="flex items-end justify-between gap-1.5 px-0.5 mb-3 relative z-10" style={{ height: "7rem" }}>
+              {weeklyBars.map((pct, i) => {
+                const dayDate = new Date();
+                dayDate.setDate(dayDate.getDate() - (6 - i));
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center justify-end h-full group/bar relative">
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-foreground/90 backdrop-blur-md px-2 py-1 rounded text-[10px] font-black text-background opacity-0 group-hover/bar:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
+                      {dailyXP[i]} XP
+                    </div>
+                    <motion.div
+                      initial={{ height: 0 }}
+                      animate={{ height: `${pct || 2}%` }}
+                      className={cn(
+                        "w-full transition-all duration-300 rounded-sm",
+                        i === 6 ? "bg-[#A78BFA]" : "bg-[#A78BFA]/20"
+                      )}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            {/* Day labels */}
+            <div className="flex justify-between gap-1.5 px-0.5 mb-5">
+              {weeklyBars.map((_, i) => {
+                const dayDate = new Date();
+                dayDate.setDate(dayDate.getDate() - (6 - i));
+                const dayName = dayDate.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase();
+                return (
+                  <div key={i} className="flex-1 text-center">
+                    <span className={cn("text-[8px] font-black tracking-wide", i === 6 ? "text-[#A78BFA]" : "text-foreground/20")}>
+                      {dayName}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Level progress bar */}
+            <div className="space-y-3">
+              <div className="h-1.5 w-full bg-foreground/10 rounded-full overflow-hidden">
                 <motion.div
-                  initial={{ height: 0 }}
-                  animate={{ height: `${pct || 2}%` }}
-                  className={cn(
-                    "w-full transition-all duration-300 rounded-sm",
-                    i === 6 ? "bg-[#A78BFA]" : "bg-[#A78BFA]/20"
-                  )}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  className="h-full bg-[#A78BFA] rounded-full"
                 />
               </div>
-            );
-          })}
-        </div>
-        {/* Day labels */}
-        <div className="flex justify-between gap-1.5 px-0.5 mb-5">
-          {weeklyBars.map((_, i) => {
-            const dayDate = new Date();
-            dayDate.setDate(dayDate.getDate() - (6 - i));
-            const dayName = dayDate.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase();
-            return (
-              <div key={i} className="flex-1 text-center">
-                <span className={cn("text-[8px] font-black tracking-wide", i === 6 ? "text-[#A78BFA]" : "text-foreground/20")}>
-                  {dayName}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Level progress bar */}
-        <div className="space-y-3">
-          <div className="h-1.5 w-full bg-foreground/10 rounded-full overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              className="h-full bg-[#A78BFA] rounded-full"
-            />
-          </div>
-          <p className="text-[10px] font-bold text-foreground/40 text-center uppercase tracking-[0.15em]">
-            {progress}% to next level
-          </p>
-        </div>
+              <p className="text-[10px] font-bold text-foreground/40 text-center uppercase tracking-[0.15em]">
+                {progress}% to next level
+              </p>
+            </div>
+          </>
+        )}
       </div>
 
       {/* 4. Referral Card */}
@@ -292,39 +472,82 @@ export default function RightDashboard() {
       </div>
 
       {/* 5. XP History */}
-      <div className="mt-2 px-2">
+      <div className="mt-2 bg-card border border-border rounded-[24px] p-4 shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[11px] font-black text-foreground/50 uppercase tracking-[0.2em]">XP History</h3>
-          <Link href="/dashboard" className="text-[11px] font-black text-[#A78BFA] hover:underline uppercase tracking-widest">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-full border border-neutral-700 bg-neutral-900/80 flex items-center justify-center">
+              <Star className="w-3.5 h-3.5 text-foreground/70" />
+            </div>
+            <div>
+              <h3 className="text-[12px] font-black text-foreground/85 uppercase tracking-[0.18em]">Recent Activity</h3>
+              <p className="text-[10px] font-bold text-foreground/35 uppercase tracking-[0.12em]">{xpLoading ? "Loading…" : `Latest ${Math.min(recentTx.length, 4)} events`}</p>
+            </div>
+          </div>
+          <Link href="/dashboard" className="text-[11px] font-black text-foreground/70 hover:text-foreground uppercase tracking-widest transition-colors">
             View All
           </Link>
         </div>
 
-        {recentTx.length === 0 ? (
-          <div className="bg-card border border-border rounded-2xl p-4 text-center">
-            <p className="text-[11px] font-bold text-foreground/40 uppercase tracking-wider">No XP activity yet</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {recentTx.map((tx) => (
-              <div
-                key={tx.id}
-                className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between group hover:border-[#A78BFA]/20 transition-colors shadow-sm"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#A78BFA]/10 flex items-center justify-center border border-[#A78BFA]/20">
-                    <Zap size={18} className="text-[#A78BFA]" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-foreground leading-snug">{txLabel(tx)}</p>
-                    <p className="text-[10px] font-bold text-foreground/40">{relativeTime(tx.createdAt)}</p>
-                  </div>
+        {xpLoading ? (
+          <div className="space-y-1.5 animate-pulse">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="rounded-xl border border-border p-3 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-foreground/10 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 rounded bg-foreground/10 w-3/4" />
+                  <div className="h-2.5 rounded bg-foreground/6 w-1/2" />
                 </div>
-                <span className={cn("text-xs font-black", tx.amount >= 0 ? "text-[#A78BFA]" : "text-red-400")}>
-                  {tx.amount >= 0 ? "+" : ""}{tx.amount} XP
-                </span>
+                <div className="h-5 w-14 rounded-full bg-foreground/10 shrink-0" />
               </div>
             ))}
+          </div>
+        ) : recentTx.length === 0 ? (
+          <div className="rounded-2xl border border-border bg-foreground/[0.02] p-7 text-center">
+            <Sparkles className="w-6 h-6 text-foreground/45 mx-auto mb-2" />
+            <p className="text-[11px] font-bold text-foreground/55">No activity yet — start voting or posting.</p>
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            {recentTx.map((tx, idx) => {
+              const { style, label, sub } = txConfig(tx);
+              const Icon = style.icon;
+              return (
+                <motion.div
+                  key={tx.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.28, delay: idx * 0.05 }}
+                  className={cn(
+                    "group rounded-xl border border-border p-3 flex items-center gap-3 transition-all duration-300",
+                    "bg-card hover:bg-foreground/[0.03] hover:-translate-y-[1px]",
+                    idx === 0 && "animate-[pulse_2.6s_ease-in-out_infinite]"
+                  )}
+                >
+                  <div className={cn("w-9 h-9 rounded-full flex items-center justify-center shrink-0 border shadow-inner transition-transform duration-300 group-hover:scale-105", style.bg, style.border)}>
+                    <Icon size={16} className={style.color} />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-white leading-snug truncate">{label}</p>
+                    {sub ? (
+                      <p className="text-[11px] font-medium text-neutral-400 truncate mt-0.5">{sub}</p>
+                    ) : (
+                      <p className="text-[11px] font-medium text-neutral-400 truncate mt-0.5">XP activity</p>
+                    )}
+                    <p className="text-[10px] font-medium text-neutral-500 mt-1">{relativeTime(tx.createdAt, nowMs)}</p>
+                  </div>
+
+                  <div className={cn(
+                    "shrink-0 px-2.5 py-1 rounded-full text-[11px] font-black border shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] transition-shadow duration-300",
+                    tx.amount >= 0
+                      ? "text-[#B6FF60] bg-[#B6FF60]/10 border-[#B6FF60]/25 shadow-[0_0_10px_rgba(182,255,96,0.14)] group-hover:shadow-[0_0_14px_rgba(182,255,96,0.26)]"
+                      : "text-red-300 bg-red-500/10 border-red-400/25"
+                  )}>
+                    {tx.amount >= 0 ? "+" : ""}{tx.amount} XP
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </div>

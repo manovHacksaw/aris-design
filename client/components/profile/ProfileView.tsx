@@ -338,12 +338,16 @@ export default function ProfileView({
                     </p>
                     <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-1">Following</p>
                   </button>
-                  <div>
-                    <p className="font-display text-3xl text-white tracking-tight leading-none">
+                  <button
+                    type="button"
+                    onClick={() => setShowSocialModal({ show: true, type: "following" })}
+                    className="text-left group"
+                  >
+                    <p className="font-display text-3xl text-white tracking-tight leading-none group-hover:text-primary transition-colors">
                       {following.length}
                     </p>
                     <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-1">Brands Followed</p>
-                  </div>
+                  </button>
                 </div>
               </div>
 

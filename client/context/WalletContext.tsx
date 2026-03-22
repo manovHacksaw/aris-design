@@ -32,6 +32,7 @@ type WalletContextType = {
   balance: string;
   smartWalletClient: any | null; // Represents the generic Privy Smart Wallet Provider
   publicClient: PublicClient | null;
+  isAuthenticated: boolean;
   isConnected: boolean;
   isLoading: boolean;
   isInitialized: boolean;
@@ -74,6 +75,7 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
   const eoaAddress = (embeddedWallet?.address as Address) || null;
 
   const isConnected = ready && authenticated && !!address;
+  const isAuthenticated = ready && authenticated;
   const isInitialized = ready || timedOut;
 
   const userInfo = privyUser
@@ -185,6 +187,7 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
         balance,
         smartWalletClient,
         publicClient,
+        isAuthenticated,
         isConnected,
         isLoading: !ready && !timedOut,
         isInitialized,

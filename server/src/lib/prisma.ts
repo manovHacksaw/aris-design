@@ -11,11 +11,11 @@ function buildPrismaUrl(dbUrl?: string): string | undefined {
   const isSupabasePooler = url.hostname.includes('pooler.supabase.com');
   const explicitConnectionLimit = process.env.PRISMA_CONNECTION_LIMIT;
 
-  // Supabase pooler URLs are sensitive to client fan-out, especially during
-  // restarts in local dev. Default to a single Prisma connection unless an
-  // explicit override is provided.
+  // Supabase pooler (PgBouncer) supports up to ~10 connections per client in
+  // transaction mode. Use 5 as a safe default to allow parallel queries while
+  // avoiding pool exhaustion. Override with PRISMA_CONNECTION_LIMIT if needed.
   if (isSupabasePooler) {
-    url.searchParams.set('connection_limit', explicitConnectionLimit || '1');
+    url.searchParams.set('connection_limit', explicitConnectionLimit || '5');
   }
 
   if (explicitConnectionLimit && !isSupabasePooler) {

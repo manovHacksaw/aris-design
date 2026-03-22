@@ -1,25 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, ChevronLeft, ArrowRight } from "lucide-react";
-
-const MOCK_BRANDS = [
-  { id: "nike",    name: "Nike",        category: "Sports",       avatar: "https://upload.wikimedia.org/wikipedia/commons/a/a6/Logo_NIKE.svg" },
-  { id: "spotify", name: "Spotify",     category: "Music",        avatar: "https://upload.wikimedia.org/wikipedia/commons/2/26/Spotify_logo_with_text.svg" },
-  { id: "netflix", name: "Netflix",     category: "Entertainment",avatar: "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg" },
-  { id: "redbull", name: "Red Bull",    category: "Sports",       avatar: "https://upload.wikimedia.org/wikipedia/en/4/49/Red_Bull_Logo.svg" },
-  { id: "apple",   name: "Apple",       category: "Technology",   avatar: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" },
-  { id: "gucci",   name: "Gucci",       category: "Fashion",      avatar: "https://upload.wikimedia.org/wikipedia/commons/5/57/Gucci_logo.svg" },
-];
-
-const MOCK_CREATORS = [
-  { id: "c1", name: "Maya Chen",     handle: "@mayavisuals",  category: "Photography",  avatar: "https://i.pravatar.cc/80?img=1" },
-  { id: "c2", name: "Kai Studios",   handle: "@kaistudios",   category: "Art & Design", avatar: "https://i.pravatar.cc/80?img=2" },
-  { id: "c3", name: "Alex Nova",     handle: "@alexnova",     category: "Gaming",       avatar: "https://i.pravatar.cc/80?img=3" },
-  { id: "c4", name: "Sofia Ray",     handle: "@sofiaray",     category: "Lifestyle",    avatar: "https://i.pravatar.cc/80?img=4" },
-  { id: "c5", name: "Jamal Beats",   handle: "@jamalbeats",   category: "Music",        avatar: "https://i.pravatar.cc/80?img=5" },
-  { id: "c6", name: "Luna Creates",  handle: "@lunacreates",  category: "Fashion",      avatar: "https://i.pravatar.cc/80?img=6" },
-];
+import { getBrandLeaderboard, getUserLeaderboard, type BrandLeaderboardEntry, type UserLeaderboardEntry } from "@/services/leaderboard.service";
 
 export interface NetworkData {
   followedBrands: string[];
@@ -28,13 +11,54 @@ export interface NetworkData {
 
 interface Props {
   initial: Partial<NetworkData>;
+  preferredCategories?: string[];
   onNext: (data: NetworkData) => void;
   onBack: () => void;
 }
 
-export default function StepNetwork({ initial, onNext, onBack }: Props) {
+export default function StepNetwork({ initial, preferredCategories = [], onNext, onBack }: Props) {
   const [brands, setBrands] = useState<string[]>(initial.followedBrands || []);
   const [creators, setCreators] = useState<string[]>(initial.followedCreators || []);
+
+  const [brandList, setBrandList] = useState<BrandLeaderboardEntry[]>([]);
+  const [creatorList, setCreatorList] = useState<UserLeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      const [brandsRes, creatorsRes] = await Promise.allSettled([
+        getBrandLeaderboard("A"),
+        getUserLeaderboard(1, 6, "W"),
+      ]);
+
+      if (brandsRes.status === "fulfilled") {
+        let all = brandsRes.value.data ?? [];
+        if (preferredCategories.length > 0) {
+          const lower = preferredCategories.map(c => c.toLowerCase());
+          const matched = all.filter(b =>
+            b.categories?.some(c => lower.includes(c.toLowerCase()))
+          );
+          all = matched.length > 0 ? matched.slice(0, 6) : all.slice(0, 6);
+        } else {
+          all = all.slice(0, 6);
+        }
+        setBrandList(all);
+      } else {
+        console.warn("Brands fetch failed:", brandsRes.reason);
+      }
+
+      if (creatorsRes.status === "fulfilled") {
+        setCreatorList(creatorsRes.value.data?.slice(0, 6) ?? []);
+      } else {
+        console.warn("Creators fetch failed:", creatorsRes.reason);
+      }
+
+      setLoading(false);
+    }
+    fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const toggleBrand = (id: string) =>
     setBrands(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -46,72 +70,145 @@ export default function StepNetwork({ initial, onNext, onBack }: Props) {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <p className="text-xs font-bold text-primary/80 uppercase tracking-widest">Step 6 of 8</p>
+        <p className="text-xs font-bold text-primary/80 uppercase tracking-widest">Step 6 of 7</p>
         <h1 className="text-2xl font-black text-foreground tracking-tighter">Follow & Connect</h1>
         <p className="text-sm text-foreground/40">
           Seed your feed instantly. You can always change this later.
         </p>
       </div>
 
-      {/* Brands */}
-      <div className="space-y-2.5">
-        <div className="flex items-center justify-between">
-          <label className="text-xs font-bold text-foreground/50 uppercase tracking-widest">Brands</label>
-          {brands.length > 0 && <span className="text-[11px] text-primary font-bold">{brands.length} followed</span>}
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {MOCK_BRANDS.map(b => {
-            const active = brands.includes(b.id);
-            return (
-              <button
-                key={b.id}
-                onClick={() => toggleBrand(b.id)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-[12px] border transition-all ${
-                  active ? "bg-primary/10 border-primary/40" : "bg-card border-border/40 hover:border-border/60"
-                }`}
-              >
-                <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shrink-0 overflow-hidden">
-                  <img src={b.avatar} alt={b.name} className="w-6 h-6 object-contain" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+      {loading ? (
+        <div className="space-y-6">
+          {/* Brands skeleton */}
+          <div className="space-y-2.5">
+            <div className="h-3 w-16 rounded bg-white/10 animate-pulse" />
+            <div className="grid grid-cols-2 gap-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-[12px] border border-border/40 bg-card animate-pulse">
+                  <div className="w-8 h-8 rounded-lg bg-white/10 shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-2.5 rounded bg-white/10 w-3/4" />
+                    <div className="h-2 rounded bg-white/5 w-1/2" />
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0 text-left">
-                  <p className={`text-xs font-bold truncate ${active ? "text-foreground" : "text-foreground/70"}`}>{b.name}</p>
-                  <p className="text-[10px] text-foreground/35 truncate">{b.category}</p>
+              ))}
+            </div>
+          </div>
+          {/* Creators skeleton */}
+          <div className="space-y-2.5">
+            <div className="h-3 w-24 rounded bg-white/10 animate-pulse" />
+            <div className="grid grid-cols-2 gap-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-[12px] border border-border/40 bg-card animate-pulse">
+                  <div className="w-8 h-8 rounded-full bg-white/10 shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-2.5 rounded bg-white/10 w-3/4" />
+                    <div className="h-2 rounded bg-white/5 w-1/2" />
+                  </div>
                 </div>
-                {active && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
-              </button>
-            );
-          })}
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* Brands */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-foreground/50 uppercase tracking-widest">
+                Brands
+                {preferredCategories.length > 0 && (
+                  <span className="ml-2 text-primary/60 normal-case font-medium">matched to your interests</span>
+                )}
+              </label>
+              {brands.length > 0 && <span className="text-[11px] text-primary font-bold">{brands.length} followed</span>}
+            </div>
 
-      {/* Creators */}
-      <div className="space-y-2.5">
-        <div className="flex items-center justify-between">
-          <label className="text-xs font-bold text-foreground/50 uppercase tracking-widest">Creators</label>
-          {creators.length > 0 && <span className="text-[11px] text-primary font-bold">{creators.length} followed</span>}
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {MOCK_CREATORS.map(c => {
-            const active = creators.includes(c.id);
-            return (
-              <button
-                key={c.id}
-                onClick={() => toggleCreator(c.id)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-[12px] border transition-all ${
-                  active ? "bg-primary/10 border-primary/40" : "bg-card border-border/40 hover:border-border/60"
-                }`}
-              >
-                <img src={c.avatar} alt={c.name} className="w-8 h-8 rounded-full shrink-0 object-cover" />
-                <div className="flex-1 min-w-0 text-left">
-                  <p className={`text-xs font-bold truncate ${active ? "text-foreground" : "text-foreground/70"}`}>{c.name}</p>
-                  <p className="text-[10px] text-foreground/35 truncate">{c.category}</p>
-                </div>
-                {active && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+            {brandList.length === 0 ? (
+              <p className="text-sm text-foreground/30 py-4 text-center">No brands available yet.</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {brandList.map(b => {
+                  const active = brands.includes(b.id);
+                  const logoUrl = b.avatar ?? null;
+                  const category = b.categories?.[0] ?? "Brand";
+                  return (
+                    <button
+                      key={b.id}
+                      onClick={() => toggleBrand(b.id)}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-[12px] border transition-all ${
+                        active ? "bg-primary/10 border-primary/40" : "bg-card border-border/40 hover:border-border/60"
+                      }`}
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shrink-0 overflow-hidden">
+                        {logoUrl ? (
+                          <img
+                            src={logoUrl}
+                            alt={b.name}
+                            className="w-6 h-6 object-contain"
+                            onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                          />
+                        ) : (
+                          <span className="text-[10px] font-black text-black">{b.name[0]}</span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0 text-left">
+                        <p className={`text-xs font-bold truncate ${active ? "text-foreground" : "text-foreground/70"}`}>{b.name}</p>
+                        <p className="text-[10px] text-foreground/35 truncate">{category}</p>
+                      </div>
+                      {active && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Creators */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-foreground/50 uppercase tracking-widest">
+                Top Creators
+                <span className="ml-2 text-primary/60 normal-case font-medium">this week</span>
+              </label>
+              {creators.length > 0 && <span className="text-[11px] text-primary font-bold">{creators.length} followed</span>}
+            </div>
+
+            {creatorList.length === 0 ? (
+              <p className="text-sm text-foreground/30 py-4 text-center">No creators yet — check back soon.</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {creatorList.map(c => {
+                  const active = creators.includes(c.id);
+                  const avatar = c.avatarUrl || c.avatar;
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => toggleCreator(c.id)}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-[12px] border transition-all ${
+                        active ? "bg-primary/10 border-primary/40" : "bg-card border-border/40 hover:border-border/60"
+                      }`}
+                    >
+                      {avatar ? (
+                        <img src={avatar} alt={c.displayName} className="w-8 h-8 rounded-full shrink-0 object-cover" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                          <span className="text-[11px] font-black text-primary">{c.displayName?.[0] ?? "?"}</span>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0 text-left">
+                        <p className={`text-xs font-bold truncate ${active ? "text-foreground" : "text-foreground/70"}`}>{c.displayName}</p>
+                        <p className="text-[10px] text-foreground/35 truncate">Lv {c.level} · {c.xp.toLocaleString()} XP</p>
+                      </div>
+                      {active && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
       <div className="flex gap-3 pt-1">
         <button onClick={onBack} className="flex items-center gap-1.5 px-5 py-4 rounded-[16px] text-foreground/40 hover:text-foreground font-bold text-xs uppercase tracking-widest transition-colors">
