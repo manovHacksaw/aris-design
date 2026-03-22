@@ -1,12 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Building2,
   Globe,
-  Lock,
-  Save,
   Loader2,
   CheckCircle,
   AlertCircle,
@@ -16,9 +14,13 @@ import {
   Check,
   Tag,
   Link as LinkIcon,
-  ChevronRight,
   Info,
   Sparkles,
+  Calendar,
+  Mail,
+  Wallet,
+  Shield,
+  Edit3,
 } from "lucide-react";
 import { useUser } from "@/context/UserContext";
 import { useAuth } from "@/context/AuthContext";
@@ -29,22 +31,15 @@ import { BrandImageGeneratorModal } from "@/components/create/BrandImageGenerato
 
 const CATEGORIES = [
   "Fashion & Apparel", "Technology", "Automotive", "Food & Beverage",
-  "Health & Wellness", "Entertainment", "Gaming", "Sports & Fitness", "Beauty & Personal Care",
-  "Finance & Fintech", "Education", "Travel & Tourism",
+  "Health & Wellness", "Entertainment", "Gaming", "Sports & Fitness",
+  "Beauty & Personal Care", "Finance & Fintech", "Education", "Travel & Tourism",
 ];
 
 const SOCIAL_KEYS = [
-  { key: "website", label: "Website", placeholder: "https://yourbrand.com" },
-  { key: "twitter", label: "Twitter / X", placeholder: "https://twitter.com/yourbrand" },
-  { key: "instagram", label: "Instagram", placeholder: "https://instagram.com/yourbrand" },
-  { key: "linkedin", label: "LinkedIn", placeholder: "https://linkedin.com/company/yourbrand" },
-];
-
-const settingsSections = [
-  { id: "brand", label: "Brand Profile", icon: Building2 },
-  { id: "socials", label: "Online Presence", icon: LinkIcon },
-  { id: "categories", label: "Categories", icon: Tag },
-  { id: "account", label: "Account Info", icon: Lock },
+  { key: "website", label: "Website", placeholder: "https://yourbrand.com", icon: Globe },
+  { key: "twitter", label: "Twitter / X", placeholder: "https://twitter.com/yourbrand", icon: LinkIcon },
+  { key: "instagram", label: "Instagram", placeholder: "https://instagram.com/yourbrand", icon: LinkIcon },
+  { key: "linkedin", label: "LinkedIn", placeholder: "https://linkedin.com/company/yourbrand", icon: LinkIcon },
 ];
 
 export default function BrandSettingsPage() {
@@ -52,11 +47,11 @@ export default function BrandSettingsPage() {
   const { onboardingData } = useAuth();
   const seeded = useRef(false);
 
-  const [activeSection, setActiveSection] = useState("brand");
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [walletCopied, setWalletCopied] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const userSocialLinks = (user?.socialLinks ?? {}) as Record<string, string>;
 
@@ -66,7 +61,6 @@ export default function BrandSettingsPage() {
   const [categories, setCategories] = useState<string[]>([]);
   const [socialLinks, setSocialLinks] = useState<Record<string, string>>({});
 
-  // Logo upload
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -91,8 +85,9 @@ export default function BrandSettingsPage() {
       instagram: obSocials.instagram ?? sl.instagram ?? onboardingData?.brandInstagram ?? "",
       linkedin: obSocials.linkedin ?? sl.linkedin ?? onboardingData?.brandLinkedin ?? "",
     });
-    if (ob?.logoUrl || ob?.logoCid) {
-      const resolvedLogo = ob.logoUrl || (ob.logoCid ? `https://gateway.pinata.cloud/ipfs/${ob.logoCid}` : null);
+    const obAny = ob as any;
+    if (obAny?.logoUrl || ob?.logoCid) {
+      const resolvedLogo = obAny.logoUrl || (ob.logoCid ? `https://gateway.pinata.cloud/ipfs/${ob.logoCid}` : null);
       setLogoUrl(resolvedLogo);
       setLogoPreview(resolvedLogo);
     } else if (user.avatarUrl) {
@@ -120,12 +115,11 @@ export default function BrandSettingsPage() {
     if (!file) return;
     const validation = validateImageFile(file);
     if (!validation.valid) { showToast("error", validation.error!); return; }
-    
-    // Local preview immediately
+
     const localUrl = URL.createObjectURL(file);
     setLogoPreview(localUrl);
     setIsUploadingLogo(true);
-    
+
     try {
       const { imageUrl: uploadedLogoUrl } = await uploadToPinata(file);
       setLogoUrl(uploadedLogoUrl);
@@ -133,7 +127,7 @@ export default function BrandSettingsPage() {
       showToast("success", "Logo uploaded successfully!");
     } catch {
       showToast("error", "Logo upload failed. Try again.");
-      setLogoPreview(user?.avatarUrl || null); // Revert to previous on failure
+      setLogoPreview(user?.avatarUrl || null);
     } finally {
       setIsUploadingLogo(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -141,16 +135,15 @@ export default function BrandSettingsPage() {
   }
 
   const handleRemoveLogo = async () => {
-        setLogoPreview(null);
-        setLogoUrl(null);
-        try {
-            await upsertBrandProfile({ logoUrl: "" });
-            showToast("success", "Brand logo removed.");
-        } catch {
-            setLogoPreview(logoUrl); // reset visualization if server fails
-        }
-    };
-
+    setLogoPreview(null);
+    setLogoUrl(null);
+    try {
+      await upsertBrandProfile({ logoUrl: "" });
+      showToast("success", "Brand logo removed.");
+    } catch {
+      setLogoPreview(logoUrl);
+    }
+  };
 
   function copyWallet() {
     if (!user?.walletAddress) return;
@@ -178,7 +171,7 @@ export default function BrandSettingsPage() {
         tagline,
         description,
         categories,
-        ...(logoUrl ? { logoUrl } : {}),
+        ...((logoUrl ? { logoUrl } : {}) as any),
         socialLinks: {
           website: socialLinks.website,
           twitter: socialLinks.twitter,
@@ -205,6 +198,7 @@ export default function BrandSettingsPage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
       showToast("success", "Brand profile saved.");
+      setIsEditing(false);
     } catch (err: any) {
       showToast("error", err?.message ?? "Failed to save changes.");
     } finally {
@@ -214,36 +208,27 @@ export default function BrandSettingsPage() {
 
   const logoInitial = (brandName || "B")[0].toUpperCase();
 
+  function truncateAddress(addr: string) {
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  }
+
+  const joinDate = user?.createdAt
+    ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+    : null;
+
+  const socialLinksCount = Object.values(socialLinks).filter(Boolean).length;
+
   if (userLoading && !user) {
     return (
-      <div className="font-sans max-w-[1200px] mx-auto py-8 space-y-10 pb-24 animate-pulse">
-        <div className="px-4 md:px-0 space-y-3">
-          <div className="h-10 bg-white/[0.04] rounded-xl w-48" />
-          <div className="h-4 bg-white/[0.04] rounded-lg w-64" />
-        </div>
-        <div className="grid lg:grid-cols-[280px_1fr] gap-8 px-4 md:px-0">
-          <aside className="space-y-2">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-14 bg-secondary rounded-2xl" />
+      <div className="w-full pt-6 lg:pt-10 pb-24 space-y-6 animate-pulse text-white">
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex-1 space-y-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] h-48" />
             ))}
-          </aside>
-          <div className="bg-card border border-border/60 rounded-[32px] p-8 space-y-8">
-            <div className="flex flex-col sm:flex-row items-center gap-8">
-              <div className="w-28 h-28 rounded-full bg-secondary shrink-0" />
-              <div className="space-y-3 w-full max-w-[200px]">
-                <div className="h-6 bg-secondary rounded-lg w-32" />
-                <div className="h-3 bg-secondary rounded-lg w-full" />
-                <div className="h-10 bg-secondary rounded-xl w-32 mt-4" />
-              </div>
-            </div>
-            <div className="grid md:grid-cols-2 gap-8">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className={cn("space-y-2", i === 3 ? "md:col-span-2" : "")}>
-                  <div className="h-3 bg-secondary rounded-lg w-20 ml-1" />
-                  <div className={cn("rounded-2xl w-full bg-secondary", i === 3 ? "h-32" : "h-14")} />
-                </div>
-              ))}
-            </div>
+          </div>
+          <div className="lg:w-[300px] space-y-6">
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] h-64" />
           </div>
         </div>
       </div>
@@ -251,14 +236,15 @@ export default function BrandSettingsPage() {
   }
 
   return (
-    <div className="font-sans max-w-[1200px] mx-auto py-8 space-y-10 pb-24">
+    <div className="w-full pt-6 lg:pt-10 pb-24 md:pb-12 space-y-6 text-white">
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold ${toast.type === "success"
+          className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold ${
+            toast.type === "success"
               ? "bg-green-500/10 border border-green-500/30 text-green-400"
               : "bg-red-500/10 border border-red-500/30 text-red-400"
-            }`}
+          }`}
         >
           {toast.type === "success" ? (
             <CheckCircle className="w-4 h-4 shrink-0" />
@@ -272,357 +258,448 @@ export default function BrandSettingsPage() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="px-4 md:px-0">
-        <h1 className="font-display text-4xl text-white uppercase tracking-tight mb-2">Settings</h1>
-        <p className="text-[11px] font-black text-white/30 uppercase tracking-[0.2em]">
-          Manage your brand profile and account
-        </p>
-      </div>
+      <div className="flex flex-col lg:flex-row gap-6">
 
-      <div className="grid lg:grid-cols-[280px_1fr] gap-8 px-4 md:px-0">
-        {/* Navigation Sidebar */}
-        <aside className="space-y-2">
-          {settingsSections.map((section) => (
-            <button
-              key={section.id}
-              onClick={() => setActiveSection(section.id)}
-              className={cn(
-                "w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-sm font-black transition-all group",
-                activeSection === section.id
-                  ? "bg-foreground text-background shadow-lg shadow-foreground/10"
-                  : "bg-card/50 text-foreground/40 hover:bg-secondary hover:text-foreground"
-              )}
-            >
-              <section.icon className={cn("w-5 h-5", activeSection === section.id ? "" : "opacity-40")} />
-              <span className="flex-1 text-left">{section.label}</span>
-              <ChevronRight
-                className={cn(
-                  "w-4 h-4 transition-transform",
-                  activeSection === section.id ? "translate-x-1" : "opacity-0"
-                )}
-              />
-            </button>
-          ))}
-        </aside>
+        {/* ── Left / Main ── */}
+        <div className="flex-1 min-w-0 space-y-6">
 
-        {/* Content Area */}
-        <div className="space-y-8">
-          {/* Brand Profile Section */}
-          {activeSection === "brand" && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-card border border-border/60 rounded-[32px] overflow-hidden shadow-sm"
-            >
-              <div className="p-8 space-y-10">
-                {/* Logo Upload */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  className="hidden"
-                  onChange={handleLogoSelect}
-                />
-                <div className="flex flex-col sm:flex-row items-center gap-8">
-                  <div
-                    className="relative group cursor-pointer"
-                    onClick={() => !isUploadingLogo && fileInputRef.current?.click()}
-                  >
-                    <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-background shadow-xl">
-                      {isUploadingLogo ? (
-                        <div className="w-full h-full bg-primary/20 flex items-center justify-center">
-                          <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                        </div>
-                      ) : logoPreview ? (
-                        <img
-                          src={logoPreview}
-                          alt="Brand logo"
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                          <span className="text-primary text-4xl font-black uppercase">{logoInitial}</span>
-                        </div>
-                      )}
+          {/* ── Identity Card ── */}
+          <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 md:p-8">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={handleLogoSelect}
+            />
+            <div className="flex flex-wrap items-start gap-5">
+
+              {/* Logo */}
+              <div className="relative shrink-0">
+                <div
+                  className="relative group cursor-pointer w-20 h-20 md:w-24 md:h-24 rounded-3xl overflow-hidden border-2 border-white/[0.1] bg-white/[0.05]"
+                  onClick={() => !isUploadingLogo && fileInputRef.current?.click()}
+                >
+                  {logoPreview ? (
+                    <img src={logoPreview} alt="Brand logo" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                      <span className="font-display text-4xl text-white/30 uppercase">{logoInitial}</span>
                     </div>
-                    {!isUploadingLogo && (
-                      <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Camera className="w-8 h-8 text-white" />
-                      </div>
-                    )}
+                  )}
+                  <div className="absolute inset-0 bg-black/50 rounded-3xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    {isUploadingLogo
+                      ? <Loader2 className="w-6 h-6 text-white animate-spin" />
+                      : <Camera className="w-6 h-6 text-white" />
+                    }
                   </div>
-                  <div className="text-center sm:text-left">
-                    <h3 className="text-xl font-black text-foreground mb-2">Brand Logo</h3>
-                    <p className="text-[11px] font-black text-foreground/30 uppercase tracking-widest mb-1">
-                      Click the logo to upload · JPEG, PNG, WebP — max 5 MB
-                    </p>
-                    <p className="text-[10px] text-foreground/25 mb-4">Stored permanently on IPFS via Pinata</p>
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-background shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+              </div>
+
+              {/* Brand Info */}
+              <div className="flex-1 min-w-0">
+                <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight mb-1">
+                  {brandName || "Your Brand"}
+                </h1>
+                <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em] mb-3">
+                  {tagline || (user?.username ? `@${user.username}` : "@brand")}
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  {user?.walletAddress && (
                     <button
-                      onClick={() => setAiModalOpen(true)}
-                      disabled={isUploadingLogo}
-                      className="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={copyWallet}
+                      className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.2] rounded-full transition-colors group"
                     >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      Generate with AI
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      <span className="text-[10px] font-black text-white/40 font-mono group-hover:text-white/70 transition-colors">
+                        {walletCopied ? "Copied!" : truncateAddress(user.walletAddress)}
+                      </span>
+                      <Copy className="w-2.5 h-2.5 text-white/20 group-hover:text-white/50 transition-colors" />
                     </button>
+                  )}
+                  {joinDate && (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.04] border border-white/[0.06] rounded-full">
+                      <Calendar className="w-3 h-3 text-white/30" />
+                      <span className="text-[10px] font-black text-white/30 uppercase tracking-wide">Joined {joinDate}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Edit Profile Button */}
+              <div className="flex items-center gap-3 ml-auto">
+                <button
+                  onClick={() => setIsEditing((v) => !v)}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/[0.04] border border-white/[0.1] hover:bg-white/[0.08] hover:border-white/[0.2] rounded-xl text-[11px] font-black text-white/60 hover:text-white uppercase tracking-widest transition-all"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  Edit Profile
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Edit Settings Panel ── */}
+          <AnimatePresence>
+            {isEditing && (
+              <motion.div
+                key="edit-panel"
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white/[0.02] border border-primary/20 rounded-[24px] p-6 md:p-8 space-y-6"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-display text-2xl text-white uppercase tracking-tight">Edit Brand Profile</h3>
+                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-0.5">Update your brand settings</p>
                   </div>
+                  <button
+                    onClick={() => setIsEditing(false)}
+                    className="w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center transition-colors"
+                  >
+                    <X className="w-4 h-4 text-white/50" />
+                  </button>
+                </div>
+
+                {/* Logo actions */}
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingLogo}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] border border-white/[0.1] hover:bg-white/[0.08] hover:border-white/[0.2] rounded-xl text-[10px] font-black text-white/60 hover:text-white uppercase tracking-widest transition-all disabled:opacity-40"
+                  >
+                    {isUploadingLogo ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />}
+                    {isUploadingLogo ? "Uploading…" : "Change Logo"}
+                  </button>
+                  {logoPreview && (
+                    <button
+                      onClick={handleRemoveLogo}
+                      disabled={isUploadingLogo}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-[10px] font-black text-white/40 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 uppercase tracking-widest transition-all disabled:opacity-40"
+                    >
+                      <X className="w-3 h-3" /> Remove
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setAiModalOpen(true)}
+                    disabled={isUploadingLogo}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 border border-primary/20 text-primary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/20 transition-all disabled:opacity-40"
+                  >
+                    <Sparkles className="w-3 h-3" /> Generate with AI
+                  </button>
                 </div>
 
                 <div className="h-[1px] bg-white/[0.04]" />
 
-                {/* Form Fields */}
-                <div className="grid md:grid-cols-2 gap-8">
+                {/* Brand Name, Tagline, Description */}
+                <div className="grid md:grid-cols-2 gap-5">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">
-                      Brand Name
-                    </label>
+                    <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">Brand Name</label>
                     <input
                       type="text"
                       value={brandName}
                       onChange={(e) => setBrandName(e.target.value)}
                       placeholder="Your brand name"
-                      className="w-full bg-secondary/50 border border-border/60 rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none focus:border-primary/40 transition-colors"
+                      className="w-full bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] focus:border-white/[0.2] rounded-2xl px-5 py-4 text-sm font-bold text-white placeholder:text-white/20 focus:outline-none transition-colors"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">
-                      Tagline
-                    </label>
+                    <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">Tagline</label>
                     <input
                       type="text"
                       value={tagline}
                       onChange={(e) => setTagline(e.target.value)}
                       placeholder="e.g. Just Do It"
                       maxLength={80}
-                      className="w-full bg-secondary/50 border border-border/60 rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none focus:border-primary/40 transition-colors"
+                      className="w-full bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] focus:border-white/[0.2] rounded-2xl px-5 py-4 text-sm font-bold text-white placeholder:text-white/20 focus:outline-none transition-colors"
                     />
                   </div>
                   <div className="md:col-span-2 space-y-2">
-                    <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">
-                      Description
-                    </label>
+                    <div className="flex items-center justify-between ml-1 mr-1">
+                      <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Description</label>
+                      <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">{description.length}/200</span>
+                    </div>
                     <textarea
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Tell creators what your brand is about..."
                       maxLength={200}
                       rows={4}
-                      className="w-full bg-secondary/50 border border-border/60 rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none focus:border-primary/40 transition-colors resize-none"
+                      className="w-full bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] focus:border-white/[0.2] rounded-2xl px-5 py-4 text-sm font-bold text-white placeholder:text-white/20 focus:outline-none transition-colors resize-none"
                     />
-                    <p className="text-[10px] text-white/20 text-right font-black uppercase tracking-widest">{description.length}/200</p>
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4 border-t border-white/[0.04]">
+                <div className="h-[1px] bg-white/[0.04]" />
+
+                {/* Categories */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-primary" />
+                    <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Brand Categories</label>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {CATEGORIES.map((cat) => {
+                      const selected = categories.includes(cat);
+                      return (
+                        <button
+                          key={cat}
+                          onClick={() => toggleCategory(cat)}
+                          className={cn(
+                            "px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer",
+                            selected
+                              ? "bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20"
+                              : "bg-white/[0.03] border border-white/[0.06] text-white/40 hover:bg-white/[0.07] hover:border-white/[0.12] hover:text-white"
+                          )}
+                        >
+                          {cat}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {categories.length > 0 && (
+                    <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">
+                      {categories.length} categor{categories.length !== 1 ? "ies" : "y"} selected
+                    </p>
+                  )}
+                </div>
+
+                <div className="h-[1px] bg-white/[0.04]" />
+
+                {/* Social Links */}
+                <div className="space-y-4">
+                  <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Online Presence</label>
+                  <div className="grid gap-4">
+                    {SOCIAL_KEYS.map(({ key, label, placeholder }) => (
+                      <div key={key} className="space-y-2">
+                        <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">{label}</label>
+                        <div className="relative">
+                          <input
+                            type="url"
+                            value={socialLinks[key] ?? ""}
+                            onChange={(e) => setSocialLinks((prev) => ({ ...prev, [key]: e.target.value }))}
+                            placeholder={placeholder}
+                            className="w-full bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] focus:border-white/[0.2] rounded-2xl px-5 py-3.5 text-sm font-bold text-white placeholder:text-white/20 focus:outline-none transition-colors"
+                          />
+                          <Globe className="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/20" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Save / Cancel */}
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    onClick={() => setIsEditing(false)}
+                    className="px-5 py-2.5 rounded-xl text-[11px] font-black text-white/40 hover:text-white/70 uppercase tracking-widest transition-all"
+                  >
+                    Cancel
+                  </button>
                   <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex items-center gap-2 bg-foreground text-background px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-foreground/90 transition-all active:scale-95 shadow-lg shadow-foreground/10 disabled:opacity-60"
+                    className="flex items-center gap-2 bg-white hover:bg-white/90 text-black px-7 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
                   >
-                    {isSaving ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : saved ? (
-                      <Check className="w-4 h-4 text-green-500" />
-                    ) : null}
+                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <Check className="w-4 h-4 text-green-600" /> : null}
                     {saved ? "Saved!" : "Save Changes"}
                   </button>
                 </div>
-              </div>
-            </motion.div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {/* Online Presence Section */}
-          {activeSection === "socials" && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-card border border-border/60 rounded-[32px] overflow-hidden shadow-sm"
-            >
-              <div className="p-8 space-y-8">
+          {/* ── Stats Row ── */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-primary">Status</p>
+              <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">
+                {user?.isOnboarded ? "Live" : "Setup"}
+              </p>
+              <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Brand Account</p>
+            </div>
+
+            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-lime-400">Categories</p>
+              <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">{categories.length}</p>
+              <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Selected</p>
+            </div>
+
+            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-blue-400">Socials</p>
+              <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">{socialLinksCount}</p>
+              <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Connected</p>
+            </div>
+
+            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-yellow-400">Account</p>
+              <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">Brand</p>
+              <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">
+                {user?.isOnboarded ? "Verified" : "Pending"}
+              </p>
+            </div>
+          </div>
+
+          {/* ── About ── */}
+          <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 md:p-8 space-y-5">
+            <h2 className="font-display text-2xl text-white uppercase tracking-tight">
+              About {(brandName || "Brand").split(" ")[0]}
+            </h2>
+            {description ? (
+              <p className="text-sm font-medium text-white/50 leading-relaxed">{description}</p>
+            ) : (
+              <p className="text-sm font-black text-white/20 uppercase tracking-wide">No description yet.</p>
+            )}
+
+            {Object.values(socialLinks).some(Boolean) && (
+              <div className="flex flex-wrap gap-2 pt-3 border-t border-white/[0.04]">
+                {SOCIAL_KEYS.map(({ key, label, icon: Icon }) =>
+                  socialLinks[key] ? (
+                    <a
+                      key={key}
+                      href={socialLinks[key]}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.03] border border-white/[0.06] rounded-xl text-[10px] font-black text-white/40 hover:text-white hover:border-white/[0.15] uppercase tracking-widest transition-all"
+                    >
+                      <Icon className="w-3 h-3" /> {label}
+                    </a>
+                  ) : null
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ── Categories Display ── */}
+          {categories.length > 0 && (
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 md:p-8 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-center shrink-0">
+                  <Tag className="w-4 h-4 text-primary" />
+                </div>
                 <div>
-                  <h3 className="font-display text-2xl text-white uppercase tracking-tight mb-2">Online Presence</h3>
-                  <p className="text-sm font-medium text-white/50">
-                    Add your brand's social media and website links to build creator trust.
+                  <h3 className="font-display text-2xl text-white uppercase tracking-tight">Brand Categories</h3>
+                  <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-0.5">
+                    Industries we operate in
                   </p>
                 </div>
-
-                <div className="grid gap-6">
-                  {SOCIAL_KEYS.map(({ key, label, placeholder }) => (
-                    <div key={key} className="space-y-2">
-                      <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">
-                        {label}
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="url"
-                          value={socialLinks[key] ?? ""}
-                          onChange={(e) =>
-                            setSocialLinks((prev) => ({ ...prev, [key]: e.target.value }))
-                          }
-                          placeholder={placeholder}
-                          className="w-full bg-secondary/50 border border-border/60 rounded-2xl px-5 py-4 text-sm font-bold text-foreground focus:outline-none focus:border-primary/40 transition-colors placeholder:text-foreground/20"
-                        />
-                        <div className="absolute right-5 top-1/2 -translate-y-1/2">
-                          <Globe className="w-4 h-4 text-foreground/20" />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4 border-t border-white/[0.04]">
-                  <button
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="flex items-center gap-2 bg-foreground text-background px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-foreground/90 transition-all active:scale-95 shadow-lg shadow-foreground/10 disabled:opacity-60"
-                  >
-                    {isSaving ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : saved ? (
-                      <Check className="w-4 h-4 text-green-500" />
-                    ) : null}
-                    {saved ? "Saved!" : "Update Links"}
-                  </button>
-                </div>
               </div>
-            </motion.div>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((cat) => (
+                  <span
+                    key={cat}
+                    className="px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-primary/10 border border-primary/20 text-primary"
+                  >
+                    {cat}
+                  </span>
+                ))}
+              </div>
+            </div>
           )}
+        </div>
 
-          {/* Categories Section */}
-          {activeSection === "categories" && (
+        {/* ── Right Column ── */}
+        <div className="lg:w-[300px] xl:w-[320px] flex-shrink-0 space-y-6">
+          {user && (
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-card border border-border/60 rounded-[32px] overflow-hidden shadow-sm"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.08 }}
+              className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 space-y-4"
             >
-              <div className="p-8 space-y-8">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                    <Tag className="w-5 h-5 text-primary" />
+              <div>
+                <h3 className="font-display text-xl text-white uppercase tracking-tight">Account Info</h3>
+                <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-0.5">Read-only</p>
+              </div>
+
+              <div className="space-y-2">
+                {/* Email */}
+                <div className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:bg-white/[0.04] transition-all">
+                  <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0">
+                    <Mail className="w-4 h-4 text-white/40" />
                   </div>
-                  <div>
-                    <h3 className="font-display text-2xl text-white uppercase tracking-tight">Brand Categories</h3>
-                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">
-                      What industries does your brand operate in?
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[9px] font-black text-white/30 uppercase tracking-wide">Email</p>
+                    <p className="text-sm font-black text-white truncate">{user.email || "—"}</p>
+                  </div>
+                </div>
+
+                {/* Role */}
+                <div className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:bg-white/[0.04] transition-all">
+                  <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0">
+                    <Building2 className="w-4 h-4 text-white/40" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[9px] font-black text-white/30 uppercase tracking-wide">Role</p>
+                    <p className="text-sm font-black text-white">{user.role || "—"}</p>
+                  </div>
+                  <span className={cn(
+                    "text-[9px] font-black px-2 py-0.5 rounded-full border uppercase tracking-widest shrink-0",
+                    user.isOnboarded
+                      ? "bg-green-500/10 border-green-500/20 text-green-400"
+                      : "bg-white/[0.04] border-white/[0.08] text-white/30"
+                  )}>
+                    {user.isOnboarded ? "Active" : "Pending"}
+                  </span>
+                </div>
+
+                {/* Member since */}
+                <div className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:bg-white/[0.04] transition-all">
+                  <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0">
+                    <Calendar className="w-4 h-4 text-white/40" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[9px] font-black text-white/30 uppercase tracking-wide">Member Since</p>
+                    <p className="text-sm font-black text-white">
+                      {new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-3">
-                  {CATEGORIES.map((cat) => {
-                    const selected = categories.includes(cat);
-                    return (
-                      <button
-                        key={cat}
-                        onClick={() => toggleCategory(cat)}
-                        className={cn(
-                          "px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer",
-                          selected
-                            ? "bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary"
-                            : "bg-secondary/50 hover:bg-primary/10 hover:border-primary/30 border border-border/60 text-foreground"
-                        )}
-                      >
-                        {cat}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {categories.length > 0 && (
-                  <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">
-                    {categories.length} categor{categories.length !== 1 ? "ies" : "y"} selected
-                  </p>
-                )}
-
-                <div className="flex justify-end gap-3 pt-4 border-t border-white/[0.04]">
-                  <button
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="flex items-center gap-2 bg-foreground text-background px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-foreground/90 transition-all active:scale-95 shadow-lg shadow-foreground/10 disabled:opacity-60"
-                  >
-                    {isSaving ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : saved ? (
-                      <Check className="w-4 h-4 text-green-500" />
-                    ) : null}
-                    {saved ? "Saved!" : "Save Preferences"}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Account Info Section */}
-          {activeSection === "account" && user && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="space-y-6"
-            >
-              <div className="bg-card border border-border/60 rounded-[32px] p-8 space-y-6 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <h3 className="font-display text-2xl text-white uppercase tracking-tight">Account Info</h3>
-                  <span className="ml-2 text-[9px] bg-white/[0.06] text-white/40 border border-white/[0.08] px-3 py-1 rounded-full font-black uppercase tracking-widest">
-                    Read-only
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[
-                    { label: "Email", value: user.email },
-                    { label: "Company Size", value: userSocialLinks.companySize ?? "—" },
-                    { label: "Monthly Budget", value: userSocialLinks.monthlyBudget ?? "—" },
-                    { label: "Account Status", value: user.isOnboarded ? "Active" : "Pending" },
-                    { label: "Role", value: user.role },
-                    { label: "Member Since", value: new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" }) },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="space-y-2">
-                      <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">
-                        {label}
-                      </label>
-                      <div className="w-full bg-secondary/30 border border-border/40 rounded-2xl px-5 py-4 text-sm font-bold text-foreground/40 cursor-not-allowed break-all">
-                        {value}
-                      </div>
+                {/* Company size */}
+                {userSocialLinks.companySize && (
+                  <div className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:bg-white/[0.04] transition-all">
+                    <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0">
+                      <Shield className="w-4 h-4 text-white/40" />
                     </div>
-                  ))}
-
-                  {/* Wallet — with copy */}
-                  <div className="md:col-span-2 space-y-2 mt-2">
-                    <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">
-                      Wallet Address
-                    </label>
-                    <div className="flex items-center gap-3 bg-secondary/30 border border-border/40 rounded-2xl px-5 py-4">
-                      <span className="flex-1 text-sm font-bold text-foreground/40 font-mono break-all">
-                        {user.walletAddress
-                          ? `${user.walletAddress.slice(0, 8)}…${user.walletAddress.slice(-6)}`
-                          : "—"}
-                      </span>
-                      {user.walletAddress && (
-                        <button
-                          type="button"
-                          onClick={copyWallet}
-                          className="shrink-0 text-white/30 hover:text-white transition-colors"
-                          title="Copy wallet address"
-                        >
-                          {walletCopied ? (
-                            <Check className="w-4 h-4 text-green-400" />
-                          ) : (
-                            <Copy className="w-4 h-4" />
-                          )}
-                        </button>
-                      )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[9px] font-black text-white/30 uppercase tracking-wide">Company Size</p>
+                      <p className="text-sm font-black text-white">{userSocialLinks.companySize}</p>
                     </div>
                   </div>
-                </div>
+                )}
 
-                <div className="flex items-start gap-3 p-4 bg-secondary/30 border border-border/40 rounded-2xl">
-                  <Info className="w-4 h-4 text-foreground/30 mt-0.5 shrink-0" />
-                  <p className="text-[11px] text-foreground/40 font-medium leading-relaxed">
-                    Account details are managed by your authentication provider and cannot be changed here.
-                    Contact support if you need to update your email or wallet.
-                  </p>
-                </div>
+                {/* Wallet */}
+                {user.walletAddress && (
+                  <div className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:bg-white/[0.04] transition-all">
+                    <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0">
+                      <Wallet className="w-4 h-4 text-white/40" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[9px] font-black text-white/30 uppercase tracking-wide">Wallet</p>
+                      <p className="text-[11px] font-bold text-white/60 font-mono">
+                        {`${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}`}
+                      </p>
+                    </div>
+                    <button
+                      onClick={copyWallet}
+                      className="shrink-0 text-white/20 hover:text-white/60 transition-colors"
+                      title="Copy wallet address"
+                    >
+                      {walletCopied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-start gap-2.5 p-3 bg-white/[0.02] border border-white/[0.04] rounded-2xl">
+                <Info className="w-3.5 h-3.5 text-white/20 mt-0.5 shrink-0" />
+                <p className="text-[10px] text-white/30 font-medium leading-relaxed">
+                  Account details are managed by your auth provider and cannot be changed here.
+                </p>
               </div>
             </motion.div>
           )}
