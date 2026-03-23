@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { User, AtSign, FileText, Camera, X, Loader2, ArrowRight, Check, Phone, Calendar } from "lucide-react";
+import { User, AtSign, FileText, Camera, X, Loader2, ArrowRight, Check, Mail, Gift } from "lucide-react";
 import { toast } from "sonner";
 import { uploadToPinata, validateImageFile } from "@/lib/pinata-upload";
+import { validateReferralCode } from "@/services/user.service";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
@@ -12,11 +13,10 @@ type UsernameStatus = "idle" | "checking" | "available" | "taken" | "invalid";
 export interface IdentityData {
   displayName: string;
   username: string;
+  email: string;
   bio: string;
   avatarUrl: string;
-  gender: string;
-  phoneNumber: string;
-  dateOfBirth: string;
+  incomingReferralCode: string;
 }
 
 interface Props {
@@ -26,22 +26,14 @@ interface Props {
   onNext: (data: IdentityData) => void;
 }
 
-const GENDER_OPTIONS = [
-  { value: "male", label: "Male" },
-  { value: "female", label: "Female" },
-  { value: "non-binary", label: "Non-binary" },
-  { value: "prefer_not_to_say", label: "Prefer not to say" },
-];
-
 export default function StepIdentity({ initial, prefillName, prefillAvatar, onNext }: Props) {
   const [form, setForm] = useState<IdentityData>({
     displayName: initial.displayName || prefillName || "",
     username: initial.username || "",
+    email: initial.email || "",
     bio: initial.bio || "",
     avatarUrl: initial.avatarUrl || prefillAvatar || "",
-    gender: initial.gender || "",
-    phoneNumber: initial.phoneNumber || "",
-    dateOfBirth: initial.dateOfBirth || "",
+    incomingReferralCode: initial.incomingReferralCode || "",
   });
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
@@ -49,6 +41,7 @@ export default function StepIdentity({ initial, prefillName, prefillAvatar, onNe
   );
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>("idle");
+  const [isReferralChecking, setIsReferralChecking] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const usernameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -85,9 +78,9 @@ export default function StepIdentity({ initial, prefillName, prefillAvatar, onNe
     setAvatarPreview(localUrl);
     setIsUploadingAvatar(true);
     try {
-      const { url } = await uploadToPinata(file);
-      setForm(f => ({ ...f, avatarUrl: url }));
-      setAvatarPreview(url);
+      const { imageUrl } = await uploadToPinata(file);
+      setForm(f => ({ ...f, avatarUrl: imageUrl }));
+      setAvatarPreview(imageUrl);
       toast.success("Photo uploaded!");
     } catch {
       toast.error("Upload failed. Try again.");
@@ -109,8 +102,27 @@ export default function StepIdentity({ initial, prefillName, prefillAvatar, onNe
       toast.error("Username must be 3+ chars (letters, numbers, underscore)"); return;
     }
     if (usernameStatus === "checking") { toast.error("Please wait while we check username availability"); return; }
-    if (!form.dateOfBirth) { toast.error("Date of birth is required"); return; }
-    onNext(form);
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+    onNext({ ...form, incomingReferralCode: form.incomingReferralCode.trim().toUpperCase() });
+  };
+
+  const handleReferralBlur = async () => {
+    const code = form.incomingReferralCode.trim().toUpperCase();
+    if (!code) return;
+    setIsReferralChecking(true);
+    try {
+      const result = await validateReferralCode(code);
+      if (!result.valid) {
+        toast.warning(result.reason || "Referral code looks invalid. You can still continue.");
+      }
+    } catch {
+      // non-blocking check
+    } finally {
+      setIsReferralChecking(false);
+    }
   };
 
   const bioLength = form.bio.length;
@@ -127,9 +139,9 @@ export default function StepIdentity({ initial, prefillName, prefillAvatar, onNe
   return (
     <div className="space-y-5">
       <div className="space-y-1">
-        <p className="text-xs font-bold text-primary/80 uppercase tracking-widest">Step 1 of 8</p>
+        <p className="text-xs font-bold text-primary/80 uppercase tracking-widest">Step 1 of 7</p>
         <h1 className="text-2xl font-black text-foreground tracking-tighter">Your Identity</h1>
-        <p className="text-sm text-foreground/40">How should the community know you?</p>
+        <p className="text-sm text-foreground/40">Set your account details to get started.</p>
       </div>
 
       <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" className="hidden" onChange={handleAvatarSelect} />
@@ -229,61 +241,41 @@ export default function StepIdentity({ initial, prefillName, prefillAvatar, onNe
         </div>
       </div>
 
-      {/* Gender */}
+      {/* Email */}
       <div className="space-y-1.5">
         <label className="text-xs font-bold text-foreground/50 uppercase tracking-widest">
-          Gender <span className="text-foreground/20 normal-case font-normal tracking-normal">optional</span>
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {GENDER_OPTIONS.map(opt => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setForm(f => ({ ...f, gender: f.gender === opt.value ? "" : opt.value }))}
-              className={`px-4 py-2 rounded-[10px] text-xs font-bold transition-all border ${
-                form.gender === opt.value
-                  ? "bg-primary text-white border-primary"
-                  : "bg-card border-border/50 text-foreground/50 hover:border-primary/40 hover:text-foreground/80"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Date of Birth */}
-      <div className="space-y-1.5">
-        <label className="text-xs font-bold text-foreground/50 uppercase tracking-widest">
-          Date of Birth
+          Email <span className="text-foreground/20 normal-case font-normal tracking-normal">optional</span>
         </label>
         <div className="relative">
-          <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30" />
+          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30" />
           <input
-            type="date"
-            value={form.dateOfBirth}
-            onChange={e => setForm(f => ({ ...f, dateOfBirth: e.target.value }))}
-            max={new Date(Date.now() - 13 * 365.25 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}
-            className="w-full bg-card border border-border/50 rounded-[14px] pl-11 pr-4 py-4 text-sm font-medium text-foreground/70 focus:outline-none focus:border-primary/50 transition-colors [color-scheme:dark]"
-          />
-        </div>
-        <p className="text-[11px] text-foreground/30 px-1">You must be at least 13 years old</p>
-      </div>
-
-      {/* Phone Number */}
-      <div className="space-y-1.5">
-        <label className="text-xs font-bold text-foreground/50 uppercase tracking-widest">
-          Phone Number <span className="text-foreground/20 normal-case font-normal tracking-normal">optional</span>
-        </label>
-        <div className="relative">
-          <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30" />
-          <input
-            type="tel"
-            value={form.phoneNumber}
-            onChange={e => setForm(f => ({ ...f, phoneNumber: e.target.value }))}
-            placeholder="+91 98765 43210"
+            type="email"
+            value={form.email}
+            onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+            placeholder="you@example.com"
             className="w-full bg-card border border-border/50 rounded-[14px] pl-11 pr-4 py-4 text-sm font-medium placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors"
           />
+        </div>
+      </div>
+
+      {/* Referral */}
+      <div className="space-y-1.5">
+        <label className="text-xs font-bold text-foreground/50 uppercase tracking-widest">
+          Referral Code <span className="text-foreground/20 normal-case font-normal tracking-normal">if you have one</span>
+        </label>
+        <div className="relative">
+          <Gift className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30" />
+          <input
+            type="text"
+            value={form.incomingReferralCode}
+            onChange={e => setForm(f => ({ ...f, incomingReferralCode: e.target.value.toUpperCase() }))}
+            onBlur={handleReferralBlur}
+            placeholder="ARIS-XXXXXX-XXXX"
+            className="w-full bg-card border border-border/50 rounded-[14px] pl-11 pr-10 py-4 text-sm font-mono font-bold placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors"
+          />
+          {isReferralChecking && (
+            <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40 animate-spin" />
+          )}
         </div>
       </div>
 

@@ -110,8 +110,13 @@ export class VoteService {
             throw new Error('This event type does not allow submission voting');
         }
 
-        // 3. Business Rule: Must be in VOTING status
-        console.log(`DEBUG: event.status=${event.status}, expected=${EventStatus.VOTING}, match=${event.status === EventStatus.VOTING}`);
+        // 3. Business Rule: Must be in VOTING status and within voting window
+        if (event.status !== EventStatus.VOTING && event.status !== EventStatus.COMPLETED) {
+            // allow the completed check below to give a better error
+        }
+        if (event.status === EventStatus.COMPLETED || new Date() > new Date(event.endTime)) {
+            throw new Error('Voting has ended for this event');
+        }
         if (event.status !== EventStatus.VOTING) {
             throw new Error(`Voting is only allowed during the VOTING phase (Current: ${event.status})`);
         }

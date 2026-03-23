@@ -1,240 +1,150 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import { Sparkles, Trophy, Zap, ArrowRight, Loader2, Copy, Check, Share2, Gift, X } from "lucide-react";
-import { toast } from "sonner";
-import { validateReferralCode } from "@/services/user.service";
-
-const MOCK_EVENTS = [
-  {
-    id: "e1",
-    brand: "Nike",
-    title: "Air Max Redesign Challenge",
-    category: "Fashion",
-    reward: "$50",
-    participants: "1.2k",
-    img: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=400&h=250&fit=crop",
-  },
-  {
-    id: "e2",
-    brand: "Spotify",
-    title: "Cover Art Submission",
-    category: "Music",
-    reward: "$30",
-    participants: "890",
-    img: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=400&h=250&fit=crop",
-  },
-  {
-    id: "e3",
-    brand: "Red Bull",
-    title: "Vote: Best Street Art",
-    category: "Art",
-    reward: "$20",
-    participants: "2.1k",
-    img: "https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8?w=400&h=250&fit=crop",
-  },
-];
-
-type CodeStatus = "idle" | "checking" | "valid" | "invalid";
+import { useState, useEffect } from "react";
+import { Sparkles, Map, ArrowRight, Loader2 } from "lucide-react";
 
 interface Props {
   displayName: string;
-  referralCode?: string | null;
   isSaving: boolean;
-  onComplete: (appliedReferralCode?: string) => void;
+  onComplete: (startTour: boolean) => void;
   onBack: () => void;
 }
 
-export default function StepComplete({ displayName, referralCode, isSaving, onComplete, onBack }: Props) {
+const TOUR_SLIDES = [
+  {
+    label: "Home Feed",
+    caption: "Trending campaigns & live events",
+    img: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?q=80&w=800&auto=format&fit=crop",
+  },
+  {
+    label: "Explore",
+    caption: "Discover brands and creators",
+    img: "https://images.unsplash.com/photo-1558655146-364adaf1fcc9?q=80&w=800&auto=format&fit=crop",
+  },
+  {
+    label: "Vote & Earn",
+    caption: "Cast votes and collect USDC rewards",
+    img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop",
+  },
+  {
+    label: "Create",
+    caption: "Submit content with AI assistance",
+    img: "https://images.unsplash.com/photo-1547658719-da2b51169166?q=80&w=800&auto=format&fit=crop",
+  },
+  {
+    label: "Wallet",
+    caption: "Track earnings and claim rewards",
+    img: "https://images.unsplash.com/photo-1620321023374-d1a68fbc720d?q=80&w=800&auto=format&fit=crop",
+  },
+  {
+    label: "Leaderboard",
+    caption: "Compete and climb the ranks",
+    img: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=800&auto=format&fit=crop",
+  },
+  {
+    label: "Profile",
+    caption: "Showcase your stats and badges",
+    img: "https://images.unsplash.com/photo-1535223289429-462769a7af7a?q=80&w=800&auto=format&fit=crop",
+  },
+];
+
+const INTERVAL_MS = 2500;
+
+export default function StepComplete({ displayName, isSaving, onComplete, onBack }: Props) {
   const firstName = displayName.split(" ")[0] || "there";
+  const [current, setCurrent] = useState(0);
+  const [visible, setVisible] = useState(true);
 
-  // My referral code (share)
-  const [copied, setCopied] = useState(false);
-
-  // Incoming referral code (enter)
-  const [incomingCode, setIncomingCode] = useState("");
-  const [codeStatus, setCodeStatus] = useState<CodeStatus>("idle");
-  const [referrerName, setReferrerName] = useState<string | null>(null);
-  const [invalidReason, setInvalidReason] = useState<string | null>(null);
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const checkCode = useCallback(async (code: string) => {
-    if (!code) { setCodeStatus("idle"); setReferrerName(null); setInvalidReason(null); return; }
-
-    setCodeStatus("checking");
-    try {
-      const res = await validateReferralCode(code);
-      if (res.valid) {
-        setCodeStatus("valid");
-        setReferrerName(res.referrerName ?? null);
-        setInvalidReason(null);
-      } else {
-        setCodeStatus("invalid");
-        setReferrerName(null);
-        setInvalidReason(res.reason ?? "Invalid code");
-      }
-    } catch {
-      setCodeStatus("idle");
-    }
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setCurrent(c => (c + 1) % TOUR_SLIDES.length);
+        setVisible(true);
+      }, 300);
+    }, INTERVAL_MS);
+    return () => clearInterval(timer);
   }, []);
 
-  const handleCodeChange = (raw: string) => {
-    const value = raw.toUpperCase();
-    setIncomingCode(value);
-    setCodeStatus("idle");
-    setReferrerName(null);
-    setInvalidReason(null);
-
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    if (value.length >= 6) {
-      debounceTimer.current = setTimeout(() => checkCode(value), 500);
-    }
-  };
-
-  const handleCopy = () => {
-    if (!referralCode) return;
-    navigator.clipboard.writeText(referralCode).then(() => {
-      setCopied(true);
-      toast.success("Referral code copied!");
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-
-  const handleShare = () => {
-    if (!referralCode) return;
-    const text = `Join me on Aris — the platform where your engagement earns real rewards! Use my code ${referralCode} to sign up and we both earn XP. 🚀`;
-    if (navigator.share) {
-      navigator.share({ title: "Join Aris", text }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(text);
-      toast.success("Share text copied!");
-    }
-  };
-
-  const inputBorderClass =
-    codeStatus === "valid"   ? "border-emerald-400/60 focus:border-emerald-400" :
-    codeStatus === "invalid" ? "border-red-400/60 focus:border-red-400" :
-                               "border-border/50 focus:border-primary/50";
+  const slide = TOUR_SLIDES[current];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="space-y-1">
-        <p className="text-xs font-bold text-primary/80 uppercase tracking-widest">Step 8 of 8</p>
-        <h1 className="text-2xl font-black text-foreground tracking-tighter">You're all set,<br />{firstName}!</h1>
-        <p className="text-sm text-foreground/40">Your profile is ready. Jump into your first action below.</p>
+        <p className="text-xs font-bold text-primary/80 uppercase tracking-widest">Step 7 of 7</p>
+        <h1 className="text-2xl font-black text-foreground tracking-tighter">Welcome, {firstName}</h1>
+        <p className="text-sm text-foreground/40">Your onboarding is complete. Start with a quick tour or skip for now.</p>
       </div>
 
-      {/* Welcome XP badge */}
+      {/* XP bonus */}
       <div className="flex items-center gap-4 p-4 rounded-[16px] bg-gradient-to-r from-primary/10 to-violet-500/10 border border-primary/20">
-        <div className="w-12 h-12 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
-          <Zap className="w-6 h-6 text-primary" />
+        <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
+          <Sparkles className="w-5 h-5 text-primary" />
         </div>
         <div>
           <p className="text-sm font-black text-foreground">+10 XP Welcome Bonus</p>
-          <p className="text-xs text-foreground/40">You've unlocked the Early Explorer badge</p>
-        </div>
-        <div className="ml-auto">
-          <span className="text-xs font-black text-primary bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-full">
-            Earned
-          </span>
+          <p className="text-xs text-foreground/40">You are ready to explore Aris.</p>
         </div>
       </div>
 
-      {/* My referral code (share) */}
-      {referralCode && (
-        <div className="space-y-3 p-4 rounded-[16px] bg-card border border-border/50">
-          <div className="flex items-center gap-2">
-            <Share2 className="w-4 h-4 text-amber-400" />
-            <p className="text-xs font-bold text-foreground/50 uppercase tracking-widest">Refer Friends, Earn XP</p>
-          </div>
-          <p className="text-sm text-foreground/60 leading-relaxed">
-            Share your code — you earn <span className="text-primary font-bold">+5 XP</span> for every friend who joins using it.
-          </p>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 bg-background border border-border/50 rounded-[12px] px-4 py-3">
-              <span className="text-sm font-black text-foreground tracking-wider font-mono">{referralCode}</span>
-            </div>
-            <button onClick={handleCopy} className="p-3 rounded-[12px] bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors" title="Copy">
-              {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-primary" />}
-            </button>
-            <button onClick={handleShare} className="p-3 rounded-[12px] bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors" title="Share">
-              <Share2 className="w-4 h-4 text-primary" />
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Cycling screenshot */}
+      <div className="relative rounded-[16px] overflow-hidden border border-border/40 bg-card aspect-[16/9]">
+        <img
+          key={current}
+          src={slide.img}
+          alt={slide.label}
+          className="w-full h-full object-cover"
+          style={{
+            opacity: visible ? 1 : 0,
+            transition: "opacity 0.3s ease",
+          }}
+        />
+        {/* dark overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
 
-      {/* Suggested events */}
-      <div className="space-y-2.5">
-        <div className="flex items-center gap-2">
-          <Trophy className="w-4 h-4 text-amber-400" />
-          <label className="text-xs font-bold text-foreground/50 uppercase tracking-widest">Trending Near You</label>
+        {/* caption */}
+        <div
+          className="absolute bottom-0 left-0 right-0 p-4"
+          style={{ opacity: visible ? 1 : 0, transition: "opacity 0.3s ease" }}
+        >
+          <p className="text-xs font-black text-primary uppercase tracking-widest">{slide.label}</p>
+          <p className="text-sm font-medium text-white/80">{slide.caption}</p>
         </div>
-        <div className="space-y-2">
-          {MOCK_EVENTS.map(ev => (
-            <div key={ev.id} className="flex items-center gap-3 p-3 rounded-[14px] bg-card border border-border/40 hover:border-border/70 transition-colors cursor-pointer group">
-              <img src={ev.img} alt={ev.title} className="w-14 h-14 rounded-[10px] object-cover shrink-0 group-hover:scale-105 transition-transform duration-300" />
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest">{ev.brand} · {ev.category}</p>
-                <p className="text-sm font-black text-foreground truncate">{ev.title}</p>
-                <div className="flex items-center gap-3 mt-0.5">
-                  <span className="text-[11px] font-bold text-emerald-400">{ev.reward} reward</span>
-                  <span className="text-[11px] text-foreground/30">{ev.participants} participants</span>
-                </div>
-              </div>
-              <ArrowRight className="w-4 h-4 text-foreground/20 group-hover:text-foreground/50 transition-colors shrink-0" />
-            </div>
+
+        {/* dot indicators */}
+        <div className="absolute top-3 right-3 flex gap-1">
+          {TOUR_SLIDES.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => { setVisible(false); setTimeout(() => { setCurrent(i); setVisible(true); }, 300); }}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                i === current ? "w-4 bg-primary" : "w-1.5 bg-white/30"
+              }`}
+            />
           ))}
         </div>
       </div>
 
-      {/* Incoming referral code */}
-      <div className="space-y-2.5 p-4 rounded-[16px] bg-card border border-border/50">
-        <div className="flex items-center gap-2">
-          <Gift className="w-4 h-4 text-emerald-400" />
-          <p className="text-xs font-bold text-foreground/50 uppercase tracking-widest">Got a Referral Code?</p>
-        </div>
-        <p className="text-xs text-foreground/40">Enter a friend's code to credit them with +5 XP.</p>
-
-        <div className="relative">
-          <input
-            type="text"
-            value={incomingCode}
-            onChange={e => handleCodeChange(e.target.value)}
-            placeholder="ARIS-XXXXXX-XXXX"
-            className={`w-full bg-background border rounded-[12px] px-4 py-3 pr-10 text-sm font-mono font-bold placeholder:text-foreground/20 focus:outline-none transition-colors ${inputBorderClass}`}
-          />
-          <div className="absolute right-3 top-1/2 -translate-y-1/2">
-            {codeStatus === "checking" && <Loader2 className="w-4 h-4 text-foreground/40 animate-spin" />}
-            {codeStatus === "valid"    && <Check className="w-4 h-4 text-emerald-400" />}
-            {codeStatus === "invalid"  && <X className="w-4 h-4 text-red-400" />}
-          </div>
-        </div>
-
-        {/* Status hint */}
-        <div className="px-1 h-4">
-          {codeStatus === "checking" && (
-            <p className="text-[11px] text-foreground/40">Checking…</p>
-          )}
-          {codeStatus === "valid" && referrerName && (
-            <p className="text-[11px] text-emerald-400 font-bold">Referred by {referrerName} — they'll earn +5 XP!</p>
-          )}
-          {codeStatus === "invalid" && invalidReason && (
-            <p className="text-[11px] text-red-400 font-bold">{invalidReason}</p>
-          )}
-        </div>
-      </div>
-
-      {/* CTA */}
+      {/* Actions */}
       <div className="space-y-2 pt-1">
         <button
-          onClick={() => onComplete(codeStatus === "valid" ? incomingCode.trim() : undefined)}
-          disabled={isSaving || codeStatus === "checking"}
-          className="w-full py-4 rounded-[16px] bg-primary text-white font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={() => onComplete(true)}
+          disabled={isSaving}
+          className="w-full py-4 rounded-[16px] bg-primary text-black font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving
             ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
-            : <><Sparkles className="w-4 h-4" /> Enter Aris</>
+            : <><Map className="w-4 h-4" /> Start 7-Step Tour</>
+          }
+        </button>
+        <button
+          onClick={() => onComplete(false)}
+          disabled={isSaving}
+          className="w-full py-4 rounded-[16px] bg-foreground text-background font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-foreground/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSaving
+            ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
+            : <>Skip Tour <ArrowRight className="w-4 h-4" /></>
           }
         </button>
         <button onClick={onBack} className="w-full py-3 text-foreground/30 hover:text-foreground/50 text-xs font-bold uppercase tracking-widest transition-colors">

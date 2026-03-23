@@ -16,10 +16,10 @@ import {
   getCurrentUser,
   getUserStats,
   updateProfile as updateProfileAPI,
-  updateWalletAddress as updateWalletAPI,
 } from "@/services/user.service";
 import { authenticateWithPrivy, setPrivyTokenGetter, getAuthToken } from "@/services/api";
 import type { User, UserStats, UpdateUserData } from "@/types/user";
+import { perfLog, perfNow } from "@/lib/perf";
 
 type UserContextType = {
   user: User | null;
@@ -35,7 +35,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const { getAccessToken, user: privyUser, authenticated, ready } = usePrivy();
-  const { address, eoaAddress, isConnected, isInitialized, userInfo } = useWallet();
+  const { address, eoaAddress, isConnected, isInitialized } = useWallet();
   const pathname = usePathname();
 
   const [user, setUser] = useState<User | null>(null);
@@ -44,6 +44,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [syncedAddress, setSyncedAddress] = useState<string | null>(null);
 
   const syncingRef = useRef(false);
+  const bootstrappedRef = useRef(false);
 
   // Derive loading: true while Privy/wallet init or actively syncing
   const isAuthenticated = !!(user && isConnected);
@@ -51,6 +52,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   /** Call /auth/privy-login to get a JWT, then fetch user + stats */
   const syncWithBackend = useCallback(async () => {
     if (syncingRef.current || !isConnected) return;
+    const start = perfNow();
     syncingRef.current = true;
     setIsLoading(true);
     // Force clear old state to prevent UI flicker of previous user data
@@ -78,6 +80,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
       setUser(authUser);
       setSyncedAddress(address);
+      perfLog("user", "syncWithBackend auth complete");
 
       // Fetch stats in parallel
       try {
@@ -93,11 +96,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
     } finally {
       syncingRef.current = false;
       setIsLoading(false);
+      perfLog("user", `syncWithBackend finished in ${(perfNow() - start).toFixed(1)}ms`);
     }
   }, [isConnected, address, getAccessToken, privyUser]);
 
   /** Re-fetch from /users/me (uses existing token) */
   const refreshUser = useCallback(async () => {
+    const start = perfNow();
     setIsLoading(true);
     try {
       const [u, s] = await Promise.all([getCurrentUser(), getUserStats().catch(() => null)]);
@@ -112,6 +117,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }
     } finally {
       setIsLoading(false);
+      perfLog("user", `refreshUser finished in ${(perfNow() - start).toFixed(1)}ms`);
     }
   }, [syncWithBackend, pathname]);
 
@@ -159,6 +165,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   // On mount, if there's an existing token, try to load user silently
   useEffect(() => {
+    if (bootstrappedRef.current) return;
+    if (authenticated || isConnected) {
+      bootstrappedRef.current = true;
+      setIsLoading(false);
+      return;
+    }
+
     getAuthToken().then((token) => {
       if (token && !user) {
         getCurrentUser()
@@ -172,8 +185,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
       } else {
         setIsLoading(false);
       }
+      bootstrappedRef.current = true;
     });
-  }, []);
+  }, [authenticated, isConnected, user]);
 
   return (
     <UserContext.Provider

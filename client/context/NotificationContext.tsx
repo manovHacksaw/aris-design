@@ -11,6 +11,7 @@ import React, {
 import { useSocket } from "./SocketContext";
 import { useUser } from "./UserContext";
 import { toast } from "sonner";
+import { perfLog, perfNow } from "@/lib/perf";
 
 export interface Notification {
     id: string;
@@ -50,6 +51,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }, [user?.id]);
 
     const fetchNotifications = useCallback(async () => {
+        const start = perfNow();
         try {
             setIsLoading(true);
             const token = localStorage.getItem("authToken");
@@ -58,6 +60,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 setNotifications([]);
                 setUnreadCount(0);
                 setIsLoading(false);
+                perfLog("notifications", "skipped fetch (no token/user)");
                 return;
             }
 
@@ -71,9 +74,15 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 setUnreadCount(
                     (data.notifications || []).filter((n: Notification) => !n.isRead).length
                 );
+                perfLog("notifications", `fetched in ${(perfNow() - start).toFixed(1)}ms`, {
+                    count: (data.notifications || []).length,
+                });
             } else if (response.status === 404) {
                 setNotifications([]);
                 setUnreadCount(0);
+                perfLog("notifications", `fetched in ${(perfNow() - start).toFixed(1)}ms`, {
+                    count: 0,
+                });
             }
         } catch (error) {
             console.error("Failed to fetch notifications:", error);
@@ -128,7 +137,21 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }, [fetchNotifications]);
 
     useEffect(() => {
-        if (user?.id) fetchNotifications();
+        if (!user?.id) return;
+
+        const run = () => { fetchNotifications(); };
+        const idle =
+            typeof window !== "undefined" && "requestIdleCallback" in window
+                ? (window as any).requestIdleCallback(run, { timeout: 1500 })
+                : null;
+        const timer = idle ? null : setTimeout(run, 800);
+
+        return () => {
+            if (idle && typeof window !== "undefined" && "cancelIdleCallback" in window) {
+                (window as any).cancelIdleCallback(idle);
+            }
+            if (timer) clearTimeout(timer);
+        };
     }, [user?.id, fetchNotifications]);
 
     useEffect(() => {

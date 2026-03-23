@@ -18,8 +18,10 @@ export type OnboardingData = {
   // User profile
   displayName?: string;
   username?: string;
+  email?: string;
   bio?: string;
   avatarUrl?: string;
+  incomingReferralCode?: string;
   gender?: string;
   phoneNumber?: string;
   dateOfBirth?: string;
@@ -33,9 +35,11 @@ export type OnboardingData = {
   audienceSize?: string;
   // User interests & preferences
   preferredCategories?: string[];
+  preferredDomains?: string[];
   preferredBrands?: string[];
   contentFormat?: string;
   creatorCategories?: string[];
+  themePreference?: "light" | "dark";
   // User intent
   intentGoals?: string[];
   // Web3 familiarity

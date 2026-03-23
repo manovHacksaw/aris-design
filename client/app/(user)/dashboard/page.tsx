@@ -744,43 +744,41 @@ function ActivityRow({ item, index, isLast }: { item: ActivityItem; index: numbe
                 )}
             </div>
 
-            {/* CENTER — Three content lines */}
+            {/* CENTER — Two content lines */}
             <div className="flex-1 min-w-0">
                 {/* Line 1: Title */}
                 <p className="text-[13px] font-semibold text-white/90 truncate leading-tight tracking-[-0.01em]">
                     {item.title}
                 </p>
 
-                {/* Line 2: Brand · Category · Type */}
+                {/* Line 2: Brand · Category · Type · votes */}
                 <p className="text-[11px] text-white/35 font-medium mt-0.5 truncate">
                     <span className="text-white/50 font-semibold">{item.brand}</span>
                     {item.domain && <><span className="mx-1.5 text-white/15">·</span><span>{item.domain}</span></>}
                     <span className="mx-1.5 text-white/15">·</span>
                     <span className={isPost ? "text-lime-400/50" : "text-blue-400/50"}>{isPost ? "Post" : "Vote"}</span>
-                </p>
-
-                {/* Line 3: Metadata */}
-                <p className="text-[10px] text-white/20 font-medium mt-0.5">
-                    {item.date}
                     {isPost && item.votesReceived !== undefined && item.votesReceived > 0 && (
                         <><span className="mx-1.5 text-white/10">·</span>{item.votesReceived.toLocaleString()} votes</>
                     )}
                     {!isPost && item.votesCast !== undefined && item.votesCast > 0 && (
                         <><span className="mx-1.5 text-white/10">·</span>{item.votesCast} cast</>
                     )}
-                    {item.rank && (
-                        <><span className="mx-1.5 text-white/10">·</span>Rank #{item.rank}</>
-                    )}
-                    {!!item.earnings && item.earnings > 0 && (
-                        <><span className="mx-1.5 text-white/10">·</span><span className="text-lime-400/70">${item.earnings.toFixed(2)}</span></>
-                    )}
                 </p>
+
+                {/* Line 3: Date */}
+                <p className="text-[10px] text-white/20 font-medium mt-0.5">{item.date}</p>
             </div>
 
-            {/* RIGHT — Status dot + label */}
-            <div className="shrink-0 flex items-center gap-1.5 min-w-[72px] justify-end">
-                <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", sc.dot)} />
-                <span className={cn("text-[10px] font-medium capitalize", sc.text)}>{sc.label}</span>
+            {/* RIGHT — Earnings · Rank · Status */}
+            <div className="shrink-0 flex flex-col items-end gap-1">
+                {!!item.earnings && item.earnings > 0 ? (
+                    <span className="text-[12px] font-black text-lime-400">+${item.earnings.toFixed(2)}</span>
+                ) : null}
+                {item.rank ? <RankBadge rank={item.rank} /> : null}
+                <div className="flex items-center gap-1.5">
+                    <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", sc.dot)} />
+                    <span className={cn("text-[10px] font-medium capitalize", sc.text)}>{sc.label}</span>
+                </div>
             </div>
         </motion.div>
     );
@@ -841,6 +839,8 @@ export default function DashboardPage() {
     const [showLevelModal, setShowLevelModal] = useState(false);
     const [transactions, setTransactions] = useState<XpTransactionSummary[]>([]);
     const [followers, setFollowers] = useState<{ followedAt?: string }[]>([]);
+    const [graphDays, setGraphDays] = useState<7 | 30 | 90>(7);
+    const [achievementsExpanded, setAchievementsExpanded] = useState(false);
 
     useEffect(() => {
         if (!user) return;
@@ -908,18 +908,19 @@ export default function DashboardPage() {
 
     const achievementFilter = activeTab === "overall" ? "all" : activeTab;
     const achievements = getAchievements(stats, achievementFilter);
-    const visibleAchievements = achievements.slice(0, 4);
 
     // ── Chart data ────────────────────────────────────────────────
 
-    // XP over last 14 days
+    // XP over last N days
     const xpAreaData = (() => {
-        const days = 14;
+        const days = graphDays;
         const now = new Date();
         return Array.from({ length: days }, (_, i) => {
             const date = new Date(now);
             date.setDate(date.getDate() - (days - 1 - i));
-            const label = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+            const label = days <= 7
+                ? date.toLocaleDateString("en-US", { weekday: "short" })
+                : date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
             const xpEarned = transactions
                 .filter(tx => {
                     const d = new Date(tx.createdAt);
@@ -965,29 +966,6 @@ export default function DashboardPage() {
         });
     })();
 
-    // XP by source type
-    const xpByType = (() => {
-        const map: Record<string, number> = {};
-        for (const tx of transactions) {
-            const key = tx.type || "OTHER";
-            map[key] = (map[key] || 0) + tx.amount;
-        }
-        const colorMap: Record<string, string> = {
-            VOTE_CAST: "#60A5FA", SUBMISSION: "#A3E635", LOGIN_STREAK: "#FB923C",
-            MILESTONE: "#C084FC", REFERRAL: "#F472B6", OTHER: "#6B7280",
-        };
-        const labelMap: Record<string, string> = {
-            VOTE_CAST: "Votes", SUBMISSION: "Posts", LOGIN_STREAK: "Streaks",
-            MILESTONE: "Milestones", REFERRAL: "Referrals", OTHER: "Other",
-        };
-        return Object.entries(map)
-            .sort((a, b) => b[1] - a[1])
-            .map(([type, amount]) => ({
-                label: labelMap[type] || type,
-                amount,
-                color: colorMap[type] || colorMap.OTHER,
-            }));
-    })();
 
     // Follower growth — last 30 days, daily cumulative
     const followerGrowthData = (() => {
@@ -1027,33 +1005,86 @@ export default function DashboardPage() {
         });
     })();
 
-    // Events vs Earnings (last 8 events participated, chronological)
-    const eventsEarningsData = [...allActivity]
-        .slice(0, 8)
-        .reverse()
-        .map(item => ({
-            label: item.title.length > 14 ? item.title.slice(0, 14) + "…" : item.title,
-            earnings: item.earnings || 0,
-            xp: item.xpEarned || 0,
-        }));
+    // Daily Earnings (cumulative) over graphDays
+    const dailyEarningsData = (() => {
+        const days = graphDays;
+        const now = new Date();
+        let running = 0;
+        return Array.from({ length: days }, (_, i) => {
+            const date = new Date(now);
+            date.setDate(date.getDate() - (days - 1 - i));
+            const dayEarnings = allActivity
+                .filter(item => {
+                    try { return new Date(item.date).toDateString() === date.toDateString(); } catch { return false; }
+                })
+                .reduce((sum, item) => sum + (item.earnings || 0), 0);
+            running += dayEarnings;
+            const label = days <= 7
+                ? date.toLocaleDateString("en-US", { weekday: "short" })
+                : date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+            return { label, earnings: running, daily: dayEarnings };
+        });
+    })();
+    const totalEarnings = allActivity.reduce((sum, item) => sum + (item.earnings || 0), 0);
 
     const xp = user?.xp || 0;
     const xpLevel = Math.floor(xp / 1000) + 1;
     const xpProgress = (xp % 1000) / 10;
     const xpToNext = xpLevel * 1000 - xp;
 
-    const statRows = [
+    const earnedTodayXP = transactions
+        .filter(tx => Date.now() - new Date(tx.createdAt).getTime() < 86400000)
+        .reduce((sum, tx) => sum + tx.amount, 0);
+    const earnedTodayEarnings = allActivity
+        .filter(item => Date.now() - new Date(item.date).getTime() < 86400000)
+        .reduce((sum, item) => sum + (item.earnings || 0), 0);
+    const newFollowersThisWeek = followers
+        .filter(f => f.followedAt && Date.now() - new Date(f.followedAt).getTime() < 7 * 86400000).length;
+
+    const statRows: { label: string; value: string; icon: React.ElementType; color: string; bg: string; delta: string; deltaPositive: boolean }[][] = [
         [
-            { label: "Earnings", value: stats?.earnings ? `$${stats.earnings.toFixed(2)}` : "$0.00", icon: DollarSign, color: "text-lime-400", bg: "bg-lime-400/10" },
-            { label: "XP", value: xp.toLocaleString(), icon: Zap, color: "text-yellow-400", bg: "bg-yellow-400/10" },
-            { label: "Followers", value: (stats?.subscribers ?? 0).toString(), icon: Users, color: "text-pink-400", bg: "bg-pink-400/10" },
-            { label: "Brands", value: "—", icon: Building2, color: "text-blue-400", bg: "bg-blue-400/10" },
+            {
+                label: "Earnings", value: stats?.earnings ? `$${stats.earnings.toFixed(2)}` : "$0.00", icon: DollarSign, color: "text-lime-400", bg: "bg-lime-400/10",
+                delta: earnedTodayEarnings > 0 ? `+$${earnedTodayEarnings.toFixed(4)} today` : "No earnings yet",
+                deltaPositive: earnedTodayEarnings > 0,
+            },
+            {
+                label: "XP", value: xp.toLocaleString(), icon: Zap, color: "text-yellow-400", bg: "bg-yellow-400/10",
+                delta: earnedTodayXP > 0 ? `+${earnedTodayXP} today` : "No XP today",
+                deltaPositive: earnedTodayXP > 0,
+            },
+            {
+                label: "Followers", value: (stats?.subscribers ?? 0).toString(), icon: Users, color: "text-pink-400", bg: "bg-pink-400/10",
+                delta: newFollowersThisWeek > 0 ? `+${newFollowersThisWeek} this week` : "No new followers",
+                deltaPositive: newFollowersThisWeek > 0,
+            },
+            {
+                label: "Events", value: (stats?.events ?? 0).toString(), icon: Trophy, color: "text-purple-400", bg: "bg-purple-400/10",
+                delta: allActivity.length > 0 ? `${allActivity.length} total` : "No events yet",
+                deltaPositive: allActivity.length > 0,
+            },
         ],
         [
-            { label: "Events", value: (stats?.events ?? 0).toString(), icon: Trophy, color: "text-purple-400", bg: "bg-purple-400/10" },
-            { label: "Votes Cast", value: (stats?.votesCast ?? 0).toString(), icon: MousePointerClick, color: "text-blue-400", bg: "bg-blue-400/10" },
-            { label: "Posts", value: (stats?.posts ?? 0).toString(), icon: ImageIcon, color: "text-lime-400", bg: "bg-lime-400/10" },
-            { label: "Votes Received", value: (stats?.votesReceived ?? 0).toLocaleString(), icon: ThumbsUp, color: "text-purple-400", bg: "bg-purple-400/10" },
+            {
+                label: "Votes Cast", value: (stats?.votesCast ?? 0).toString(), icon: MousePointerClick, color: "text-blue-400", bg: "bg-blue-400/10",
+                delta: (stats?.votesCast ?? 0) > 0 ? `${stats?.votesCast} votes cast` : "No votes yet",
+                deltaPositive: (stats?.votesCast ?? 0) > 0,
+            },
+            {
+                label: "Posts", value: (stats?.posts ?? 0).toString(), icon: ImageIcon, color: "text-lime-400", bg: "bg-lime-400/10",
+                delta: (stats?.posts ?? 0) > 0 ? `${stats?.posts} submissions` : "No posts yet",
+                deltaPositive: (stats?.posts ?? 0) > 0,
+            },
+            {
+                label: "Votes Received", value: (stats?.votesReceived ?? 0).toLocaleString(), icon: ThumbsUp, color: "text-purple-400", bg: "bg-purple-400/10",
+                delta: (stats?.votesReceived ?? 0) > 0 ? `${(stats?.votesReceived ?? 0).toLocaleString()} received` : "No votes received",
+                deltaPositive: (stats?.votesReceived ?? 0) > 0,
+            },
+            {
+                label: "Brands", value: "—", icon: Building2, color: "text-blue-400", bg: "bg-blue-400/10",
+                delta: "No brands followed",
+                deltaPositive: false,
+            },
         ],
     ];
 
@@ -1065,10 +1096,16 @@ export default function DashboardPage() {
 
     const tier = getTier(xpLevel);
 
+    const insightMessage = earnedTodayXP > 0
+        ? `You earned +${earnedTodayXP} XP today`
+        : allActivity.length > 0
+            ? `${allActivity.length} event${allActivity.length !== 1 ? "s" : ""} participated — keep going`
+            : "No activity yet — join events to start earning";
+
     return (
         <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
             <SidebarLayout>
-                <main className="w-full pt-6 lg:pt-10 pb-20 md:pb-12 space-y-10">
+                <main className="w-full pt-6 lg:pt-10 pb-20 md:pb-12 space-y-8">
 
                     {/* ── Header ─────────────────────────────── */}
                     <div className="space-y-1">
@@ -1103,15 +1140,26 @@ export default function DashboardPage() {
                                             <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center shrink-0", stat.bg)}>
                                                 <stat.icon className={cn("w-4 h-4", stat.color)} />
                                             </div>
-                                            <div className="min-w-0">
+                                            <div className="min-w-0 flex-1">
                                                 <p className="text-[9px] font-black uppercase tracking-[0.15em] text-foreground/30 leading-none mb-1">{stat.label}</p>
                                                 <p className="font-display text-3xl text-foreground tracking-tight leading-none">{stat.value}</p>
+                                                <p className={cn(
+                                                    "text-[9px] font-bold mt-1 truncate",
+                                                    stat.deltaPositive ? stat.color : "text-foreground/20"
+                                                )}>{stat.delta}</p>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             ))}
                         </div>
+                    )}
+
+                    {/* ── Insight line ────────────────────────── */}
+                    {!loading && (
+                        <p className="text-[11px] font-medium text-foreground/40 -mt-4">
+                            {insightMessage}
+                        </p>
                     )}
 
                     {/* ── Tabs ───────────────────────────────── */}
@@ -1133,13 +1181,13 @@ export default function DashboardPage() {
                     </div>
 
                     {/* ── Two-column layout ──────────────────── */}
-                    <div className="flex flex-col lg:flex-row gap-8">
+                    <div className="flex flex-col lg:flex-row gap-6">
 
                         {/* ── Left: Activity List ─────────────── */}
                         <div className="flex-1 min-w-0 space-y-4">
                             <div className="flex items-center justify-between">
                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/30">
-                                    {activeTab === "overall" ? "All Activity" : activeTab === "vote" ? "Vote Events" : "Post Events"}
+                                    {activeTab === "overall" ? "Recent Activity" : activeTab === "vote" ? "Vote Events" : "Post Events"}
                                 </p>
                                 <span className="text-[10px] font-black text-foreground/20">
                                     {filteredActivity.length} events
@@ -1159,10 +1207,51 @@ export default function DashboardPage() {
                                     ))}
                                 </div>
                             ) : filteredActivity.length === 0 ? (
-                                <div className="py-16 text-center">
-                                    <p className="text-[11px] text-white/20 font-medium">
-                                        No {activeTab === "overall" ? "" : activeTab + " "}activity yet
-                                    </p>
+                                <div className="space-y-3">
+                                    {transactions.length > 0 ? (
+                                        <>
+                                            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/25 px-1">Recent Activity</p>
+                                            <div className="bg-white/[0.015] rounded-xl px-3 divide-y divide-white/[0.04]">
+                                                {transactions.slice(0, 6).map((tx) => {
+                                                    const typeMap: Record<string, { label: string; icon: React.ElementType; color: string; bg: string }> = {
+                                                        VOTE_CAST:    { label: "Vote cast", icon: ThumbsUp, color: "text-blue-400", bg: "bg-blue-400/10" },
+                                                        SUBMISSION:   { label: "Post submitted", icon: ImageIcon, color: "text-lime-400", bg: "bg-lime-400/10" },
+                                                        LOGIN_STREAK: { label: "Login streak", icon: Flame, color: "text-orange-400", bg: "bg-orange-400/10" },
+                                                        MILESTONE:    { label: "Milestone reached", icon: Trophy, color: "text-purple-400", bg: "bg-purple-400/10" },
+                                                        REFERRAL:     { label: "Referral bonus", icon: Users, color: "text-pink-400", bg: "bg-pink-400/10" },
+                                                        WELCOME:      { label: "Welcome bonus", icon: Star, color: "text-yellow-400", bg: "bg-yellow-400/10" },
+                                                    };
+                                                    const meta = typeMap[tx.type] ?? { label: tx.type, icon: Zap, color: "text-yellow-400", bg: "bg-yellow-400/10" };
+                                                    const Icon = meta.icon;
+                                                    return (
+                                                        <div key={tx.id} className="flex items-center gap-3 py-3">
+                                                            <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", meta.bg)}>
+                                                                <Icon className={cn("w-3.5 h-3.5", meta.color)} />
+                                                            </div>
+                                                            <p className="flex-1 text-[12px] font-semibold text-white/70 truncate">
+                                                                {tx.description || meta.label}
+                                                            </p>
+                                                            <span className="text-[11px] font-black text-yellow-400 shrink-0">
+                                                                +{tx.amount} XP
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                            <p className="text-[10px] text-white/20 font-medium text-center pt-1">
+                                                {activeTab === "post" ? "Submit a post to see events here" : activeTab === "vote" ? "Vote in an event to see it here" : "Join an event to start tracking performance"}
+                                            </p>
+                                        </>
+                                    ) : (
+                                        <div className="py-12 text-center space-y-2">
+                                            <p className="text-[13px] font-semibold text-white/30">
+                                                {activeTab === "post" ? "No posts yet" : activeTab === "vote" ? "No votes yet" : "No activity yet"}
+                                            </p>
+                                            <p className="text-[11px] text-white/15 font-medium">
+                                                {activeTab === "post" ? "Submit your first entry to an event" : activeTab === "vote" ? "Cast your first vote in an event" : "Join your first event to start earning"}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             ) : (() => {
                                 // Date grouping
@@ -1209,7 +1298,7 @@ export default function DashboardPage() {
                         </div>
 
                         {/* ── Right: Gamified XP & Achievements ── */}
-                        <div className="lg:w-[300px] xl:w-[320px] flex-shrink-0 space-y-4">
+                        <div className="lg:w-[300px] xl:w-[320px] flex-shrink-0 space-y-4 relative">
 
                             {/* ── Level Card ─────────────────────── */}
                             <button
@@ -1261,7 +1350,7 @@ export default function DashboardPage() {
                                         </div>
                                         <div className="flex justify-between text-[9px] font-black text-foreground/25">
                                             <span>{(xp % 1000).toLocaleString()} / 1000 XP</span>
-                                            <span>{xpToNext.toLocaleString()} to Lv.{xpLevel + 1}</span>
+                                            <span className={cn(tier.color, "opacity-70")}>{xpToNext.toLocaleString()} XP to Lv.{xpLevel + 1}</span>
                                         </div>
                                     </div>
 
@@ -1293,101 +1382,131 @@ export default function DashboardPage() {
                                 </div>
                             </button>
 
-                            {/* ── Achievements ───────────────────── */}
-                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] overflow-hidden">
-                                <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/[0.05]">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">
-                                        {activeTab === "vote" ? "Vote" : activeTab === "post" ? "Post" : ""} Achievements
-                                    </span>
-                                    <span className="text-[9px] font-black text-foreground/20">
-                                        {achievements.filter(a => a.current >= a.target).length}/{achievements.length}
-                                    </span>
-                                </div>
+                            {/* ── Milestones ─────────────────────── */}
+                            {(() => {
+                                const PREVIEW_COUNT = 4;
+                                const completedCount = achievements.filter(a => a.current >= a.target).length;
+                                const inProgressCount = achievements.filter(a => a.current > 0 && a.current < a.target).length;
 
-                                <div className="p-3 space-y-2">
-                                    {visibleAchievements.map((a, i) => {
-                                        const done = a.current >= a.target;
-                                        const pct = Math.min(100, (a.current / a.target) * 100);
-                                        const Icon = a.icon;
-                                        return (
-                                            <motion.div
-                                                key={a.id}
-                                                initial={{ opacity: 0, y: 6 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: i * 0.05 }}
-                                                className={cn(
-                                                    "relative overflow-hidden rounded-xl border p-3 transition-all",
-                                                    done
-                                                        ? cn("border-opacity-30", a.border, "bg-gradient-to-r from-white/[0.04] to-transparent")
-                                                        : pct > 0
-                                                            ? "border-white/[0.08] bg-white/[0.02]"
-                                                            : "border-white/[0.04] bg-transparent"
-                                                )}
-                                            >
-                                                {/* Done glow */}
-                                                {done && (
-                                                    <div className={cn("absolute inset-0 opacity-10", a.bg)} />
-                                                )}
-
-                                                <div className="relative flex items-center gap-3">
-                                                    {/* Icon */}
-                                                    <div className={cn(
-                                                        "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border transition-all",
-                                                        done ? cn(a.bg, a.border) : "bg-white/[0.04] border-white/[0.06]"
-                                                    )}>
-                                                        {done
-                                                            ? <Icon className={cn("w-4 h-4", a.color)} />
-                                                            : pct === 0
-                                                                ? <Lock className="w-4 h-4 text-white/20" />
-                                                                : <Icon className={cn("w-4 h-4 opacity-50", a.color)} />
-                                                        }
-                                                    </div>
-
-                                                    {/* Info */}
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center justify-between gap-1 mb-0.5">
-                                                            <span className={cn(
-                                                                "text-[10px] font-black truncate",
-                                                                done ? a.color : pct > 0 ? "text-foreground/60" : "text-foreground/25"
-                                                            )}>
-                                                                {a.label}
-                                                            </span>
-                                                            {done ? (
-                                                                <span className={cn("text-[8px] font-black uppercase tracking-widest flex items-center gap-0.5 shrink-0", a.color)}>
-                                                                    <CheckCircle2 className="w-3 h-3" /> Done
-                                                                </span>
-                                                            ) : (
-                                                                <span className="text-[9px] font-black text-yellow-400/60 shrink-0">+{a.xp}</span>
-                                                            )}
+                                function MilestoneRow({ a, i }: { a: typeof achievements[0]; i: number }) {
+                                    const done = a.current >= a.target;
+                                    const inProgress = !done && a.current > 0;
+                                    const pct = Math.min(100, (a.current / a.target) * 100);
+                                    const Icon = a.icon;
+                                    return (
+                                        <motion.div
+                                            key={a.id}
+                                            initial={{ opacity: 0, y: 4 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                                            transition={{ duration: 0.18, delay: i * 0.03 }}
+                                            className="flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-white/[0.03] transition-colors"
+                                        >
+                                            <div className={cn(
+                                                "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border transition-all",
+                                                done ? cn(a.bg, a.border) :
+                                                inProgress ? "bg-white/[0.06] border-white/[0.1]" :
+                                                "bg-white/[0.02] border-white/[0.04]"
+                                            )}>
+                                                {done
+                                                    ? <CheckCircle2 className={cn("w-3.5 h-3.5", a.color)} />
+                                                    : !inProgress
+                                                        ? <Lock className="w-3 h-3 text-white/15" />
+                                                        : <Icon className={cn("w-3.5 h-3.5 opacity-70", a.color)} />
+                                                }
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className={cn(
+                                                    "text-[11px] font-black truncate leading-snug",
+                                                    done ? a.color : inProgress ? "text-foreground/70" : "text-foreground/25"
+                                                )}>{a.label}</p>
+                                                {inProgress && (
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <div className="flex-1 h-[3px] bg-white/[0.06] rounded-full overflow-hidden">
+                                                            <motion.div
+                                                                initial={{ width: 0 }}
+                                                                animate={{ width: `${pct}%` }}
+                                                                transition={{ duration: 0.6, ease: "easeOut" }}
+                                                                className={cn("h-full rounded-full", a.color.replace("text-", "bg-"))}
+                                                            />
                                                         </div>
-
-                                                        {!done && (
-                                                            <>
-                                                                <div className="w-full h-1 bg-white/[0.05] rounded-full overflow-hidden mb-1">
-                                                                    <div
-                                                                        className={cn("h-full rounded-full transition-all duration-700", pct > 0 ? a.color.replace("text-", "bg-") : "bg-white/10")}
-                                                                        style={{ width: `${pct}%` }}
-                                                                    />
-                                                                </div>
-                                                                <p className={cn("text-[9px] font-medium", pct > 0 ? "text-foreground/30" : "text-foreground/15")}>
-                                                                    {a.current}/{a.target}
-                                                                </p>
-                                                            </>
-                                                        )}
+                                                        <span className="text-[9px] font-bold text-foreground/30 shrink-0">{a.current}/{a.target}</span>
                                                     </div>
-                                                </div>
-                                            </motion.div>
-                                        );
-                                    })}
+                                                )}
+                                            </div>
+                                            <span className={cn(
+                                                "text-[9px] font-black shrink-0",
+                                                done ? a.color : inProgress ? "text-yellow-400/50" : "text-foreground/15"
+                                            )}>+{a.xp} XP</span>
+                                        </motion.div>
+                                    );
+                                }
 
-                                    <button
-                                        onClick={() => setShowMilestonesModal(true)}
-                                        className="w-full py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05] text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 hover:bg-white/[0.06] hover:text-foreground/50 transition-all"
-                                    >
-                                        Show All Milestones
-                                    </button>
-                                </div>
-                            </div>
+                                return (
+                                    <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] overflow-hidden">
+                                        {/* Header — click to expand inline */}
+                                        <button
+                                            onClick={() => setAchievementsExpanded(e => !e)}
+                                            className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-white/[0.025] transition-colors"
+                                        >
+                                            <div className="flex items-center gap-2.5">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Milestones</span>
+                                                <span className={cn(
+                                                    "text-[8px] font-black px-1.5 py-0.5 rounded-full border",
+                                                    completedCount > 0
+                                                        ? "bg-lime-400/10 border-lime-400/20 text-lime-400/70"
+                                                        : "bg-white/[0.04] border-white/[0.06] text-foreground/20"
+                                                )}>{completedCount}/{achievements.length}</span>
+                                                {inProgressCount > 0 && (
+                                                    <span className="text-[8px] font-bold text-yellow-400/50">{inProgressCount} in progress</span>
+                                                )}
+                                            </div>
+                                            <motion.div
+                                                animate={{ rotate: achievementsExpanded ? 180 : 0 }}
+                                                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                                                className="w-6 h-6 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0"
+                                            >
+                                                <svg className="w-3 h-3 text-foreground/30" fill="none" viewBox="0 0 12 12">
+                                                    <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                                </svg>
+                                            </motion.div>
+                                        </button>
+
+                                        {/* Content */}
+                                        <div className="px-3 pb-1 space-y-0.5 border-t border-white/[0.04]">
+                                            {/* Preview rows — always visible */}
+                                            {achievements.slice(0, PREVIEW_COUNT).map((a, i) => (
+                                                <MilestoneRow key={a.id} a={a} i={i} />
+                                            ))}
+
+                                            {/* Expanded rows — animate in */}
+                                            <AnimatePresence initial={false}>
+                                                {achievementsExpanded && achievements.slice(PREVIEW_COUNT).map((a, i) => (
+                                                    <MilestoneRow key={a.id} a={a} i={i} />
+                                                ))}
+                                            </AnimatePresence>
+
+                                            {/* Footer */}
+                                            {achievements.length > PREVIEW_COUNT && (
+                                                <div className="flex gap-2 pt-1 pb-1">
+                                                    <button
+                                                        onClick={() => setAchievementsExpanded(e => !e)}
+                                                        className="flex-1 py-2 rounded-xl bg-white/[0.03] border border-white/[0.05] text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 hover:bg-white/[0.06] hover:text-foreground/50 transition-all"
+                                                    >
+                                                        {achievementsExpanded ? "Show less" : `+${achievements.length - PREVIEW_COUNT} more`}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setShowMilestonesModal(true)}
+                                                        className="px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.05] text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 hover:bg-white/[0.06] hover:text-foreground/50 transition-all"
+                                                    >
+                                                        Full
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
 
                             {/* ── XP History Feed ─────────────────── */}
                             <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] overflow-hidden">
@@ -1397,7 +1516,10 @@ export default function DashboardPage() {
                                 </div>
                                 <div className="p-3 space-y-1">
                                     {transactions.length === 0 ? (
-                                        <p className="text-[10px] text-foreground/20 font-bold text-center py-6">No XP earned yet</p>
+                                        <div className="py-6 text-center space-y-1.5">
+                                            <p className="text-[11px] font-bold text-foreground/25">No XP earned yet</p>
+                                            <p className="text-[10px] text-foreground/15">Join events to start earning XP</p>
+                                        </div>
                                     ) : (
                                         transactions.slice(0, 8).map((tx) => {
                                             const typeMap: Record<string, { icon: React.ElementType; color: string; bg: string; label: string }> = {
@@ -1436,21 +1558,42 @@ export default function DashboardPage() {
                                 </div>
                             </div>
 
+
                         </div>
                     </div>
 
                     {/* ── Graphs & Insights ───────────────────── */}
                     {!loading && (
                         <div className="space-y-4 pt-2">
-                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/30">Graphs &amp; Insights</p>
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                            <div className="flex items-center justify-between">
+                                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/30">Graphs &amp; Insights</p>
+                                {/* Time filter */}
+                                <div className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.06] rounded-xl p-0.5">
+                                    {([7, 30, 90] as const).map((d) => (
+                                        <button
+                                            key={d}
+                                            onClick={() => setGraphDays(d)}
+                                            className={cn(
+                                                "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all",
+                                                graphDays === d
+                                                    ? "bg-white text-black"
+                                                    : "text-foreground/35 hover:text-foreground/60"
+                                            )}
+                                        >
+                                            {d}D
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
                             {/* XP Growth (cumulative area chart) */}
                             <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
                                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">XP Growth</p>
-                                        <p className="text-[9px] font-bold text-foreground/25 mt-0.5">Last 14 days</p>
+                                        <p className="text-[9px] font-bold text-foreground/25 mt-0.5">Last {graphDays} days</p>
                                     </div>
                                     <span className="text-[10px] font-black text-yellow-400">
                                         +{xpAreaData.reduce((s, d) => s + d.xp, 0).toLocaleString()} XP
@@ -1469,60 +1612,118 @@ export default function DashboardPage() {
                                             dataKey="label"
                                             tick={{ fontSize: 8, fill: "rgba(255,255,255,0.25)", fontWeight: 700 }}
                                             tickLine={false} axisLine={false}
-                                            interval={2}
+                                            interval={Math.floor(graphDays / 7)}
                                         />
                                         <YAxis tick={{ fontSize: 8, fill: "rgba(255,255,255,0.2)", fontWeight: 700 }} tickLine={false} axisLine={false} />
                                         <Tooltip
-                                            contentStyle={{ background: "hsl(var(--card))", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 11, fontWeight: 700 }}
-                                            labelStyle={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}
+                                            cursor={{ stroke: "rgba(255,255,255,0.06)", strokeWidth: 1 }}
+                                            contentStyle={{ background: "hsl(var(--card))", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 11, fontWeight: 700, padding: "8px 12px" }}
+                                            labelStyle={{ color: "rgba(255,255,255,0.4)", fontSize: 9, marginBottom: 4 }}
                                             formatter={(val: any, name: any) => [
                                                 name === "xp" ? `${Number(val).toLocaleString()} XP` : `+${val} XP`,
-                                                name === "xp" ? "Total XP" : "Daily Earned"
+                                                name === "xp" ? "Total XP" : "Daily"
                                             ]}
                                         />
-                                        <Area type="monotone" dataKey="xp" stroke="#A78BFA" strokeWidth={2} fill="url(#xpGrad)" dot={false} activeDot={{ r: 4, fill: "#A78BFA" }} />
-                                        <Area type="monotone" dataKey="daily" stroke="#60A5FA" strokeWidth={1.5} fill="none" strokeDasharray="3 3" dot={false} activeDot={{ r: 3, fill: "#60A5FA" }} />
+                                        <Area type="monotone" dataKey="xp" stroke="#A78BFA" strokeWidth={2} fill="url(#xpGrad)" dot={false} activeDot={{ r: 3, fill: "#A78BFA", strokeWidth: 0 }} />
+                                        <Area type="monotone" dataKey="daily" stroke="#60A5FA" strokeWidth={1.5} fill="none" strokeDasharray="3 3" dot={false} activeDot={{ r: 2, fill: "#60A5FA", strokeWidth: 0 }} />
                                     </AreaChart>
                                 </ResponsiveContainer>
                                 <div className="flex items-center gap-4 mt-2">
                                     <div className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-[#A78BFA] rounded" /><span className="text-[9px] font-bold text-foreground/30">Cumulative</span></div>
                                     <div className="flex items-center gap-1.5"><span className="w-3 border-t border-dashed border-[#60A5FA]" /><span className="text-[9px] font-bold text-foreground/30">Daily</span></div>
                                 </div>
+                                {xpAreaData.reduce((s, d) => s + d.xp, 0) > 0 ? (
+                                    <p className="text-[9px] font-bold text-foreground/25 mt-2">
+                                        {earnedTodayXP > 0 ? `+${earnedTodayXP} XP earned today` : `${xpAreaData.filter(d => d.xp > 0).length} active days this period`}
+                                    </p>
+                                ) : (
+                                    <p className="text-[9px] font-bold text-foreground/20 mt-2">Participate in events to earn XP</p>
+                                )}
                             </div>
 
-                            {/* XP by Source */}
+                            {/* Daily Earnings (Cumulative) */}
                             <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
-                                <div className="mb-4">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">XP by Source</p>
-                                    <p className="text-[9px] font-bold text-foreground/25 mt-0.5">All time breakdown</p>
-                                </div>
-                                {xpByType.length === 0 ? (
-                                    <p className="text-[10px] text-foreground/20 font-bold text-center py-8">No XP data yet</p>
-                                ) : (
-                                    <div className="space-y-3">
-                                        {xpByType.slice(0, 5).map((src) => {
-                                            const totalXpAllSrc = xpByType.reduce((s, d) => s + d.amount, 0);
-                                            const pct = totalXpAllSrc > 0 ? (src.amount / totalXpAllSrc) * 100 : 0;
-                                            return (
-                                                <div key={src.label}>
-                                                    <div className="flex items-center justify-between mb-1">
-                                                        <span className="text-[10px] font-black text-foreground/60">{src.label}</span>
-                                                        <span className="text-[10px] font-black" style={{ color: src.color }}>+{src.amount.toLocaleString()}</span>
-                                                    </div>
-                                                    <div className="h-1.5 bg-foreground/[0.06] rounded-full overflow-hidden">
-                                                        <motion.div
-                                                            initial={{ width: 0 }}
-                                                            animate={{ width: `${pct}%` }}
-                                                            transition={{ duration: 0.8, ease: "easeOut" }}
-                                                            className="h-full rounded-full"
-                                                            style={{ background: src.color }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Daily Earnings</p>
+                                        <p className="text-[9px] font-bold text-foreground/25 mt-0.5">Cumulative · last {graphDays}d</p>
                                     </div>
+                                    <span className="text-[10px] font-black text-lime-400">
+                                        ${totalEarnings.toFixed(2)} total
+                                    </span>
+                                </div>
+                                {totalEarnings === 0 ? (
+                                    <div className="h-[140px] flex flex-col items-center justify-center gap-2">
+                                        <p className="text-[10px] font-bold text-foreground/20">No earnings yet</p>
+                                        <p className="text-[9px] text-foreground/15">Participate in events to start earning</p>
+                                    </div>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height={140}>
+                                        <AreaChart data={dailyEarningsData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                                            <defs>
+                                                <linearGradient id="earningsGrad" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stopColor="#A3E635" stopOpacity={0.35} />
+                                                    <stop offset="100%" stopColor="#A3E635" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                                            <XAxis dataKey="label" tick={{ fontSize: 8, fill: "rgba(255,255,255,0.25)", fontWeight: 700 }} tickLine={false} axisLine={false} interval={Math.floor(graphDays / 7)} />
+                                            <YAxis tick={{ fontSize: 8, fill: "rgba(255,255,255,0.2)", fontWeight: 700 }} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
+                                            <Tooltip
+                                                cursor={{ stroke: "rgba(255,255,255,0.05)", strokeWidth: 1 }}
+                                                contentStyle={{ background: "hsl(var(--card))", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 11, fontWeight: 700, padding: "8px 12px" }}
+                                                labelStyle={{ color: "rgba(255,255,255,0.4)", fontSize: 9, marginBottom: 4 }}
+                                                formatter={(val: any, name: any) => [
+                                                    `$${Number(val).toFixed(4)}`,
+                                                    name === "earnings" ? "Cumulative" : "Daily"
+                                                ]}
+                                            />
+                                            <Area type="monotone" dataKey="earnings" stroke="#A3E635" strokeWidth={2} fill="url(#earningsGrad)" dot={false} activeDot={{ r: 3, fill: "#A3E635", strokeWidth: 0 }} />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
                                 )}
+                                {totalEarnings === 0 && (
+                                    <p className="text-[9px] font-bold text-foreground/20 mt-3">Complete events to start earning USDC</p>
+                                )}
+                            </div>
+
+                            {/* Activity bar chart */}
+                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Activity</p>
+                                        <p className="text-[9px] font-bold text-foreground/25 mt-0.5">By week</p>
+                                    </div>
+                                    <div className="flex flex-col gap-1 items-end">
+                                        <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#60A5FA]" /><span className="text-[8px] font-bold text-foreground/40">Votes</span></div>
+                                        <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#A3E635]" /><span className="text-[8px] font-bold text-foreground/40">Posts</span></div>
+                                    </div>
+                                </div>
+                                <ResponsiveContainer width="100%" height={140}>
+                                    <BarChart data={activityData.slice(-6)} barGap={2} margin={{ top: 0, right: 2, left: -24, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                                        <XAxis dataKey="label" tick={{ fontSize: 7, fill: "rgba(255,255,255,0.25)", fontWeight: 700 }} tickLine={false} axisLine={false} />
+                                        <YAxis tick={{ fontSize: 7, fill: "rgba(255,255,255,0.2)", fontWeight: 700 }} tickLine={false} axisLine={false} allowDecimals={false} />
+                                        <Tooltip
+                                            cursor={false}
+                                            contentStyle={{ background: "hsl(var(--card))", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 11, fontWeight: 700, padding: "8px 12px" }}
+                                            labelStyle={{ color: "rgba(255,255,255,0.4)", fontSize: 9, marginBottom: 4 }}
+                                        />
+                                        <Bar dataKey="votes" fill="#60A5FA" radius={[3, 3, 0, 0]} maxBarSize={16} />
+                                        <Bar dataKey="posts" fill="#A3E635" radius={[3, 3, 0, 0]} maxBarSize={16} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                                {(() => {
+                                    const totalVotes = activityData.reduce((s, d) => s + d.votes, 0);
+                                    const totalPosts = activityData.reduce((s, d) => s + d.posts, 0);
+                                    return totalVotes + totalPosts > 0 ? (
+                                        <p className="text-[9px] font-bold text-foreground/25 mt-2">
+                                            {totalVotes} votes · {totalPosts} posts this period
+                                        </p>
+                                    ) : (
+                                        <p className="text-[9px] font-bold text-foreground/20 mt-2">Start voting to see activity</p>
+                                    );
+                                })()}
                             </div>
 
                             {/* Follower Growth */}
@@ -1540,11 +1741,12 @@ export default function DashboardPage() {
                                     </div>
                                 </div>
                                 {followers.length === 0 ? (
-                                    <div className="h-[120px] flex items-center justify-center">
-                                        <p className="text-[10px] font-bold text-foreground/20">No follower data yet</p>
+                                    <div className="h-[140px] flex flex-col items-center justify-center gap-2">
+                                        <p className="text-[10px] font-bold text-foreground/20">No followers yet</p>
+                                        <p className="text-[9px] text-foreground/15">Build your audience by participating</p>
                                     </div>
                                 ) : (
-                                    <ResponsiveContainer width="100%" height={120}>
+                                    <ResponsiveContainer width="100%" height={140}>
                                         <AreaChart data={followerGrowthData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                                             <defs>
                                                 <linearGradient id="followerGrad" x1="0" y1="0" x2="0" y2="1">
@@ -1556,78 +1758,18 @@ export default function DashboardPage() {
                                             <XAxis dataKey="label" tick={{ fontSize: 8, fill: "rgba(255,255,255,0.25)", fontWeight: 700 }} tickLine={false} axisLine={false} interval={5} />
                                             <YAxis tick={{ fontSize: 8, fill: "rgba(255,255,255,0.2)", fontWeight: 700 }} tickLine={false} axisLine={false} allowDecimals={false} />
                                             <Tooltip
-                                                contentStyle={{ background: "hsl(var(--card))", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 11, fontWeight: 700 }}
-                                                labelStyle={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}
-                                                formatter={(val: any, name: any) => [val, name === "followers" ? "Total Followers" : "New Today"]}
+                                                cursor={{ stroke: "rgba(255,255,255,0.06)", strokeWidth: 1 }}
+                                                contentStyle={{ background: "hsl(var(--card))", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 11, fontWeight: 700, padding: "8px 12px" }}
+                                                labelStyle={{ color: "rgba(255,255,255,0.4)", fontSize: 9, marginBottom: 4 }}
+                                                formatter={(val: any, name: any) => [val, name === "followers" ? "Total Followers" : "New"]}
                                             />
-                                            <Area type="monotone" dataKey="followers" stroke="#F472B6" strokeWidth={2} fill="url(#followerGrad)" dot={false} activeDot={{ r: 4, fill: "#F472B6" }} />
+                                            <Area type="monotone" dataKey="followers" stroke="#F472B6" strokeWidth={2} fill="url(#followerGrad)" dot={false} activeDot={{ r: 3, fill: "#F472B6", strokeWidth: 0 }} />
                                         </AreaChart>
                                     </ResponsiveContainer>
                                 )}
-                            </div>
-
-                            {/* Events vs Earnings */}
-                            <div className="lg:col-span-2 bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div>
-                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Events vs Earnings</p>
-                                        <p className="text-[9px] font-bold text-foreground/25 mt-0.5">Last 8 events</p>
-                                    </div>
-                                    <span className="text-[10px] font-black text-lime-400">
-                                        ${eventsEarningsData.reduce((s, d) => s + d.earnings, 0).toFixed(2)} earned
-                                    </span>
-                                </div>
-                                {eventsEarningsData.length === 0 ? (
-                                    <div className="h-[120px] flex items-center justify-center">
-                                        <p className="text-[10px] font-bold text-foreground/20">No event data yet</p>
-                                    </div>
-                                ) : (
-                                    <ResponsiveContainer width="100%" height={120}>
-                                        <BarChart data={eventsEarningsData} barGap={4} margin={{ top: 0, right: 4, left: -20, bottom: 0 }}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                                            <XAxis dataKey="label" tick={{ fontSize: 7, fill: "rgba(255,255,255,0.25)", fontWeight: 700 }} tickLine={false} axisLine={false} />
-                                            <YAxis tick={{ fontSize: 7, fill: "rgba(255,255,255,0.2)", fontWeight: 700 }} tickLine={false} axisLine={false} allowDecimals={false} />
-                                            <Tooltip
-                                                contentStyle={{ background: "hsl(var(--card))", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 11, fontWeight: 700 }}
-                                                labelStyle={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}
-                                                formatter={(val: any, name: any) => [name === "earnings" ? `$${Number(val).toFixed(2)}` : `${val} XP`, name === "earnings" ? "Earned (USDC)" : "XP Earned"]}
-                                            />
-                                            <Bar dataKey="earnings" fill="#A3E635" radius={[3, 3, 0, 0]} maxBarSize={20} />
-                                            <Bar dataKey="xp" fill="#A78BFA" radius={[3, 3, 0, 0]} maxBarSize={20} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
+                                {followers.length === 0 && (
+                                    <p className="text-[9px] font-bold text-foreground/20 mt-3">Post content to attract followers</p>
                                 )}
-                                <div className="flex items-center gap-4 mt-2">
-                                    <div className="flex items-center gap-1.5"><span className="w-3 h-2 bg-[#A3E635] rounded-sm" /><span className="text-[9px] font-bold text-foreground/30">Earnings (USDC)</span></div>
-                                    <div className="flex items-center gap-1.5"><span className="w-3 h-2 bg-[#A78BFA] rounded-sm" /><span className="text-[9px] font-bold text-foreground/30">XP Earned</span></div>
-                                </div>
-                            </div>
-
-                            {/* Activity bar chart */}
-                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div>
-                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Activity</p>
-                                        <p className="text-[9px] font-bold text-foreground/25 mt-0.5">By week</p>
-                                    </div>
-                                    <div className="flex flex-col gap-1 items-end">
-                                        <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#60A5FA]" /><span className="text-[8px] font-bold text-foreground/40">Votes</span></div>
-                                        <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#A3E635]" /><span className="text-[8px] font-bold text-foreground/40">Posts</span></div>
-                                    </div>
-                                </div>
-                                <ResponsiveContainer width="100%" height={120}>
-                                    <BarChart data={activityData.slice(-6)} barGap={2} margin={{ top: 0, right: 2, left: -24, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                                        <XAxis dataKey="label" tick={{ fontSize: 7, fill: "rgba(255,255,255,0.25)", fontWeight: 700 }} tickLine={false} axisLine={false} />
-                                        <YAxis tick={{ fontSize: 7, fill: "rgba(255,255,255,0.2)", fontWeight: 700 }} tickLine={false} axisLine={false} allowDecimals={false} />
-                                        <Tooltip
-                                            contentStyle={{ background: "hsl(var(--card))", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 11, fontWeight: 700 }}
-                                            labelStyle={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}
-                                        />
-                                        <Bar dataKey="votes" fill="#60A5FA" radius={[3, 3, 0, 0]} maxBarSize={16} />
-                                        <Bar dataKey="posts" fill="#A3E635" radius={[3, 3, 0, 0]} maxBarSize={16} />
-                                    </BarChart>
-                                </ResponsiveContainer>
                             </div>
 
                             </div>

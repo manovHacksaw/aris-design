@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useWallet } from "@/context/WalletContext";
 import { useAuth } from "@/context/AuthContext";
 
 import { useUser } from "@/context/UserContext";
+import { perfLog, perfNow } from "@/lib/perf";
 
 // Paths that don't require authentication (wallet or onboarding)
 const PUBLIC_PATHS = ["/register", "/onboard", "/admin", "/claim-brand", "/brand/pending"];
@@ -92,9 +93,9 @@ export function AppSkeleton() {
 }
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { isConnected, isInitialized, isLoading: walletLoading } = useWallet();
+  const { isAuthenticated, isConnected, isInitialized, isLoading: walletLoading } = useWallet();
   const { isOnboarded: authIsOnboarded, role: authRole, isLoading: authLoading } = useAuth();
-  const { user, isLoading: userLoading } = useUser();
+  const { user } = useUser();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -104,18 +105,40 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   // Brand is active only after admin approval + claim. Null/undefined ownedBrands means not yet claimed.
   const brandIsActive = user?.ownedBrands?.[0]?.isActive === true;
 
-  const isLoading = !isInitialized || walletLoading || authLoading || userLoading;
+  // Keep route protection responsive, but do not block first paint on user profile fetch.
+  const isLoading = !isInitialized || walletLoading || authLoading;
+  const loadStartRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (isLoading && loadStartRef.current === null) {
+      loadStartRef.current = perfNow();
+      perfLog("auth-guard", "loading started");
+      return;
+    }
+    if (!isLoading && loadStartRef.current !== null) {
+      const elapsed = perfNow() - loadStartRef.current;
+      perfLog("auth-guard", `loading cleared in ${elapsed.toFixed(1)}ms`, {
+        isAuthenticated,
+        isConnected,
+        pathname,
+      });
+      loadStartRef.current = null;
+    }
+  }, [isLoading, isAuthenticated, isConnected, pathname]);
 
   useEffect(() => {
     if (isLoading) return;
 
     // Not authenticated — redirect to register
-    if (!isConnected) {
+    if (!isAuthenticated) {
       if (!isPublicPath(pathname)) {
         router.replace("/register");
       }
       return;
     }
+
+    // Session exists but smart-wallet address can lag briefly; avoid false logout redirects.
+    if (!isConnected) return;
 
     // Authenticated but not onboarded — send to signup to complete onboarding
     if (!isOnboarded) {
@@ -160,7 +183,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       router.replace("/");
       return;
     }
-  }, [isLoading, isConnected, isOnboarded, isBrand, brandIsActive, pathname, router]);
+  }, [isLoading, isAuthenticated, isConnected, isOnboarded, isBrand, brandIsActive, pathname, router]);
 
   // Public paths handle their own loading state
   if (isLoading) {
@@ -171,8 +194,13 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   // Not connected — render null while redirect happens
-  if (!isConnected && !isPublicPath(pathname)) {
+  if (!isAuthenticated && !isPublicPath(pathname)) {
     return null;
+  }
+
+  // Authenticated session present, waiting for smart-wallet address hydration.
+  if (isAuthenticated && !isConnected && !isPublicPath(pathname)) {
+    return <AppSkeleton />;
   }
 
   // Connected but not onboarded — render null while redirect happens

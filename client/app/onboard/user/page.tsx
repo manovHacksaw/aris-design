@@ -1,171 +1,160 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, User, Target, Globe, Heart, BarChart2, Users, Wallet, Sparkles } from "lucide-react";
+import { Loader2, User, IdCard, Target, Heart, Users, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 import { useWallet } from "@/context/WalletContext";
 import { useAuth } from "@/context/AuthContext";
+import type { OnboardingData } from "@/context/AuthContext";
 import { useUser } from "@/context/UserContext";
 import { saveOnboardingAnalytics, applyReferralCode } from "@/services/user.service";
 
 import OnboardingShell, { type StepMeta } from "@/components/onboarding/OnboardingShell";
 import StepIdentity, { type IdentityData } from "@/components/onboarding/steps/StepIdentity";
+import StepPersonalDetails, { type PersonalDetailsData } from "@/components/onboarding/steps/StepPersonalDetails";
 import StepIntent, { type IntentData } from "@/components/onboarding/steps/StepIntent";
-import StepWeb3, { type Web3Data } from "@/components/onboarding/steps/StepWeb3";
 import StepInterests, { type InterestsData } from "@/components/onboarding/steps/StepInterests";
 import StepBehavior, { type BehaviorData } from "@/components/onboarding/steps/StepBehavior";
 import StepNetwork, { type NetworkData } from "@/components/onboarding/steps/StepNetwork";
-import StepWalletIntro from "@/components/onboarding/steps/StepWalletIntro";
 import StepComplete from "@/components/onboarding/steps/StepComplete";
-
-// ─── Step metadata (left panel content) ──────────────────────────────────────
 
 const STEP_META: StepMeta[] = [
   {
     Icon: User,
-    title: "Create Your\nIdentity",
-    subtitle: "Set up your Aris profile. Choose a unique username.",
+    title: "Account\nSetup",
+    subtitle: "Add your identity details to create your public Aris profile.",
     hints: [
-      "Display name is visible to everyone and can be changed later",
-      "Username — lowercase letters and numbers only",
-      "Upload a profile photo to stand out in the community",
+      "Name and username are required",
+      "Bio and profile photo are optional",
+      "Add a referral code now if you have one",
     ],
-    bg: "https://images.unsplash.com/flagged/photo-1574164908900-6275ca361157?q=80&w=735&auto=format&fit=crop",
+    bg: "https://images.unsplash.com/photo-1574164908900-6275ca361157?q=80&w=735&auto=format&fit=crop",
   },
   {
-    Icon: Target,
-    title: "Your Goals\nOn Aris",
-    subtitle: "Tell us why you're here so we can personalise your experience from day one.",
+    Icon: IdCard,
+    title: "Personal\nDetails",
+    subtitle: "Set your age and gender so we can personalize safely.",
     hints: [
-      "Select everything that interests you — no wrong answers",
-      "Your goals shape your feed, notifications, and recommendations",
-      "You can update your goals later in profile settings",
+      "Minimum age is 16 years",
+      "Gender options: Male, Female, Other",
+      "This can be updated later in settings",
     ],
     bg: "https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=1170&auto=format&fit=crop",
   },
   {
-    Icon: Globe,
-    title: "Web3\nComfort Level",
-    subtitle: "This helps us adjust hints, tooltips, and feature visibility to match your experience.",
+    Icon: Target,
+    title: "Your\nInterest",
+    subtitle: "Choose how you want to engage on Aris.",
     hints: [
-      "Beginners get step-by-step guidance throughout the app",
-      "Advanced users unlock power features like raw wallet control",
-      "You can change this in settings as you learn more",
-    ],
-    bg: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=1332&auto=format&fit=crop",
-  },
-  {
-    Icon: Heart,
-    title: "Find Your\nTribe",
-    subtitle: "Pick your interests to personalise your feed and unlock relevant campaigns.",
-    hints: [
-      "Select at least 3 interests to continue",
-      "More specific selections lead to better brand matches",
-      "You can always update these from your profile settings",
+      "Pick one or multiple options",
+      "This helps personalize recommendations",
+      "You can change this later",
     ],
     bg: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?q=80&w=1170&auto=format&fit=crop",
   },
   {
-    Icon: BarChart2,
-    title: "Help Us\nImprove",
-    subtitle: "Quick anonymous questions that help us build a better platform for everyone.",
+    Icon: Heart,
+    title: "Brand + Domain\nPreferences",
+    subtitle: "Select categories and domains you want to see first.",
     hints: [
-      "All answers are anonymous and for internal analytics only",
-      "This data is never shown back to you or made public",
-      "Skipping individual questions is totally fine",
+      "Choose at least one brand category",
+      "Choose at least one domain",
+      "These preferences shape your initial feed",
     ],
     bg: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1170&auto=format&fit=crop",
   },
   {
-    Icon: Users,
-    title: "Seed Your\nFeed",
-    subtitle: "Follow brands and creators you like to get a personalised feed from the start.",
+    Icon: Sparkles,
+    title: "Discovery +\nTheme",
+    subtitle: "Tell us how you found us and pick Bright or Dark mode.",
     hints: [
-      "Suggestions are based on your interests and goals",
-      "You can unfollow at any time from their profiles",
-      "Skip this step if you prefer to discover organically",
+      "Source selection is optional",
+      "Theme applies immediately",
+      "You can toggle theme anytime",
+    ],
+    bg: "https://images.unsplash.com/photo-1557804506-669a67965ba0?q=80&w=1074&auto=format&fit=crop",
+  },
+  {
+    Icon: Users,
+    title: "Follow Brands\n& Creators",
+    subtitle: "Seed your feed by following profiles now, or skip.",
+    hints: [
+      "Completely optional step",
+      "Unfollow anytime later",
+      "This only affects initial feed quality",
     ],
     bg: "https://images.unsplash.com/photo-1556761175-4b46a572b786?q=80&w=1074&auto=format&fit=crop",
   },
   {
-    Icon: Wallet,
-    title: "Your Wallet\nIs Ready",
-    subtitle: "A gasless smart account was created for you automatically. Here's how rewards work.",
-    hints: [
-      "No seed phrase needed — your wallet is secured by your login",
-      "All transactions are gasless — we cover the fees for you",
-      "Rewards are paid in USDC directly to your smart account",
-    ],
-    bg: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=1332&auto=format&fit=crop",
-  },
-  {
     Icon: Sparkles,
-    title: "You're\nAll Set!",
-    subtitle: "Your profile is live. Jump into your first campaign and start earning.",
+    title: "Welcome\nTo Aris",
+    subtitle: "Finish onboarding and choose whether to run the brief platform tour.",
     hints: [
-      "You've earned +10 XP just for completing onboarding",
-      "Your Early Explorer badge has been unlocked",
-      "Your personalised feed is ready — dive in!",
+      "Tour is 7 short steps",
+      "You can skip and start exploring immediately",
+      "Welcome bonus is unlocked",
     ],
-    bg: "https://images.unsplash.com/photo-1557804506-669a67965ba0?q=80&w=1074&auto=format&fit=crop",
+    bg: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=1170&auto=format&fit=crop",
   },
 ];
-
-// ─── Form state ───────────────────────────────────────────────────────────────
 
 interface OnboardingForm {
   displayName: string;
   username: string;
+  email: string;
   bio: string;
   avatarUrl: string;
+  incomingReferralCode: string;
   gender: string;
-  phoneNumber: string;
   dateOfBirth: string;
   intentGoals: string[];
-  web3Level: "beginner" | "basic" | "intermediate" | "advanced" | "";
   preferredCategories: string[];
-  creatorType: string;
-  contentFormat: string;
+  preferredDomains: string[];
   analyticsData: Partial<BehaviorData>;
   followedBrands: string[];
   followedCreators: string[];
 }
 
-function detectResumeStep(d: any): number {
+function detectResumeStep(d: Partial<OnboardingData> | null): number {
   if (!d) return 1;
   if (!d.displayName || !d.username) return 1;
-  if (!d.intentGoals?.length) return 2;
-  if (!d.web3Level) return 3;
+  if (!d.dateOfBirth || !d.gender) return 2;
+  if (!d.intentGoals?.length) return 3;
   if (!d.preferredCategories?.length) return 4;
   return 5;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error && typeof error === "object" && "message" in error && typeof error.message === "string") {
+    return error.message;
+  }
+  return fallback;
+}
 
 export default function UserOnboarding() {
   const router = useRouter();
   const { isConnected, isInitialized, isLoading: walletLoading, userInfo } = useWallet();
   const { completeOnboarding, setOnboardingData, isOnboarded, onboardingData, isLoading: authLoading } = useAuth();
-  const { updateProfile, user } = useUser();
+  const { updateProfile } = useUser();
 
   const [step, setStep] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
+  const hasResumed = useRef(false);
 
   const [form, setForm] = useState<OnboardingForm>({
     displayName: onboardingData?.displayName || userInfo?.name || "",
     username: onboardingData?.username || "",
+    email: onboardingData?.email || userInfo?.email || "",
     bio: onboardingData?.bio || "",
     avatarUrl: onboardingData?.avatarUrl || userInfo?.profileImage || "",
+    incomingReferralCode: onboardingData?.incomingReferralCode || "",
     gender: onboardingData?.gender || "",
-    phoneNumber: onboardingData?.phoneNumber || "",
     dateOfBirth: onboardingData?.dateOfBirth || "",
     intentGoals: onboardingData?.intentGoals || [],
-    web3Level: (onboardingData?.web3Level as OnboardingForm["web3Level"]) || "",
     preferredCategories: onboardingData?.preferredCategories || [],
-    creatorType: onboardingData?.creatorType || "",
-    contentFormat: onboardingData?.contentFormat || "",
+    preferredDomains: onboardingData?.preferredDomains || [],
     analyticsData: (onboardingData?.analyticsData as Partial<BehaviorData>) || {},
     followedBrands: onboardingData?.followedBrands || [],
     followedCreators: onboardingData?.followedCreators || [],
@@ -181,16 +170,18 @@ export default function UserOnboarding() {
   }, [isOnboarded, authLoading, router]);
 
   useEffect(() => {
-    if (!authLoading && onboardingData) {
+    if (!authLoading && onboardingData && !hasResumed.current) {
+      hasResumed.current = true;
       const resumeStep = detectResumeStep(onboardingData);
       if (resumeStep > 1) setStep(resumeStep);
     }
-  }, [authLoading]);
+  }, [authLoading, onboardingData]);
 
   useEffect(() => {
     if (userInfo?.name && !form.displayName) setForm(f => ({ ...f, displayName: userInfo.name! }));
     if (userInfo?.profileImage && !form.avatarUrl) setForm(f => ({ ...f, avatarUrl: userInfo.profileImage! }));
-  }, [userInfo]);
+    if (userInfo?.email && !form.email) setForm(f => ({ ...f, email: userInfo.email! }));
+  }, [userInfo, form.displayName, form.avatarUrl, form.email]);
 
   const advance = (partial: Partial<OnboardingForm>) => {
     const next = { ...form, ...partial };
@@ -199,17 +190,16 @@ export default function UserOnboarding() {
       role: "user",
       displayName: next.displayName,
       username: next.username,
+      email: next.email,
       bio: next.bio,
       avatarUrl: next.avatarUrl,
+      incomingReferralCode: next.incomingReferralCode,
       gender: next.gender,
-      phoneNumber: next.phoneNumber,
       dateOfBirth: next.dateOfBirth,
       intentGoals: next.intentGoals,
-      web3Level: next.web3Level as any,
       preferredCategories: next.preferredCategories,
-      creatorType: next.creatorType,
-      contentFormat: next.contentFormat,
-      analyticsData: next.analyticsData as any,
+      preferredDomains: next.preferredDomains,
+      analyticsData: next.analyticsData,
       followedBrands: next.followedBrands,
       followedCreators: next.followedCreators,
       onboardingStep: step + 1,
@@ -219,44 +209,36 @@ export default function UserOnboarding() {
 
   const back = () => setStep(s => Math.max(1, s - 1));
 
-  const handleComplete = async (appliedReferralCode?: string) => {
+  const handleComplete = async (startTour: boolean) => {
     setIsSaving(true);
     try {
       await updateProfile({
+        email: form.email || undefined,
         displayName: form.displayName,
         username: form.username,
         bio: form.bio,
         avatarUrl: form.avatarUrl,
-        gender: form.gender || undefined,
-        phoneNumber: form.phoneNumber || undefined,
+        gender: form.gender,
         dateOfBirth: form.dateOfBirth ? new Date(form.dateOfBirth).toISOString() : undefined,
         preferredCategories: form.preferredCategories,
+        creatorCategories: form.preferredDomains,
         isOnboarded: true,
         intentGoals: form.intentGoals,
-        web3Level: form.web3Level || undefined,
-        contentFormat: form.contentFormat || undefined,
-        creatorCategories: form.creatorType ? [form.creatorType] : [],
-        onboardingStep: 8,
+        onboardingStep: 7,
       });
 
-      if (Object.values(form.analyticsData).some(Boolean)) {
+      if (form.analyticsData.referralSource || form.analyticsData.themePreference) {
         saveOnboardingAnalytics({
-          adsSeenDaily: form.analyticsData.adsSeenDaily,
           referralSource: form.analyticsData.referralSource,
-          joinMotivation: form.analyticsData.joinMotivation,
-          socialPlatforms: form.analyticsData.socialPlatforms,
-          rewardPreference: form.analyticsData.rewardPreference,
-          engagementStyle: form.analyticsData.engagementStyle,
         }).catch(err => console.warn("Analytics save failed:", err));
       }
 
-      if (appliedReferralCode) {
+      if (form.incomingReferralCode) {
         try {
-          const result = await applyReferralCode(appliedReferralCode);
+          const result = await applyReferralCode(form.incomingReferralCode);
           toast.success(result.message || "Referral applied!");
-        } catch (err: any) {
-          // Non-fatal — warn but don't block onboarding
-          toast.warning(err?.message || "Referral code could not be applied.");
+        } catch (err: unknown) {
+          toast.warning(getErrorMessage(err, "Referral code could not be applied."));
         }
       }
 
@@ -264,26 +246,33 @@ export default function UserOnboarding() {
         role: "user",
         displayName: form.displayName,
         username: form.username,
+        email: form.email,
         bio: form.bio,
         avatarUrl: form.avatarUrl,
+        incomingReferralCode: form.incomingReferralCode,
         gender: form.gender,
-        phoneNumber: form.phoneNumber,
         dateOfBirth: form.dateOfBirth,
         intentGoals: form.intentGoals,
-        web3Level: form.web3Level as any,
         preferredCategories: form.preferredCategories,
-        creatorType: form.creatorType,
-        contentFormat: form.contentFormat,
+        preferredDomains: form.preferredDomains,
         followedBrands: form.followedBrands,
         followedCreators: form.followedCreators,
+        themePreference:
+          form.analyticsData.themePreference === "light" || form.analyticsData.themePreference === "dark"
+            ? form.analyticsData.themePreference
+            : undefined,
         isOnboarded: true,
       });
 
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("aris_start_platform_tour", startTour ? "true" : "false");
+      }
+
       toast.success("Welcome to Aris!");
       router.push("/");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error(err?.message || "Something went wrong. Please try again.");
+      toast.error(getErrorMessage(err, "Something went wrong. Please try again."));
     } finally {
       setIsSaving(false);
     }
@@ -302,11 +291,18 @@ export default function UserOnboarding() {
   const meta = STEP_META[step - 1];
 
   return (
-    <OnboardingShell step={step} total={8} meta={meta}>
+    <OnboardingShell step={step} total={7} meta={meta}>
 
       {step === 1 && (
         <StepIdentity
-          initial={{ displayName: form.displayName, username: form.username, bio: form.bio, avatarUrl: form.avatarUrl, gender: form.gender, phoneNumber: form.phoneNumber, dateOfBirth: form.dateOfBirth }}
+          initial={{
+            displayName: form.displayName,
+            username: form.username,
+            email: form.email,
+            bio: form.bio,
+            avatarUrl: form.avatarUrl,
+            incomingReferralCode: form.incomingReferralCode,
+          }}
           prefillName={userInfo?.name}
           prefillAvatar={userInfo?.profileImage}
           onNext={(data: IdentityData) => advance(data)}
@@ -314,6 +310,14 @@ export default function UserOnboarding() {
       )}
 
       {step === 2 && (
+        <StepPersonalDetails
+          initial={{ dateOfBirth: form.dateOfBirth, gender: form.gender }}
+          onNext={(data: PersonalDetailsData) => advance(data)}
+          onBack={back}
+        />
+      )}
+
+      {step === 3 && (
         <StepIntent
           initial={{ intentGoals: form.intentGoals }}
           onNext={(data: IntentData) => advance(data)}
@@ -321,18 +325,15 @@ export default function UserOnboarding() {
         />
       )}
 
-      {step === 3 && (
-        <StepWeb3
-          initial={{ web3Level: form.web3Level as any }}
-          onNext={(data: Web3Data) => advance(data)}
-          onBack={back}
-        />
-      )}
-
       {step === 4 && (
         <StepInterests
-          initial={{ preferredCategories: form.preferredCategories, creatorType: form.creatorType, contentFormat: form.contentFormat }}
-          onNext={(data: InterestsData) => advance({ preferredCategories: data.preferredCategories, creatorType: data.creatorType, contentFormat: data.contentFormat })}
+          initial={{ preferredBrandCategories: form.preferredCategories, preferredDomains: form.preferredDomains }}
+          onNext={(data: InterestsData) =>
+            advance({
+              preferredCategories: data.preferredBrandCategories,
+              preferredDomains: data.preferredDomains,
+            })
+          }
           onBack={back}
         />
       )}
@@ -348,24 +349,17 @@ export default function UserOnboarding() {
       {step === 6 && (
         <StepNetwork
           initial={{ followedBrands: form.followedBrands, followedCreators: form.followedCreators }}
+          preferredCategories={form.preferredCategories}
           onNext={(data: NetworkData) => advance(data)}
           onBack={back}
         />
       )}
 
       {step === 7 && (
-        <StepWalletIntro
-          onNext={() => setStep(8)}
-          onBack={back}
-        />
-      )}
-
-      {step === 8 && (
         <StepComplete
           displayName={form.displayName}
-          referralCode={user?.referralCode}
           isSaving={isSaving}
-          onComplete={(code) => handleComplete(code)}
+          onComplete={(startTour) => handleComplete(startTour)}
           onBack={back}
         />
       )}
