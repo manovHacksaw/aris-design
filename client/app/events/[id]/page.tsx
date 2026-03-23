@@ -27,6 +27,7 @@ import {
 } from "@/services/submission.service";
 import { uploadToPinata, validateImageFile } from "@/lib/pinata-upload";
 import { generateAiImage, refineAiPrompt } from "@/services/ai.service";
+import { generateImage, base64ToFile, base64ToObjectUrl } from "@/services/image-generation.service";
 import { PinturaImageEditor } from "@/components/create/PinturaImageEditor";
 import { useUser } from "@/context/UserContext";
 import { useSocket } from "@/context/SocketContext";
@@ -601,6 +602,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     const [aiGenerating, setAiGenerating] = useState(false);
     const [aiRefining, setAiRefining] = useState(false);
     const [aiImageUrl, setAiImageUrl] = useState<string | null>(null);
+    const [aiImageFile, setAiImageFile] = useState<File | null>(null);
 
     const [gridView, setGridView] = useState(true);
 
@@ -764,16 +766,13 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     };
 
     const handleSubmit = async () => {
-        if (!file && !aiImageUrl) { toast.error("Please select or generate an image."); return; }
+        if (!file && !aiImageFile) { toast.error("Please select or generate an image."); return; }
         setSubmitting(true);
         try {
             let imageUrl: string;
-            if (aiImageUrl) {
-                imageUrl = aiImageUrl;
-            } else {
-                const res = await uploadToPinata(file!);
-                imageUrl = res.imageUrl;
-            }
+            const uploadFile = aiImageFile ?? file!;
+            const res = await uploadToPinata(uploadFile);
+            imageUrl = res.imageUrl;
             const sub = await createSubmission({ eventId: event!.id, imageUrl, caption: caption.trim() || undefined });
             toast.success("Submission uploaded!");
             setHasSubmitted(true);
@@ -788,16 +787,24 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
     const handleAiGenerate = async () => {
         if (!aiPrompt.trim()) { toast.error("Enter a prompt first."); return; }
+        if (!user?.id) { toast.error("Please sign in to generate images."); return; }
         setAiGenerating(true);
+        // Revoke previous object URL to avoid memory leaks
+        if (aiImageUrl && aiImageUrl.startsWith("blob:")) URL.revokeObjectURL(aiImageUrl);
         try {
-            const res = await generateAiImage(aiPrompt.trim());
-            if (res.success && (res.url || res.cid)) {
-                const url = res.url || `${PINATA_GW}/${res.cid}`;
-                setAiImageUrl(url);
-                setPreview(url);
+            const res = await generateImage(aiPrompt.trim(), user.id, "user");
+            if (res.success && res.image) {
+                const objectUrl = base64ToObjectUrl(res.image.data, res.image.mimeType);
+                const imgFile = base64ToFile(res.image.data, res.image.mimeType, `ai-generated-${Date.now()}.png`);
+                setAiImageUrl(objectUrl);
+                setAiImageFile(imgFile);
+                setPreview(objectUrl);
                 setFile(null);
+                if (res.remainingGenerations !== undefined) {
+                    toast.success(`Image generated! ${res.remainingGenerations} generation${res.remainingGenerations === 1 ? "" : "s"} left today.`);
+                }
             } else {
-                toast.error(res.error || "Image generation failed.");
+                toast.error(res.error || "Image generation failed. Please try again.");
             }
         } catch (err: any) {
             toast.error(err?.message ?? "Generation failed.");
@@ -1260,7 +1267,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                             </div>
                                                             {/* Remove button */}
                                                             <button
-                                                                onClick={() => { setAiImageUrl(null); setPreview(null); }}
+                                                                onClick={() => { if (aiImageUrl?.startsWith("blob:")) URL.revokeObjectURL(aiImageUrl); setAiImageUrl(null); setAiImageFile(null); setPreview(null); }}
                                                                 className="absolute top-3 left-3 w-7 h-7 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-red-500/80 transition-colors z-10"
                                                             >
                                                                 <X className="w-3.5 h-3.5 text-white" />
@@ -1315,7 +1322,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                             {/* Submit CTA */}
                                             <button
                                                 onClick={handleSubmit}
-                                                disabled={(!file && !aiImageUrl) || submitting}
+                                                disabled={(!file && !aiImageFile) || submitting}
                                                 className={cn(
                                                     "w-full py-4 text-white rounded-[14px] text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2.5 active:scale-[0.99] transition-all disabled:opacity-30 disabled:cursor-not-allowed",
                                                     aiImageUrl ? "bg-purple-500 hover:bg-purple-500/90" : "bg-orange-500 hover:bg-orange-500/90"
