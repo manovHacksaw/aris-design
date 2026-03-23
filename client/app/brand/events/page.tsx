@@ -139,7 +139,7 @@ export default function BrandCampaignsPage() {
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             placeholder="Search campaigns…"
-                            className="pl-9 pr-4 py-2.5 rounded-full bg-card border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 w-64"
+                            className="pl-9 pr-4 py-2.5 rounded-full bg-card border border-border text-sm font-sans focus:outline-none focus:ring-2 focus:ring-primary/20 w-64"
                         />
                     </div>
                     <Link
@@ -161,7 +161,7 @@ export default function BrandCampaignsPage() {
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                     placeholder="Search campaigns…"
-                    className="w-full pl-9 pr-4 py-3 rounded-[16px] bg-card border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="w-full pl-9 pr-4 py-3 rounded-[16px] bg-card border border-border text-sm font-sans focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
             </div>
 
@@ -202,7 +202,7 @@ export default function BrandCampaignsPage() {
                         value={domainFilter}
                         onChange={e => setDomainFilter(e.target.value)}
                         className={cn(
-                            "appearance-none pl-8 pr-8 py-2 rounded-full text-xs font-bold border transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20",
+                            "appearance-none pl-8 pr-8 py-2 rounded-full text-xs font-bold font-sans border transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20",
                             domainFilter !== "all"
                                 ? "bg-primary text-primary-foreground border-primary"
                                 : "bg-card text-muted-foreground border-border hover:border-primary/40 hover:text-foreground"

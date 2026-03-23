@@ -506,12 +506,17 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
             setSubmissions((subs) => subs.map((s) => s.id === submissionId ? { ...s, _count: { votes: (s._count?.votes ?? 0) + delta } } : s));
         };
         const handlePresenceUpdate = ({ activeCount }: { activeCount: number }) => setActiveViewers(activeCount);
+        const handleParticipantUpdate = () => {
+            getEventParticipants(id).then(setParticipants).catch(() => {});
+        };
         socket.on("vote-update", handleVoteUpdate);
         socket.on("presence-update", handlePresenceUpdate);
+        socket.on("participant-update", handleParticipantUpdate);
         return () => {
             socket.emit("leave-event", id);
             socket.off("vote-update", handleVoteUpdate);
             socket.off("presence-update", handlePresenceUpdate);
+            socket.off("participant-update", handleParticipantUpdate);
         };
     }, [socket, id]);
 
@@ -560,6 +565,23 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
     const coverUrl = imgUrl(event?.imageUrl, event?.imageCid) ?? "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop";
 
     const enrichedSubmissions = submissions;
+
+    // For post_and_vote events, derive participants from submitters (not voters)
+    const displayParticipants: Participant[] = event?.eventType === "post_and_vote"
+        ? submissions
+            .filter((s) => s.user)
+            .map((s) => ({
+                id: s.userId,
+                displayName: s.user?.displayName,
+                username: s.user?.username,
+                avatarUrl: s.user?.avatarUrl,
+                profilePicCid: undefined,
+            }))
+        : participants;
+
+    const displayParticipantCount = event?.eventType === "post_and_vote"
+        ? submissions.length
+        : (event?._count?.votes ?? participants.length);
 
     const displayMode: "post" | "vote" | "completed" | "upcoming" =
         event?.status === "completed" ? "completed"
@@ -727,8 +749,8 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                             <EventSidebar
                                 event={event}
                                 activeViewers={activeViewers}
-                                participants={participants}
-                                totalParticipants={event._count?.votes ?? participants.length}
+                                participants={displayParticipants}
+                                totalParticipants={displayParticipantCount}
                             />
                         </div>
                     </div>

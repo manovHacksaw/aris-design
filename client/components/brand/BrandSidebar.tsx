@@ -8,7 +8,6 @@ import {
     IoMegaphoneOutline,
     IoAddCircleOutline,
     IoWalletOutline,
-    IoSettingsOutline,
     IoNotificationsOutline,
     IoSunnyOutline,
     IoMoonOutline,
@@ -29,6 +28,8 @@ import { cn } from "@/lib/utils";
 import { useSidebar } from "@/context/SidebarContext";
 import { motion } from "framer-motion";
 import { useTheme } from "next-themes";
+import { useUser } from "@/context/UserContext";
+import { getCurrentBrand } from "@/services/brand.service";
 
 export default function BrandSidebar() {
     const pathname = usePathname();
@@ -37,7 +38,24 @@ export default function BrandSidebar() {
     const { theme, setTheme } = useTheme();
     const { disconnect } = useWallet();
     const { unreadCount } = useNotifications();
+    const { user } = useUser();
     const [mounted, setMounted] = useState(false);
+    const [brandLogoUrl, setBrandLogoUrl] = useState<string | undefined>(undefined);
+
+    useEffect(() => {
+        getCurrentBrand()
+            .then((brand) => {
+                const url =
+                    brand.logoUrls?.thumbnail ||
+                    (brand.logoCid ? `https://gateway.pinata.cloud/ipfs/${brand.logoCid}` : null) ||
+                    user?.avatarUrl ||
+                    undefined;
+                setBrandLogoUrl(url ?? undefined);
+            })
+            .catch(() => {
+                setBrandLogoUrl(user?.avatarUrl ?? undefined);
+            });
+    }, [user]);
 
     const showExpanded = !isCollapsed;
 
@@ -53,7 +71,7 @@ export default function BrandSidebar() {
         { label: "Milestones", href: "/brand/milestones", icon: IoRibbonOutline },
         { label: "Wallet", href: "/brand/wallet", icon: IoWalletOutline },
         { label: "Notifications", href: "/brand/notifications", icon: IoNotificationsOutline, badge: unreadCount },
-        { label: "Settings", href: "/brand/settings", icon: IoSettingsOutline },
+        { label: "Profile", href: "/brand/settings", avatar: brandLogoUrl, showUserFallback: true },
     ];
 
     if (!mounted) return null;
@@ -103,6 +121,8 @@ export default function BrandSidebar() {
                                     label={item.label}
                                     href={item.href}
                                     icon={item.icon}
+                                    avatar={(item as any).avatar}
+                                    showUserFallback={(item as any).showUserFallback}
                                     isActive={isActive}
                                 />
                                 {item.badge !== undefined && item.badge > 0 ? (

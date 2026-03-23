@@ -4,6 +4,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/context/SidebarContext";
 import { IconType } from "react-icons";
+import { IoPersonCircleOutline } from "react-icons/io5";
 
 interface SidebarItemProps {
     label: string;
@@ -11,6 +12,7 @@ interface SidebarItemProps {
     icon?: IconType;
     activeIcon?: IconType;
     avatar?: string;
+    showUserFallback?: boolean;
     isActive?: boolean;
 }
 
@@ -20,6 +22,7 @@ export default function SidebarItem({
     icon: Icon,
     activeIcon: ActiveIcon,
     avatar,
+    showUserFallback,
     isActive,
 }: SidebarItemProps) {
     const { isCollapsed } = useSidebar();
@@ -43,11 +46,19 @@ export default function SidebarItem({
             <div className="flex-shrink-0 relative flex items-center justify-center w-7 h-7 transition-all duration-200">
                 {avatar ? (
                     <img
-                             src={avatar}
+                        src={avatar}
                         alt={label}
                         className={cn(
                             "w-7 h-7 rounded-full object-cover transition-all duration-150",
                             isActive ? "ring-2 ring-white" : "border border-transparent"
+                        )}
+                    />
+                ) : showUserFallback ? (
+                    <IoPersonCircleOutline
+                        size={22}
+                        className={cn(
+                            "transition-colors duration-150",
+                            isActive ? "text-foreground" : "text-foreground/40 group-hover:text-foreground"
                         )}
                     />
                 ) : isActive && ActiveIcon ? (
