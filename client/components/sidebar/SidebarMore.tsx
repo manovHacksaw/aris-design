@@ -11,14 +11,17 @@ import {
     IoWarningOutline,
     IoPersonAddOutline,
     IoLinkOutline,
-    IoDocumentTextOutline
+    IoDocumentTextOutline,
+    IoLogOutOutline
 } from "react-icons/io5";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/context/SidebarContext";
+import { usePrivy } from "@privy-io/react-auth";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function SidebarMore() {
     const { isCollapsed, expandSidebar } = useSidebar();
+    const { logout } = usePrivy();
     const [isOpen, setIsOpen] = useState(false);
     const [coords, setCoords] = useState({ left: 0, bottom: 0 });
     const [mounted, setMounted] = useState(false);
@@ -121,6 +124,15 @@ export default function SidebarMore() {
                                 <button className="flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium text-[#9CA3AF] hover:text-white hover:bg-secondary rounded-[16px] transition-colors group">
                                     <IoPersonAddOutline size={20} className="flex-shrink-0 text-[#6B7280] group-hover:text-white transition-colors" />
                                     Switch accounts
+                                </button>
+
+                                {/* Log Out */}
+                                <button
+                                    onClick={() => { setIsOpen(false); logout(); }}
+                                    className="flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium text-red-400 hover:text-red-300 hover:bg-secondary rounded-[16px] transition-colors group"
+                                >
+                                    <IoLogOutOutline size={20} className="flex-shrink-0 transition-colors" />
+                                    Log out
                                 </button>
                             </div>
                         </motion.div>

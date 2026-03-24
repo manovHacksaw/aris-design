@@ -229,7 +229,7 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                         return (
                             <Link
                                 key={item.id || i}
-                                href={`/brand/${item.id}`}
+                                href={`/brand/${item.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}
                                 className="grid grid-cols-[24px_1fr_80px_88px] gap-3 sm:gap-5 items-center px-2 py-3 rounded-lg hover:bg-white/[0.025] transition-colors"
                             >
                                 <RankBadge rank={item.rank || i + 1} />

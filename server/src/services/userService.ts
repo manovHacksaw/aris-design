@@ -343,6 +343,8 @@ export class UserService {
                 eventsParticipated,
                 rewardClaims,
                 otherEarnings,
+                referralsCount,
+                loginStreakData,
             ] = await Promise.all([
                 // 1. Followers (Subscribers)
                 prisma.userFollowers.count({
@@ -391,6 +393,15 @@ export class UserService {
                     },
                     _sum: { amount: true },
                 }),
+                // 9. Referrals made by this user
+                prisma.referral.count({
+                    where: { referrerId: userId },
+                }),
+                // 10. Login streak
+                prisma.userLoginStreak.findUnique({
+                    where: { userId },
+                    select: { currentStreak: true },
+                }).catch(() => null),
             ]);
 
             const totalEarnings = (rewardClaims._sum.finalAmount || 0) + (otherEarnings._sum.amount || 0);
@@ -405,6 +416,8 @@ export class UserService {
                 votesReceived: votesReceived,
                 events: eventsParticipated.length,
                 earnings: totalEarnings,
+                referrals: referralsCount,
+                loginStreak: loginStreakData?.currentStreak ?? 0,
             };
 
             console.log(`[getUserStats] Stats for ${userId}:`, JSON.stringify(stats));

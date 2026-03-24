@@ -60,17 +60,7 @@ function enforceEventDemographics(
     }
   }
 
-  // --- Region ---
-  if (event.regions && event.regions.length > 0) {
-    const userRegion = (user.region ?? '').trim().toLowerCase();
-    if (!userRegion) {
-      throw new Error('Your region is required to participate in this event');
-    }
-    const allowed = event.regions.map((r) => r.trim().toLowerCase());
-    if (!allowed.includes(userRegion)) {
-      throw new Error('You do not meet the region requirement for this event');
-    }
-  }
+  // --- Region check disabled ---
 }
 
 // ---------------------------------------------------------------------------

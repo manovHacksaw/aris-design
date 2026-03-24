@@ -321,7 +321,7 @@ function MobileBrandCard({ item }: {
 }) {
     const [followed, setFollowed] = useState(item.isFollowed);
     return (
-        <a href={`/brand/${item.id}`} className="shrink-0 w-[120px] bg-white/[0.03] border border-white/[0.05] rounded-2xl p-3 flex flex-col items-center gap-2.5">
+        <a href={`/brand/${item.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`} className="shrink-0 w-[120px] bg-white/[0.03] border border-white/[0.05] rounded-2xl p-3 flex flex-col items-center gap-2.5">
             <div className="w-12 h-12 rounded-xl border border-white/[0.08] bg-white/[0.04] overflow-hidden flex items-center justify-center">
                 {item.avatar ? (
                     <img src={item.avatar} className="w-full h-full object-cover" alt={item.name} />

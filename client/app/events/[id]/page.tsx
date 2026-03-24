@@ -6,11 +6,11 @@ import {
     Clock, Trophy, Users, ChevronLeft, Share2, ImageIcon, CheckCircle2, Loader2,
     AlertCircle, Info, Upload, PlusCircle, Vote, ChevronRight,
     Twitter, Instagram, Globe, ExternalLink, LayoutGrid, List, ThumbsUp, Coins,
-    ShieldCheck, Tag, Sparkles, Wand2, RefreshCw, X, ZoomIn
+    ShieldCheck, Tag, Sparkles, Wand2, RefreshCw, X, ZoomIn, Eye
 } from "lucide-react";
 import { calculateTotalPool } from "@/lib/eventUtils";
 import Link from "next/link";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { VoteSubmission, PostSubmission, SubmissionStatus } from "@/types/events";
 import { formatCount } from "@/lib/eventUtils";
@@ -68,6 +68,42 @@ function ExpandableDescription({ text, className }: { text: string; className?: 
     );
 }
 
+function BigCountdown({ targetDate }: { targetDate: string | Date }) {
+    const target = useMemo(() => new Date(targetDate).getTime(), [targetDate]);
+    const [timeLeft, setTimeLeft] = useState(() => Math.max(0, target - Date.now()));
+
+    useEffect(() => {
+        const tick = () => setTimeLeft(Math.max(0, target - Date.now()));
+        tick();
+        const id = setInterval(tick, 1000);
+        return () => clearInterval(id);
+    }, [target]);
+
+    const days    = Math.floor(timeLeft / 86400000);
+    const hours   = Math.floor((timeLeft / 3600000) % 24);
+    const minutes = Math.floor((timeLeft / 60000) % 60);
+    const seconds = Math.floor((timeLeft / 1000) % 60);
+
+    const units = days > 0
+        ? [{ v: days, l: "D" }, { v: hours, l: "H" }, { v: minutes, l: "M" }]
+        : [{ v: hours, l: "H" }, { v: minutes, l: "M" }, { v: seconds, l: "S" }];
+
+    if (timeLeft === 0) return <span className="text-4xl font-black text-white/40 uppercase tracking-widest">Ended</span>;
+
+    return (
+        <div className="flex items-baseline gap-4">
+            {units.map(({ v, l }) => (
+                <div key={l} className="flex items-baseline gap-1">
+                    <span className="text-4xl md:text-5xl font-black text-white tabular-nums leading-none">
+                        {String(v).padStart(2, "0")}
+                    </span>
+                    <span className="text-sm font-black text-white/40 uppercase">{l}</span>
+                </div>
+            ))}
+        </div>
+    );
+}
+
 function imgUrl(imageUrl?: string | null, cid?: string | null): string | undefined {
     if (imageUrl) return imageUrl;
     if (cid) return `${PINATA_GW}/${cid}`;
@@ -90,7 +126,7 @@ function toVoteSubmission(sub: Submission, currentUserId?: string | null): VoteS
         },
         media: sub.imageUrl || (sub.imageCid ? `${PINATA_GW}/${sub.imageCid}` : ""),
         mediaType: (!sub.imageUrl && !sub.imageCid) ? "text" : "image",
-        textContent: sub.content,
+        textContent: (sub as any).caption || sub.content,
         voteCount: sub._count?.votes ?? 0,
         rank: sub.rank,
         isOwn: sub.userId === currentUserId,
@@ -240,304 +276,235 @@ function EventSidebar({
 
     return (
         <div className="space-y-4">
-            {/* ── Event info card ── */}
-            <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5">
-                {/* Brand */}
-                <div className="flex items-center gap-3 mb-4">
-                    {event.brand?.logoCid ? (
-                        <img
-                            src={`${PINATA_GW}/${event.brand.logoCid}`}
-                            className="w-10 h-10 rounded-xl object-cover border border-border/40"
-                        />
-                    ) : (
-                        <div className="w-10 h-10 rounded-xl bg-[#A78BFA]/10 flex items-center justify-center">
-                            <span className="text-xs font-black text-[#A78BFA]">{event.brand?.name?.[0] ?? "B"}</span>
-                        </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                        <p className="text-xs font-black text-foreground">{event.brand?.name}</p>
-                        <p className="text-[10px] text-foreground/40 font-medium">Event Host</p>
+            {/* ── Rewards card ── */}
+            {mode === "vote" || (mode === "completed" && event.eventType === "vote_only") ? (
+                /* ── Vote-only flat card ── */
+                <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5">
+                    <div className="mb-4">
+                        <span className="text-sm font-black text-foreground">Reward Breakdown</span>
                     </div>
-                    {event.category && (
-                        <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#A78BFA]/10 border border-[#A78BFA]/20 shrink-0">
-                            <Tag className="w-2.5 h-2.5 text-[#A78BFA]/70" />
-                            <span className="text-[9px] font-black uppercase tracking-widest text-[#A78BFA]/80">
-                                {event.category}
-                            </span>
-                        </div>
-                    )}
-                </div>
-
-                {/* Time remaining */}
-                {event.status !== "completed" && targetDate && (
-                    <div className={cn(
-                        "flex items-center justify-between py-3 px-3 rounded-[12px] border mt-1",
-                        event.status === "posting"
-                            ? "bg-orange-500/8 border-orange-500/20"
-                            : "bg-lime-400/5 border-lime-400/20"
-                    )}>
-                        <div className="flex items-center gap-1.5">
-                            <Clock className={cn("w-3 h-3", event.status === "posting" ? "text-orange-400" : "text-lime-400")} />
-                            <span className={cn("text-[10px] font-black uppercase tracking-widest",
-                                event.status === "posting" ? "text-orange-400/80" : "text-lime-400/80"
-                            )}>
-                                {event.status === "posting" ? "Posting Ends In" : "Voting Ends In"}
-                            </span>
-                        </div>
-                        <Countdown targetDate={targetDate} label="" />
-                    </div>
-                )}
-
-                {/* Participants / Posting rules */}
-                {mode === "post" ? (
-                    <div className="py-3 border-t border-border/30 space-y-2">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">How It Works</span>
-                        <div className="flex items-start gap-2.5 mt-2">
-                            <div className="w-5 h-5 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                                <Upload className="w-2.5 h-2.5 text-orange-400" />
+                    <div className="space-y-2 mb-4">
+                        <div className="flex items-center justify-between bg-sky-400/5 border border-sky-400/15 rounded-[12px] px-3 py-3">
+                            <div>
+                                <p className="text-[9px] font-black uppercase tracking-widest text-sky-400/70 mb-0.5">You Vote</p>
+                                <p className="text-[11px] text-foreground/60 leading-tight">Per vote you cast in this event</p>
                             </div>
-                            <p className="text-[11px] text-foreground/60 leading-snug">
-                                <span className="font-black text-foreground/80">One post per user.</span> Submit your best creative entry before time runs out.
-                            </p>
-                        </div>
-                        <div className="flex items-start gap-2.5">
-                            <div className="w-5 h-5 rounded-lg bg-lime-400/10 border border-lime-400/20 flex items-center justify-center shrink-0 mt-0.5">
-                                <Vote className="w-2.5 h-2.5 text-lime-400" />
-                            </div>
-                            <p className="text-[11px] text-foreground/60 leading-snug">
-                                <span className="font-black text-foreground/80">Voters are participants.</span> Participant count tracks votes cast — not posts — during the voting phase.
-                            </p>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="py-3 border-t border-border/30">
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Participating</span>
-                            <div className="flex items-center gap-1.5">
-                                <Users className="w-3 h-3 text-foreground/40" />
-                                <span className="text-sm font-black text-foreground">
-                                    {formatCount(participantCount)}
-                                </span>
-                                {event.capacity && (
-                                    <span className="text-[10px] text-foreground/35 font-medium">
-                                        / {formatCount(event.capacity)}
-                                    </span>
-                                )}
+                            <div className="text-right shrink-0 ml-2">
+                                <p className="text-base font-black text-sky-400">${(event.baseReward ?? 0.03).toFixed(2)}</p>
+                                <p className="text-[9px] text-foreground/40">USDC</p>
                             </div>
                         </div>
-                        {event.capacity && (
-                            <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
-                                <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${Math.min((participantCount / event.capacity) * 100, 100)}%` }}
-                                    transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                                    className="h-full rounded-full bg-gradient-to-r from-[#F97316] via-[#EA580C] to-[#C2410C]"
-                                />
+                        {topReward > 0 && (
+                            <div className="flex items-center justify-between bg-[#A78BFA]/5 border border-[#A78BFA]/15 rounded-[12px] px-3 py-3">
+                                <div>
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-[#A78BFA]/70 mb-0.5">Top Reward</p>
+                                    <p className="text-[11px] text-foreground/60 leading-tight">Divided among voters of winning content</p>
+                                </div>
+                                <div className="text-right shrink-0 ml-2">
+                                    <p className="text-base font-black text-[#A78BFA]">${topReward.toLocaleString()}</p>
+                                    <p className="text-[9px] text-foreground/40">USDC</p>
+                                </div>
                             </div>
                         )}
                     </div>
-                )}
-
-                {/* Active viewers */}
-                {activeViewers > 0 && (
-                    <div className="flex items-center justify-between py-3 border-t border-border/30">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Watching Now</span>
-                        <div className="flex items-center gap-1.5">
-                            <span className="relative flex h-1.5 w-1.5">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
-                            </span>
-                            <span className="text-sm font-black text-green-400">{activeViewers}</span>
-                        </div>
-                    </div>
-                )}
-
-                {/* Social links */}
-                <SocialLinks links={socialLinks} />
-            </div>
-
-            {/* ── Rewards + Guidelines card ── */}
-            <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5">
-                {/* Vote & Earn highlight — voting phase only */}
-                {mode === "vote" && (
-                    <div className="mb-4 bg-lime-400/8 border border-lime-400/20 rounded-[14px] p-3.5 flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-lime-400/15 flex items-center justify-center shrink-0">
-                            <Coins className="w-4 h-4 text-lime-400" />
-                        </div>
-                        <div>
-                            <p className="text-xs font-black text-lime-400">Vote &amp; Earn $0.03</p>
-                            <p className="text-[10px] text-foreground/50 leading-tight mt-0.5">
-                                Fixed reward per vote, distributed on completion
-                            </p>
-                        </div>
-                    </div>
-                )}
-
-                {/* Header */}
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                        <Trophy className="w-4 h-4 text-[#A78BFA]" />
-                        <span className="text-sm font-black text-foreground">Rewards Pool</span>
-                    </div>
-                    <span className="text-[9px] bg-[#A78BFA]/10 text-[#A78BFA] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border border-[#A78BFA]/20">
-                        Guaranteed
-                    </span>
-                </div>
-
-                {/* Grand prize */}
-                {topReward > 0 && (
-                    <div className="bg-[#A78BFA]/5 border border-[#A78BFA]/15 rounded-[14px] p-4 mb-3">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Grand-Prize Winner</p>
-                        <p className="text-2xl font-black text-foreground">${topReward.toLocaleString()}</p>
-                        <p className="text-[10px] text-foreground/40 font-medium">USDC</p>
-                    </div>
-                )}
-
-                {/* Leaderboard pool */}
-                {leaderboardPool > 0 && (
-                    <div className="mb-4">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Leaderboard Pool</p>
-                        <p className="text-xl font-black text-foreground">${leaderboardPool.toLocaleString()}</p>
-                        <p className="text-[10px] text-foreground/40 font-medium">USDC</p>
-                    </div>
-                )}
-
-                {/* Base reward */}
-                {event.baseReward != null && event.baseReward > 0 && (
-                    <div className="mb-4">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Per {mode === "vote" ? "Vote" : "Submission"}</p>
-                        <p className="text-lg font-black text-foreground">${event.baseReward.toLocaleString()}</p>
-                    </div>
-                )}
-
-                {/* Eligibility — posting phase only */}
-                {mode === "post" && (
-                    <div className="pb-4 mb-4 border-b border-border/40">
-                        <div className="flex items-center gap-1.5 mb-2.5">
-                            <ShieldCheck className="w-3 h-3 text-foreground/40" />
-                            <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40">Eligibility</p>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-orange-500/10 text-orange-400/80 border border-orange-500/15">
-                                Open to All Users
-                            </span>
-                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-foreground/5 text-foreground/50 border border-border/40">
-                                1 Submission / User
-                            </span>
-                        </div>
-                    </div>
-                )}
-
-                {/* Completed mode — final stats instead of guidelines */}
-                {mode === "completed" && (
-                    <div className="pt-4 border-t border-border/40 space-y-3">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40">Event Summary</p>
-                        <div className="grid grid-cols-2 gap-2">
-                            <div className="bg-white/[0.03] border border-white/[0.06] rounded-[12px] p-3">
-                                <p className="text-[9px] font-black uppercase tracking-widest text-foreground/35 mb-1">Total Votes</p>
-                                <p className="text-lg font-black text-foreground">{participantCount}</p>
-                            </div>
-                            <div className="bg-white/[0.03] border border-white/[0.06] rounded-[12px] p-3">
-                                <p className="text-[9px] font-black uppercase tracking-widest text-foreground/35 mb-1">Participants</p>
-                                <p className="text-lg font-black text-foreground">{participantCount}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2 px-3 py-2 rounded-[10px] bg-foreground/[0.03] border border-foreground/[0.06]">
-                            <div className="w-1.5 h-1.5 rounded-full bg-foreground/30 shrink-0" />
-                            <p className="text-[10px] text-foreground/40 font-medium">
-                                {event.capacity && participantCount >= event.capacity
-                                    ? "Ended · Participant cap reached"
-                                    : "Ended · Time limit reached"}
-                            </p>
-                        </div>
-                    </div>
-                )}
-
-                {/* Submission guidelines */}
-                <div className={cn(mode !== "post" && mode !== "completed" && "pt-4 border-t border-border/40")}>
-                    {mode !== "completed" && (
-                    <><p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-3">
-                        {mode === "vote" ? "Voting Guidelines" : "Posting Rules"}
-                    </p>
-                    <ol className="space-y-2.5">
-                        {(mode === "vote"
-                            ? [
-                                "Tap any image to open full-screen preview.",
-                                "Click the Vote button on your favourite entry.",
-                                "Confirm your vote in the bottom bar (one vote only).",
-                            ]
-                            : (event.submissionGuidelines
-                                ? event.submissionGuidelines.split("\n").filter(Boolean)
-                                : [
-                                    "Upload a high-res image (JPEG or PNG, max 5 MB).",
-                                    "Aspect ratio: 4:5 or 1:1 preferred.",
-                                    "Add an optional caption to describe your work.",
-                                    "One submission per participant — make it count.",
-                                    "No offensive, copyrighted   content.",
-                                ])
-                        ).map((rule, i) => (
-                            <li key={i} className="flex gap-2.5 text-xs text-foreground/60">
-                                <span className={cn(
-                                    "w-4 h-4 rounded-full font-black text-[9px] flex items-center justify-center shrink-0 mt-0.5",
-                                    mode === "vote"
-                                        ? "bg-lime-400/10 text-lime-400"
-                                        : "bg-orange-500/10 text-orange-400"
-                                )}>
-                                    {i + 1}
-                                </span>
-                                {rule}
-                            </li>
-                        ))}
-                    </ol></>
-                    )}
-                </div>
-            </div>
-
-            {/* ── Vote status / Submit form ── */}
-            {mode === "vote" && !isBrand && (
-                <div className={cn(
-                    "rounded-[20px] p-4 border space-y-3",
-                    votedSubmissionId
-                        ? "bg-lime-400/8 border-lime-400/25"
-                        : "bg-lime-400/5 border-lime-400/20"
-                )}>
-                    {/* Top row: icon + text + thumbnail */}
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-lime-400/15 flex items-center justify-center shrink-0">
-                            {votedSubmissionId
-                                ? <CheckCircle2 className="w-4 h-4 text-lime-400" />
-                                : <Vote className="w-4 h-4 text-lime-400" />
-                            }
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-sm font-black text-foreground">
-                                {votedSubmissionId ? "Vote cast!" : "Cast your vote"}
-                            </p>
-                            <p className="text-xs text-foreground/40 mt-0.5">
-                                {votedSubmissionId
-                                    ? `You voted for @${votedSub?.user?.username || "this entry"}`
-                                    : "Pick your favourite entry from the grid"}
-                            </p>
-                        </div>
-                        {votedSub && (votedSub.imageUrl || votedSub.imageCid) && (
-                            <img
-                                src={votedSub.imageUrl || `${PINATA_GW}/${votedSub.imageCid}`}
-                                className="w-10 h-10 rounded-xl object-cover border-2 border-lime-400/40 shrink-0"
-                            />
-                        )}
-                    </div>
-                    {/* Results countdown — only after vote confirmed */}
-                    {votedSubmissionId && event.endTime && (
-                        <div className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-black/20 border border-lime-400/10">
-                            <div className="flex items-center gap-1.5">
-                                <Clock className="w-3 h-3 text-lime-400/60" />
-                                <span className="text-[10px] font-black uppercase tracking-widest text-lime-400/60">Results in</span>
-                            </div>
-                            <Countdown targetDate={event.endTime} label="" />
+                    {mode === "vote" && (
+                        <div className="border-t border-border/40 pt-4">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-foreground/35 mb-3">How to Earn</p>
+                            <ol className="space-y-2.5">
+                                {[
+                                    "Browse submissions in the grid below.",
+                                    "Tap the thumbs-up on your favourite entry to vote.",
+                                    "Earn $" + (event.baseReward ?? "0.03") + " USDC automatically for every valid vote.",
+                                    "Top voters on the winning entry share the top reward.",
+                                ].map((step, i) => (
+                                    <li key={i} className="flex gap-2.5 text-[11px] text-foreground/55">
+                                        <span className="w-4 h-4 rounded-full font-black text-[9px] flex items-center justify-center shrink-0 mt-0.5 bg-sky-400/10 text-sky-400">
+                                            {i + 1}
+                                        </span>
+                                        {step}
+                                    </li>
+                                ))}
+                            </ol>
                         </div>
                     )}
+                    {/* Earnings for completed vote_only */}
+                    {mode === "completed" && votedSubmissionId && (
+                        <div className="border-t border-border/40 pt-4">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-foreground/35 mb-3">Your Earnings</p>
+                            <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[11px] text-foreground/55">From voting</span>
+                                    <span className="text-[11px] font-black text-sky-400">${(event.baseReward ?? 0.03).toFixed(2)}</span>
+                                </div>
+                                <div className="flex items-center justify-between pt-1.5 border-t border-border/30 mt-1">
+                                    <span className="text-[11px] font-black text-foreground/70">Total Earned</span>
+                                    <span className="text-sm font-black text-white">${(event.baseReward ?? 0.03).toFixed(2)} USDC</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            ) : mode === "completed" && event.eventType === "post_and_vote" ? (
+                /* ── Post+Vote completed flat card ── */
+                <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5">
+                    <div className="mb-4">
+                        <span className="text-sm font-black text-foreground">Reward Breakdown</span>
+                    </div>
+                    <div className="space-y-2 mb-4">
+                        {/* You post */}
+                        <div className="flex items-center justify-between bg-lime-400/5 border border-lime-400/15 rounded-[12px] px-3 py-3">
+                            <div>
+                                <p className="text-[9px] font-black uppercase tracking-widest text-lime-400/70 mb-0.5">You Post</p>
+                                <p className="text-[11px] text-foreground/60 leading-tight">Per vote received on your post</p>
+                            </div>
+                            <div className="text-right shrink-0 ml-2">
+                                <p className="text-base font-black text-lime-400">$0.05</p>
+                                <p className="text-[9px] text-foreground/40">USDC</p>
+                            </div>
+                        </div>
+                        {/* You vote */}
+                        <div className="flex items-center justify-between bg-sky-400/5 border border-sky-400/15 rounded-[12px] px-3 py-3">
+                            <div>
+                                <p className="text-[9px] font-black uppercase tracking-widest text-sky-400/70 mb-0.5">You Vote</p>
+                                <p className="text-[11px] text-foreground/60 leading-tight">Per vote you cast in this event</p>
+                            </div>
+                            <div className="text-right shrink-0 ml-2">
+                                <p className="text-base font-black text-sky-400">$0.03</p>
+                                <p className="text-[9px] text-foreground/40">USDC</p>
+                            </div>
+                        </div>
+                        {/* Leaderboard pool */}
+                        {leaderboardPool > 0 && (() => {
+                            const p1 = leaderboardPool * 0.50;
+                            const p2 = leaderboardPool * 0.35;
+                            const p3 = leaderboardPool * 0.15;
+                            return (
+                                <div className="border border-white/[0.08] rounded-[12px] px-3 py-3 space-y-2">
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40">Leaderboard Rewards</p>
+                                    <p className="text-[10px] text-foreground/35">Top 3 creators ranked by votes received</p>
+                                    {[
+                                        { emoji: "🥇", label: "1st place", amount: p1 },
+                                        { emoji: "🥈", label: "2nd place", amount: p2 },
+                                        { emoji: "🥉", label: "3rd place", amount: p3 },
+                                    ].map((row) => (
+                                        <div key={row.label} className="flex items-center justify-between">
+                                            <span className="text-[11px] text-foreground/60">{row.emoji} {row.label}</span>
+                                            <span className="text-[11px] font-black text-foreground/80">${row.amount.toFixed(2)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })()}
+                    </div>
+                    {/* Your Earnings */}
+                    {(mySubmission || votedSubmissionId) && (() => {
+                        const postEarnings = (mySubmission?._count?.votes ?? 0) * 0.05;
+                        const voteEarnings = votedSubmissionId ? 0.03 : 0;
+                        const total = postEarnings + voteEarnings;
+                        return (
+                            <div className="border-t border-border/40 pt-4">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-foreground/35 mb-3">Your Earnings</p>
+                                <div className="space-y-1.5">
+                                    {mySubmission && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[11px] text-foreground/55">From your post ({mySubmission._count?.votes ?? 0} votes)</span>
+                                            <span className="text-[11px] font-black text-lime-400">${postEarnings.toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    {votedSubmissionId && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[11px] text-foreground/55">From voting</span>
+                                            <span className="text-[11px] font-black text-sky-400">$0.03</span>
+                                        </div>
+                                    )}
+                                    <div className="flex items-center justify-between pt-1.5 border-t border-border/30 mt-1">
+                                        <span className="text-[11px] font-black text-foreground/70">Total Earned</span>
+                                        <span className="text-sm font-black text-white">${total.toFixed(2)} USDC</span>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
+                </div>
+            ) : (
+                /* ── Non-vote mode: hero card (completed / upcoming) ── */
+                <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] overflow-hidden">
+                    <div className="relative bg-gradient-to-br from-[#A78BFA]/15 via-[#A78BFA]/8 to-transparent border-b border-white/[0.07] p-5">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Trophy className="w-4 h-4 text-[#A78BFA]" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-[#A78BFA]">Rewards Pool</span>
+                                </div>
+                                <p className="text-[9px] font-black uppercase tracking-widest text-foreground/35 mb-1">Total Prizes</p>
+                                <div className="flex items-baseline gap-2">
+                                    <p className="text-4xl font-black text-white leading-none">${calculateTotalPool(event).toLocaleString()}</p>
+                                    <span className="text-xs font-black text-foreground/40">USDC</span>
+                                </div>
+                            </div>
+                            <span className="text-[9px] bg-[#A78BFA]/15 text-[#A78BFA] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border border-[#A78BFA]/25">
+                                Guaranteed
+                            </span>
+                        </div>
+                    </div>
+                    <div className="p-5 space-y-4">
+                        <div className="space-y-2">
+                            {topReward > 0 && (
+                                <div className="flex items-center justify-between bg-white/[0.04] border border-white/[0.07] rounded-[12px] px-4 py-3">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-7 h-7 rounded-lg bg-yellow-400/10 flex items-center justify-center shrink-0">
+                                            <Trophy className="w-3.5 h-3.5 text-yellow-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-black text-foreground">Grand Prize</p>
+                                            <p className="text-[9px] text-foreground/40 font-medium">#1 on leaderboard</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm font-black text-yellow-400">${topReward.toLocaleString()}</p>
+                                        <p className="text-[9px] text-foreground/40">USDC</p>
+                                    </div>
+                                </div>
+                            )}
+                            {leaderboardPool > 0 && (
+                                <div className="flex items-center justify-between bg-white/[0.04] border border-white/[0.07] rounded-[12px] px-4 py-3">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-7 h-7 rounded-lg bg-[#A78BFA]/10 flex items-center justify-center shrink-0">
+                                            <Users className="w-3.5 h-3.5 text-[#A78BFA]" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-black text-foreground">Leaderboard Pool</p>
+                                            <p className="text-[9px] text-foreground/40 font-medium">Split among top voters</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm font-black text-[#A78BFA]">${leaderboardPool.toLocaleString()}</p>
+                                        <p className="text-[9px] text-foreground/40">USDC</p>
+                                    </div>
+                                </div>
+                            )}
+                            {event.baseReward != null && event.baseReward > 0 && (
+                                <div className="flex items-center justify-between bg-lime-400/6 border border-lime-400/15 rounded-[12px] px-4 py-3">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-7 h-7 rounded-lg bg-lime-400/10 flex items-center justify-center shrink-0">
+                                            <Coins className="w-3.5 h-3.5 text-lime-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-black text-lime-400">Per Vote</p>
+                                            <p className="text-[9px] text-foreground/40 font-medium">Every vote earns you this</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm font-black text-lime-400">${event.baseReward}</p>
+                                        <p className="text-[9px] text-foreground/40">USDC</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             )}
+
 
             {mode === "post" && !hasSubmitted && fileRef && !isBrand && (
                 <div className="bg-white/[0.03] border border-white/[0.08] rounded-[24px] overflow-hidden">
@@ -656,7 +623,13 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     const [aiRefining, setAiRefining] = useState(false);
     const [aiImageUrl, setAiImageUrl] = useState<string | null>(null);
     const [aiImageFile, setAiImageFile] = useState<File | null>(null);
+    const [submitModalOpen, setSubmitModalOpen] = useState(false);
     const [isDraggingFile, setIsDraggingFile] = useState(false);
+
+    useEffect(() => {
+        document.body.style.overflow = submitModalOpen ? "hidden" : "";
+        return () => { document.body.style.overflow = ""; };
+    }, [submitModalOpen]);
     const [showFullRules, setShowFullRules] = useState(false);
 
     const [gridView, setGridView] = useState(true);
@@ -696,7 +669,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                 setFetchError(null);
                 const publicEvent = await getEventById(id, { skipAuth: true });
                 setEvent(publicEvent);
-                setParticipantCount(publicEvent._count?.votes ?? 0);
+                setParticipantCount((publicEvent as any).totalParticipants ?? publicEvent._count?.votes ?? 0);
                 setSubmissions(deriveSubmissionsFromEvent(publicEvent));
                 setVotedSubmissionId(null);
                 setHasSubmitted(false);
@@ -858,6 +831,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                 setAiImageFile(imgFile);
                 setPreview(objectUrl);
                 setFile(null);
+                setSubmitModalOpen(true);
                 if (res.remainingGenerations !== undefined) {
                     toast.success(`Image generated! ${res.remainingGenerations} generation${res.remainingGenerations === 1 ? "" : "s"} left today.`);
                 }
@@ -902,13 +876,23 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     const isVotingEnded = !event ? false :
         event.status === "completed" || new Date() > new Date(event.endTime);
 
+    const isCancelled = !!event?.description?.startsWith("[System]: Cancelled");
+    const cancelReason = isCancelled
+        ? (event!.description!.replace(/^\[System\]: Cancelled:\s*/i, "") || "Not enough posts to proceed.")
+        : null;
+
     const displayMode: "post" | "vote" | "completed" | "upcoming" =
         isVotingEnded ? "completed"
             : event?.status === "posting" ? "post"
                 : event?.status === "voting" || event?.eventType === "vote_only" ? "vote"
                     : "upcoming";
 
-    const sortedSubmissions = [...enrichedSubmissions].sort((a, b) => (b._count?.votes || 0) - (a._count?.votes || 0));
+    const sortedSubmissions = [...enrichedSubmissions].sort((a, b) => {
+        // Voted submission always first
+        if (a.id === votedSubmissionId) return -1;
+        if (b.id === votedSubmissionId) return 1;
+        return (b._count?.votes || 0) - (a._count?.votes || 0);
+    });
     const postingTopReward = event ? (event.topReward ?? event.leaderboardPool ?? 0) : 0;
     const recentPostingSubmissions = sortedSubmissions.slice(0, 6);
 
@@ -1135,46 +1119,157 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         <Link href="/home" className="text-xs font-black text-primary hover:underline">Back to home</Link>
                     </div>
                 ) : event ? (
-                    displayMode === "post" && !isBrand ? (
+                    isCancelled ? (
                         /* ══════════════════════════════════════════════
-                           POSTING PHASE — upload-focused layout (users only)
+                           CANCELLED STATE
                         ══════════════════════════════════════════════ */
                         <div className="flex flex-col lg:flex-row gap-6">
-
-                            {/* ── Left: Upload hero ── */}
-                            <div className="flex-1 min-w-0 space-y-5">
-
-                                {/* Banner — same as standard layout */}
-                                <div className="relative rounded-[24px] overflow-hidden h-[220px] md:h-[260px]">
-                                    <img src={coverUrl} className="w-full h-full object-cover" alt="Event" />
-                                    <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-black/10" />
-                                    <div className="absolute inset-0 p-6 flex flex-col justify-between">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <div className="bg-orange-500/80 backdrop-blur-md border border-orange-400/30 px-2.5 py-1 rounded-full flex items-center gap-1.5">
-                                                <Clock className="w-3 h-3 text-white" />
-                                                <span className="text-[10px] font-black text-white">Posting Open</span>
-                                            </div>
+                            {/* Left */}
+                            <div className="flex-1 min-w-0">
+                                {/* Banner with overlay */}
+                                <div className="relative rounded-[24px] overflow-hidden h-[220px] md:h-[280px] mb-5">
+                                    {(event.imageUrl || event.imageCid) ? (
+                                        <img
+                                            src={event.imageUrl || `https://gateway.pinata.cloud/ipfs/${event.imageCid}`}
+                                            className="w-full h-full object-cover opacity-30"
+                                            alt={event.title}
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-white/[0.04]" />
+                                    )}
+                                    {/* Dark overlay */}
+                                    <div className="absolute inset-0 bg-black/60" />
+                                    {/* Cancelled badge + text */}
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-6">
+                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/20 border border-red-500/40">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-red-400">Cancelled</span>
                                         </div>
-                                        <div>
-                                            <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mb-0.5">{event.brand?.name}</p>
-                                            <h1 className="font-display text-3xl md:text-[2.6rem] text-white leading-tight mb-1">{event.title}</h1>
-                                            <p className="text-[11px] font-black text-white/75 mb-1.5">Compete with others for the top spot</p>
-                                            {event.postingEnd && (
-                                                <div className="flex items-center gap-1.5 mb-2">
-                                                    <span className="text-[11px] font-black text-orange-300">⏳</span>
-                                                    <span className="text-[11px] font-black text-orange-300/90">left to submit</span>
-                                                    <Countdown targetDate={event.postingEnd} label="" />
-                                                </div>
-                                            )}
-                                            {event.description && (
-                                                <ExpandableDescription
-                                                    text={event.description}
-                                                    className="text-xs text-white/60 font-medium leading-relaxed"
-                                                />
-                                            )}
-                                        </div>
+                                        <h1 className="font-display text-4xl md:text-5xl text-white/60 uppercase leading-tight">{event.title}</h1>
                                     </div>
                                 </div>
+
+                                {/* Reason card */}
+                                <div className="rounded-[20px] bg-red-500/5 border border-red-500/15 p-6 flex items-start gap-4">
+                                    <div className="w-10 h-10 rounded-xl bg-red-500/15 flex items-center justify-center shrink-0">
+                                        <AlertCircle className="w-5 h-5 text-red-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-black text-foreground/80 mb-1">This event was cancelled</p>
+                                        <p className="text-sm text-foreground/50 leading-relaxed">{cancelReason}</p>
+                                        <p className="text-xs text-foreground/30 mt-3 font-medium">Hosted by {event.brand?.name}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right — minimal info */}
+                            <div className="lg:w-[280px] shrink-0 space-y-4">
+                                <div className="bg-white/[0.03] border border-white/[0.07] rounded-[20px] p-5 space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        {event.brand?.logoCid ? (
+                                            <img src={`https://gateway.pinata.cloud/ipfs/${event.brand.logoCid}`} className="w-9 h-9 rounded-xl object-cover" alt={event.brand.name} />
+                                        ) : (
+                                            <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
+                                                <span className="text-sm font-black text-primary">{event.brand?.name?.[0]}</span>
+                                            </div>
+                                        )}
+                                        <div>
+                                            <p className="text-sm font-black text-foreground">{event.brand?.name}</p>
+                                            <p className="text-[10px] text-foreground/40">Event Host</p>
+                                        </div>
+                                    </div>
+                                    <div className="h-px bg-white/[0.06]" />
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Category</p>
+                                        <span className="text-[10px] font-black text-foreground/60 uppercase">{event.category}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Status</p>
+                                        <span className="text-[10px] font-black text-red-400 uppercase">Cancelled</span>
+                                    </div>
+                                </div>
+                                <Link href="/home" className="block w-full py-3 rounded-[14px] bg-white/[0.04] border border-white/[0.08] text-center text-xs font-black uppercase tracking-widest text-foreground/50 hover:bg-white/[0.08] hover:text-foreground transition-all">
+                                    Browse other events
+                                </Link>
+                            </div>
+                        </div>
+                    ) : displayMode === "post" && !isBrand ? (
+                        /* ══════════════════════════════════════════════
+                           POSTING PHASE — Image #6-style full-width hero
+                        ══════════════════════════════════════════════ */
+                        <>
+                            {/* ── Full-width hero banner (same style as vote layout) ── */}
+                            <div className="relative overflow-hidden min-h-[300px] md:min-h-[400px] mb-6 -mx-3 w-[calc(100%+1.5rem)] sm:-mx-4 sm:w-[calc(100%+2rem)] md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
+                                <img src={coverUrl} className="absolute inset-0 w-full h-full object-cover object-center" alt="Event" />
+                                <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/75 to-black/20" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                                <div className="relative z-10 flex flex-col justify-between h-full min-h-[380px] md:min-h-[460px] p-7 md:p-10">
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-4 flex-wrap">
+                                            <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/15 rounded-full pl-1 pr-3 py-1">
+                                                {event.brand?.logoCid ? (
+                                                    <img src={`${PINATA_GW}/${event.brand.logoCid}`} className="w-6 h-6 rounded-full object-cover border border-white/20" alt={event.brand?.name} />
+                                                ) : (
+                                                    <div className="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+                                                        <span className="text-[9px] font-black text-white/70">{event.brand?.name?.[0]}</span>
+                                                    </div>
+                                                )}
+                                                <span className="text-[11px] font-black text-white/90">{event.brand?.name}</span>
+                                            </div>
+                                            {event.category && (
+                                                <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.10] text-white/50">
+                                                    {event.category}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <h1 className="font-display text-5xl md:text-6xl lg:text-7xl text-white uppercase leading-[0.88] tracking-tight max-w-[60%]">
+                                            {event.title}
+                                        </h1>
+                                        {event.tagline && (
+                                            <p className="font-display text-4xl md:text-5xl lg:text-6xl text-lime-400 uppercase leading-[0.88] tracking-tight mt-1">
+                                                {event.tagline}
+                                            </p>
+                                        )}
+                                        {event.description && (
+                                            <p className="text-sm text-white/60 font-medium leading-relaxed mt-3 max-w-xl line-clamp-2">
+                                                {event.description}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="border-t border-white/10 pt-4 flex items-end gap-0 flex-wrap">
+                                        {event.postingEnd && (
+                                            <>
+                                                <div className="pr-8">
+                                                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-2">Posting Ends In</p>
+                                                    <BigCountdown targetDate={event.postingEnd} />
+                                                </div>
+                                                <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
+                                            </>
+                                        )}
+                                        <div className="pr-8">
+                                            <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Submissions So Far</p>
+                                            <p className="text-4xl md:text-5xl font-black text-lime-400 leading-none tabular-nums">{sortedSubmissions.length}</p>
+                                        </div>
+                                        {activeViewers > 0 && (
+                                            <>
+                                                <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
+                                                <div>
+                                                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Watching Live</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <Eye className="w-5 h-5 text-green-400 animate-pulse shrink-0" />
+                                                        <p className="text-4xl md:text-5xl font-black text-green-400 leading-none tabular-nums">{activeViewers}</p>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col lg:flex-row gap-6">
+
+                                {/* ── Left: Submit panel ── */}
+                                <div className="flex-1 min-w-0 space-y-5">
 
                                 {/* ── Already submitted ── */}
                                 {hasSubmitted && mySubmission ? (
@@ -1193,15 +1288,15 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                 <CheckCircle2 className="w-4 h-4 text-lime-400" />
                                             </motion.div>
                                             <div>
-                                                <p className="text-sm font-black text-foreground">Your entry is live 🎉</p>
-                                                <p className="text-[10px] text-foreground/40 font-medium">Voting starts when posting ends.</p>
+                                                <p className="text-sm font-black text-foreground">Your post has been submitted </p>
+                                                <p className="text-[10px] text-foreground/40 font-medium">Submitted successfully · waiting for voting phase</p>
                                             </div>
                                         </div>
                                         {(mySubmission.imageUrl || mySubmission.imageCid) && (
                                             <div className="p-4">
                                                 <img
                                                     src={mySubmission.imageUrl || `${PINATA_GW}/${mySubmission.imageCid}`}
-                                                    className="w-full max-h-[340px] object-cover rounded-[16px] border border-lime-400/20"
+                                                    className="w-full rounded-[16px] border border-lime-400/20 object-contain bg-black"
                                                     alt="Your submission"
                                                 />
                                                 {(mySubmission as any).caption && (
@@ -1209,287 +1304,229 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                 )}
                                             </div>
                                         )}
+                                        {/* Voting phase info */}
+                                        <div className="mx-4 mb-4 rounded-[14px] bg-white/[0.03] border border-white/[0.07] px-4 py-3 space-y-1.5">
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-foreground/35">What happens next?</p>
+                                            <p className="text-[11px] text-foreground/55 leading-relaxed">
+                                                Once the posting phase ends, the <span className="text-foreground/80 font-semibold">voting phase begins</span>. You'll be able to see all other submissions and vote on your favourite. Other participants will also see your entry and can vote for it — every vote earns you <span className="text-lime-400 font-semibold">$0.05 USDC</span>.
+                                            </p>
+                                        </div>
                                     </motion.div>
                                 ) : (
-                                    /* ── Upload zone ── */
+                                    /* ── Submit hero panel (CreateHero-style) ── */
                                     <motion.div
                                         initial={{ opacity: 0, y: 8 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className="rounded-[24px] border border-border/40 bg-white/[0.02] overflow-hidden"
+                                        className="rounded-[28px] bg-[#0c0c10] border border-white/[0.07]"
                                     >
-                                        {/* Header */}
-                                        <div className="px-5 pt-5 pb-4 border-b border-border/30 flex items-center gap-3">
-                                            <div className="w-9 h-9 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
-                                                <Upload className="w-4 h-4 text-orange-400" />
+                                        <div className="px-6 py-8 sm:px-8 space-y-6">
+                                            {/* Heading */}
+                                            <div>
+                                                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">{event.brand?.name}</p>
+                                                <h2 className="font-display text-4xl md:text-5xl text-white leading-[0.9] uppercase tracking-tight">
+                                                    Compete for the{" "}
+                                                    <span className="bg-gradient-to-r from-lime-300 via-lime-400 to-green-400 bg-clip-text text-transparent">top spot</span>
+                                                </h2>
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h2 className="text-sm font-black text-foreground">Submit to Compete</h2>
-                                                <p className="text-[10px] text-foreground/40 font-medium">Upload or generate your strongest entry</p>
-                                            </div>
-                                            {/* Mode toggle */}
-                                            <div className="flex items-center bg-foreground/5 border border-border/40 rounded-xl p-0.5 shrink-0">
-                                                <button
-                                                    onClick={() => { setUploadMode("upload"); setAiImageUrl(null); if (!file) setPreview(null); }}
-                                                    className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all",
-                                                        uploadMode === "upload" ? "bg-orange-500 text-white shadow-sm" : "text-foreground/40 hover:text-foreground/70"
-                                                    )}
-                                                >
-                                                    <Upload className="w-3 h-3" /> Upload
-                                                </button>
-                                                <button
-                                                    onClick={() => { setUploadMode("ai"); setFile(null); if (!aiImageUrl) setPreview(null); }}
-                                                    className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all",
-                                                        uploadMode === "ai" ? "bg-purple-500 text-white shadow-sm" : "text-foreground/40 hover:text-foreground/70"
-                                                    )}
-                                                >
-                                                    <Sparkles className="w-3 h-3" /> AI
-                                                </button>
-                                            </div>
-                                        </div>
 
-                                        <div className="p-5 space-y-4">
-                                            {uploadMode === "upload" ? (
-                                                /* ── Upload tab ── */
-                                                <>
-                                                    <div
-                                                        onClick={() => fileRef.current?.click()}
-                                                        onDragEnter={(e) => { e.preventDefault(); setIsDraggingFile(true); }}
-                                                        onDragOver={(e) => { e.preventDefault(); setIsDraggingFile(true); }}
-                                                        onDragLeave={(e) => {
-                                                            e.preventDefault();
-                                                            const relatedTarget = e.relatedTarget as Node | null;
-                                                            if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) setIsDraggingFile(false);
-                                                        }}
-                                                        onDrop={(e) => {
-                                                            e.preventDefault();
-                                                            setIsDraggingFile(false);
-                                                            handleSelectedFile(e.dataTransfer.files?.[0]);
-                                                        }}
-                                                        className={cn(
-                                                            "relative border-2 border-dashed rounded-[20px] flex flex-col items-center justify-center cursor-pointer transition-all duration-200 overflow-hidden group",
-                                                            preview
-                                                                ? "border-orange-500/45 h-[320px] md:h-[400px]"
-                                                                : "h-[220px] md:h-[280px]",
-                                                            isDraggingFile
-                                                                ? "border-orange-400 bg-orange-500/[0.06] shadow-[0_0_0_1px_rgba(251,146,60,0.35),0_0_28px_rgba(251,146,60,0.22)]"
-                                                                : "border-border/40 hover:border-orange-500/60 hover:bg-orange-500/[0.03] hover:shadow-[0_0_22px_rgba(251,146,60,0.12)]"
-                                                        )}
-                                                    >
-                                                        {preview ? (
-                                                            <>
-                                                                <img src={preview} className="w-full h-full object-cover" alt="Preview" />
-                                                                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2">
-                                                                    <div className="bg-black/60 backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-2">
-                                                                        <Upload className="w-3.5 h-3.5 text-white" />
-                                                                        <span className="text-xs font-black text-white">Change Image</span>
-                                                                    </div>
-                                                                </div>
-                                                                {/* Remove button */}
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); if (preview) URL.revokeObjectURL(preview); setFile(null); setPreview(null); }}
-                                                                    className="absolute top-3 left-3 w-7 h-7 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-red-500/80 transition-colors z-10"
-                                                                >
-                                                                    <X className="w-3.5 h-3.5 text-white" />
-                                                                </button>
-                                                                {/* View full size button */}
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); setLightboxOpen(true); }}
-                                                                    className="absolute top-3 right-3 w-7 h-7 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors z-10"
-                                                                >
-                                                                    <ZoomIn className="w-3.5 h-3.5 text-white" />
-                                                                </button>
-                                                                <div className="absolute bottom-3 right-3 bg-lime-400/85 text-black px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
-                                                                    Ready to submit
-                                                                </div>
-                                                            </>
-                                                        ) : (
-                                                            <div className="flex flex-col items-center gap-3 p-6 text-center">
-                                                                <div className="w-16 h-16 rounded-3xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mb-1 group-hover:bg-orange-500/15 transition-colors">
-                                                                    <ImageIcon className="w-7 h-7 text-orange-400" />
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-sm font-black text-foreground/80">Drop your best entry here</p>
-                                                                    <p className="text-xs text-foreground/45 font-medium mt-1">Make it count — top entry wins</p>
-                                                                    <p className="text-xs text-foreground/35 font-medium mt-1">or click to browse</p>
-                                                                </div>
-                                                                <div className="flex items-center gap-2 mt-1">
-                                                                    {["JPEG", "PNG", "WEBP"].map(fmt => (
-                                                                        <span key={fmt} className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-foreground/5 border border-border/40 text-foreground/30">{fmt}</span>
-                                                                    ))}
-                                                                    <span className="text-[9px] font-bold text-foreground/25">· max 5 MB</span>
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" className="hidden" onChange={handleFileChange} />
-                                                </>
-                                            ) : (
-                                                /* ── AI Generate tab ── */
-                                                <div className="space-y-4">
-                                                    {/* Prompt input */}
-                                                    <div className="space-y-2">
-                                                        <div className="relative">
-                                                            <textarea
-                                                                value={aiPrompt}
-                                                                onChange={(e) => setAiPrompt(e.target.value)}
-                                                                placeholder={`Describe the image you want to generate for "${event.title}"…`}
-                                                                rows={3}
-                                                                className="w-full bg-foreground/[0.03] border border-border/40 rounded-xl px-4 py-3 pr-12 text-sm text-foreground placeholder:text-foreground/30 resize-none focus:outline-none focus:border-purple-500/50 transition-colors"
-                                                            />
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <button
-                                                                onClick={handleRefinePrompt}
-                                                                disabled={!aiPrompt.trim() || aiRefining}
-                                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-black uppercase tracking-wider hover:bg-purple-500/20 transition-all disabled:opacity-30"
-                                                            >
-                                                                {aiRefining ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
-                                                                Enhance Prompt
-                                                            </button>
-                                                            <p className="text-[10px] text-foreground/30 font-medium">AI will improve your description</p>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Preview or generate CTA */}
-                                                    {aiImageUrl ? (
-                                                        <div className="relative rounded-[20px] overflow-hidden border border-purple-500/30 h-[280px] md:h-[360px] group/ai">
-                                                            <img src={aiImageUrl} className="w-full h-full object-cover" alt="AI Generated" />
-                                                            <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover/ai:opacity-100 transition-opacity gap-2">
-                                                                <button
-                                                                    onClick={() => handleAiGenerate()}
-                                                                    disabled={!aiPrompt.trim() || aiGenerating}
-                                                                    className="bg-black/60 backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-2 disabled:opacity-40"
-                                                                >
-                                                                    <RefreshCw className="w-3.5 h-3.5 text-white" />
-                                                                    <span className="text-xs font-black text-white">Regenerate</span>
-                                                                </button>
-                                                            </div>
-                                                            {/* Remove button */}
-                                                            <button
-                                                                onClick={() => { if (aiImageUrl?.startsWith("blob:")) URL.revokeObjectURL(aiImageUrl); setAiImageUrl(null); setAiImageFile(null); setPreview(null); }}
-                                                                className="absolute top-3 left-3 w-7 h-7 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-red-500/80 transition-colors z-10"
-                                                            >
-                                                                <X className="w-3.5 h-3.5 text-white" />
-                                                            </button>
-                                                            <div className="absolute top-3 right-3 bg-purple-500/80 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1.5">
-                                                                <Sparkles className="w-3 h-3 text-white" />
-                                                                <span className="text-[9px] font-black text-white uppercase tracking-widest">AI Generated</span>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
+                                            {/* AI prompt + generate — always shown */}
+                                            <div className="space-y-3">
+                                                    {/* Create-page style prompt row */}
+                                                    <div className="flex items-center gap-2 px-4 py-3 rounded-[14px] border border-white/[0.1] bg-white/[0.03] focus-within:border-lime-400/40 focus-within:shadow-[0_0_0_1px_rgba(163,230,53,0.15)] transition-all">
+                                                        <input
+                                                            value={aiPrompt}
+                                                            onChange={(e) => setAiPrompt(e.target.value)}
+                                                            onKeyDown={(e) => { if (e.key === "Enter" && aiPrompt.trim() && !aiGenerating) handleAiGenerate(); }}
+                                                            placeholder={`Describe the image for "${event.title}"…`}
+                                                            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-foreground/30 focus:outline-none min-w-0"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleRefinePrompt}
+                                                            disabled={!aiPrompt.trim() || aiRefining}
+                                                            className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all disabled:opacity-30 shrink-0"
+                                                            title="Enhance prompt"
+                                                        >
+                                                            {aiRefining ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+                                                        </button>
                                                         <button
                                                             onClick={handleAiGenerate}
                                                             disabled={!aiPrompt.trim() || aiGenerating}
-                                                            className="w-full h-[220px] md:h-[280px] border-2 border-dashed border-purple-500/30 hover:border-purple-500/60 rounded-[20px] flex flex-col items-center justify-center gap-4 transition-all hover:bg-purple-500/[0.03] disabled:opacity-40 disabled:cursor-not-allowed group"
+                                                            className="px-5 py-2.5 rounded-xl bg-lime-400 text-black font-black uppercase tracking-widest text-[11px] shadow-[0_4px_18px_rgba(163,230,53,0.3)] hover:bg-lime-300 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0 flex items-center gap-1.5 whitespace-nowrap"
                                                         >
-                                                            {aiGenerating ? (
-                                                                <>
-                                                                    <div className="w-16 h-16 rounded-3xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
-                                                                        <Loader2 className="w-7 h-7 text-purple-400 animate-spin" />
+                                                            {aiGenerating ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating…</> : aiImageUrl ? <><RefreshCw className="w-3.5 h-3.5" /> Regenerate</> : "Generate"}
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Style hint chips */}
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {["4K Bokeh", "Cyberpunk", "Cinematic", "Minimalist"].map((hint) => (
+                                                            <button
+                                                                key={hint}
+                                                                type="button"
+                                                                onClick={() => setAiPrompt((p) => p ? `${p}, ${hint}` : hint)}
+                                                                className="px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.07] text-[10px] font-black uppercase tracking-wider text-white/30 hover:text-white/70 hover:bg-white/[0.08] hover:border-white/[0.14] transition-all"
+                                                            >
+                                                                {hint}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+
+                                                    {/* Sample images reference */}
+                                                    {event.sampleUrls && event.sampleUrls.length > 0 && (
+                                                        <div className="space-y-2">
+                                                            <p className="text-[10px] font-black uppercase tracking-widest text-white/30 flex items-center gap-1.5">
+                                                                <ImageIcon className="w-3 h-3" /> Sample references — match this style
+                                                            </p>
+                                                            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                                                                {event.sampleUrls.map((s, i) => (
+                                                                    <div key={i} className="shrink-0 w-24 h-24 rounded-xl overflow-hidden border border-white/[0.08]">
+                                                                        <img
+                                                                            src={s.urls?.medium || s.urls?.thumbnail}
+                                                                            alt={`Sample ${i + 1}`}
+                                                                            className="w-full h-full object-cover"
+                                                                        />
                                                                     </div>
-                                                                    <div className="text-center">
-                                                                        <p className="text-sm font-black text-foreground/70">Generating your image…</p>
-                                                                        <p className="text-xs text-foreground/30 font-medium mt-1">This may take a few seconds</p>
-                                                                    </div>
-                                                                </>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Review pill — shown after generation */}
+                                                    {aiImageUrl && (
+                                                        <div className="flex items-center gap-2">
+                                                            {submitting ? (
+                                                                <div className="flex items-center gap-2 flex-1 px-3 py-2 rounded-xl bg-purple-500/10 border border-purple-500/25">
+                                                                    <Loader2 className="w-3.5 h-3.5 text-purple-400 animate-spin shrink-0" />
+                                                                    <span className="text-xs font-black text-purple-400 truncate">Uploading &amp; submitting…</span>
+                                                                </div>
                                                             ) : (
                                                                 <>
-                                                                    <div className="w-16 h-16 rounded-3xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/15 transition-colors">
-                                                                        <Sparkles className="w-7 h-7 text-purple-400" />
-                                                                    </div>
-                                                                    <div className="text-center">
-                                                                        <p className="text-sm font-black text-foreground/70">Generate with AI</p>
-                                                                        <p className="text-xs text-foreground/30 font-medium mt-1">Enter a prompt above and click here</p>
-                                                                    </div>
+                                                                    <button
+                                                                        onClick={() => setSubmitModalOpen(true)}
+                                                                        className="flex-1 px-4 py-2 rounded-xl bg-purple-500 text-white font-black uppercase tracking-widest text-[10px] hover:bg-purple-400 transition-colors"
+                                                                    >
+                                                                        Review &amp; Submit
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => { if (aiImageUrl?.startsWith("blob:")) URL.revokeObjectURL(aiImageUrl); setAiImageUrl(null); setAiImageFile(null); setPreview(null); }}
+                                                                        className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-white/40 hover:bg-red-500/20 hover:text-red-400 transition-colors shrink-0"
+                                                                    >
+                                                                        <X className="w-3.5 h-3.5" />
+                                                                    </button>
                                                                 </>
                                                             )}
-                                                        </button>
+                                                        </div>
                                                     )}
                                                 </div>
-                                            )}
-
-                                            {/* Caption */}
-                                            <textarea
-                                                value={caption}
-                                                onChange={(e) => setCaption(e.target.value)}
-                                                placeholder="Add a caption to describe your entry… (optional)"
-                                                rows={3}
-                                                maxLength={280}
-                                                className="w-full bg-secondary/40 border border-border/40 rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-foreground/30 resize-none focus:outline-none focus:border-orange-500/50 transition-colors"
-                                            />
-
-                                            <div className="rounded-xl border border-orange-500/25 bg-orange-500/[0.06] px-3.5 py-2.5">
-                                                <p className="text-xs font-black text-orange-300">🏆 Top entry wins ${postingTopReward.toFixed(2)}</p>
-                                            </div>
-
-                                            {/* Submit CTA */}
-                                            <button
-                                                onClick={handleSubmit}
-                                                disabled={(!file && !aiImageFile) || submitting}
-                                                className={cn(
-                                                    "w-full py-4 text-white rounded-[14px] text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2.5 active:scale-[0.99] transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed",
-                                                    aiImageUrl
-                                                        ? "bg-purple-500 hover:bg-purple-500/90 hover:shadow-[0_0_18px_rgba(168,85,247,0.35)]"
-                                                        : "bg-orange-500 hover:bg-orange-500/90 hover:shadow-[0_0_18px_rgba(249,115,22,0.32)]"
-                                                )}
-                                            >
-                                                {submitting
-                                                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</>
-                                                    : aiImageUrl
-                                                        ? <><Sparkles className="w-4 h-4" /> Enter Competition</>
-                                                        : <><Upload className="w-4 h-4" /> Submit to Compete</>
-                                                }
-                                            </button>
-
-                                            <div className="rounded-xl border border-border/30 bg-white/[0.02] p-3">
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-foreground/45 mb-2">After submission:</p>
-                                                <ul className="space-y-1.5">
-                                                    {[
-                                                        "Your entry goes live",
-                                                        "Users vote on entries",
-                                                        "Top entry wins the reward",
-                                                    ].map((step) => (
-                                                        <li key={step} className="text-xs text-foreground/60 flex items-center gap-2">
-                                                            <span className="w-1 h-1 rounded-full bg-foreground/40 shrink-0" />
-                                                            {step}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
                                         </div>
                                     </motion.div>
                                 )}
 
-                                {/* ── Recent submissions ── */}
-                                <div className="rounded-[24px] border border-border/40 bg-white/[0.02] p-5 space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Recent Submissions</p>
-                                        <span className="text-[10px] text-foreground/35 font-medium">{recentPostingSubmissions.length} shown</span>
-                                    </div>
-                                    {recentPostingSubmissions.length === 0 ? (
-                                        <div className="rounded-xl border border-border/30 bg-white/[0.01] px-4 py-8 text-center">
-                                            <p className="text-sm font-black text-foreground/60">No submissions yet</p>
-                                            <p className="text-xs text-foreground/35 mt-1">Be the first to compete</p>
-                                        </div>
-                                    ) : (
-                                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
-                                            {recentPostingSubmissions.map((sub) => (
-                                                <button
-                                                    key={sub.id}
-                                                    type="button"
-                                                    onClick={() => setPreviewSubmissionId(sub.id)}
-                                                    className="aspect-square rounded-xl overflow-hidden border border-border/40 hover:border-orange-500/50 transition-all hover:scale-[1.02]"
-                                                >
+
+                                {/* ── Submit modal ── */}
+                                <AnimatePresence>
+                                    {submitModalOpen && aiImageUrl && (
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+                                            onClick={(e) => { if (e.target === e.currentTarget) setSubmitModalOpen(false); }}
+                                        >
+                                            <motion.div
+                                                initial={{ opacity: 0, scale: 0.95, y: 12 }}
+                                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                exit={{ opacity: 0, scale: 0.95, y: 12 }}
+                                                transition={{ duration: 0.22 }}
+                                                className="w-full max-w-3xl bg-[#0e0e12] border border-white/[0.08] rounded-[28px] overflow-hidden flex flex-col md:flex-row"
+                                            >
+                                                {/* Left — image */}
+                                                <div className="md:w-[52%] shrink-0 relative bg-black flex items-center justify-center min-h-[320px]">
                                                     <img
-                                                        src={sub.imageUrl || `${PINATA_GW}/${sub.imageCid}`}
-                                                        alt="Recent submission"
-                                                        className="w-full h-full object-cover"
+                                                        src={aiImageUrl}
+                                                        className="w-full h-full object-contain"
+                                                        style={{ maxHeight: "520px" }}
+                                                        alt="AI Generated"
                                                     />
-                                                </button>
-                                            ))}
-                                        </div>
+                                                    <div className="absolute top-3 left-3 bg-lime-400/80 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                                                        <Sparkles className="w-3 h-3 text-black" />
+                                                        <span className="text-[9px] font-black text-black uppercase tracking-widest">AI Generated</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Right — caption + rewards + submit */}
+                                                <div className="flex-1 flex flex-col p-6 gap-4">
+                                                    <div className="flex items-start justify-between">
+                                                        <div>
+                                                            <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">{event.brand?.name}</p>
+                                                            <h3 className="font-display text-2xl text-white uppercase leading-tight">Submit Entry</h3>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => setSubmitModalOpen(false)}
+                                                            className="w-8 h-8 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.1] transition-colors shrink-0"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Optional caption */}
+                                                    <div>
+                                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">
+                                                            Optional Caption
+                                                        </label>
+                                                        <textarea
+                                                            value={caption}
+                                                            onChange={(e) => setCaption(e.target.value)}
+                                                            placeholder="Describe your entry…"
+                                                            rows={3}
+                                                            maxLength={280}
+                                                            className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-foreground/30 resize-none focus:outline-none focus:border-white/20 transition-colors"
+                                                        />
+                                                        <p className="text-[10px] text-white/25 text-right mt-1">{caption.length}/280</p>
+                                                    </div>
+
+                                                    {/* Reward info */}
+                                                    <div className="rounded-[14px] bg-white/[0.03] border border-white/[0.07] p-3 space-y-2">
+                                                        <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-1">Your Earnings</p>
+                                                        <div className="flex items-center justify-between">
+                                                            <p className="text-[11px] text-white/55">Per vote received on your post</p>
+                                                            <p className="text-xs font-black text-lime-400">$0.05 USDC</p>
+                                                        </div>
+                                                        {(event.leaderboardPool ?? 0) > 0 && (
+                                                            <>
+                                                                <div className="border-t border-white/[0.06] pt-2 space-y-1.5">
+                                                                    <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-1">Leaderboard Pool · ${(event.leaderboardPool ?? 0).toLocaleString()} USDC</p>
+                                                                    {([
+                                                                        { place: "🥇 1st", pct: 0.50 },
+                                                                        { place: "🥈 2nd", pct: 0.35 },
+                                                                        { place: "🥉 3rd", pct: 0.15 },
+                                                                    ] as const).map(({ place, pct }) => (
+                                                                        <div key={place} className="flex items-center justify-between">
+                                                                            <p className="text-[11px] text-white/55">{place} Place</p>
+                                                                            <p className="text-xs font-black text-white/70">${((event.leaderboardPool ?? 0) * pct).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC</p>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+
+                                                    <button
+                                                        onClick={() => { setSubmitModalOpen(false); handleSubmit(); }}
+                                                        disabled={!aiImageFile || submitting}
+                                                        className="mt-auto w-full py-4 bg-purple-500 hover:bg-purple-400 text-white rounded-[14px] text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2.5 active:scale-[0.99] transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:shadow-[0_0_20px_rgba(168,85,247,0.4)]"
+                                                    >
+                                                        {submitting
+                                                            ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</>
+                                                            : <><Sparkles className="w-4 h-4" /> Enter Competition</>
+                                                        }
+                                                    </button>
+                                                </div>
+                                            </motion.div>
+                                        </motion.div>
                                     )}
-                                </div>
+                                </AnimatePresence>
 
                                 {/* ── Rules (quick) ── */}
                                 <div className="rounded-[24px] border border-border/40 bg-white/[0.02] p-5 space-y-4">
@@ -1558,208 +1595,312 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                             {/* ── Right: Event info + Rewards ── */}
                             <div className="lg:w-[300px] shrink-0">
                                 <div className="sticky top-6 space-y-4">
-                                    {/* Event info card */}
-                                    <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-3">Competition Status</p>
-
-                                        {/* Countdown */}
-                                        {event.postingEnd && (
-                                            <div className="flex items-center justify-between py-3 px-3 rounded-[12px] bg-orange-500/8 border border-orange-500/20 mb-3">
-                                                <div className="flex items-center gap-1.5">
-                                                    <Clock className="w-3 h-3 text-orange-400" />
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-400/80">Posting Ends In</span>
-                                                </div>
-                                                <Countdown targetDate={event.postingEnd} label="" />
-                                            </div>
-                                        )}
-
-                                        <div className="px-3 py-2.5 rounded-[12px] bg-white/[0.02] border border-white/[0.06]">
-                                            <p className="text-[9px] font-black uppercase tracking-widest text-foreground/35 mb-1">Top Reward</p>
-                                            <p className="text-2xl font-black text-foreground">${postingTopReward.toFixed(2)} <span className="text-sm text-foreground/30">USDC</span></p>
-                                        </div>
-                                        <p className="text-[10px] text-foreground/30 mt-3">Hosted by {event.brand?.name}</p>
-                                    </div>
+                                   
 
                                     {/* Rewards card */}
                                     <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5">
-                                        <div className="flex items-center justify-between mb-4">
+                                        <div className="mb-4">
                                             <span className="text-sm font-black text-foreground">Reward Breakdown</span>
-                                            <span className="text-[9px] bg-[#A78BFA]/10 text-[#A78BFA] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border border-[#A78BFA]/20">
-                                                Guaranteed
-                                            </span>
                                         </div>
-                                        {(event.topReward ?? event.leaderboardPool ?? 0) > 0 && (
-                                            <div className="bg-[#A78BFA]/5 border border-[#A78BFA]/15 rounded-[14px] p-4 mb-3">
-                                                <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Grand-Prize Winner</p>
-                                                <p className="text-2xl font-black text-foreground">${(event.topReward ?? event.leaderboardPool ?? 0).toLocaleString()}</p>
-                                                <p className="text-[10px] text-foreground/40 font-medium">USDC</p>
+
+                                        {/* Two incentive rows */}
+                                        <div className="space-y-2 mb-4">
+                                            {/* Creator incentive — per vote received */}
+                                            <div className="flex items-center justify-between bg-lime-400/5 border border-lime-400/15 rounded-[12px] px-3 py-3">
+                                                <div>
+                                                    <p className="text-[9px] font-black uppercase tracking-widest text-lime-400/70 mb-0.5">You post</p>
+                                                    <p className="text-[11px] text-foreground/60 leading-tight">Per vote received on your post</p>
+                                                </div>
+                                                <div className="text-right shrink-0 ml-2">
+                                                    <p className="text-base font-black text-lime-400">$0.05</p>
+                                                    <p className="text-[9px] text-foreground/40">USDC</p>
+                                                </div>
                                             </div>
-                                        )}
-                                        {(event.leaderboardPool ?? 0) > 0 && (
-                                            <div className="mb-3">
-                                                <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Leaderboard Pool</p>
-                                                <p className="text-xl font-black text-foreground">${(event.leaderboardPool ?? 0).toLocaleString()}</p>
-                                                <p className="text-[10px] text-foreground/40">USDC</p>
+                                            {/* Voter incentive — per vote cast */}
+                                            <div className="flex items-center justify-between bg-sky-400/5 border border-sky-400/15 rounded-[12px] px-3 py-3">
+                                                <div>
+                                                    <p className="text-[9px] font-black uppercase tracking-widest text-sky-400/70 mb-0.5">You vote</p>
+                                                    <p className="text-[11px] text-foreground/60 leading-tight">Per vote you cast in this event</p>
+                                                </div>
+                                                <div className="text-right shrink-0 ml-2">
+                                                    <p className="text-base font-black text-sky-400">$0.03</p>
+                                                    <p className="text-[9px] text-foreground/40">USDC</p>
+                                                </div>
                                             </div>
-                                        )}
-                                        {(event.baseReward ?? 0) > 0 && (
-                                            <div>
-                                                <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Per Submission</p>
-                                                <p className="text-lg font-black text-foreground">${(event.baseReward ?? 0).toLocaleString()}</p>
-                                            </div>
-                                        )}
+                                        </div>
+
+                                        {/* Leaderboard prizes — 50 / 35 / 15 */}
+                                        {(event.leaderboardPool ?? 0) > 0 && (() => {
+                                            const pool = event.leaderboardPool ?? 0;
+                                            const prize1 = pool * 0.50;
+                                            const prize2 = pool * 0.35;
+                                            const prize3 = pool * 0.15;
+                                            return (
+                                                <div>
+                                                    <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-0.5">Leaderboard Rewards</p>
+                                                    <p className="text-[10px] text-foreground/35 mb-2.5">Top 3 creators ranked by votes received</p>
+                                                    <div className="space-y-1.5">
+                                                        <div className="flex items-center justify-between bg-yellow-400/5 border border-yellow-400/15 rounded-[12px] px-3 py-2.5">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-sm leading-none">🥇</span>
+                                                                <div>
+                                                                    <p className="text-xs font-black text-foreground">1st Place</p>
+                                                                    <p className="text-[9px] text-foreground/40">Most votes · 50% of pool</p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="text-sm font-black text-yellow-400">${prize1.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                                                <p className="text-[9px] text-foreground/40">USDC</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center justify-between bg-white/[0.03] border border-white/[0.07] rounded-[12px] px-3 py-2.5">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-sm leading-none">🥈</span>
+                                                                <div>
+                                                                    <p className="text-xs font-black text-foreground">2nd Place</p>
+                                                                    <p className="text-[9px] text-foreground/40">2nd most votes · 35% of pool</p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="text-sm font-black text-foreground/70">${prize2.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                                                <p className="text-[9px] text-foreground/40">USDC</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center justify-between bg-white/[0.03] border border-white/[0.07] rounded-[12px] px-3 py-2.5">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-sm leading-none">🥉</span>
+                                                                <div>
+                                                                    <p className="text-xs font-black text-foreground">3rd Place</p>
+                                                                    <p className="text-[9px] text-foreground/40">3rd most votes · 15% of pool</p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="text-sm font-black text-foreground/50">${prize3.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                                                <p className="text-[9px] text-foreground/40">USDC</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
                             </div>
                         </div>
+                        </>
                     ) : (
                         /* ══════════════════════════════════════════════
                            STANDARD LAYOUT — voting / completed / upcoming
                         ══════════════════════════════════════════════ */
-                        <div className="flex flex-col lg:flex-row gap-6">
-                            {/* ── Left column ── */}
-                            <div className="flex-1 min-w-0">
-                                {/* Banner card */}
-                                <div className="relative rounded-[24px] overflow-hidden h-[220px] md:h-[260px] mb-5">
-                                    <img src={coverUrl} className="w-full h-full object-cover" alt="Event" />
-                                    <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-black/10" />
-                                    <div className="absolute inset-0 p-6 flex flex-col justify-between">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            {event.status !== "completed" && (
-                                                <div className="bg-black/30 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-full flex items-center gap-1.5">
-                                                    <Clock className="w-3 h-3 text-white/60" />
-                                                    <span className="text-[10px] font-black text-white">Voting phase</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div>
-                                            <h1 className="font-display text-3xl md:text-[2.6rem] text-white leading-tight mb-1">{event.title}</h1>
-                                            {event.description && (
-                                                <div className="mb-2">
-                                                    <ExpandableDescription
-                                                        text={event.description}
-                                                        className="text-xs text-white/60 font-medium leading-relaxed"
-                                                    />
-                                                </div>
-                                            )}
-                                            {isVotingEnded ? (
-                                                <div className="space-y-1">
-                                                    {/* End reason */}
-                                                    <p className="text-[11px] font-black text-white/50 uppercase tracking-widest">
-                                                        Ended ·{" "}
-                                                        {event.capacity && participantCount >= event.capacity
-                                                            ? "Max Participants Reached"
-                                                            : "Time Expired"}
-                                                    </p>
-                                                    {/* Global stats */}
-                                                    <p className="text-xs text-white/40 font-medium">
-                                                        {participantCount} participants ·{" "}
-                                                        {enrichedSubmissions.reduce((s, sub) => s + (sub._count?.votes ?? 0), 0)} total votes
-                                                    </p>
-                                                    {/* User personalisation */}
-                                                    {(votedSubmissionId || mySubmission) && (
-                                                        <p className="text-xs text-emerald-400/80 font-bold mt-0.5">
-                                                            {votedSubmissionId && "You voted"}
-                                                            {mySubmission && votedSubmissionId && " · "}
-                                                            {mySubmission && `Your submission — Rank #${mySubmission.rank ?? "—"} · ${mySubmission._count?.votes ?? 0} votes`}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            ) : displayMode === "vote" && !votedSubmissionId && !isBrand ? (
-                                                <div className="px-5 py-2.5 bg-lime-400 text-black rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-1.5 w-fit">
-                                                    <ThumbsUp className="w-3.5 h-3.5" /> Vote Below
-                                                </div>
-                                            ) : null}
-                                        </div>
-                                    </div>
-                                </div>
+                        <>
+                            {/* ── Full-width hero banner ── */}
+                            <div className="relative overflow-hidden min-h-[200px] md:min-h-[400px] mb-6 -mx-3 w-[calc(100%+1.5rem)] sm:-mx-4 sm:w-[calc(100%+2rem)] md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
+                                {/* Background image */}
+                                <img src={coverUrl} className="absolute inset-0 w-full h-full object-cover object-center" alt="Event" />
 
-                                {/* Count + View toggle */}
-                                {displayMode !== "upcoming" && (
-                                    <div className="flex items-center justify-between mb-5">
-                                        <span className="text-[11px] font-black uppercase tracking-widest text-foreground/40">
-                                            {enrichedSubmissions.length} {event.eventType === "vote_only" ? "Options" : "Submissions"}
-                                        </span>
-                                        <div className="flex border border-border/40 rounded-lg overflow-hidden">
-                                            <button onClick={() => setGridView(true)} className={cn("p-1.5 transition-colors", gridView ? "bg-white/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}><LayoutGrid className="w-3.5 h-3.5" /></button>
-                                            <button onClick={() => setGridView(false)} className={cn("p-1.5 transition-colors", !gridView ? "bg-white/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}><List className="w-3.5 h-3.5" /></button>
-                                        </div>
-                                    </div>
-                                )}
+                                {/* Gradients */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/75 to-black/20" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
                                 {/* Content */}
-                                {displayMode === "upcoming" ? (
-                                    <div className="py-16 flex flex-col items-center text-center gap-4">
-                                        <div className="w-14 h-14 rounded-3xl bg-primary/10 flex items-center justify-center">
-                                            <Clock className="w-7 h-7 text-primary" />
-                                        </div>
-                                        <div>
-                                            <h2 className="text-xl font-black text-foreground tracking-tighter mb-1">Coming Soon</h2>
-                                            <p className="text-sm text-foreground/50 font-medium">Goes live on <strong>{new Date(event.startTime).toLocaleString()}</strong></p>
-                                        </div>
-                                    </div>
-                                ) : displayMode === "completed" ? (
-                                    <CompletedView event={event} submissions={enrichedSubmissions} currentUserId={user?.id} gridView={gridView} votedSubmissionId={votedSubmissionId} />
-                                ) : (
-                                    <AnimatePresence>
-                                        <div className={gridView ? "grid grid-cols-2 md:grid-cols-3 gap-4" : "flex flex-col gap-4"}>
-                                            {sortedSubmissions.map((sub, idx) => (
-                                                <motion.div
-                                                    key={sub.id}
-                                                    layout
-                                                    initial={{ opacity: 0, scale: 0.92 }}
-                                                    animate={{ opacity: 1, scale: 1 }}
-                                                    transition={{ duration: 0.2, delay: idx * 0.03 }}
-                                                    className={!gridView ? "w-full max-w-[760px] mx-auto" : undefined}
-                                                >
-                                                    <VoteSubmissionCard
-                                                        submission={toVoteSubmission(sub, user?.id)}
-                                                        isVoted={votedSubmissionId === sub.id}
-                                                        isPending={pendingVoteId === sub.id}
-                                                        onVote={() => handleVote(sub.id)}
-                                                        onOpenImage={() => setPreviewSubmissionId(sub.id)}
-                                                        disabled={isVotingEnded || !!votedSubmissionId || (event.eventType !== "vote_only" && sub.userId === user?.id)}
-                                                        optionIndex={event.eventType === "vote_only" ? idx : undefined}
-                                                        showVoteCount={false}
-                                                        listView={!gridView}
+                                <div className="relative z-10 flex flex-col justify-between h-full min-h-[380px] md:min-h-[460px] p-7 md:p-10">
+                                    {/* Top: brand pill + title */}
+                                    <div>
+                                        {/* Brand + category pill */}
+                                        <div className="flex items-center gap-3 mb-4 flex-wrap">
+                                            <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/15 rounded-full pl-1 pr-3 py-1">
+                                                {event.brand?.logoCid ? (
+                                                    <img
+                                                        src={`${PINATA_GW}/${event.brand.logoCid}`}
+                                                        className="w-6 h-6 rounded-full object-cover border border-white/20"
+                                                        alt={event.brand?.name}
                                                     />
-                                                </motion.div>
-                                            ))}
-                                        </div>
-                                        {enrichedSubmissions.length === 0 && (
-                                            <div className="text-center py-20">
-                                                <p className="text-sm text-foreground/30 font-bold">{event.eventType === "vote_only" ? "No options yet" : "No entries yet"}</p>
+                                                ) : (
+                                                    <div className="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+                                                        <span className="text-[9px] font-black text-white/70">{event.brand?.name?.[0]}</span>
+                                                    </div>
+                                                )}
+                                                <span className="text-[11px] font-black text-white/90">{event.brand?.name}</span>
                                             </div>
-                                        )}
-                                    </AnimatePresence>
-                                )}
-                            </div>
+                                            {event.category && (
+                                                <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.10] text-white/50">
+                                                    {event.category}
+                                                </span>
+                                            )}
+                                        </div>
 
-                            {/* ── Right: Sticky sidebar ── */}
-                            <div className="lg:w-[300px] shrink-0">
-                                <div className="sticky top-6">
-                                    <EventSidebar
-                                        event={event}
-                                        activeViewers={activeViewers}
-                                        participantCount={participantCount}
-                                        mode={displayMode}
-                                        votedSubmissionId={votedSubmissionId}
-                                        votedSub={votedSub ?? undefined}
-                                        hasSubmitted={hasSubmitted}
-                                        mySubmission={mySubmission}
-                                        file={file}
-                                        preview={preview}
-                                        caption={caption}
-                                        submitting={submitting}
-                                        fileRef={fileRef}
-                                        onFileChange={handleFileChange}
-                                        onSubmit={handleSubmit}
-                                        onCaptionChange={setCaption}
-                                        isBrand={isBrand}
-                                    />
+                                        {/* Title */}
+                                        <h1 className="font-display text-5xl md:text-6xl lg:text-7xl text-white uppercase leading-[0.88] tracking-tight max-w-[60%]">
+                                            {event.title}
+                                        </h1>
+                                        {event.tagline && (
+                                            <p className="font-display text-4xl md:text-5xl lg:text-6xl text-lime-400 uppercase leading-[0.88] tracking-tight mt-1">
+                                                {event.tagline}
+                                            </p>
+                                        )}
+                                    </div>
+
+
+
+                                    {/* Bottom: brand strip + stats */}
+                                    <div className="space-y-4">
+
+
+                                        {/* Stats row */}
+                                        <div className="border-t border-white/10 pt-4 flex items-end gap-0 flex-wrap">
+                                            {/* Countdown or Ended */}
+                                            {isVotingEnded ? (
+                                                <>
+                                                    <div className="pr-8">
+                                                        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Event Status</p>
+                                                        <p className="text-2xl font-black text-white/50 leading-none">Ended</p>
+                                                    </div>
+                                                    <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
+                                                </>
+                                            ) : !isVotingEnded && displayMode === "vote" && event.endTime ? (
+                                                <>
+                                                    <div className="pr-8">
+                                                        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-2">Voting Ends In</p>
+                                                        <BigCountdown targetDate={event.endTime} />
+                                                    </div>
+                                                    <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
+                                                </>
+                                            ) : null}
+                                            {!isVotingEnded && displayMode === "upcoming" && event.startTime && (
+                                                <>
+                                                    <div className="pr-8">
+                                                        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-2">Starts In</p>
+                                                        <BigCountdown targetDate={event.startTime} />
+                                                    </div>
+                                                    <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
+                                                </>
+                                            )}
+
+                                            {/* Participants */}
+                                            <div className="pr-8">
+                                                <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Total Participants</p>
+                                                {loading ? (
+                                                    <div className="h-10 w-20 rounded-lg bg-white/10 animate-pulse" />
+                                                ) : (
+                                                    <div className="flex items-center gap-1">
+                                                        <p className="text-4xl md:text-5xl font-black text-lime-400 leading-none tabular-nums">{participantCount.toLocaleString()}</p>
+                                                        {event.capacity && (
+                                                            <span className="text-2xl md:text-3xl font-black text-white/30 leading-none">/{event.capacity.toLocaleString()}</span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Watching Now — always shown */}
+                                            <>
+                                                <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
+                                                <div>
+                                                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Watching Live</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <Eye className="w-5 h-5 text-green-400 animate-pulse shrink-0" />
+                                                        <p className="text-4xl md:text-5xl font-black text-green-400 leading-none tabular-nums">{activeViewers}</p>
+                                                    </div>
+                                                </div>
+                                            </>
+
+                                        </div>
+                                       
+
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+
+                            {/* ── Content + sidebar ── */}
+                            <div className="flex flex-col lg:flex-row gap-6">
+                                {/* ── Left column ── */}
+                                <div className="flex-1 min-w-0">
+                                    {/* Count + View toggle */}
+                                    {displayMode !== "upcoming" && displayMode !== "completed" && (
+                                        <div className="flex items-center justify-between mb-5">
+                                            <span className="text-[11px] font-black uppercase tracking-widest text-foreground/40">
+                                                {enrichedSubmissions.length} {event.eventType === "vote_only" ? "Options" : "Submissions"}
+                                            </span>
+                                            <div className="flex border border-border/40 rounded-lg overflow-hidden">
+                                                <button onClick={() => setGridView(true)} className={cn("p-1.5 transition-colors", gridView ? "bg-white/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}><LayoutGrid className="w-3.5 h-3.5" /></button>
+                                                <button onClick={() => setGridView(false)} className={cn("p-1.5 transition-colors", !gridView ? "bg-white/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}><List className="w-3.5 h-3.5" /></button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Content */}
+                                    {displayMode === "upcoming" ? (
+                                        <div className="py-16 flex flex-col items-center text-center gap-4">
+                                            <div className="w-14 h-14 rounded-3xl bg-primary/10 flex items-center justify-center">
+                                                <Clock className="w-7 h-7 text-primary" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-xl font-black text-foreground tracking-tighter mb-1">Coming Soon</h2>
+                                                <p className="text-sm text-foreground/50 font-medium">Goes live on <strong>{new Date(event.startTime).toLocaleString()}</strong></p>
+                                            </div>
+                                        </div>
+                                    ) : displayMode === "completed" ? (
+                                        <CompletedView event={event} submissions={enrichedSubmissions} currentUserId={user?.id} gridView={gridView} votedSubmissionId={votedSubmissionId} />
+                                    ) : (
+                                        <AnimatePresence>
+                                            <div className={gridView ? "grid grid-cols-2 md:grid-cols-3 gap-4" : "flex flex-col gap-4"}>
+                                                {sortedSubmissions.map((sub, idx) => (
+                                                    <motion.div
+                                                        key={sub.id}
+                                                        layout
+                                                        initial={{ opacity: 0, scale: 0.92 }}
+                                                        animate={{ opacity: 1, scale: 1 }}
+                                                        transition={{ duration: 0.2, delay: idx * 0.03 }}
+                                                        className={!gridView ? "w-full max-w-[760px] mx-auto" : undefined}
+                                                    >
+                                                        <VoteSubmissionCard
+                                                            submission={toVoteSubmission(sub, user?.id)}
+                                                            isVoted={votedSubmissionId === sub.id}
+                                                            isPending={pendingVoteId === sub.id}
+                                                            onVote={() => handleVote(sub.id)}
+                                                            onOpenImage={() => setPreviewSubmissionId(sub.id)}
+                                                            disabled={isVotingEnded || !!votedSubmissionId || (event.eventType !== "vote_only" && sub.userId === user?.id)}
+                                                            optionIndex={event.eventType === "vote_only" ? idx : undefined}
+                                                            showVoteCount={false}
+                                                            listView={!gridView}
+                                                        />
+                                                    </motion.div>
+                                                ))}
+                                            </div>
+                                            {enrichedSubmissions.length === 0 && (
+                                                <div className="text-center py-20">
+                                                    <p className="text-sm text-foreground/30 font-bold">{event.eventType === "vote_only" ? "No options yet" : "No entries yet"}</p>
+                                                </div>
+                                            )}
+                                        </AnimatePresence>
+                                    )}
+                                </div>
+
+                                {/* ── Right: Sticky sidebar ── */}
+                                <div className="lg:w-[300px] shrink-0">
+                                    <div className="sticky top-6">
+                                        <EventSidebar
+                                            event={event}
+                                            activeViewers={activeViewers}
+                                            participantCount={participantCount}
+                                            mode={displayMode}
+                                            votedSubmissionId={votedSubmissionId}
+                                            votedSub={votedSub ?? undefined}
+                                            hasSubmitted={hasSubmitted}
+                                            mySubmission={mySubmission}
+                                            file={file}
+                                            preview={preview}
+                                            caption={caption}
+                                            submitting={submitting}
+                                            fileRef={fileRef}
+                                            onFileChange={handleFileChange}
+                                            onSubmit={handleSubmit}
+                                            onCaptionChange={setCaption}
+                                            isBrand={isBrand}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </>
                     )
                 ) : null}
             </main>
@@ -1817,6 +1958,7 @@ function CompletedView({ event, submissions, currentUserId, gridView, votedSubmi
     const totalVotes = submissions.reduce((sum, s) => sum + (s._count?.votes ?? 0), 0);
     const winner = sorted[0];
     const showCreator = event.eventType !== "vote_only";
+    const myPost = currentUserId ? sorted.find(s => s.userId === currentUserId) : null;
 
     // Result insight line
     const insightText = (() => {
@@ -1907,34 +2049,51 @@ function CompletedView({ event, submissions, currentUserId, gridView, votedSubmi
                 )}
             </AnimatePresence>
 
-            {/* Winner outcome block */}
-            {winner && (
-                <div className="flex items-center gap-4 p-4 rounded-[16px] bg-white/[0.03] border border-white/[0.06]">
-                    <div className="flex-1 min-w-0">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/35 mb-1">Winner</p>
-                        <p className="text-base font-black text-foreground truncate">
-                            {winner.content?.split("\n")[0] || `@${winner.user?.username || "entry"}`}
-                        </p>
-                        <p className="text-xs text-foreground/45 font-medium mt-0.5">
-                            {winner._count?.votes ?? 0} votes
-                            {totalVotes > 0 && ` · ${Math.round(((winner._count?.votes ?? 0) / totalVotes) * 100)}% of total`}
-                        </p>
-                        {insightText && (
-                            <p className="text-[10px] text-foreground/30 font-medium mt-2 italic">{insightText}</p>
+
+            {/* Top 3 — final results */}
+            {/* ── My Post ── */}
+            {myPost && event.eventType === "post_and_vote" && (
+                <div className="rounded-[20px] border-2 border-primary/40 bg-primary/5 overflow-hidden">
+                    <div className="px-4 pt-4 pb-2 flex items-center gap-2">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-primary/70">Your Entry</span>
+                        {myPost.rank && (
+                            <span className={cn(
+                                "text-[10px] font-black px-2 py-0.5 rounded-full",
+                                myPost.rank === 1 ? "bg-yellow-400 text-black" :
+                                myPost.rank === 2 ? "bg-slate-300 text-black" :
+                                myPost.rank === 3 ? "bg-amber-600 text-white" :
+                                "bg-white/10 text-white/70"
+                            )}>#{myPost.rank}</span>
                         )}
                     </div>
-                    {(winner.imageUrl || winner.imageCid) && (
-                        <div
-                            className="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-white/10 cursor-zoom-in"
-                            onClick={() => { const idx = getLightboxIdx(winner); if (idx >= 0) setLightboxIdx(idx); }}
-                        >
-                            <img src={winner.imageUrl || `${PINATA_GW}/${winner.imageCid}`} className="w-full h-full object-cover" alt="Winner" />
+                    <div className="flex gap-4 px-4 pb-4">
+                        {(myPost.imageUrl || myPost.imageCid) && (
+                            <div
+                                className="w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-white/10 cursor-zoom-in"
+                                onClick={() => { const idx = getLightboxIdx(myPost); if (idx >= 0) setLightboxIdx(idx); }}
+                            >
+                                <img src={myPost.imageUrl || `${PINATA_GW}/${myPost.imageCid}`} className="w-full h-full object-cover" alt="My post" />
+                            </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                            {(myPost as any).caption && (
+                                <p className="text-sm font-semibold text-foreground/80 line-clamp-2 mb-2">{(myPost as any).caption}</p>
+                            )}
+                            <div className="flex items-center gap-4">
+                                <div>
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-foreground/35">Votes Received</p>
+                                    <p className="text-xl font-black text-foreground">{myPost._count?.votes ?? 0}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-lime-400/60">Earned</p>
+                                    <p className="text-xl font-black text-lime-400">${((myPost._count?.votes ?? 0) * 0.05).toFixed(2)}</p>
+                                </div>
+                            </div>
                         </div>
-                    )}
+                    </div>
                 </div>
             )}
 
-            {/* Top 3 — final results */}
             {topThree.length > 0 && (
                 <div>
                     <div className="flex items-center justify-between mb-4">
@@ -1950,10 +2109,12 @@ function CompletedView({ event, submissions, currentUserId, gridView, votedSubmi
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
                             {topThree.map((sub, i) => (
                                 <div key={sub.id} className="relative">
-                                    {/* Minimal rank badge */}
+                                    {/* Highlighted rank badge */}
                                     <div className={cn(
-                                        "absolute -top-3 left-4 z-10 px-2.5 py-0.5 rounded-md text-xs font-medium bg-neutral-900 border",
-                                        i === 0 ? "border-neutral-500 text-neutral-200" : "border-neutral-700 text-neutral-500"
+                                        "absolute -top-3 left-4 z-10 px-2.5 py-0.5 rounded-md text-xs font-black",
+                                        i === 0 ? "bg-yellow-400 text-black" :
+                                        i === 1 ? "bg-slate-300 text-black" :
+                                        "bg-amber-600 text-white"
                                     )}>
                                         #{i + 1}
                                     </div>

@@ -266,12 +266,13 @@ function EventSidebar({
                 {/* Active viewers */}
                 {activeViewers > 0 && (
                     <div className="flex items-center justify-between py-3 border-t border-border/30">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Watching Now</span>
-                        <div className="flex items-center gap-1.5">
-                            <span className="relative flex h-1.5 w-1.5">
+                          <span className="relative flex h-1.5 w-1.5">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
                                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
                             </span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Watching Now</span>
+                        <div className="flex items-center  gap-1.5">
+                          
                             <span className="text-sm font-black text-green-400">{activeViewers}</span>
                         </div>
                     </div>

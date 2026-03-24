@@ -15,6 +15,10 @@ import { useUser } from "@/context/UserContext";
 
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
+function toBrandSlug(name: string) {
+    return name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+}
+
 const STATUS_STYLE: Record<string, string> = {
     posting: "bg-orange-500/10 text-orange-400 border-orange-500/20",
     voting: "bg-lime-400/10 text-lime-400 border-lime-500/20",
@@ -54,6 +58,11 @@ export default function BrandPublicPage() {
         setLoading(true);
         getBrandById(identifier).then(data => {
             setBrand(data);
+            // Redirect UUID URLs to clean slug URLs
+            const slug = toBrandSlug(data.name);
+            if (identifier !== slug) {
+                router.replace(`/brand/${slug}`);
+            }
             if (currentUser) {
                 getSubscriptionStatus(data.id).then(setSubscribed);
             }
@@ -77,8 +86,62 @@ export default function BrandPublicPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-background flex items-center justify-center">
-                <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+            <div className="min-h-screen bg-background text-foreground font-sans">
+                <SidebarLayout>
+                    <div className="pb-24 lg:pb-10 animate-pulse">
+                        {/* Back placeholder */}
+                        <div className="h-4 w-12 bg-foreground/10 rounded mb-6" />
+
+                        {/* Header card skeleton */}
+                        <div className="rounded-[28px] border border-border bg-card overflow-hidden mb-6 p-6 sm:p-8">
+                            <div className="flex flex-col sm:flex-row sm:items-start gap-5">
+                                {/* Logo */}
+                                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-foreground/10 shrink-0" />
+                                <div className="flex-1 space-y-3">
+                                    {/* Name */}
+                                    <div className="h-8 w-48 bg-foreground/10 rounded-lg" />
+                                    {/* Tagline */}
+                                    <div className="h-4 w-32 bg-foreground/7 rounded" />
+                                    {/* Categories */}
+                                    <div className="flex gap-2">
+                                        <div className="h-6 w-24 bg-foreground/7 rounded-full" />
+                                        <div className="h-6 w-28 bg-foreground/7 rounded-full" />
+                                    </div>
+                                    {/* Subscribe button */}
+                                    <div className="h-9 w-28 bg-foreground/10 rounded-xl" />
+                                </div>
+                            </div>
+                            {/* Stats row */}
+                            <div className="flex flex-wrap gap-8 mt-6 pt-5 border-t border-border">
+                                {[...Array(4)].map((_, i) => (
+                                    <div key={i} className="space-y-1.5">
+                                        <div className="h-3 w-16 bg-foreground/7 rounded" />
+                                        <div className="h-7 w-10 bg-foreground/10 rounded" />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Tab bar skeleton */}
+                        <div className="h-11 w-40 bg-foreground/7 rounded-2xl mb-6" />
+
+                        {/* Event cards skeleton */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                            {[...Array(3)].map((_, i) => (
+                                <div key={i} className="rounded-[20px] border border-border bg-card overflow-hidden">
+                                    <div className="h-[160px] bg-foreground/10" />
+                                    <div className="p-4 space-y-2">
+                                        <div className="h-4 w-3/4 bg-foreground/10 rounded" />
+                                        <div className="h-3 w-1/2 bg-foreground/7 rounded" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="md:hidden">
+                        <BottomNav />
+                    </div>
+                </SidebarLayout>
             </div>
         );
     }

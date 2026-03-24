@@ -1,10 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check, Vote, ImageIcon, Circle } from "lucide-react";
+import { ThumbsUp, ImageIcon, Circle, Share2, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VoteSubmission } from "@/types/events";
-import { formatCount } from "@/lib/eventUtils";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -32,168 +31,157 @@ export default function VoteSubmissionCard({
     listView = false,
 }: VoteSubmissionCardProps) {
     const [imgError, setImgError] = useState(false);
-
     const isCloudinary = submission.media?.includes('cloudinary.com');
+
+    const handleShare = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const url = `${window.location.origin}${window.location.pathname}`;
+        if (navigator.share) {
+            navigator.share({ url }).catch(() => {});
+        } else {
+            navigator.clipboard.writeText(url);
+        }
+    };
 
     return (
         <motion.div
-            whileHover={!disabled ? { y: -3, scale: 1.01 } : undefined}
-            whileTap={!disabled ? { scale: 0.98 } : undefined}
+            whileHover={!disabled ? { y: -3 } : undefined}
+            whileTap={!disabled ? { scale: 0.99 } : undefined}
             className={cn(
                 "relative rounded-[24px] overflow-hidden transition-all duration-200",
                 "border-2",
                 isVoted
-                    ? "border-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.15)]"
+                    ? "border-lime-400 shadow-[0_0_0_4px_rgba(163,230,53,0.18)]"
                     : isPending
-                        ? "border-lime-400/70 shadow-[0_0_0_4px_rgba(163,230,53,0.12)]"
-                        : "border-transparent hover:border-white/20",
-                disabled && !isVoted && !isPending && "opacity-40",
+                        ? "border-lime-400/60"
+                        : "border-transparent hover:border-white/15",
+                disabled && !isVoted && !isPending && "opacity-50",
                 !disabled && "hover:shadow-2xl"
             )}
         >
-            {/* Portrait image container */}
+            {/* Image fills the card */}
             <div
                 className={cn(
-                    "relative bg-secondary overflow-hidden",
+                    "relative bg-black overflow-hidden",
                     listView ? "aspect-[16/9]" : "aspect-[3/4]"
                 )}
             >
+                {/* Click to zoom */}
+                <button
+                    type="button"
+                    onClick={onOpenImage}
+                    className={cn("absolute inset-0 w-full h-full", onOpenImage ? "cursor-zoom-in" : "cursor-default")}
+                    tabIndex={-1}
+                />
+
                 {submission.mediaType === "text" ? (
                     <div className="w-full h-full flex items-center justify-center p-8 bg-gradient-to-br from-card to-secondary">
                         <p className="text-base font-bold text-foreground text-center leading-relaxed">
                             {submission.textContent}
                         </p>
                     </div>
+                ) : imgError || !submission.media ? (
+                    <div className="w-full h-full flex items-center justify-center bg-secondary">
+                        <ImageIcon className="w-8 h-8 text-foreground/20" />
+                    </div>
+                ) : isCloudinary ? (
+                    <Image
+                        src={submission.media}
+                        alt="Submission"
+                        fill
+                        sizes="(max-width: 768px) 50vw, 33vw"
+                        className="object-cover"
+                        onError={() => setImgError(true)}
+                    />
                 ) : (
-                    <div className="w-full h-full relative flex flex-col">
-                        <button
-                            type="button"
-                            onClick={onOpenImage}
-                            className={cn(
-                                "w-full flex-1 relative overflow-hidden text-left min-h-0",
-                                onOpenImage ? "cursor-zoom-in" : "cursor-default"
-                            )}
-                        >
-                            {imgError || !submission.media ? (
-                                <div className="w-full h-full flex items-center justify-center bg-secondary">
-                                    <ImageIcon className="w-8 h-8 text-foreground/20" />
-                                </div>
-                            ) : isCloudinary ? (
-                                <Image
-                                    src={submission.media}
-                                    alt="Submission"
-                                    fill
-                                    sizes="(max-width: 768px) 50vw, 33vw"
-                                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                                    onError={() => setImgError(true)}
-                                />
-                            ) : (
-                                <img
-                                    src={submission.media}
-                                    alt="Submission"
-                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                    onError={() => setImgError(true)}
-                                />
-                            )}
-                        </button>
+                    <img
+                        src={submission.media}
+                        alt="Submission"
+                        className="w-full h-full object-cover"
+                        onError={() => setImgError(true)}
+                    />
+                )}
+
+                {/* Voted tint overlay */}
+                {isVoted && <div className="absolute inset-0 bg-lime-400/10 pointer-events-none" />}
+
+                {/* "Your Vote" badge — top left */}
+                {isVoted && (
+                    <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 bg-lime-400 px-2.5 py-1.5 rounded-full shadow-lg pointer-events-none">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-black" />
+                        <span className="text-[11px] font-black text-black leading-none">Your Vote</span>
+                    </div>
+                )}
+
+                {/* Creator info top-right — hidden for vote_only */}
+                {optionIndex === undefined && !isVoted && (
+                    <div className="absolute top-3 right-3 flex items-center gap-1.5 pointer-events-none">
+                        <img
+                            className="w-6 h-6 rounded-full border-2 border-white/20 object-cover"
+                            src={submission.creator.avatar}
+                            alt={submission.creator.name}
+                        />
+                        <span className="text-[11px] font-bold text-white/90 drop-shadow">
+                            @{submission.creator.handle}
+                        </span>
+                    </div>
+                )}
+
+                {/* Bottom gradient */}
+                <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/85 to-transparent pointer-events-none" />
+
+                {/* Bottom bar: caption left, buttons right */}
+                <div className="absolute bottom-0 inset-x-0 px-3.5 pb-3.5 flex items-end justify-between gap-2">
+                    {/* Caption */}
+                    <div className="flex-1 min-w-0">
                         {submission.textContent && (
-                            <div className="w-full bg-card px-3 py-2 z-10 relative border-t border-border/30">
-                                <p className="text-[13px] font-semibold text-foreground/80 line-clamp-2">
-                                    {submission.textContent}
-                                </p>
-                            </div>
+                            <p className="text-[13px] font-bold text-white leading-snug line-clamp-2 drop-shadow">
+                                {submission.textContent}
+                            </p>
                         )}
                     </div>
-                )}
 
-                {/* Top gradient for creator info */}
-                <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/60 to-transparent" />
-
-                {/* Rank / Option badge */}
-                {optionIndex !== undefined ? (
-                    <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-background/80 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/10">
-                        <span className="text-[10px] font-black text-foreground/70 tracking-wide">
-                            Option {optionIndex + 1}
-                        </span>
-                    </div>
-                ) : submission.rank ? (
-                    <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-background/80 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/10">
-                        <span className={cn(
-                            "text-[10px] font-black tracking-wide",
-                            submission.rank === 1 ? "text-yellow-400" :
-                            submission.rank === 2 ? "text-slate-300" :
-                            submission.rank === 3 ? "text-amber-500" :
-                            "text-foreground/70"
-                        )}>
-                            #{submission.rank}
-                        </span>
-                    </div>
-                ) : null}
-
-                {/* Creator info top-right */}
-                <div className="absolute top-3 right-3 flex items-center gap-1.5">
-                    <img
-                        className="w-6 h-6 rounded-full border-2 border-white/20"
-                        src={submission.creator.avatar}
-                        alt={submission.creator.name}
-                    />
-                    <span className="text-[11px] font-bold text-white/90 drop-shadow-sm">
-                        @{submission.creator.handle}
-                    </span>
-                </div>
-
-                {/* Bottom gradient (only needed if text isn't occupying the bottom space) */}
-                {(!submission.textContent || submission.mediaType === "text") && (
-                    <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
-                )}
-
-                {/* Bottom: vote count + vote button */}
-                <div className="absolute bottom-0 inset-x-0 p-4 flex items-end justify-between">
-                    {showVoteCount && (
-                        <div className="flex items-center gap-1.5 drop-shadow-md">
-                            <Vote className={cn("w-3.5 h-3.5", (!submission.textContent || submission.mediaType === "text") ? "text-white/60" : "text-foreground/60")} />
-                            <span className={cn("text-xs font-black", (!submission.textContent || submission.mediaType === "text") ? "text-white/80" : "text-foreground/80")}>
-                                {formatCount(submission.voteCount)}
-                            </span>
-                        </div>
-                    )}
-
-                    {/* Vote CTA */}
-                    {isVoted ? (
-                        <div className="flex items-center gap-2 bg-lime-400 px-4 py-2 rounded-full shadow-lg">
-                            <Check className="w-3.5 h-3.5 text-black" />
-                            <span className="text-[11px] font-black text-black uppercase tracking-wider">Voted</span>
-                        </div>
-                    ) : isPending ? (
-                        <div className="flex items-center gap-2 bg-lime-400 px-4 py-2 rounded-full shadow-lg">
-                            <Circle className="w-2.5 h-2.5 fill-black text-black" />
-                            <span className="text-[11px] font-black text-black uppercase tracking-wider">Selected</span>
-                        </div>
-                    ) : (
+                    {/* Buttons */}
+                    <div className="flex items-center gap-2 shrink-0">
+                        {/* Share */}
                         <button
                             type="button"
-                            onClick={onVote}
-                            disabled={disabled}
-                            className={cn(
-                            "px-4 py-2 rounded-full transition-all",
-                            disabled
-                                ? "bg-white/10 border border-white/10"
-                                : "bg-white/15 backdrop-blur-md border border-white/20 hover:bg-primary hover:border-primary group-hover:scale-105"
-                        )}>
-                            <span className="text-[11px] font-black text-white uppercase tracking-wider">
-                                {submission.isOwn ? "My Content" : "Vote"}
-                            </span>
+                            onClick={handleShare}
+                            className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/20 flex items-center justify-center text-white/70 hover:bg-white/20 hover:text-white transition-all"
+                        >
+                            <Share2 className="w-4 h-4" />
                         </button>
-                    )}
-                </div>
 
-                {/* Voted / Pending overlay */}
-                {isVoted && (
-                    <div className="absolute inset-0 bg-primary/10 pointer-events-none" />
-                )}
-                {isPending && (
-                    <div className="absolute inset-0 bg-lime-400/8 pointer-events-none" />
-                )}
+                        {/* Vote */}
+                        {submission.isOwn ? (
+                            <div className="w-10 h-10 rounded-full bg-black/40 border border-white/10 flex items-center justify-center" title="Your submission">
+                                <ThumbsUp className="w-4 h-4 text-white/20" />
+                            </div>
+                        ) : isVoted ? (
+                            <div className="w-10 h-10 rounded-full bg-lime-400 shadow-[0_0_14px_rgba(163,230,53,0.5)] flex items-center justify-center">
+                                <ThumbsUp className="w-4 h-4 text-black fill-black" />
+                            </div>
+                        ) : isPending ? (
+                            <div className="w-10 h-10 rounded-full bg-lime-400/80 flex items-center justify-center">
+                                <Circle className="w-2.5 h-2.5 fill-black text-black" />
+                            </div>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); onVote(); }}
+                                disabled={disabled}
+                                className={cn(
+                                    "w-10 h-10 rounded-full flex items-center justify-center transition-all",
+                                    disabled
+                                        ? "bg-black/30 border border-white/10 cursor-not-allowed"
+                                        : "bg-black/50 backdrop-blur-md border border-white/20 hover:bg-lime-400 hover:border-lime-400 hover:text-black active:scale-95"
+                                )}
+                            >
+                                <ThumbsUp className={cn("w-4 h-4", disabled ? "text-white/20" : "text-white")} />
+                            </button>
+                        )}
+                    </div>
+                </div>
             </div>
         </motion.div>
     );

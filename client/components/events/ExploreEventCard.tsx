@@ -90,7 +90,7 @@ export default function ExploreEventCard({ event }: { event: ExploreEvent }) {
                     <div className="flex items-center justify-between">
                         {/* Brand */}
                         <Link
-                            href={event.brand ? `/brand/${event.brand.id}` : "#"}
+                            href={event.brand ? `/brand/${event.brand.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}` : "#"}
                             onClick={(e) => e.stopPropagation()}
                             className="flex items-center gap-1.5 min-w-0 hover:opacity-80 transition-opacity"
                         >

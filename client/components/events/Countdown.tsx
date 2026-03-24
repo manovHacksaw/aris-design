@@ -44,11 +44,12 @@ export default function Countdown({ targetDate, label, className, onEnd }: Count
     const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
     const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
 
+    // Show seconds only when less than 1 day remaining
     const parts = [
-        days > 0 ? `${days}d` : null,
-        hours > 0 || days > 0 ? `${hours}h` : null,
-        `${minutes}m`,
-        days === 0 && hours === 0 ? `${seconds}s` : null,
+        days > 0 ? `${days}D` : null,
+        hours > 0 || days > 0 ? `${hours}H` : null,
+        `${minutes}M`,
+        days === 0 ? `${seconds}s` : null,
     ].filter(Boolean);
 
     return (

@@ -265,7 +265,7 @@ export default function HomeHeader() {
                                             {results!.brands.map((brand) => (
                                                 <button
                                                     key={brand.id}
-                                                    onClick={() => { router.push(`/brand/${brand.id}`); setOpen(false); setSearchQuery(""); }}
+                                                    onClick={() => { router.push(`/brand/${brand.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`); setOpen(false); setSearchQuery(""); }}
                                                     className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/[0.04] transition-colors text-left"
                                                 >
                                                     {brand.logoCid

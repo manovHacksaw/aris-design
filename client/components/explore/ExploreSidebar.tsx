@@ -129,7 +129,7 @@ function SuggestedItemCard({ item, type }: { item: SuggestedItem; type: "brand" 
 
     const handleNavigate = () => {
         if (type === "brand") {
-            router.push(`/brand/${item.id}`);
+            router.push(`/brand/${item.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`);
         } else {
             const username = item.username || item.handle.replace(/^@/, "");
             router.push(`/profile/${username}`);

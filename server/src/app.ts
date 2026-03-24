@@ -14,6 +14,8 @@ export const createApp = () => {
     app.use(cors({
         origin: [
             'http://localhost:3000',
+            // allow local dev running on port 3001 (requested)
+            'http://localhost:3001',
             'https://aris-demo.vercel.app',
             'https://arisweb-demo.vercel.app',
             process.env.FRONTEND_URL || ''

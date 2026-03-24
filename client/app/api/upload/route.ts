@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { v2 as cloudinary } from "cloudinary";
-
-cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+  if (!cloudName || !apiKey || !apiSecret) {
+    return NextResponse.json({ error: "Cloudinary credentials not configured" }, { status: 500 });
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;
@@ -16,26 +18,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    // Build signed upload parameters
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder = "aris/submissions";
 
-    const result = await new Promise<{ secure_url: string; public_id: string }>(
-      (resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          { folder: "aris/submissions", resource_type: "image" },
-          (err, res) => {
-            if (err || !res) return reject(err ?? new Error("Upload failed"));
-            resolve(res as { secure_url: string; public_id: string });
-          }
-        );
-        stream.end(buffer);
-      }
+    // Params must be sorted alphabetically for signing
+    const paramsToSign = `folder=${folder}&timestamp=${timestamp}`;
+    const signature = crypto
+      .createHash("sha256")
+      .update(paramsToSign + apiSecret)
+      .digest("hex");
+
+    // Build multipart form for Cloudinary REST API
+    const uploadForm = new FormData();
+    uploadForm.append("file", file);
+    uploadForm.append("api_key", apiKey);
+    uploadForm.append("timestamp", String(timestamp));
+    uploadForm.append("folder", folder);
+    uploadForm.append("signature", signature);
+
+    const cloudinaryRes = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+      { method: "POST", body: uploadForm }
     );
+
+    const result = await cloudinaryRes.json();
+
+    if (!cloudinaryRes.ok || result.error) {
+      console.error("Cloudinary upload error:", result.error ?? result);
+      return NextResponse.json({ error: result.error?.message ?? "Upload failed" }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
-      imageUrl: result.secure_url,
-      publicId: result.public_id,
+      imageUrl: result.secure_url as string,
+      publicId: result.public_id as string,
     });
   } catch (error) {
     console.error("Upload handler error:", error);

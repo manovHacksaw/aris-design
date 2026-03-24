@@ -174,7 +174,7 @@ export default function ExploreHeader({ activeSector, onSectorChange, searchQuer
                                                 {searchResults!.brands.map((b) => (
                                                     <button
                                                         key={b.id}
-                                                        onClick={() => navigate(`/brand/${b.id}`)}
+                                                        onClick={() => navigate(`/brand/${b.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`)}
                                                         className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-foreground/[0.04] transition-colors text-left"
                                                     >
                                                         {b.logoCid

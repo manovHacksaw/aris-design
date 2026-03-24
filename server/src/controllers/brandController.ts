@@ -407,11 +407,15 @@ export const getPublicBrandProfile = async (req: Request, res: Response): Promis
             return;
         }
 
+        // Support slug lookup: "example-aris" → "example aris"
+        const slugAsName = identifier.replace(/-/g, ' ');
+
         const brand = await prisma.brand.findFirst({
             where: {
                 OR: [
                     { id: identifier },
                     { name: { equals: identifier, mode: 'insensitive' } },
+                    { name: { equals: slugAsName, mode: 'insensitive' } },
                 ],
                 isActive: true
             },

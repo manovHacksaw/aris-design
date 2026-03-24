@@ -319,13 +319,13 @@ const MILESTONE_CATEGORIES: MilestoneCategory[] = [
         color: "text-blue-400",
         xp: [10, 25, 50, 100, 250, 500],
         rows: [
-            { label: "Rank #1 Votes",      icon: Crown,            targets: [1, 3, 10, 25, 50, 100],         unit: "times" },
-            { label: "Top 3 Finishes",      icon: Trophy,           targets: [1, 5, 25, 50, 100, 250],        unit: "times" },
-            { label: "Top 5 Finishes",      icon: Star,             targets: [1, 5, 50, 100, 250, 500],       unit: "times" },
-            { label: "Top 10 Finishes",     icon: TrendingUp,       targets: [1, 10, 100, 100, 250, 500],     unit: "times" },
-            { label: "> 51%ile Accuracy",   icon: Target,           targets: [1, 25, 125, 250, 500, 1000],    unit: "times" },
-            { label: "Votes Cast",          icon: Zap,              statKey: "votesCast", targets: [1, 25, 125, 250, 500, 1000], unit: "votes" },
-            { label: "Events Participated", icon: Calendar,         statKey: "events",    targets: [1, 5, 25, 50, 100, 250],    unit: "events" },
+            { label: "Rank #1 Picks",   icon: Crown,        targets: [1, 3, 10, 25, 50, 100],         unit: "times" },
+            { label: "Top 3 Picks",     icon: ThumbsUp,     targets: [1, 5, 25, 50, 100, 250],        unit: "times" },
+            { label: "Top 5 Picks",     icon: Star,         targets: [1, 5, 50, 100, 250, 500],       unit: "times" },
+            { label: "Top 10 Picks",    icon: TrendingUp,   targets: [1, 10, 100, 100, 250, 500],     unit: "times" },
+            { label: ">51% Accuracy",   icon: Target,       targets: [1, 25, 125, 250, 500, 1000],    unit: "times" },
+            { label: "Votes Cast",      icon: Zap,          statKey: "votesCast", targets: [1, 25, 125, 250, 500, 1000], unit: "votes" },
+            { label: "Events Voted In", icon: Calendar,     statKey: "events",    targets: [1, 5, 25, 50, 100, 250],    unit: "events" },
         ],
     },
     {
@@ -335,13 +335,13 @@ const MILESTONE_CATEGORIES: MilestoneCategory[] = [
         color: "text-lime-400",
         xp: [10, 50, 100, 250, 500, 1000],
         rows: [
-            { label: "Rank #1 Posts",       icon: Crown,            targets: [1, 3, 10, 25, 50, 100],         unit: "times" },
-            { label: "Top 3 Finishes",      icon: Trophy,           targets: [1, 5, 10, 50, 100, 250],        unit: "times" },
-            { label: "Top 5 Finishes",      icon: Star,             targets: [1, 5, 25, 100, 250, 500],       unit: "times" },
-            { label: "Top 10 Finishes",     icon: TrendingUp,       targets: [1, 10, 25, 100, 250, 500],      unit: "times" },
-            { label: "> 51%ile Accuracy",   icon: Target,           targets: [1, 25, 50, 250, 500, 1000],     unit: "times" },
-            { label: "Posts Submitted",     icon: ImageIcon,        statKey: "posts",     targets: [1, 25, 100, 250, 500, 1000], unit: "posts" },
-            { label: "Events Participated", icon: Calendar,         statKey: "events",    targets: [1, 5, 10, 25, 50, 100],     unit: "events" },
+            { label: "Rank #1 Posts",    icon: Crown,        targets: [1, 3, 10, 25, 50, 100],         unit: "times" },
+            { label: "Top 3 Finishes",   icon: Trophy,       targets: [1, 5, 10, 50, 100, 250],        unit: "times" },
+            { label: "Top 5 Finishes",   icon: Star,         targets: [1, 5, 25, 100, 250, 500],       unit: "times" },
+            { label: "Top 10 Finishes",  icon: TrendingUp,   targets: [1, 10, 25, 100, 250, 500],      unit: "times" },
+            { label: ">51% Post Rank",   icon: Shield,       targets: [1, 25, 50, 250, 500, 1000],     unit: "times" },
+            { label: "Posts Submitted",  icon: ImageIcon,    statKey: "posts",     targets: [1, 25, 100, 250, 500, 1000], unit: "posts" },
+            { label: "Events Posted In", icon: Calendar,     statKey: "events",    targets: [1, 5, 10, 25, 50, 100],     unit: "events" },
         ],
     },
     {
@@ -351,8 +351,9 @@ const MILESTONE_CATEGORIES: MilestoneCategory[] = [
         color: "text-orange-400",
         xp: [10, 25, 50, 100, 250, 500],
         rows: [
-            { label: "Vote Streak",         icon: Flame,            statKey: "voteStreak",  targets: [1, 3, 7, 15, 30, 100],          unit: "days" },
-            { label: "Post Streak",         icon: Zap,              statKey: "postStreak",  targets: [1, 3, 7, 15, 30, 100],          unit: "days" },
+            { label: "Login Streak",  icon: Flame,    statKey: "loginStreak", targets: [1, 3, 7, 15, 30, 100], unit: "days" },
+            { label: "Vote Streak",   icon: ThumbsUp, statKey: "voteStreak",  targets: [1, 3, 7, 15, 30, 100], unit: "days" },
+            { label: "Post Streak",   icon: ImageIcon, statKey: "postStreak", targets: [1, 3, 7, 15, 30, 100], unit: "days" },
         ],
     },
     {
@@ -362,18 +363,17 @@ const MILESTONE_CATEGORIES: MilestoneCategory[] = [
         color: "text-pink-400",
         xp: [10, 25, 125, 500, 1200, 2500],
         rows: [
-            { label: "Referrals Made",      icon: Users,            targets: [1, 5, 25, 100, 250, 500],       unit: "users" },
+            { label: "Referrals Made",  icon: Users,  statKey: "referrals", targets: [1, 5, 25, 100, 250, 500], unit: "users" },
         ],
     },
 ];
 
 // ─── Milestones Modal ─────────────────────────────────────────────
 
-function MilestonesModal({ open, onClose, stats, streak }: {
+function MilestonesModal({ open, onClose, stats }: {
     open: boolean;
     onClose: () => void;
     stats: UserStats | null;
-    streak: number;
 }) {
     const [activeCategory, setActiveCategory] = useState("voter");
     const category = MILESTONE_CATEGORIES.find(c => c.id === activeCategory)!;
@@ -381,7 +381,6 @@ function MilestonesModal({ open, onClose, stats, streak }: {
     // Get live stat value for a row
     function getLiveValue(row: MilestoneRow): number {
         if (!row.statKey) return 0;
-        if (row.statKey === "voteStreak" || row.statKey === "postStreak") return streak;
         if (!stats) return 0;
         return (stats as any)[row.statKey] ?? 0;
     }
@@ -841,6 +840,8 @@ export default function DashboardPage() {
     const [followers, setFollowers] = useState<{ followedAt?: string }[]>([]);
     const [graphDays, setGraphDays] = useState<7 | 30 | 90>(7);
     const [achievementsExpanded, setAchievementsExpanded] = useState(false);
+    const [viewMode, setViewMode] = useState<"activity" | "graphs">("activity");
+    const [showXpModal, setShowXpModal] = useState(false);
 
     useEffect(() => {
         if (!user) return;
@@ -1162,26 +1163,43 @@ export default function DashboardPage() {
                         </p>
                     )}
 
-                    {/* ── Tabs ───────────────────────────────── */}
-                    <div className="flex items-center gap-1.5 border-t border-white/[0.05] pt-6">
-                        {tabs.map((tab) => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={cn(
-                                    "px-6 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
-                                    activeTab === tab.id
-                                        ? "bg-white text-black border-white"
-                                        : "bg-white/[0.04] text-foreground/40 border-white/[0.06] hover:bg-white/[0.08] hover:text-foreground/80"
-                                )}
-                            >
-                                {tab.label}
-                            </button>
-                        ))}
+                    {/* ── Tabs + View toggle ─────────────────── */}
+                    <div className="flex items-center justify-between gap-3 border-t border-white/[0.05] pt-6 flex-wrap">
+                        <div className="flex items-center gap-1.5">
+                            {tabs.map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={cn(
+                                        "px-6 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
+                                        activeTab === tab.id
+                                            ? "bg-white text-black border-white"
+                                            : "bg-white/[0.04] text-foreground/40 border-white/[0.06] hover:bg-white/[0.08] hover:text-foreground/80"
+                                    )}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+                        {/* View toggle: Activity / Graphs */}
+                        <div className="flex items-center gap-0.5 bg-white/[0.04] border border-white/[0.06] rounded-xl p-0.5">
+                            {(["activity", "graphs"] as const).map((v) => (
+                                <button
+                                    key={v}
+                                    onClick={() => setViewMode(v)}
+                                    className={cn(
+                                        "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all",
+                                        viewMode === v ? "bg-white text-black" : "text-foreground/40 hover:text-foreground/70"
+                                    )}
+                                >
+                                    {v === "activity" ? "Activity" : "Graphs"}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     {/* ── Two-column layout ──────────────────── */}
-                    <div className="flex flex-col lg:flex-row gap-6">
+                    {viewMode === "graphs" ? null : <div className="flex flex-col lg:flex-row gap-6">
 
                         {/* ── Left: Activity List ─────────────── */}
                         <div className="flex-1 min-w-0 space-y-4">
@@ -1509,61 +1527,148 @@ export default function DashboardPage() {
                             })()}
 
                             {/* ── XP History Feed ─────────────────── */}
-                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] overflow-hidden">
-                                <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/[0.05]">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">XP History</span>
-                                    <span className="text-[9px] font-black text-foreground/20">{transactions.length} entries</span>
-                                </div>
-                                <div className="p-3 space-y-1">
-                                    {transactions.length === 0 ? (
-                                        <div className="py-6 text-center space-y-1.5">
-                                            <p className="text-[11px] font-bold text-foreground/25">No XP earned yet</p>
-                                            <p className="text-[10px] text-foreground/15">Join events to start earning XP</p>
+                            {(() => {
+                                const typeMap: Record<string, { icon: React.ElementType; color: string; bg: string; label: string }> = {
+                                    VOTE_CAST:    { icon: ThumbsUp,  color: "text-blue-400",   bg: "bg-blue-400/10",   label: "Vote cast" },
+                                    SUBMISSION:   { icon: ImageIcon, color: "text-lime-400",   bg: "bg-lime-400/10",   label: "Post submitted" },
+                                    LOGIN_STREAK: { icon: Flame,     color: "text-orange-400", bg: "bg-orange-400/10", label: "Login streak" },
+                                    MILESTONE:    { icon: Trophy,    color: "text-purple-400", bg: "bg-purple-400/10", label: "Milestone" },
+                                    REFERRAL:     { icon: Users,     color: "text-pink-400",   bg: "bg-pink-400/10",   label: "Referral" },
+                                };
+
+                                function formatXpDesc(desc: string | null | undefined, type: string): string {
+                                    if (!desc) return typeMap[type]?.label ?? "XP earned";
+                                    // Convert raw milestone format: "VOTES_CAST milestone: reached 10" → "Voted 10 times"
+                                    const milestoneMatch = desc.match(/^([A-Z_0-9]+)\s+milestone:\s+reached\s+(\d+)/i);
+                                    if (milestoneMatch) {
+                                        const [, key, n] = milestoneMatch;
+                                        const milestoneLabels: Record<string, (n: string) => string> = {
+                                            VOTES_CAST:      (n) => `Cast ${n} votes`,
+                                            TOP_VOTES:       (n) => `Received ${n} votes on posts`,
+                                            TOP_3_CONTENT:   (n) => `Ranked top 3 in ${n} event${+n !== 1 ? "s" : ""}`,
+                                            LOGIN_STREAK:    (n) => `${n}-day login streak`,
+                                            POSTS_CREATED:   (n) => `Created ${n} post${+n !== 1 ? "s" : ""}`,
+                                            EVENTS_JOINED:   (n) => `Joined ${n} event${+n !== 1 ? "s" : ""}`,
+                                            REFERRALS:       (n) => `Referred ${n} friend${+n !== 1 ? "s" : ""}`,
+                                        };
+                                        return milestoneLabels[key]?.(n) ?? `${key.replace(/_/g, " ").toLowerCase()} milestone`;
+                                    }
+                                    // Shorten referral text
+                                    if (desc.startsWith("Referral bonus")) return "Referral bonus";
+                                    return desc;
+                                }
+
+                                function relativeTime(createdAt: string) {
+                                    const elapsed = Date.now() - new Date(createdAt).getTime();
+                                    if (elapsed < 3600000) return `${Math.floor(elapsed / 60000)}m ago`;
+                                    if (elapsed < 86400000) return `${Math.floor(elapsed / 3600000)}h ago`;
+                                    return `${Math.floor(elapsed / 86400000)}d ago`;
+                                }
+
+                                function fullDateTime(createdAt: string) {
+                                    const d = new Date(createdAt);
+                                    const date = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+                                    const time = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+                                    return `${date} · ${time}`;
+                                }
+
+                                function getIconMeta(desc: string | null | undefined, type: string) {
+                                    const d = (desc ?? "").toLowerCase();
+                                    if (d.includes("streak") || d.includes("login")) return { icon: Flame, color: "text-orange-400", bg: "bg-orange-400/10" };
+                                    if (d.includes("referral")) return { icon: Users, color: "text-pink-400", bg: "bg-pink-400/10" };
+                                    if (d.includes("vote") || d.includes("picked") || d.includes("pick")) return { icon: ThumbsUp, color: "text-blue-400", bg: "bg-blue-400/10" };
+                                    if (d.includes("post") || d.includes("submission") || d.includes("submit")) return { icon: ImageIcon, color: "text-lime-400", bg: "bg-lime-400/10" };
+                                    if (d.includes("rank") || d.includes("top") || d.includes("milestone") || d.includes("reached")) return { icon: Trophy, color: "text-purple-400", bg: "bg-purple-400/10" };
+                                    return typeMap[type] ?? { icon: Zap, color: "text-yellow-400", bg: "bg-yellow-400/10" };
+                                }
+
+                                function XpRow({ tx, isModal = false }: { tx: typeof transactions[0]; isModal?: boolean }) {
+                                    const meta = getIconMeta(tx.description, tx.type);
+                                    const Icon = meta.icon;
+                                    return (
+                                        <div className="flex items-center gap-2.5 px-2 py-2.5 rounded-xl hover:bg-white/[0.03] transition-colors">
+                                            <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", meta.bg)}>
+                                                <Icon className={cn("w-3.5 h-3.5", meta.color)} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-[12px] font-semibold text-foreground/75 truncate">
+                                                    {formatXpDesc(tx.description, tx.type)}
+                                                </p>
+                                                <p className="text-[9px] text-foreground/30 font-medium mt-0.5">
+                                                    {isModal ? fullDateTime(tx.createdAt) : relativeTime(tx.createdAt)}
+                                                </p>
+                                            </div>
+                                            <span className={cn("text-[11px] font-black shrink-0", tx.amount > 0 ? "text-yellow-400" : "text-red-400")}>
+                                                {tx.amount > 0 ? "+" : ""}{tx.amount} XP
+                                            </span>
                                         </div>
-                                    ) : (
-                                        transactions.slice(0, 8).map((tx) => {
-                                            const typeMap: Record<string, { icon: React.ElementType; color: string; bg: string; label: string }> = {
-                                                VOTE_CAST:     { icon: ThumbsUp,  color: "text-blue-400",   bg: "bg-blue-400/10",   label: "Vote cast" },
-                                                SUBMISSION:    { icon: ImageIcon, color: "text-lime-400",   bg: "bg-lime-400/10",   label: "Post submitted" },
-                                                LOGIN_STREAK:  { icon: Flame,     color: "text-orange-400", bg: "bg-orange-400/10", label: "Login streak" },
-                                                MILESTONE:     { icon: Trophy,    color: "text-purple-400", bg: "bg-purple-400/10", label: "Milestone" },
-                                                REFERRAL:      { icon: Users,     color: "text-pink-400",   bg: "bg-pink-400/10",   label: "Referral" },
-                                            };
-                                            const meta = typeMap[tx.type] ?? { icon: Zap, color: "text-yellow-400", bg: "bg-yellow-400/10", label: tx.type };
-                                            const Icon = meta.icon;
-                                            const elapsed = Date.now() - new Date(tx.createdAt).getTime();
-                                            const relTime = elapsed < 3600000
-                                                ? `${Math.floor(elapsed / 60000)}m ago`
-                                                : elapsed < 86400000
-                                                    ? `${Math.floor(elapsed / 3600000)}h ago`
-                                                    : `${Math.floor(elapsed / 86400000)}d ago`;
-                                            return (
-                                                <div key={tx.id} className="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-white/[0.03] transition-colors">
-                                                    <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", meta.bg)}>
-                                                        <Icon className={cn("w-3.5 h-3.5", meta.color)} />
+                                    );
+                                }
+
+                                return (
+                                    <>
+                                        <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] overflow-hidden">
+                                            <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/[0.05]">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">XP History</span>
+                                                {transactions.length > 0 && (
+                                                    <button
+                                                        onClick={() => setShowXpModal(true)}
+                                                        className="text-[9px] font-black text-foreground/30 hover:text-foreground/60 uppercase tracking-widest transition-colors"
+                                                    >
+                                                        View all ({transactions.length})
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="p-3 space-y-0.5">
+                                                {transactions.length === 0 ? (
+                                                    <div className="py-6 text-center space-y-1.5">
+                                                        <p className="text-[11px] font-bold text-foreground/25">No XP earned yet</p>
+                                                        <p className="text-[10px] text-foreground/15">Join events to start earning XP</p>
                                                     </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-[11px] font-black text-foreground/70 truncate">
-                                                            {tx.description || meta.label}
-                                                        </p>
-                                                        <p className="text-[9px] text-foreground/30 font-medium">{relTime}</p>
+                                                ) : (
+                                                    transactions.slice(0, 6).map((tx) => <XpRow key={tx.id} tx={tx} />)
+                                                )}
+                                            </div>
+                                            {transactions.length > 6 && (
+                                                <button
+                                                    onClick={() => setShowXpModal(true)}
+                                                    className="w-full py-2.5 text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 hover:text-foreground/60 hover:bg-white/[0.02] transition-all border-t border-white/[0.04]"
+                                                >
+                                                    +{transactions.length - 6} more entries
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* XP History Modal */}
+                                        {showXpModal && (
+                                            <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setShowXpModal(false)}>
+                                                <div className="bg-[#0d0d0f] border border-white/[0.08] rounded-[28px] w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+                                                    <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] shrink-0">
+                                                        <div>
+                                                            <p className="text-sm font-black text-foreground">XP History</p>
+                                                            <p className="text-[10px] text-foreground/35 mt-0.5">{transactions.length} entries</p>
+                                                        </div>
+                                                        <button onClick={() => setShowXpModal(false)} className="w-8 h-8 rounded-full bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-foreground/50 hover:bg-white/10 transition-all">
+                                                            <X className="w-3.5 h-3.5" />
+                                                        </button>
                                                     </div>
-                                                    <span className={cn("text-[11px] font-black shrink-0", tx.amount > 0 ? "text-yellow-400" : "text-red-400")}>
-                                                        {tx.amount > 0 ? "+" : ""}{tx.amount} XP
-                                                    </span>
+                                                    <div className="overflow-y-auto p-3 space-y-0.5">
+                                                        {transactions.map((tx) => <XpRow key={tx.id} tx={tx} isModal />)}
+                                                    </div>
                                                 </div>
-                                            );
-                                        })
-                                    )}
-                                </div>
-                            </div>
+                                            </div>
+                                        )}
+                                    </>
+                                );
+                            })()}
+
 
 
                         </div>
-                    </div>
+                    </div>}
 
                     {/* ── Graphs & Insights ───────────────────── */}
-                    {!loading && (
+                    {viewMode === "graphs" && !loading && (
                         <div className="space-y-4 pt-2">
                             <div className="flex items-center justify-between">
                                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/30">Graphs &amp; Insights</p>
@@ -1792,7 +1897,6 @@ export default function DashboardPage() {
                 open={showMilestonesModal}
                 onClose={() => setShowMilestonesModal(false)}
                 stats={stats}
-                streak={user?.currentStreak ?? 0}
             />
         </div>
     );

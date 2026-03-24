@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sparkles, Paperclip, ImageIcon, PlayCircle, Settings2 } from "lucide-react";
+import { Sparkles, Paperclip, Settings2 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { StarsBackground } from "@/components/ui/stars-background";
@@ -30,7 +30,6 @@ interface CreateHeroProps {
 }
 
 export default function CreateHero({ onGenerate, events = [] }: CreateHeroProps) {
-    const [activeTab, setActiveTab] = useState<"ai" | "manual">("ai");
     const [prompt, setPrompt] = useState("");
 
     const handleHint = (hint: string) => {
@@ -83,34 +82,12 @@ export default function CreateHero({ onGenerate, events = [] }: CreateHeroProps)
                             transition={{ duration: 0.5, delay: 0.18 }}
                             className="max-w-3xl space-y-5"
                         >
-                            {/* Mode Toggle */}
-                            <div className="flex gap-1 p-1 bg-white/[0.04] border border-white/[0.06] rounded-2xl w-fit">
-                                {(["ai", "manual"] as const).map((tab) => (
-                                    <button
-                                        key={tab}
-                                        onClick={() => setActiveTab(tab)}
-                                        className={cn(
-                                            "flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-200",
-                                            activeTab === tab
-                                                ? "bg-white text-black shadow-lg"
-                                                : "text-white/35 hover:text-white/70"
-                                        )}
-                                    >
-                                        {tab === "ai"
-                                            ? <Sparkles className="w-3.5 h-3.5" />
-                                            : <ImageIcon className="w-3.5 h-3.5" />
-                                        }
-                                        {tab === "ai" ? "AI Generation" : "Manual Upload"}
-                                    </button>
-                                ))}
-                            </div>
-
                             {/* Animated vanish input + action buttons */}
                             <PlaceholdersAndVanishInput
-                                placeholders={activeTab === "ai" ? AI_PLACEHOLDERS : MANUAL_PLACEHOLDERS}
+                                placeholders={AI_PLACEHOLDERS}
                                 onChange={(e) => setPrompt(e.target.value)}
                                 onSubmit={(_, val) => {
-                                    if (activeTab === "ai" && val.trim() && onGenerate) {
+                                    if (val.trim() && onGenerate) {
                                         onGenerate(val.trim());
                                     }
                                 }}
@@ -133,13 +110,13 @@ export default function CreateHero({ onGenerate, events = [] }: CreateHeroProps)
                                     <button
                                         type="submit"
                                         onClick={() => {
-                                            if (activeTab === "ai" && prompt.trim() && onGenerate) {
+                                            if (prompt.trim() && onGenerate) {
                                                 onGenerate(prompt.trim());
                                             }
                                         }}
                                         className="px-7 py-3 rounded-2xl bg-lime-400 text-black font-black uppercase tracking-widest text-[11px] shadow-[0_4px_24px_rgba(163,230,53,0.3)] hover:bg-lime-300 hover:scale-[1.02] active:scale-95 transition-all whitespace-nowrap"
                                     >
-                                        {activeTab === "ai" ? "Generate" : "Continue"}
+                                        Generate
                                     </button>
                                 </div>
                             </PlaceholdersAndVanishInput>

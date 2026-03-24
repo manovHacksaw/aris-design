@@ -80,6 +80,7 @@ interface FormData {
     hashtags: string[];
     contentType: string[];
     coverImage: File | null;
+    sampleImages: File[];
     useRefundCredit: boolean;
     refundCreditAmount: number;
 }
@@ -147,6 +148,8 @@ export default function CreateEventPage() {
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
     const bannerInputRef = useRef<HTMLInputElement | null>(null);
     const [bannerGeneratorOpen, setBannerGeneratorOpen] = useState(false);
+    const [samplePreviews, setSamplePreviews] = useState<string[]>([]);
+    const sampleInputRef = useRef<HTMLInputElement | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement | null>(null);
     const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
@@ -173,6 +176,7 @@ export default function CreateEventPage() {
         hashtags: [],
         contentType: ["Photo"],
         coverImage: null,
+        sampleImages: [],
         useRefundCredit: false,
         refundCreditAmount: 0,
     });
@@ -298,6 +302,8 @@ export default function CreateEventPage() {
                 if (!form.title.trim()) return "Event name is required.";
                 if (form.description.trim().length < 20) return "Description must be at least 20 characters.";
                 if (!form.domain || form.domain === "Other") return "Please enter your domain.";
+                if (!form.coverImage) return "Event banner is required.";
+                if (isPost && form.sampleImages.length < 1) return "At least 1 sample image is required for post events.";
                 if (!form.startImmediately && !form.startDate) return "Please set a start date.";
                 if (isPost) {
                     if (!form.postingEndDate) return "Please set a posting end date.";
@@ -720,7 +726,6 @@ export default function CreateEventPage() {
                             <label className="flex items-center text-sm font-semibold text-foreground mb-1.5">
                                 Event Banner
                                 <InfoTooltip text="This image appears as the event banner visible to participants. Recommended: 16:9 ratio, JPEG or PNG, max 5 MB." />
-                                <span className="ml-1.5 text-xs font-normal text-muted-foreground">(optional)</span>
                             </label>
 
                             {bannerPreview ? (
@@ -815,6 +820,68 @@ export default function CreateEventPage() {
                             eventDescription={form.description}
                             optionLabel="Event Banner (16:9)"
                         />
+
+                        {/* Sample images — post events only */}
+                        {isPost && (
+                            <div>
+                                <label className="flex items-center text-sm font-semibold text-foreground mb-1.5">
+                                    Sample Images
+                                    <InfoTooltip text="Upload reference images to show creators what kind of content you're looking for. At least 1 required." />
+                                    <span className="ml-1.5 text-xs font-normal text-red-400">*required</span>
+                                </label>
+
+                                {/* Grid of uploaded samples */}
+                                {samplePreviews.length > 0 && (
+                                    <div className="grid grid-cols-3 gap-2 mb-3">
+                                        {samplePreviews.map((src, i) => (
+                                            <div key={i} className="relative group rounded-xl overflow-hidden border border-border" style={{ aspectRatio: "1/1" }}>
+                                                <img src={src} alt={`Sample ${i + 1}`} className="w-full h-full object-cover" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        URL.revokeObjectURL(src);
+                                                        const newPreviews = samplePreviews.filter((_, idx) => idx !== i);
+                                                        const newFiles = form.sampleImages.filter((_, idx) => idx !== i);
+                                                        setSamplePreviews(newPreviews);
+                                                        set({ sampleImages: newFiles });
+                                                    }}
+                                                    className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/70 border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/80"
+                                                >
+                                                    <X className="w-3 h-3 text-white" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Upload button */}
+                                {samplePreviews.length < 4 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => sampleInputRef.current?.click()}
+                                        className="flex items-center gap-2 px-5 py-3 bg-secondary hover:bg-secondary/70 border border-dashed border-border rounded-2xl text-sm font-bold text-muted-foreground hover:text-foreground transition-all hover:scale-[1.02]"
+                                    >
+                                        <Upload className="w-4 h-4" /> Add Sample Image
+                                    </button>
+                                )}
+                                <p className="text-xs text-muted-foreground/50 mt-1.5">JPEG, PNG · Max 5 MB each · 1–4 images required</p>
+
+                                <input
+                                    ref={sampleInputRef}
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        if (file.size > 5 * 1024 * 1024) { toast.error("Sample image must be under 5 MB"); return; }
+                                        setSamplePreviews((p) => [...p, URL.createObjectURL(file)]);
+                                        set({ sampleImages: [...form.sampleImages, file] });
+                                        e.target.value = "";
+                                    }}
+                                />
+                            </div>
+                        )}
                     </div>
                 );
 

@@ -58,6 +58,8 @@ export interface UserStats {
   votesReceived: number;
   events: number;
   earnings: number;
+  referrals: number;
+  loginStreak: number;
 }
 
 export interface UpdateUserData {

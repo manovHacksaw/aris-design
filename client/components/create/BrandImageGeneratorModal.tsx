@@ -143,8 +143,12 @@ export function BrandImageGeneratorModal({
 
   const handleAddToOption = () => {
     if (!generatedImage) return;
-    const file = base64ToFile(generatedImage.data, generatedImage.mimeType, "ai-generated.png");
-    onAddToOption(file, generatedImage.objectUrl);
+    const { data, mimeType, objectUrl } = generatedImage;
+    // Null out before closing so the cleanup effect doesn't revoke the URL
+    // that was just handed off to the parent as bannerPreview
+    setGeneratedImage(null);
+    const file = base64ToFile(data, mimeType, "ai-generated.png");
+    onAddToOption(file, objectUrl);
     onClose();
   };
 
@@ -293,10 +297,10 @@ export function BrandImageGeneratorModal({
                       </button>
                       <button
                         onClick={handleAddToOption}
-                        className="flex-1 py-2.5 rounded-xl bg-primary text-white text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95 shadow-md shadow-primary/20 flex items-center justify-center gap-1.5"
+                        className="flex-1 py-2.5 rounded-xl bg-primary text-black text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95 shadow-md shadow-primary/20 flex items-center justify-center gap-1.5"
                       >
                         <Check className="w-3 h-3" />
-                        Add to Option
+                        Okay
                       </button>
                     </div>
 
