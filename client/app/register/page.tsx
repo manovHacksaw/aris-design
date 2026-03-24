@@ -9,6 +9,7 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
 import { useAuth } from "@/context/AuthContext";
 import { useUser } from "@/context/UserContext";
+import { Captcha } from "@privy-io/react-auth";
 
 export default function Register() {
   const [selectedRole, setSelectedRole] = useState<"user" | "brand" | null>("user");
@@ -168,6 +169,8 @@ export default function Register() {
             )}
           </motion.button>
         </motion.div>
+
+        <Captcha />
 
         {/* Already have account */}
         <p className="text-foreground/40 text-sm text-center">
