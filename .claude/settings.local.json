@@ -63,7 +63,9 @@
       "Bash(perl:*)",
       "Bash(PIMLICO_API_KEY=pim_EUHoE84PA87vUFGYGNemv2 npx tsx src/scripts/recoverUsers.ts 2>&1)",
       "Bash(PIMLICO_API_KEY=pim_Q4eNC7jUqJX851hdnJVrs5 npx tsx src/scripts/recoverUsers.ts 2>&1)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "WebFetch(domain:docs.privy.io)",
+      "Bash(git remote:*)"
     ]
   }
 }
