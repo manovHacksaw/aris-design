@@ -30,6 +30,8 @@ import { generateAiImage, refineAiPrompt } from "@/services/ai.service";
 import { generateImage, base64ToFile, base64ToObjectUrl } from "@/services/image-generation.service";
 import { PinturaImageEditor } from "@/components/create/PinturaImageEditor";
 import { useUser } from "@/context/UserContext";
+import { useWallet } from "@/context/WalletContext";
+import { useLoginModal } from "@/context/LoginModalContext";
 import { useSocket } from "@/context/SocketContext";
 import { toast } from "sonner";
 import Countdown from "@/components/events/Countdown";
@@ -587,6 +589,8 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     const resolvedParams = use(params as any);
     const id = (resolvedParams as { id: string }).id;
     const { user } = useUser();
+    const { isAuthenticated } = useWallet();
+    const { openLoginModal } = useLoginModal();
     const { socket } = useSocket();
 
     const [event, setEvent] = useState<Event | null>(null);
@@ -731,13 +735,14 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
     // Step 1: select a submission (sets pending state only)
     const handleVote = useCallback((submissionId: string) => {
+        if (!isAuthenticated) { openLoginModal(); return; }
         if (!event || votedSubmissionId || isVotingEnded) return;
         const sub = submissions.find((s) => s.id === submissionId);
         if (!sub) return;
         if (sub.userId === user?.id && event.eventType !== "vote_only") { toast.error("You can't vote for your own submission."); return; }
         // Toggle off if clicking the already-pending card
         setPendingVoteId((prev) => (prev === submissionId ? null : submissionId));
-    }, [event, submissions, user?.id, votedSubmissionId]);
+    }, [event, submissions, user?.id, votedSubmissionId, isAuthenticated, openLoginModal]);
 
     // Step 2: confirm the pending vote (fires the API)
     const handleConfirmVote = useCallback(async () => {
@@ -797,6 +802,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     };
 
     const handleSubmit = async () => {
+        if (!isAuthenticated) { openLoginModal(); return; }
         if (!file && !aiImageFile) { toast.error("Please select or generate an image."); return; }
         setSubmitting(true);
         try {

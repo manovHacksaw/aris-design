@@ -14,6 +14,7 @@ interface SidebarItemProps {
     avatar?: string;
     showUserFallback?: boolean;
     isActive?: boolean;
+    onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
 export default function SidebarItem({
@@ -24,6 +25,7 @@ export default function SidebarItem({
     avatar,
     showUserFallback,
     isActive,
+    onClick,
 }: SidebarItemProps) {
     const { isCollapsed } = useSidebar();
     const showExpanded = !isCollapsed;
@@ -31,6 +33,7 @@ export default function SidebarItem({
     return (
         <Link
             href={href}
+            onClick={onClick}
             className={cn(
                 "group flex items-center relative w-full py-2.5 my-1",
                 isCollapsed ? "justify-center" : "pl-3",

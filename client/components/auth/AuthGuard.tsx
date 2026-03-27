@@ -8,8 +8,17 @@ import { useAuth } from "@/context/AuthContext";
 import { useUser } from "@/context/UserContext";
 import { perfLog, perfNow } from "@/lib/perf";
 
-// Paths that don't require authentication (wallet or onboarding)
-const PUBLIC_PATHS = ["/register", "/onboard", "/admin", "/claim-brand", "/brand/pending"];
+// Paths that don't require authentication
+const PUBLIC_PATHS = [
+  "/register",
+  "/onboard",
+  "/admin",
+  "/claim-brand",
+  "/brand/pending",
+  "/explore",
+  "/leaderboard",
+  "/events",
+];
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some(
@@ -132,7 +141,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     // Not authenticated — redirect to register
     if (!isAuthenticated) {
       if (!isPublicPath(pathname)) {
-        router.replace("/register");
+        router.replace("/explore");
       }
       return;
     }

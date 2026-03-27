@@ -7,6 +7,7 @@ import { IoHomeOutline, IoHome, IoCompassOutline, IoCompass, IoAddCircleOutline,
 import { usePrivy } from "@privy-io/react-auth";
 import { useUser } from "@/context/UserContext";
 import { useWallet } from "@/context/WalletContext";
+import { useLoginModal } from "@/context/LoginModalContext";
 import SidebarItem from "@/components/sidebar/SidebarItem";
 import SidebarMore from "@/components/sidebar/SidebarMore";
 import { cn } from "@/lib/utils";
@@ -24,7 +25,8 @@ export default function Sidebar() {
     const showExpanded = !isCollapsed;
 
     const { user } = useUser();
-    const { userInfo } = useWallet();
+    const { userInfo, isAuthenticated } = useWallet();
+    const { openLoginModal } = useLoginModal();
     const avatarUrl = user?.avatarUrl || userInfo?.profileImage || undefined;
 
     useEffect(() => {
@@ -32,24 +34,29 @@ export default function Sidebar() {
     }, []);
 
     const navItems = [
-        { label: "Home", href: "/home", icon: IoHomeOutline, activeIcon: IoHome },
-
-
-        { label: "Explore", href: "/explore", icon: IoCompassOutline, activeIcon: IoCompass },
-        { label: "Create", href: "/create", icon: IoAddCircleOutline, activeIcon: IoAddCircle },
-        { label: "Leaderboard", href: "/leaderboard", icon: IoTrophyOutline, activeIcon: IoTrophy },
-        { label: "Dashboard", href: "/dashboard", icon: IoGridOutline, activeIcon: IoGrid },
-        { label: "Notifications", href: "/notifications", icon: IoNotificationsOutline, activeIcon: IoNotifications },
-        { label: "Wallet", href: "/wallet", icon: IoWalletOutline, activeIcon: IoWallet },
-
+        { label: "Home",          href: "/home",          icon: IoHomeOutline,          activeIcon: IoHome,          requiresAuth: true },
+        { label: "Explore",       href: "/explore",       icon: IoCompassOutline,       activeIcon: IoCompass,       requiresAuth: false },
+        { label: "Create",        href: "/create",        icon: IoAddCircleOutline,     activeIcon: IoAddCircle,     requiresAuth: true },
+        { label: "Leaderboard",   href: "/leaderboard",   icon: IoTrophyOutline,        activeIcon: IoTrophy,        requiresAuth: false },
+        { label: "Dashboard",     href: "/dashboard",     icon: IoGridOutline,          activeIcon: IoGrid,          requiresAuth: true },
+        { label: "Notifications", href: "/notifications", icon: IoNotificationsOutline, activeIcon: IoNotifications, requiresAuth: true },
+        { label: "Wallet",        href: "/wallet",        icon: IoWalletOutline,        activeIcon: IoWallet,        requiresAuth: true },
         {
             label: "Profile",
             href: "/profile",
             icon: IoPersonOutline,
             activeIcon: IoPerson,
-            avatar: avatarUrl
+            avatar: isAuthenticated ? avatarUrl : undefined,
+            requiresAuth: true,
         },
     ];
+
+    const handleProtectedClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        if (!isAuthenticated) {
+            e.preventDefault();
+            openLoginModal();
+        }
+    };
 
     if (!mounted) return null;
 
@@ -116,6 +123,7 @@ export default function Sidebar() {
                                         activeIcon={item.activeIcon}
                                         avatar={item.avatar}
                                         isActive={isActive}
+                                        onClick={item.requiresAuth ? handleProtectedClick : undefined}
                                     />
                                 </div>
                             );
@@ -159,31 +167,58 @@ export default function Sidebar() {
                                 )}
                             </button>
 
-                            {/* Logout */}
-                            <button
-                                onClick={() => logout()}
-                                className={cn(
-                                    "group relative flex items-center w-full py-2 rounded-xl",
-                                    isCollapsed ? "justify-center" : "pl-3",
-                                    "text-foreground/50 hover:bg-foreground/5 hover:text-red-400",
-                                    "transition-colors duration-150 ease-out"
-                                )}
-                            >
-                                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8">
-                                    <IoLogOutOutline size={20} className="transition-colors duration-150" />
-                                </div>
-                                <span className={cn(
-                                    "whitespace-nowrap overflow-hidden transition-all duration-150 ease-out text-base font-medium",
-                                    showExpanded ? "opacity-100 w-auto ml-3" : "opacity-0 w-0 ml-0"
-                                )}>
-                                    Logout
-                                </span>
-                                {isCollapsed && (
-                                    <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 px-3 py-1.5 bg-card text-foreground text-xs rounded-[8px] shadow-spotify opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 whitespace-nowrap z-50 pointer-events-none font-bold">
-                                        Logout
+                            {/* Authenticated: Logout | Guest: Sign In */}
+                            {isAuthenticated ? (
+                                <button
+                                    onClick={() => logout()}
+                                    className={cn(
+                                        "group relative flex items-center w-full py-2 rounded-xl",
+                                        isCollapsed ? "justify-center" : "pl-3",
+                                        "text-foreground/50 hover:bg-foreground/5 hover:text-red-400",
+                                        "transition-colors duration-150 ease-out"
+                                    )}
+                                >
+                                    <div className="flex-shrink-0 flex items-center justify-center w-8 h-8">
+                                        <IoLogOutOutline size={20} className="transition-colors duration-150" />
                                     </div>
-                                )}
-                            </button>
+                                    <span className={cn(
+                                        "whitespace-nowrap overflow-hidden transition-all duration-150 ease-out text-base font-medium",
+                                        showExpanded ? "opacity-100 w-auto ml-3" : "opacity-0 w-0 ml-0"
+                                    )}>
+                                        Logout
+                                    </span>
+                                    {isCollapsed && (
+                                        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 px-3 py-1.5 bg-card text-foreground text-xs rounded-[8px] shadow-spotify opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 whitespace-nowrap z-50 pointer-events-none font-bold">
+                                            Logout
+                                        </div>
+                                    )}
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={openLoginModal}
+                                    className={cn(
+                                        "group relative flex items-center w-full py-2 rounded-xl",
+                                        isCollapsed ? "justify-center" : "pl-3",
+                                        "bg-primary/10 hover:bg-primary/20 text-primary",
+                                        "transition-colors duration-150 ease-out"
+                                    )}
+                                >
+                                    <div className="flex-shrink-0 flex items-center justify-center w-8 h-8">
+                                        <IoPersonOutline size={20} className="transition-colors duration-150" />
+                                    </div>
+                                    <span className={cn(
+                                        "whitespace-nowrap overflow-hidden transition-all duration-150 ease-out text-base font-bold",
+                                        showExpanded ? "opacity-100 w-auto ml-3" : "opacity-0 w-0 ml-0"
+                                    )}>
+                                        Sign In
+                                    </span>
+                                    {isCollapsed && (
+                                        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 px-3 py-1.5 bg-card text-foreground text-xs rounded-[8px] shadow-spotify opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 whitespace-nowrap z-50 pointer-events-none font-bold">
+                                            Sign In
+                                        </div>
+                                    )}
+                                </button>
+                            )}
 
                             {/* More Menu */}
                             <SidebarMore />

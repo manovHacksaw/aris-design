@@ -13,6 +13,8 @@ import { UserProvider } from "@/context/UserContext";
 import { SocketProvider } from "@/context/SocketContext";
 import { NotificationProvider } from "@/context/NotificationContext";
 import { SidebarProvider } from "@/context/SidebarContext";
+import { LoginModalProvider } from "@/context/LoginModalContext";
+import LoginModal from "@/components/auth/LoginModal";
 import { Toaster } from "sonner";
 import { type ReactNode } from "react";
 
@@ -61,13 +63,15 @@ export function ClientProviders({ children }: { children: ReactNode }) {
             }}
           >
             <WalletProvider>
-              <UserProvider>
-                <SocketProvider>
-                  <NotificationProvider>
-                    <AuthProvider>
-                      <SidebarProvider>
-                        {children}
-                        <Toaster
+              <LoginModalProvider>
+                <UserProvider>
+                  <SocketProvider>
+                    <NotificationProvider>
+                      <AuthProvider>
+                        <SidebarProvider>
+                          {children}
+                          <LoginModal />
+                          <Toaster
                           position="top-center"
                           richColors
                           toastOptions={{
@@ -80,11 +84,12 @@ export function ClientProviders({ children }: { children: ReactNode }) {
                             },
                           }}
                         />
-                      </SidebarProvider>
-                    </AuthProvider>
-                  </NotificationProvider>
-                </SocketProvider>
-              </UserProvider>
+                        </SidebarProvider>
+                      </AuthProvider>
+                    </NotificationProvider>
+                  </SocketProvider>
+                </UserProvider>
+              </LoginModalProvider>
             </WalletProvider>
           </SmartWalletsProvider>
         </WagmiProvider>

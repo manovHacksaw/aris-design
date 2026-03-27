@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { Calendar, Trophy } from "lucide-react";
+import { Calendar, Trophy, ChevronDown, Loader2 } from "lucide-react";
 import { useUser } from "@/context/UserContext";
 import { getUserLeaderboard, getBrandLeaderboard, getEventLeaderboard } from "@/services/leaderboard.service";
 
@@ -15,6 +15,7 @@ interface LeaderboardTableProps {
     timeline?: string;
 }
 
+const PAGE_SIZE = 15;
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
 function RankBadge({ rank }: { rank: number }) {
@@ -27,7 +28,7 @@ function RankBadge({ rank }: { rank: number }) {
 function SkeletonRows() {
     return (
         <div className="divide-y divide-white/[0.04]">
-            {Array.from({ length: 12 }).map((_, i) => (
+            {Array.from({ length: PAGE_SIZE }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 py-3 px-2 animate-pulse">
                     <div className="w-6 h-3 bg-white/[0.04] rounded" />
                     <div className="w-[26px] h-[26px] rounded-full bg-white/[0.04]" />
@@ -48,63 +49,115 @@ function ColHead({ children, className }: { children: React.ReactNode; className
     );
 }
 
+function LoadMoreButton({ onClick, loading }: { onClick: () => void; loading: boolean }) {
+    return (
+        <div className="pt-4 pb-2 flex justify-center">
+            <button
+                onClick={onClick}
+                disabled={loading}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.07] text-[11px] font-black uppercase tracking-widest text-foreground/50 hover:text-foreground transition-all disabled:opacity-40"
+            >
+                {loading
+                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    : <ChevronDown className="w-3.5 h-3.5" />
+                }
+                Load More
+            </button>
+        </div>
+    );
+}
+
 export default function LeaderboardTable({ activeTab, domain = "ALL", timeline = "A" }: LeaderboardTableProps) {
     const { user: currentUser } = useUser();
-    const [data, setData] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+
+    // ── Users: true server-side pagination ──────────────────────────────────
+    const [userRows, setUserRows] = useState<any[]>([]);
+    const [userPage, setUserPage] = useState(1);
+    const [userHasMore, setUserHasMore] = useState(false);
+    const [userLoading, setUserLoading] = useState(false);
+    const [userLoadingMore, setUserLoadingMore] = useState(false);
+
+    const fetchUserPage = useCallback(async (page: number, replace: boolean) => {
+        if (page === 1) setUserLoading(true); else setUserLoadingMore(true);
+        try {
+            const res = await getUserLeaderboard(page, PAGE_SIZE, timeline);
+            const rows = res.data || [];
+            setUserRows((prev) => replace ? rows : [...prev, ...rows]);
+            const total = res.pagination?.total ?? res.total ?? 0;
+            setUserHasMore(page * PAGE_SIZE < total);
+            setUserPage(page);
+        } catch {
+            if (replace) setUserRows([]);
+        } finally {
+            setUserLoading(false);
+            setUserLoadingMore(false);
+        }
+    }, [timeline]);
 
     useEffect(() => {
-        setLoading(true);
-        const fetchData = async () => {
-            try {
-                if (activeTab === "users") {
-                    const res = await getUserLeaderboard(1, 50, timeline);
-                    setData(res.data || []);
-                } else if (activeTab === "brands") {
-                    const res = await getBrandLeaderboard(timeline);
-                    setData(res.data || []);
-                } else {
-                    const res = await getEventLeaderboard(timeline);
-                    setData(Array.isArray(res?.data) ? res.data : []);
-                }
-            } catch {
-                setData([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
+        if (activeTab === "users") fetchUserPage(1, true);
+    }, [activeTab, timeline, fetchUserPage]);
+
+    // ── Brands: client-side pagination (API has no page param yet) ───────────
+    const [brandAll, setBrandAll] = useState<any[]>([]);
+    const [brandVisible, setBrandVisible] = useState(PAGE_SIZE);
+    const [brandLoading, setBrandLoading] = useState(false);
+
+    useEffect(() => {
+        if (activeTab !== "brands") return;
+        setBrandLoading(true);
+        getBrandLeaderboard(timeline)
+            .then((res) => setBrandAll(res.data || []))
+            .catch(() => setBrandAll([]))
+            .finally(() => setBrandLoading(false));
+        setBrandVisible(PAGE_SIZE);
     }, [activeTab, timeline]);
 
-    const filtered =
-        domain === "ALL"
-            ? data
-            : data.filter((item: any) => {
-                if (Array.isArray(item.categories)) {
-                    return item.categories.some((c: string) => c.toUpperCase() === domain);
-                }
-                return item.category?.toUpperCase() === domain || item.domain?.toUpperCase() === domain;
-            });
+    // Reset visible count when domain filter changes
+    useEffect(() => { setBrandVisible(PAGE_SIZE); }, [domain]);
 
-    if (loading) return <SkeletonRows />;
+    // ── Events: client-side pagination (API has no page param yet) ───────────
+    const [eventAll, setEventAll] = useState<any[]>([]);
+    const [eventVisible, setEventVisible] = useState(PAGE_SIZE);
+    const [eventLoading, setEventLoading] = useState(false);
 
-    if (!filtered.length) {
-        return (
-            <div className="py-24 text-center">
-                <Trophy className="w-8 h-8 text-white/10 mx-auto mb-3" />
-                <p className="text-xs text-white/25 font-black uppercase tracking-widest">No data available</p>
-            </div>
-        );
-    }
+    useEffect(() => {
+        if (activeTab !== "events") return;
+        setEventLoading(true);
+        getEventLeaderboard(timeline)
+            .then((res) => setEventAll(Array.isArray(res?.data) ? res.data : []))
+            .catch(() => setEventAll([]))
+            .finally(() => setEventLoading(false));
+        setEventVisible(PAGE_SIZE);
+    }, [activeTab, timeline]);
+
+    useEffect(() => { setEventVisible(PAGE_SIZE); }, [domain]);
+
+    // ─────────────────────────────────────────────────────────────────────────
 
     /* ── USERS ── */
     if (activeTab === "users") {
+        if (userLoading) return <SkeletonRows />;
+
+        const filtered =
+            domain === "ALL"
+                ? userRows
+                : userRows.filter((item: any) => {
+                    if (Array.isArray(item.categories)) return item.categories.some((c: string) => c.toUpperCase() === domain);
+                    return item.category?.toUpperCase() === domain || item.domain?.toUpperCase() === domain;
+                });
+
+        if (!filtered.length) {
+            return (
+                <div className="py-24 text-center">
+                    <Trophy className="w-8 h-8 text-white/10 mx-auto mb-3" />
+                    <p className="text-xs text-white/25 font-black uppercase tracking-widest">No data available</p>
+                </div>
+            );
+        }
+
         const currentUserEntry = currentUser
-            ? filtered.find(
-                (item: any) =>
-                    item.id === currentUser.id ||
-                    item.username === currentUser.username
-            )
+            ? filtered.find((item: any) => item.id === currentUser.id || item.username === currentUser.username)
             : null;
         const currentUserRank = currentUserEntry
             ? currentUserEntry.rank || filtered.indexOf(currentUserEntry) + 1
@@ -112,9 +165,7 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
         const showPinnedSelf = currentUserEntry && currentUserRank != null && currentUserRank > 3;
 
         const UserRow = ({ item, i, pinned }: { item: any; i: number; pinned?: boolean }) => {
-            const isCurrent =
-                item.id === currentUser?.id ||
-                item.username === currentUser?.username;
+            const isCurrent = item.id === currentUser?.id || item.username === currentUser?.username;
             return (
                 <Link
                     href={`/profile/${item.username}`}
@@ -128,29 +179,17 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                     )}
                 >
                     <RankBadge rank={item.rank || i + 1} />
-
                     <div className="flex items-center gap-2.5 min-w-0">
                         {item.avatarUrl ? (
-                            <img
-                                src={item.avatarUrl}
-                                className="w-[26px] h-[26px] rounded-full object-cover flex-shrink-0"
-                                alt={item.displayName}
-                            />
+                            <img src={item.avatarUrl} className="w-[26px] h-[26px] rounded-full object-cover flex-shrink-0" alt={item.displayName} />
                         ) : (
                             <div className="w-[26px] h-[26px] rounded-full bg-white/[0.06] flex-shrink-0" />
                         )}
                         <div className="min-w-0">
-                            <p
-                                className={cn(
-                                    "text-[13px] font-semibold truncate leading-tight",
-                                    isCurrent ? "text-primary" : "text-white/85"
-                                )}
-                            >
+                            <p className={cn("text-[13px] font-semibold truncate leading-tight", isCurrent ? "text-primary" : "text-white/85")}>
                                 {item.displayName || item.username}
                             </p>
-                            <p className="text-[10px] text-white/25 truncate leading-tight">
-                                @{item.username}
-                            </p>
+                            <p className="text-[10px] text-white/25 truncate leading-tight">@{item.username}</p>
                         </div>
                         {isCurrent && (
                             <span className="text-[8px] font-black text-primary uppercase tracking-widest bg-primary/10 px-1.5 py-0.5 rounded flex-shrink-0 ml-1">
@@ -158,16 +197,9 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                             </span>
                         )}
                     </div>
-
-                    <span className="text-[12px] font-black text-primary text-right tabular-nums">
-                        {(item.xp || 0).toLocaleString()}
-                    </span>
-                    <span className="text-[12px] text-white/35 text-right tabular-nums">
-                        {(item.votesCast || 0).toLocaleString()}
-                    </span>
-                    <span className="text-[12px] font-bold text-white/40 text-right">
-                        Lv.{item.level || 1}
-                    </span>
+                    <span className="text-[12px] font-black text-primary text-right tabular-nums">{(item.xp || 0).toLocaleString()}</span>
+                    <span className="text-[12px] text-white/35 text-right tabular-nums">{(item.votesCast || 0).toLocaleString()}</span>
+                    <span className="text-[12px] font-bold text-white/40 text-right">Lv.{item.level || 1}</span>
                 </Link>
             );
         };
@@ -182,15 +214,10 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                     <ColHead className="text-right">Level</ColHead>
                 </div>
 
-                {/* Pinned self row when not in top 3 */}
                 {showPinnedSelf && (
                     <>
                         <div className="py-1.5">
-                            <UserRow
-                                item={currentUserEntry}
-                                i={filtered.indexOf(currentUserEntry)}
-                                pinned
-                            />
+                            <UserRow item={currentUserEntry} i={filtered.indexOf(currentUserEntry)} pinned />
                         </div>
                         <div className="flex items-center gap-3 py-1 px-2">
                             <div className="flex-1 border-t border-white/[0.05]" />
@@ -205,12 +232,40 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                         <UserRow key={item.id || i} item={item} i={i} />
                     ))}
                 </div>
+
+                {userHasMore && (
+                    <LoadMoreButton
+                        loading={userLoadingMore}
+                        onClick={() => fetchUserPage(userPage + 1, false)}
+                    />
+                )}
             </div>
         );
     }
 
     /* ── BRANDS ── */
     if (activeTab === "brands") {
+        if (brandLoading) return <SkeletonRows />;
+
+        const filtered =
+            domain === "ALL"
+                ? brandAll
+                : brandAll.filter((item: any) => {
+                    if (Array.isArray(item.categories)) return item.categories.some((c: string) => c.toUpperCase() === domain);
+                    return item.category?.toUpperCase() === domain || item.domain?.toUpperCase() === domain;
+                });
+
+        if (!filtered.length) {
+            return (
+                <div className="py-24 text-center">
+                    <Trophy className="w-8 h-8 text-white/10 mx-auto mb-3" />
+                    <p className="text-xs text-white/25 font-black uppercase tracking-widest">No data available</p>
+                </div>
+            );
+        }
+
+        const visible = filtered.slice(0, brandVisible);
+
         return (
             <div>
                 <div className="grid grid-cols-[24px_1fr_80px_88px] gap-3 sm:gap-5 px-2 pb-2.5 border-b border-white/[0.05]">
@@ -220,11 +275,9 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                     <ColHead className="text-right">Participants</ColHead>
                 </div>
                 <div className="divide-y divide-white/[0.03]">
-                    {filtered.map((item: any, i: number) => {
+                    {visible.map((item: any, i: number) => {
                         const logoSrc = item.avatar
-                            ? item.avatar.startsWith("http")
-                                ? item.avatar
-                                : `${PINATA_GW}/${item.avatar}`
+                            ? item.avatar.startsWith("http") ? item.avatar : `${PINATA_GW}/${item.avatar}`
                             : null;
                         return (
                             <Link
@@ -233,48 +286,57 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                                 className="grid grid-cols-[24px_1fr_80px_88px] gap-3 sm:gap-5 items-center px-2 py-3 rounded-lg hover:bg-white/[0.025] transition-colors"
                             >
                                 <RankBadge rank={item.rank || i + 1} />
-
                                 <div className="flex items-center gap-2.5 min-w-0">
                                     {logoSrc ? (
-                                        <img
-                                            src={logoSrc}
-                                            className="w-[26px] h-[26px] rounded-md object-cover flex-shrink-0"
-                                            alt={item.name}
-                                        />
+                                        <img src={logoSrc} className="w-[26px] h-[26px] rounded-md object-cover flex-shrink-0" alt={item.name} />
                                     ) : (
                                         <div className="w-[26px] h-[26px] rounded-md bg-white/[0.06] flex-shrink-0" />
                                     )}
                                     <div className="min-w-0">
-                                        <p className="text-[13px] font-semibold text-white/85 truncate leading-tight">
-                                            {item.name}
-                                        </p>
+                                        <p className="text-[13px] font-semibold text-white/85 truncate leading-tight">{item.name}</p>
                                         {item.categories?.length > 0 ? (
-                                            <p className="text-[10px] text-white/25 truncate leading-tight">
-                                                {item.categories.slice(0, 2).join(" · ")}
-                                            </p>
+                                            <p className="text-[10px] text-white/25 truncate leading-tight">{item.categories.slice(0, 2).join(" · ")}</p>
                                         ) : item.bio ? (
-                                            <p className="text-[10px] text-white/25 truncate leading-tight">
-                                                {item.bio}
-                                            </p>
+                                            <p className="text-[10px] text-white/25 truncate leading-tight">{item.bio}</p>
                                         ) : null}
                                     </div>
                                 </div>
-
-                                <span className="text-[12px] font-black text-white/55 text-right tabular-nums">
-                                    {(item.artMinted || 0).toLocaleString()}
-                                </span>
-                                <span className="text-[12px] text-white/35 text-right tabular-nums">
-                                    {(item.participants || 0).toLocaleString()}
-                                </span>
+                                <span className="text-[12px] font-black text-white/55 text-right tabular-nums">{(item.artMinted || 0).toLocaleString()}</span>
+                                <span className="text-[12px] text-white/35 text-right tabular-nums">{(item.participants || 0).toLocaleString()}</span>
                             </Link>
                         );
                     })}
                 </div>
+
+                {brandVisible < filtered.length && (
+                    <LoadMoreButton loading={false} onClick={() => setBrandVisible((v) => v + PAGE_SIZE)} />
+                )}
             </div>
         );
     }
 
     /* ── EVENTS ── */
+    if (eventLoading) return <SkeletonRows />;
+
+    const filteredEvents =
+        domain === "ALL"
+            ? eventAll
+            : eventAll.filter((item: any) => {
+                if (Array.isArray(item.categories)) return item.categories.some((c: string) => c.toUpperCase() === domain);
+                return item.category?.toUpperCase() === domain || item.domain?.toUpperCase() === domain;
+            });
+
+    if (!filteredEvents.length) {
+        return (
+            <div className="py-24 text-center">
+                <Trophy className="w-8 h-8 text-white/10 mx-auto mb-3" />
+                <p className="text-xs text-white/25 font-black uppercase tracking-widest">No data available</p>
+            </div>
+        );
+    }
+
+    const visibleEvents = filteredEvents.slice(0, eventVisible);
+
     const statusCfg = (s: string) => {
         if (s === "posting") return { dot: "bg-blue-400", label: "Posting" };
         if (s === "voting") return { dot: "bg-emerald-400", label: "Voting" };
@@ -293,13 +355,9 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                 <ColHead className="text-right">Status</ColHead>
             </div>
             <div className="divide-y divide-white/[0.03]">
-                {filtered.map((item: any, i: number) => {
+                {visibleEvents.map((item: any, i: number) => {
                     const sc = statusCfg(item.status);
-                    const thumb = item.imageUrl
-                        || (item.imageCid ? `${PINATA_GW}/${item.imageCid}` : null)
-                        || item.coverImage
-                        || item.avatar
-                        || null;
+                    const thumb = item.imageUrl || (item.imageCid ? `${PINATA_GW}/${item.imageCid}` : null) || item.coverImage || item.avatar || null;
                     return (
                         <Link
                             key={item.id || i}
@@ -307,51 +365,41 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                             className="grid grid-cols-[24px_1fr_80px_100px] sm:grid-cols-[24px_1fr_80px_80px_100px] gap-3 sm:gap-5 items-center px-2 py-3 rounded-lg hover:bg-white/[0.025] transition-colors"
                         >
                             <RankBadge rank={item.rank || i + 1} />
-
                             <div className="flex items-center gap-2.5 min-w-0">
                                 {thumb ? (
-                                    <img
-                                        src={thumb}
-                                        className="w-[26px] h-[26px] rounded object-cover flex-shrink-0"
-                                        alt={item.title}
-                                    />
+                                    <img src={thumb} className="w-[26px] h-[26px] rounded object-cover flex-shrink-0" alt={item.title} />
                                 ) : (
                                     <div className="w-[26px] h-[26px] rounded bg-white/[0.06] flex-shrink-0 flex items-center justify-center">
                                         <Calendar className="w-3 h-3 text-white/20" />
                                     </div>
                                 )}
                                 <div className="min-w-0">
-                                    <p className="text-[13px] font-semibold text-white/85 truncate leading-tight">
-                                        {item.title}
-                                    </p>
+                                    <p className="text-[13px] font-semibold text-white/85 truncate leading-tight">{item.title}</p>
                                     {item.brand?.name && (
-                                        <p className="text-[10px] text-white/25 truncate leading-tight">
-                                            {item.brand.name}
-                                        </p>
+                                        <p className="text-[10px] text-white/25 truncate leading-tight">{item.brand.name}</p>
                                     )}
                                 </div>
                             </div>
-
                             <span className="text-[12px] font-black text-lime-400 text-right tabular-nums">
                                 {item.prizePool || item.leaderboardPool
                                     ? `$${(item.prizePool || item.leaderboardPool).toLocaleString()}`
                                     : "—"}
                             </span>
-
                             <span className="text-[12px] text-white/35 text-right tabular-nums hidden sm:block">
                                 {(item.participants || item._count?.submissions || 0).toLocaleString()}
                             </span>
-
                             <div className="flex items-center justify-end gap-1.5">
                                 <div className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", sc.dot)} />
-                                <span className="text-[9px] font-black uppercase tracking-widest text-white/40">
-                                    {sc.label}
-                                </span>
+                                <span className="text-[9px] font-black uppercase tracking-widest text-white/40">{sc.label}</span>
                             </div>
                         </Link>
                     );
                 })}
             </div>
+
+            {eventVisible < filteredEvents.length && (
+                <LoadMoreButton loading={false} onClick={() => setEventVisible((v) => v + PAGE_SIZE)} />
+            )}
         </div>
     );
 }
