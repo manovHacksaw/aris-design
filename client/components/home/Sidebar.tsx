@@ -112,7 +112,7 @@ export default function Sidebar() {
                 <nav className="flex-1 flex flex-col px-3 pt-2">
                     {/* Main nav items */}
                     <div className="flex flex-col gap-1">
-                        {navItems.map((item) => {
+                        {navItems.filter((item) => isAuthenticated || item.label !== "Profile").map((item) => {
                             const isActive = pathname === item.href || (item.href === "/home" && pathname === "/");
                             return (
                                 <div key={item.href} onClick={() => setMobileOpen(false)}>

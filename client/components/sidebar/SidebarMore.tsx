@@ -17,11 +17,15 @@ import {
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/context/SidebarContext";
 import { usePrivy } from "@privy-io/react-auth";
+import { useWallet } from "@/context/WalletContext";
+import { useLoginModal } from "@/context/LoginModalContext";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function SidebarMore() {
     const { isCollapsed, expandSidebar } = useSidebar();
     const { logout } = usePrivy();
+    const { isAuthenticated } = useWallet();
+    const { openLoginModal } = useLoginModal();
     const [isOpen, setIsOpen] = useState(false);
     const [coords, setCoords] = useState({ left: 0, bottom: 0 });
     const [mounted, setMounted] = useState(false);
@@ -74,14 +78,19 @@ export default function SidebarMore() {
         }
     };
 
-    const menuItems = [
+    const authMenuItems = [
         { label: "Settings", icon: IoSettingsOutline, href: "/settings" },
         { label: "Your Activity", icon: IoPulseOutline, href: "/activity" },
         { label: "Saved", icon: IoBookmarkOutline, href: "/saved" },
-        { label: "Report a problem", icon: IoWarningOutline, href: "/report" },
         { label: "Link Tree", icon: IoLinkOutline, href: "/link-tree" },
+    ];
+
+    const publicMenuItems = [
+        { label: "Report a problem", icon: IoWarningOutline, href: "/report" },
         { label: "Terms and Conditions", icon: IoDocumentTextOutline, href: "/terms" },
     ];
+
+    const menuItems = isAuthenticated ? [...authMenuItems, ...publicMenuItems] : publicMenuItems;
 
     return (
         <div className="relative">
@@ -120,20 +129,32 @@ export default function SidebarMore() {
 
                                 <div className="h-[1px] bg-border my-1.5 mx-2" />
 
-                                {/* Switch Accounts */}
-                                <button className="flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium text-[#9CA3AF] hover:text-white hover:bg-secondary rounded-[16px] transition-colors group">
-                                    <IoPersonAddOutline size={20} className="flex-shrink-0 text-[#6B7280] group-hover:text-white transition-colors" />
-                                    Switch accounts
-                                </button>
+                                {isAuthenticated ? (
+                                    <>
+                                        {/* Switch Accounts */}
+                                        <button className="flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium text-foreground/50 hover:text-foreground hover:bg-secondary rounded-[16px] transition-colors group">
+                                            <IoPersonAddOutline size={20} className="flex-shrink-0 text-foreground/30 group-hover:text-foreground transition-colors" />
+                                            Switch accounts
+                                        </button>
 
-                                {/* Log Out */}
-                                <button
-                                    onClick={() => { setIsOpen(false); logout(); }}
-                                    className="flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium text-red-400 hover:text-red-300 hover:bg-secondary rounded-[16px] transition-colors group"
-                                >
-                                    <IoLogOutOutline size={20} className="flex-shrink-0 transition-colors" />
-                                    Log out
-                                </button>
+                                        {/* Log Out */}
+                                        <button
+                                            onClick={() => { setIsOpen(false); logout(); }}
+                                            className="flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium text-red-400 hover:text-red-300 hover:bg-secondary rounded-[16px] transition-colors group"
+                                        >
+                                            <IoLogOutOutline size={20} className="flex-shrink-0 transition-colors" />
+                                            Log out
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button
+                                        onClick={() => { setIsOpen(false); openLoginModal(); }}
+                                        className="flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-bold text-primary hover:bg-primary/10 rounded-[16px] transition-colors group"
+                                    >
+                                        <IoPersonAddOutline size={20} className="flex-shrink-0 transition-colors" />
+                                        Sign in to Aris
+                                    </button>
+                                )}
                             </div>
                         </motion.div>
                     )}
