@@ -12,6 +12,7 @@ import { getSubscriptionStatus, subscribeToBrand, unsubscribeFromBrand } from "@
 import type { Event } from "@/services/event.service";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/context/UserContext";
+import { useLoginModal } from "@/context/LoginModalContext";
 
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
@@ -52,6 +53,7 @@ export default function BrandPublicPage() {
     const [subscribed, setSubscribed] = useState(false);
     const [activeTab, setActiveTab] = useState<"events" | "about">("events");
     const { user: currentUser } = useUser();
+    const { openLoginModal } = useLoginModal();
 
     useEffect(() => {
         if (!identifier) return;
@@ -72,7 +74,8 @@ export default function BrandPublicPage() {
     }, [identifier, currentUser]);
 
     const handleToggleSubscribe = async () => {
-        if (!brand || !currentUser) return;
+        if (!brand) return;
+        if (!currentUser) { openLoginModal(); return; }
         const prev = subscribed;
         setSubscribed(!prev);
 
@@ -238,7 +241,7 @@ export default function BrandPublicPage() {
                                             </Link>
                                         ) : (
                                             <button
-                                                onClick={() => setSubscribed(p => !p)}
+                                                onClick={handleToggleSubscribe}
                                                 className={cn(
                                                     "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all",
                                                     subscribed

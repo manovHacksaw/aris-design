@@ -8,14 +8,17 @@ import { formatCount } from "@/lib/eventUtils";
 interface ExploreEvent {
     id: string;
     title: string;
-    image: string;
+    image?: string;
+    imageUrl?: string;
+    imageCid?: string;
     status: string; // raw: "posting" | "voting" | "scheduled" | "completed" | "draft"
     eventType: string;
     baseReward?: number;
     topReward?: number;
     leaderboardPool?: number;
-    participationCount: number;
-    brand: { id: string; name: string; logoUrl?: string; logoCid?: string } | null;
+    participationCount?: number;
+    _count?: { submissions: number; votes: number };
+    brand: { id?: string; name: string; logoUrl?: string; logoCid?: string } | null;
     timeRemaining?: string;
 }
 
@@ -23,27 +26,34 @@ const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
 function statusDot(status: string) {
     if (status === "posting") return { dot: "bg-lime-400 animate-pulse", label: "Live · Post", text: "text-lime-400" };
-    if (status === "voting")  return { dot: "bg-blue-400 animate-pulse",  label: "Live · Vote", text: "text-blue-400" };
+    if (status === "voting") return { dot: "bg-blue-400 animate-pulse", label: "Live · Vote", text: "text-blue-400" };
     if (status === "scheduled") return { dot: "bg-yellow-400", label: "Upcoming", text: "text-yellow-400" };
     if (status === "completed") return { dot: "bg-red-400/60", label: "Closed", text: "text-red-400/70" };
     return { dot: "bg-white/15", label: status, text: "text-white/25" };
 }
 
-export default function ExploreEventCard({ event }: { event: ExploreEvent }) {
-    const sc = statusDot(event.status);
+export default function ExploreEventCard({ event }: { event: ExploreEvent | any }) {
+    const sc = statusDot(event.status || "draft");
     const logoSrc = event.brand?.logoUrl || (event.brand?.logoCid ? `${PINATA_GW}/${event.brand.logoCid}` : null);
     const hasBase = (event.baseReward ?? 0) > 0;
     const hasTop = (event.topReward ?? 0) > 0 || (event.leaderboardPool ?? 0) > 0;
     const topVal = event.topReward ?? event.leaderboardPool ?? 0;
+
+    const displayImage = event.image || event.imageUrl || (event.imageCid ? `${PINATA_GW}/${event.imageCid}` : "");
+    const pCount = event.participationCount ?? (
+        event.eventType === "vote_only"
+            ? (event._count?.votes || 0)
+            : ((event._count?.submissions || 0) + (event._count?.votes || 0))
+    );
 
     return (
         <Link href={`/events/${event.id}`} className="block group">
             <div className="relative rounded-2xl overflow-hidden border border-white/[0.07] hover:border-white/[0.14] transition-all duration-200 bg-[#0d0d10]">
                 {/* Image — 3:2 aspect */}
                 <div className="relative w-full aspect-[3/2] overflow-hidden">
-                    {event.image ? (
+                    {displayImage ? (
                         <img
-                            src={event.image}
+                            src={displayImage}
                             alt={event.title}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                         />
@@ -112,7 +122,7 @@ export default function ExploreEventCard({ event }: { event: ExploreEvent }) {
                         <div className="flex items-center gap-1 text-white/25 flex-shrink-0">
                             <Users className="w-3 h-3" />
                             <span className="text-[10px] font-bold">
-                                {formatCount(event.participationCount)}
+                                {formatCount(pCount)}
                             </span>
                         </div>
                     </div>

@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import axios from 'axios';
 import FormData from 'form-data';
 import { prisma } from '../lib/prisma.js';
-import { getDetailedEventAnalytics } from './analyticsService.js';
+import { getDetailedEventAnalytics, AnalyticsService } from './analyticsService.js';
 
 dotenv.config();
 
@@ -210,6 +210,92 @@ export class AiService {
             return summary;
         } catch (error) {
             console.error(`[AiService] Failed to generate event summary for ${eventId}:`, error);
+            return null;
+        }
+    }
+
+    /**
+     * Generate an AI summary for a brand based on all its events
+     */
+    static async generateBrandSummary(brandId: string): Promise<string | null> {
+        try {
+            // 1. Clear existing summary
+            await prisma.brand.update({
+                where: { id: brandId },
+                data: { aiSummary: null },
+            });
+
+            // 2. Fetch Brand Analytics
+            const analytics = await AnalyticsService.getBrandAnalytics(brandId);
+            if (!analytics) return null;
+
+            const {
+                totalEvents, totalVotesAcrossEvents, totalUniqueParticipants,
+                averageWinningMargin, overallVotesByGender, overallVotesByAgeGroup,
+                eventsSummary
+            } = analytics;
+
+            const brand = await prisma.brand.findUnique({
+                where: { id: brandId },
+                select: { name: true, description: true }
+            });
+
+            // 3. Format Data for Prompt
+            const demographicsStr = `
+            - Gender: Male (${overallVotesByGender.male}), Female (${overallVotesByGender.female}), Non-Binary (${overallVotesByGender.nonBinary}), Other (${overallVotesByGender.other})
+            - Age Groups: <24 (${overallVotesByAgeGroup['24_under']}), 25-34 (${overallVotesByAgeGroup['25_34']}), 35-44 (${overallVotesByAgeGroup['35_44']}), 45-54 (${overallVotesByAgeGroup['45_54']}), 55+ (${overallVotesByAgeGroup['55_64'] + overallVotesByAgeGroup['65_plus']})
+            `;
+
+            let topEventInfo = "No events with interactions yet.";
+            if (eventsSummary.length > 0) {
+                const topEvent = eventsSummary.reduce((prev: any, current: any) => (prev.totalVotes > current.totalVotes) ? prev : current);
+                if (topEvent.totalVotes > 0) {
+                    topEventInfo = `Most Engaging Event: "${topEvent.title}" with ${topEvent.totalVotes} votes.`;
+                }
+            }
+
+            const prompt = `
+            Act as an expert data analyst. Write a comprehensive, data-driven brand summary for "${brand?.name}".
+            
+            **Brand Details:**
+            - Description: ${brand?.description || 'N/A'}
+            
+            **Overall Performance Metrics:**
+            - Total Events Hosted: ${totalEvents}
+            - Total Votes Across All Events: ${totalVotesAcrossEvents}
+            - Unique Participants: ${totalUniqueParticipants}
+            - Average Winning Margin: ${averageWinningMargin.toFixed(1)}%
+            
+            **Audience Demographics:**
+            ${demographicsStr}
+            
+            **Highlights:**
+            - ${topEventInfo}
+            
+            **Instructions:**
+            1. Write a 4-5 sentence professional summary providing brand-level insights.
+            2. Analyze the audience: mention which demographic segment is most active for this brand.
+            3. Comment on the overall engagement across all events.
+            4. Suggest a general "recommended next action" for the brand based on their performance (e.g. host more events targeted at a specific demographic, try a different category).
+            5. Avoid generic phrases. Use specific numbers to back up your statements.
+            6. Do not use Markdown formatting (bold/italic). Just plain text.
+            `;
+
+            // 4. Generate Content
+            const model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+            const result = await model.generateContent(prompt);
+            const summary = result.response.text().trim();
+
+            // 5. Save to Brand
+            await prisma.brand.update({
+                where: { id: brandId },
+                data: { aiSummary: summary },
+            });
+
+            console.log(`✨ [AiService] Generated rich brand summary for ${brandId}`);
+            return summary;
+        } catch (error) {
+            console.error(`[AiService] Failed to generate brand summary for ${brandId}:`, error);
             return null;
         }
     }

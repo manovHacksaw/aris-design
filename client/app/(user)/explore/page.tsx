@@ -5,50 +5,26 @@ import BottomNav from "@/components/BottomNav";
 import { motion } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { ImageOff, Zap } from "lucide-react";
+import { ImageOff } from "lucide-react";
+
 import ExploreHeader from "@/components/explore/ExploreHeader";
 import ExploreSidebar from "@/components/explore/ExploreSidebar";
-import ExploreEventCard from "@/components/events/ExploreEventCard";
-import { getEvents } from "@/services/event.service";
+import DynamicBanner from "@/components/explore/DynamicBanner";
+import EventRow from "@/components/explore/EventRow";
+import BrandRow from "@/components/explore/BrandRow";
+import ContentMosaic from "@/components/explore/ContentMosaic";
+
+import { getExploreEvents, getExploreBrands, getExploreContent, ExploreEventsResponse } from "@/services/explore.service";
 import { getFeaturedBrands } from "@/services/search.service";
+import { useLoginModal } from "@/context/LoginModalContext";
+import { useUser } from "@/context/UserContext";
 
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
 const DOMAINS = [
     "ALL", "AI", "DESIGN", "MARKETING", "WEB3",
-    "GAMING", "FASHION", "FOOD", "TECH", "OTHER",
+    "GAMING", "FASHION", "FOOD", "TECH", "OTHER", "CLOSED"
 ];
-
-function toExploreEvent(ev: any) {
-    return {
-        id: ev.id,
-        title: ev.title,
-        image: ev.imageUrl || (ev.imageCid ? `${PINATA_GW}/${ev.imageCid}` : ""),
-        status: ev.status,
-        eventType: ev.eventType,
-        baseReward: ev.baseReward ?? 0,
-        topReward: ev.topReward ?? 0,
-        leaderboardPool: ev.leaderboardPool ?? 0,
-        participationCount:
-            ev.eventType === "vote_only"
-                ? (ev._count?.votes ?? 0)
-                : (ev._count?.submissions ?? 0),
-        brand: ev.brand ?? null,
-        timeRemaining: "",
-    };
-}
-
-function EventCardSkeleton() {
-    return (
-        <div className="rounded-2xl overflow-hidden border border-white/[0.05] bg-white/[0.02] animate-pulse">
-            <div className="w-full aspect-[3/2] bg-white/[0.04]" />
-            <div className="p-3 space-y-2">
-                <div className="h-3 bg-white/[0.04] rounded w-3/4" />
-                <div className="h-2.5 bg-white/[0.04] rounded w-1/2" />
-            </div>
-        </div>
-    );
-}
 
 function EmptyState({ label }: { label: string }) {
     return (
@@ -60,80 +36,112 @@ function EmptyState({ label }: { label: string }) {
 }
 
 export default function Explore() {
-    const [activeTab, setActiveTab] = useState<"events" | "content">("events");
-    const [activeSector, setActiveSector] = useState("ALL");
-    const [activeDomain, setActiveDomain] = useState("ALL");
+    const [activeTab, setActiveTab] = useState<"events" | "brands" | "content">("events");
+    const [activeSector, setActiveSector] = useState("ALL"); // from Header (usually for searching global stuff)
+    const [activeDomain, setActiveDomain] = useState("ALL"); // secondary pill filter
     const [searchQuery, setSearchQuery] = useState("");
 
-    const [events, setEvents] = useState<any[]>([]);
+    const [eventsData, setEventsData] = useState<ExploreEventsResponse | null>(null);
+    const [brandsData, setBrandsData] = useState<any[]>([]);
+    const [contentData, setContentData] = useState<any[]>([]);
     const [suggestedBrands, setSuggestedBrands] = useState<any[]>([]);
+
     const [loading, setLoading] = useState(true);
-    const [brandsLoading, setBrandsLoading] = useState(true);
 
     useEffect(() => {
         setLoading(true);
-        setBrandsLoading(true);
 
-        getEvents({ limit: 24 })
-            .then((res) => setEvents(res.events || []))
-            .catch(() => { })
-            .finally(() => setLoading(false));
-
-        getFeaturedBrands(6)
-            .then((brandRes) =>
-                setSuggestedBrands(
-                    (brandRes.data || []).map((b: any) => ({
-                        id: b.id,
-                        name: b.name,
-                        handle: `@${b.name.toLowerCase().replace(/\s+/g, "")}`,
-                        avatar: b.logoUrl || (b.logoCid ? `${PINATA_GW}/${b.logoCid}` : ""),
-                        isFollowed: false,
-                    }))
-                )
-            )
-            .catch(() => { })
-            .finally(() => setBrandsLoading(false));
+        Promise.all([
+            getExploreEvents().catch(() => null),
+            getExploreBrands().catch(() => []),
+            getExploreContent().catch(() => []),
+            getFeaturedBrands(6).catch(() => ({ data: [] }))
+        ]).then(([eventsRes, brandsRes, contentRes, featBrands]) => {
+            if (eventsRes) setEventsData(eventsRes);
+            setBrandsData(brandsRes || []);
+            setContentData(contentRes || []);
+            setSuggestedBrands(
+                ((featBrands as any)?.data || []).map((b: any) => ({
+                    id: b.id,
+                    name: b.name,
+                    handle: `@${b.name.toLowerCase().replace(/\s+/g, "")}`,
+                    avatar: b.logoUrl || (b.logoCid ? `${PINATA_GW}/${b.logoCid}` : ""),
+                    isFollowed: false,
+                }))
+            );
+            setLoading(false);
+        });
     }, []);
 
-    // client-side filtering
-    const filtered = useMemo(() => {
-        let list = events.map(toExploreEvent);
+    // Memoized processing for currently selected secondary tab filters
+    const filteredDomains = useMemo(() => {
+        if (!eventsData) return [];
+        let rows = [...eventsData.domains];
 
+        // Filter by Sector (Global from Header)
         if (activeSector !== "ALL") {
-            list = list.filter((e) =>
-                e.brand?.categories?.some(
-                    (c: string) => c.toUpperCase() === activeSector
-                )
-            );
+            rows = rows.filter(r => r.domain.toUpperCase() === activeSector);
         }
 
-        if (activeDomain !== "ALL") {
-            list = list.filter(
-                (e) => e.title.toUpperCase().includes(activeDomain) ||
-                    (e.brand?.name ?? "").toUpperCase().includes(activeDomain)
-            );
+        // Filter by Domain (Pills)
+        if (activeDomain !== "ALL" && activeDomain !== "CLOSED") {
+            rows = rows.filter(r => r.domain.toUpperCase() === activeDomain);
         }
 
+        // Search text matching
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
-            list = list.filter(
-                (e) =>
+            rows = rows.map(r => ({
+                domain: r.domain,
+                events: r.events.filter(e =>
                     e.title.toLowerCase().includes(q) ||
                     (e.brand?.name ?? "").toLowerCase().includes(q)
-            );
+                )
+            })).filter(r => r.events.length > 0);
         }
 
-        return list;
-    }, [events, activeSector, activeDomain, searchQuery]);
+        return rows;
+    }, [eventsData, activeSector, activeDomain, searchQuery]);
 
-    const liveEvents = useMemo(
-        () => filtered.filter((e) => e.status === "posting" || e.status === "voting"),
-        [filtered]
-    );
-    const otherEvents = useMemo(
-        () => filtered.filter((e) => e.status !== "posting" && e.status !== "voting"),
-        [filtered]
-    );
+    const displayTrending = (activeDomain === "ALL" || activeDomain === "CLOSED" === false) && !searchQuery.trim() && eventsData?.trending?.length ? true : false;
+    const displayClosed = (activeDomain === "ALL" || activeDomain === "CLOSED") && eventsData?.closed?.length ? true : false;
+
+    // Brand filtering
+    const filteredBrandsRows = useMemo(() => {
+        let rows = [...brandsData];
+        if (activeSector !== "ALL") {
+            rows = rows.filter(b => b.categories?.some((c: string) => c.toUpperCase() === activeSector));
+        }
+        if (activeDomain !== "ALL" && activeDomain !== "CLOSED") {
+            rows = rows.filter(b => b.categories?.some((c: string) => c.toUpperCase() === activeDomain));
+        }
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            rows = rows.filter(b => b.name.toLowerCase().includes(q));
+        }
+        return rows;
+    }, [brandsData, activeSector, activeDomain, searchQuery]);
+
+    // Content filtering
+    const filteredContent = useMemo(() => {
+        let subs = [...contentData];
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            subs = subs.filter(s =>
+                (s.caption || "").toLowerCase().includes(q) ||
+                (s.user?.username || "").toLowerCase().includes(q) ||
+                (s.event?.title || "").toLowerCase().includes(q)
+            );
+        }
+        // Domain filtering on content based on Event category
+        if (activeDomain !== "ALL" && activeDomain !== "CLOSED") {
+            // we'd filter submissions whose event brand is in that domain
+            // content response includes event.brand.id but maybe not categories. We'll skip deep category filter or approximate.
+            // Simplified: if active domain is not ALL, just skip complex content filtering for now
+        }
+        return subs;
+    }, [contentData, searchQuery, activeDomain]);
+
 
     return (
         <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
@@ -149,7 +157,7 @@ export default function Explore() {
                     <main className="w-full pt-6 flex flex-col lg:flex-row gap-10 lg:gap-12">
 
                         {/* ── Mobile: Brand strip ─────────────────────────── */}
-                        {(brandsLoading || suggestedBrands.length > 0) && (
+                        {(loading || suggestedBrands.length > 0) && (
                             <section className="lg:hidden">
                                 <div className="flex items-center justify-between mb-3">
                                     <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em]">Recommended Brands</p>
@@ -161,7 +169,7 @@ export default function Explore() {
                                     </button>
                                 </div>
                                 <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4">
-                                    {brandsLoading
+                                    {loading && suggestedBrands.length === 0
                                         ? Array.from({ length: 4 }).map((_, i) => (
                                             <div key={i} className="shrink-0 w-[120px] h-[140px] rounded-2xl bg-white/[0.03] animate-pulse" />
                                         ))
@@ -176,12 +184,17 @@ export default function Explore() {
                         {/* ── Main Feed ───────────────────────────────────── */}
                         <div className="flex-1 min-w-0 space-y-6">
 
-                            {/* Tab bar */}
+                            {/* Dynamic Banner Carousel (Shown only when in events tab and ALL domain, no search) */}
+                            {activeTab === "events" && activeDomain === "ALL" && !searchQuery && eventsData?.trending && eventsData.trending.length > 0 && (
+                                <DynamicBanner events={eventsData.trending.slice(0, 5)} />
+                            )}
+
+                            {/* Top level Navigation */}
                             <div className="flex items-center gap-1 bg-white/[0.03] border border-white/[0.05] rounded-xl p-0.5 w-fit">
-                                {(["events", "content"] as const).map((tab) => (
+                                {(["events", "brands", "content"] as const).map((tab) => (
                                     <button
                                         key={tab}
-                                        onClick={() => setActiveTab(tab)}
+                                        onClick={() => { setActiveTab(tab); setActiveDomain("ALL"); }}
                                         className={cn(
                                             "px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
                                             activeTab === tab
@@ -194,107 +207,100 @@ export default function Explore() {
                                 ))}
                             </div>
 
-                            {/* Domain filter — events only */}
-                            {activeTab === "events" && (
-                                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
-                                    {DOMAINS.map((d) => (
-                                        <button
-                                            key={d}
-                                            onClick={() => setActiveDomain(d)}
-                                            className={cn(
-                                                "px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap shrink-0 transition-all border",
-                                                activeDomain === d
-                                                    ? "bg-white/[0.08] border-white/25 text-white/80"
-                                                    : "border-transparent text-white/20 hover:text-white/50"
-                                            )}
-                                        >
-                                            {d}
-                                        </button>
-                                    ))}
+                            {/* Secondary Domain Pills */}
+                            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+                                {DOMAINS.map((d) => (
+                                    <button
+                                        key={d}
+                                        onClick={() => setActiveDomain(d)}
+                                        className={cn(
+                                            "px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap shrink-0 transition-all border",
+                                            activeDomain === d
+                                                ? "bg-white/[0.08] border-white/25 text-white/80"
+                                                : "border-transparent text-white/20 hover:text-white/50"
+                                        )}
+                                    >
+                                        {d}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {loading ? (
+                                <div className="space-y-12 animate-pulse mt-8">
+                                    <div className="h-40 w-full bg-white/[0.04] rounded-2xl" />
+                                    <div className="h-40 w-full bg-white/[0.04] rounded-2xl" />
                                 </div>
-                            )}
+                            ) : (
+                                <>
+                                    {/* ── Events Tab ────────────────────────────── */}
+                                    {activeTab === "events" && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 8 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.25 }}
+                                            className="space-y-10"
+                                        >
+                                            {displayTrending && activeDomain !== "CLOSED" && (
+                                                <EventRow
+                                                    title={searchQuery ? "Search Results" : "Trending Events"}
+                                                    events={eventsData!.trending}
+                                                />
+                                            )}
 
-                            {/* ── Events Tab ────────────────────────────── */}
-                            {activeTab === "events" && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 8 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.25 }}
-                                    className="space-y-10"
-                                >
-                                    {loading ? (
-                                        /* Skeleton grid */
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                                            {Array.from({ length: 6 }).map((_, i) => (
-                                                <EventCardSkeleton key={i} />
+                                            {activeDomain !== "CLOSED" && filteredDomains.map((domainObj) => (
+                                                <EventRow
+                                                    key={domainObj.domain}
+                                                    title={`${domainObj.domain} Events`}
+                                                    events={domainObj.events}
+                                                />
                                             ))}
-                                        </div>
-                                    ) : filtered.length === 0 ? (
-                                        <div className="grid grid-cols-1">
-                                            <EmptyState label="No events match your filters" />
-                                        </div>
-                                    ) : (
-                                        <>
-                                            {/* Live events section */}
-                                            {liveEvents.length > 0 && (
-                                                <section className="space-y-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-pulse" />
-                                                        <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">
-                                                            Live Now · {liveEvents.length} event{liveEvents.length !== 1 ? "s" : ""}
-                                                        </p>
-                                                    </div>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                                                        {liveEvents.map((ev, i) => (
-                                                            <motion.div
-                                                                key={ev.id}
-                                                                initial={{ opacity: 0, y: 8 }}
-                                                                animate={{ opacity: 1, y: 0 }}
-                                                                transition={{ delay: i * 0.04, duration: 0.2 }}
-                                                            >
-                                                                <ExploreEventCard event={ev} />
-                                                            </motion.div>
-                                                        ))}
-                                                    </div>
-                                                </section>
+
+                                            {displayClosed && (
+                                                <EventRow
+                                                    title="Closed Events"
+                                                    events={eventsData!.closed}
+                                                />
                                             )}
 
-                                            {/* Other events section */}
-                                            {otherEvents.length > 0 && (
-                                                <section className="space-y-4">
-                                                    {liveEvents.length > 0 && (
-                                                        <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">
-                                                            All Events
-                                                        </p>
-                                                    )}
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                                                        {otherEvents.map((ev, i) => (
-                                                            <motion.div
-                                                                key={ev.id}
-                                                                initial={{ opacity: 0, y: 8 }}
-                                                                animate={{ opacity: 1, y: 0 }}
-                                                                transition={{ delay: i * 0.03, duration: 0.2 }}
-                                                            >
-                                                                <ExploreEventCard event={ev} />
-                                                            </motion.div>
-                                                        ))}
-                                                    </div>
-                                                </section>
+                                            {(!displayTrending && !displayClosed && filteredDomains.length === 0) && (
+                                                <EmptyState label="No events found" />
                                             )}
-                                        </>
+                                        </motion.div>
                                     )}
-                                </motion.div>
-                            )}
 
-                            {/* ── Content Tab ───────────────────────────── */}
-                            {activeTab === "content" && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 8 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.25 }}
-                                >
-                                    <EmptyState label="Creator content coming soon" />
-                                </motion.div>
+                                    {/* ── Brands Tab ────────────────────────────── */}
+                                    {activeTab === "brands" && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 8 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.25 }}
+                                            className="space-y-10"
+                                        >
+                                            {filteredBrandsRows.length > 0 ? (
+                                                filteredBrandsRows.map((brand) => (
+                                                    <BrandRow key={brand.id} brand={brand} />
+                                                ))
+                                            ) : (
+                                                <EmptyState label="No brands found" />
+                                            )}
+                                        </motion.div>
+                                    )}
+
+                                    {/* ── Content Tab ───────────────────────────── */}
+                                    {activeTab === "content" && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 8 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.25 }}
+                                        >
+                                            {filteredContent.length > 0 ? (
+                                                <ContentMosaic submissions={filteredContent} />
+                                            ) : (
+                                                <EmptyState label="No content found" />
+                                            )}
+                                        </motion.div>
+                                    )}
+                                </>
                             )}
                         </div>
 
@@ -302,7 +308,7 @@ export default function Explore() {
                         <ExploreSidebar
                             brands={suggestedBrands}
                             creators={[]}
-                            loading={brandsLoading}
+                            loading={loading && suggestedBrands.length === 0}
                         />
                     </main>
                 </div>
@@ -320,8 +326,10 @@ function MobileBrandCard({ item }: {
     item: { id: string; name: string; handle: string; avatar: string; isFollowed: boolean };
 }) {
     const [followed, setFollowed] = useState(item.isFollowed);
+    const { isAuthenticated } = useUser();
+    const { openLoginModal } = useLoginModal();
     return (
-        <a href={`/brand/${item.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`} className="shrink-0 w-[120px] bg-white/[0.03] border border-white/[0.05] rounded-2xl p-3 flex flex-col items-center gap-2.5">
+        <a href={`/brand/${item.name.toLowerCase().trim().replace(/\\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`} className="shrink-0 w-[120px] bg-white/[0.03] border border-white/[0.05] rounded-2xl p-3 flex flex-col items-center gap-2.5">
             <div className="w-12 h-12 rounded-xl border border-white/[0.08] bg-white/[0.04] overflow-hidden flex items-center justify-center">
                 {item.avatar ? (
                     <img src={item.avatar} className="w-full h-full object-cover" alt={item.name} />
@@ -334,7 +342,7 @@ function MobileBrandCard({ item }: {
                 <p className="text-[8px] text-foreground/25 uppercase tracking-widest truncate mt-0.5">{item.handle}</p>
             </div>
             <button
-                onClick={(e) => { e.preventDefault(); setFollowed((p) => !p); }}
+                onClick={(e) => { e.preventDefault(); if (!isAuthenticated) { openLoginModal(); return; } setFollowed((p) => !p); }}
                 className={cn(
                     "w-full py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border",
                     followed

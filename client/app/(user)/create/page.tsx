@@ -7,6 +7,7 @@ import { Sparkles, Palette, PenLine, Video, Building2, Rocket, Star } from "luci
 import { motion } from "framer-motion";
 import { AIGeneratorWindow } from "@/components/create/AIGeneratorWindow";
 import { useUser } from "@/context/UserContext";
+import { useLoginModal } from "@/context/LoginModalContext";
 import { getEvents } from "@/services/event.service";
 import type { Event } from "@/services/event.service";
 import type { EventData } from "@/types/events";
@@ -82,6 +83,7 @@ function EventRowSkeleton() {
 
 export default function Create() {
     const { user } = useUser();
+    const { openLoginModal } = useLoginModal();
     const [generatorOpen, setGeneratorOpen] = useState(false);
     const [heroPrompt, setHeroPrompt] = useState("");
     const [activeCategory, setActiveCategory] = useState("ALL");
@@ -122,7 +124,11 @@ export default function Create() {
                         transition={{ duration: 0.5 }}
                     >
                         <CreateHero
-                            onGenerate={(p) => { setHeroPrompt(p); setGeneratorOpen(true); }}
+                            onGenerate={(p) => {
+                                if (!user?.id) { openLoginModal(); return; }
+                                setHeroPrompt(p);
+                                setGeneratorOpen(true);
+                            }}
                             events={openEvents}
                         />
                     </motion.section>

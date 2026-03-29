@@ -824,7 +824,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
     const handleAiGenerate = async () => {
         if (!aiPrompt.trim()) { toast.error("Enter a prompt first."); return; }
-        if (!user?.id) { toast.error("Please sign in to generate images."); return; }
+        if (!isAuthenticated) { openLoginModal(); return; }
         setAiGenerating(true);
         // Revoke previous object URL to avoid memory leaks
         if (aiImageUrl && aiImageUrl.startsWith("blob:")) URL.revokeObjectURL(aiImageUrl);
@@ -958,10 +958,12 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                     const goTo = (idx: number) => setPreviewSubmissionId(sortedSubmissions[idx].id);
                     return (
                     <motion.div
+                        key="submission-preview"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[60] bg-black/92 backdrop-blur-sm flex items-center justify-center p-4 md:p-8"
+                        className="fixed inset-0 z-[200] bg-black/92 backdrop-blur-sm flex items-center justify-center p-4 md:p-8"
+                        onClick={() => setPreviewSubmissionId(null)}
                         onKeyDown={(e) => {
                             if (e.key === "ArrowLeft" && hasPrev) goTo(previewIdx - 1);
                             if (e.key === "ArrowRight" && hasNext) goTo(previewIdx + 1);
@@ -996,13 +998,13 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                             <span className="text-[11px] font-black text-white/50">{previewIdx + 1} / {sortedSubmissions.length}</span>
                         </div>
 
-                        <div className="w-full max-w-[960px] flex flex-col md:flex-row gap-6 items-center md:items-stretch max-h-[90vh]">
+                        <div className="w-full max-w-[960px] flex flex-col md:flex-row gap-6 items-center md:items-stretch h-[90vh]" onClick={(e) => e.stopPropagation()}>
                             {/* Image */}
-                            <div className="flex-1 flex items-center justify-center min-h-0">
+                            <div className="flex-1 flex items-center justify-center overflow-hidden">
                                 <img
                                     src={previewSub.imageUrl || `${PINATA_GW}/${previewSub.imageCid}`}
                                     alt="Submission preview"
-                                    className="max-w-full max-h-[75vh] md:max-h-[80vh] object-contain rounded-[18px] border border-white/15"
+                                    className="max-w-full max-h-full object-contain rounded-[18px] border border-white/15"
                                 />
                             </div>
 
@@ -1409,7 +1411,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                             ) : (
                                                                 <>
                                                                     <button
-                                                                        onClick={() => setSubmitModalOpen(true)}
+                                                                        onClick={() => { if (!isAuthenticated) { openLoginModal(); return; } setSubmitModalOpen(true); }}
                                                                         className="flex-1 px-4 py-2 rounded-xl bg-purple-500 text-white font-black uppercase tracking-widest text-[10px] hover:bg-purple-400 transition-colors"
                                                                     >
                                                                         Review &amp; Submit

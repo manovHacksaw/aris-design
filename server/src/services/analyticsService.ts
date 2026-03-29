@@ -372,7 +372,7 @@ export const getDetailedEventAnalytics = async (eventId: string) => {
     try {
         const event = await prisma.event.findUnique({
             where: { id: eventId },
-            select: { id: true, title: true, eventType: true, status: true, brandId: true },
+            select: { id: true, title: true, eventType: true, status: true, brandId: true, capacity: true },
         });
         if (!event) throw new Error('Event not found');
 
@@ -480,6 +480,29 @@ export const getDetailedEventAnalytics = async (eventId: string) => {
             avgParticipantTrustScore = totalTrust / voterUsers.length;
         }
 
+        const voteCompletionPct = event.capacity ? Math.min(100, (totalVotes / event.capacity) * 100) : 0;
+
+        // Views over time (hourly buckets)
+        const viewInteractions = await prisma.eventInteraction.findMany({
+            where: { eventId, type: 'VIEW' },
+            select: { createdAt: true },
+            orderBy: { createdAt: 'asc' },
+        });
+
+        const viewsOverTime: { timestamp: string; count: number }[] = [];
+        if (viewInteractions.length > 0) {
+            const hourBuckets = new Map<string, number>();
+            for (const v of viewInteractions) {
+                const hour = new Date(v.createdAt);
+                hour.setMinutes(0, 0, 0);
+                const key = hour.toISOString();
+                hourBuckets.set(key, (hourBuckets.get(key) || 0) + 1);
+            }
+            for (const [timestamp, count] of Array.from(hourBuckets.entries()).sort()) {
+                viewsOverTime.push({ timestamp, count });
+            }
+        }
+
         // Votes over time (hourly buckets)
         const votesOverTime: { timestamp: string; count: number }[] = [];
         if (votes.length > 0) {
@@ -512,6 +535,8 @@ export const getDetailedEventAnalytics = async (eventId: string) => {
             avgParticipantTrustScore,
             topContentVotePercent,
             votesOverTime,
+            viewsOverTime,
+            voteCompletionPct,
             aiSummary: (analytics as any)?.aiSummary || null,
         };
     } catch (error) {
@@ -541,6 +566,8 @@ export const getBrandAnalytics = async (brandId: string) => {
                 status: true,
                 startTime: true,
                 endTime: true,
+                category: true,
+                capacity: true,
             },
             orderBy: { createdAt: 'desc' },
         });
@@ -578,6 +605,13 @@ export const getBrandAnalytics = async (brandId: string) => {
             overallVotesByGender[genderKey]++;
             overallVotesByAgeGroup[ageKey]++;
         }
+
+        // Get cost for all events
+        const allPools = await prisma.eventRewardsPool.findMany({
+            where: { eventId: { in: eventIds } },
+            select: { eventId: true, totalDisbursed: true },
+        });
+        const poolMap = new Map(allPools.map(p => [p.eventId, p]));
 
         // Per-event summaries with computed metrics
         const eventsSummary = [];
@@ -638,11 +672,18 @@ export const getBrandAnalytics = async (brandId: string) => {
                 eventVotesByAgeGroup[aKey]++;
             }
 
+            const cost = poolMap.get(event.id)?.totalDisbursed || 0;
+            const voteCompletionPct = event.capacity ? Math.min(100, (eventTotalVotes / event.capacity) * 100) : 0;
+
             eventsSummary.push({
                 eventId: event.id,
                 title: event.title,
                 eventType: event.eventType,
                 status: event.status,
+                category: event.category,
+                capacity: event.capacity,
+                voteCompletionPct,
+                cost,
                 totalVotes: eventTotalVotes,
                 totalSubmissions: eventAnalytics?.totalSubmissions || 0,
                 uniqueParticipants: eventAnalytics?.uniqueParticipants || 0,
@@ -697,6 +738,273 @@ export const getBrandAnalytics = async (brandId: string) => {
     }
 };
 
+/**
+ * Get high-level stats for a brand
+ */
+export const getBrandStats = async (ownerId: string) => {
+    try {
+        const brand = await prisma.brand.findFirst({
+            where: { ownerId },
+            select: { id: true, totalUsdcGiven: true },
+        });
+        if (!brand) throw new Error('Brand not found');
+
+        const totalEvents = await prisma.event.count({
+            where: { brandId: brand.id, isDeleted: false },
+        });
+
+        const subscriberCount = await prisma.brandSubscription.count({
+            where: { brandId: brand.id },
+        });
+
+        return {
+            totalEvents,
+            subscriberCount,
+            totalUsdcSpent: brand.totalUsdcGiven || 0,
+        };
+    } catch (error) {
+        console.error('Failed to get brand stats:', error);
+        throw error;
+    }
+};
+
+/**
+ * Get time-series metrics across all a brand's events
+ */
+export const getBrandTimeseries = async (brandId: string, metric: string, from?: string, to?: string) => {
+    try {
+        const events = await prisma.event.findMany({
+            where: { brandId, isDeleted: false },
+            select: { id: true },
+        });
+        const eventIds = events.map(e => e.id);
+
+        let dateFilter: any;
+        if (from && to) {
+            dateFilter = { gte: new Date(from), lte: new Date(to) };
+        } else if (from) {
+            dateFilter = { gte: new Date(from) };
+        } else if (to) {
+            dateFilter = { lte: new Date(to) };
+        }
+
+        const buckets = new Map<string, number>();
+
+        if (metric === 'views') {
+            const views = await prisma.eventInteraction.findMany({
+                where: { eventId: { in: eventIds }, type: 'VIEW', ...(dateFilter && { createdAt: dateFilter }) },
+                select: { createdAt: true },
+            });
+            views.forEach(v => {
+                const date = new Date(v.createdAt).toISOString().split('T')[0];
+                buckets.set(date, (buckets.get(date) || 0) + 1);
+            });
+        } else if (metric === 'votes') {
+            const votes = await prisma.vote.findMany({
+                where: { eventId: { in: eventIds }, ...(dateFilter && { createdAt: dateFilter }) },
+                select: { createdAt: true },
+            });
+            votes.forEach(v => {
+                const date = new Date(v.createdAt).toISOString().split('T')[0];
+                buckets.set(date, (buckets.get(date) || 0) + 1);
+            });
+        } else if (metric === 'posts') {
+            const posts = await prisma.submission.findMany({
+                where: { eventId: { in: eventIds }, ...(dateFilter && { createdAt: dateFilter }) },
+                select: { createdAt: true },
+            });
+            posts.forEach(p => {
+                const date = new Date(p.createdAt).toISOString().split('T')[0];
+                buckets.set(date, (buckets.get(date) || 0) + 1);
+            });
+        }
+
+        const timeseries = Array.from(buckets.entries())
+            .map(([date, count]) => ({ date, count }))
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        return timeseries;
+    } catch (error) {
+        console.error('Failed to get brand timeseries:', error);
+        throw error;
+    }
+};
+
+/**
+ * Get click breakdown for a specific event
+ */
+export const getEventClicksBreakdown = async (eventId: string) => {
+    try {
+        const clicks = await prisma.eventInteraction.findMany({
+            where: { eventId, type: 'CLICK' },
+            select: { metadata: true },
+        });
+
+        const breakdown = { vote: 0, event: 0, website: 0, social: 0, other: 0 };
+        clicks.forEach(c => {
+            const target = (c.metadata as any)?.target as string;
+            if (target === 'vote' || target === 'vote_button') breakdown.vote++;
+            else if (target === 'event') breakdown.event++;
+            else if (target === 'website') breakdown.website++;
+            else if (target === 'social') breakdown.social++;
+            else breakdown.other++;
+        });
+
+        return breakdown;
+    } catch (error) {
+        console.error('Failed to get event clicks breakdown:', error);
+        throw error;
+    }
+};
+
+/**
+ * Get click breakdown for all a brand's events
+ */
+export const getBrandClicksBreakdown = async (brandId: string) => {
+    try {
+        const events = await prisma.event.findMany({
+            where: { brandId, isDeleted: false },
+            select: { id: true },
+        });
+        const eventIds = events.map(e => e.id);
+
+        const clicks = await prisma.eventInteraction.findMany({
+            where: { eventId: { in: eventIds }, type: 'CLICK' },
+            select: { metadata: true },
+        });
+
+        const breakdown = { vote: 0, event: 0, website: 0, social: 0, other: 0 };
+        clicks.forEach(c => {
+            const target = (c.metadata as any)?.target as string;
+            if (target === 'vote' || target === 'vote_button') breakdown.vote++;
+            else if (target === 'event') breakdown.event++;
+            else if (target === 'website') breakdown.website++;
+            else if (target === 'social') breakdown.social++;
+            else breakdown.other++;
+        });
+
+        return breakdown;
+    } catch (error) {
+        console.error('Failed to get brand clicks breakdown:', error);
+        throw error;
+    }
+};
+
+/**
+ * Track a visit to a brand profile
+ */
+export const trackBrandView = async (brandId: string) => {
+    try {
+        await prisma.brand.update({
+            where: { id: brandId },
+            data: {
+                profileViews: { increment: 1 },
+            },
+        });
+    } catch (error) {
+        console.error('Failed to track brand view:', error);
+    }
+};
+
+/**
+ * Get brand profile views
+ */
+export const getBrandViews = async (brandId: string) => {
+    try {
+        const brand = await prisma.brand.findUnique({
+            where: { id: brandId },
+            select: { profileViews: true },
+        });
+        return { profileViews: brand?.profileViews || 0 };
+    } catch (error) {
+        console.error('Failed to get brand views:', error);
+        throw error;
+    }
+};
+
+/**
+ * Get average engagement time for an event
+ */
+export const getAverageEngagementTime = async (eventId: string) => {
+    try {
+        const submissions = await prisma.submission.findMany({
+            where: { eventId },
+            select: { id: true },
+        });
+        const submissionIds = submissions.map(s => s.id);
+
+        if (submissionIds.length === 0) return { averageViewTime: 0 };
+
+        const stats = await prisma.submissionStats.findMany({
+            where: { submissionId: { in: submissionIds } },
+            select: { viewTime: true },
+        });
+
+        if (stats.length === 0) return { averageViewTime: 0 };
+
+        const totalViewTime = stats.reduce((sum, s) => sum + s.viewTime, 0);
+        return { averageViewTime: totalViewTime / stats.length };
+    } catch (error) {
+        console.error('Failed to get average engagement time:', error);
+        throw error;
+    }
+};
+
+/**
+ * Get follower growth over time
+ */
+export const getFollowerGrowth = async (brandId: string, from?: string, to?: string, granularity: string = 'day') => {
+    try {
+        let dateFilter: any;
+        if (from && to) {
+            dateFilter = { gte: new Date(from), lte: new Date(to) };
+        } else if (from) {
+            dateFilter = { gte: new Date(from) };
+        } else if (to) {
+            dateFilter = { lte: new Date(to) };
+        }
+
+        const subscriptions = await prisma.brandSubscription.findMany({
+            where: { brandId, ...(dateFilter && { subscribedAt: dateFilter }) },
+            select: { subscribedAt: true },
+            orderBy: { subscribedAt: 'asc' },
+        });
+
+        const buckets = new Map<string, number>();
+
+        subscriptions.forEach(s => {
+            let key = '';
+            const date = new Date(s.subscribedAt);
+            if (granularity === 'month') {
+                key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            } else if (granularity === 'week') {
+                const day = date.getDay() || 7;
+                date.setHours(-24 * (day - 1));
+                key = date.toISOString().split('T')[0];
+            } else {
+                key = date.toISOString().split('T')[0];
+            }
+            buckets.set(key, (buckets.get(key) || 0) + 1);
+        });
+
+        const timeline = Array.from(buckets.entries())
+            .map(([date, count]) => ({ date, count }))
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        let previous = 0;
+        const result = timeline.map(entry => {
+            const data = { date: entry.date, count: entry.count, delta: entry.count - previous };
+            previous = entry.count;
+            return data;
+        });
+
+        return result;
+    } catch (error) {
+        console.error('Failed to get follower growth:', error);
+        throw error;
+    }
+};
+
 // Export as service
 export const AnalyticsService = {
     trackEventView,
@@ -709,4 +1017,12 @@ export const AnalyticsService = {
     getTopEventsByViews,
     getDetailedEventAnalytics,
     getBrandAnalytics,
+    getBrandStats,
+    getBrandTimeseries,
+    getEventClicksBreakdown,
+    getBrandClicksBreakdown,
+    trackBrandView,
+    getBrandViews,
+    getAverageEngagementTime,
+    getFollowerGrowth,
 };

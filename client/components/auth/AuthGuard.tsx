@@ -18,6 +18,7 @@ const PUBLIC_PATHS = [
   "/explore",
   "/leaderboard",
   "/events",
+  "/create",
 ];
 
 function isPublicPath(pathname: string) {

@@ -12,6 +12,7 @@ import { useSocket } from "./SocketContext";
 import { useUser } from "./UserContext";
 import { toast } from "sonner";
 import { perfLog, perfNow } from "@/lib/perf";
+import { apiRequest } from "@/services/api";
 
 export interface Notification {
     id: string;
@@ -35,8 +36,6 @@ type NotificationContextType = {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-
 export function NotificationProvider({ children }: { children: ReactNode }) {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -54,38 +53,30 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         const start = perfNow();
         try {
             setIsLoading(true);
-            const token = localStorage.getItem("authToken");
 
-            if (!token || !user?.id) {
+            if (!user?.id) {
                 setNotifications([]);
                 setUnreadCount(0);
                 setIsLoading(false);
-                perfLog("notifications", "skipped fetch (no token/user)");
+                perfLog("notifications", "skipped fetch (no user)");
                 return;
             }
 
-            const response = await fetch(`${API_URL}/notifications`, {
-                headers: { Authorization: `Bearer ${token}` },
+            const data = await apiRequest<{ notifications: Notification[] }>("/notifications");
+            setNotifications(data.notifications || []);
+            setUnreadCount(
+                (data.notifications || []).filter((n: Notification) => !n.isRead).length
+            );
+            perfLog("notifications", `fetched in ${(perfNow() - start).toFixed(1)}ms`, {
+                count: (data.notifications || []).length,
             });
-
-            if (response.ok) {
-                const data = await response.json();
-                setNotifications(data.notifications || []);
-                setUnreadCount(
-                    (data.notifications || []).filter((n: Notification) => !n.isRead).length
-                );
-                perfLog("notifications", `fetched in ${(perfNow() - start).toFixed(1)}ms`, {
-                    count: (data.notifications || []).length,
-                });
-            } else if (response.status === 404) {
+        } catch (error: any) {
+            if (error?.status === 404) {
                 setNotifications([]);
                 setUnreadCount(0);
-                perfLog("notifications", `fetched in ${(perfNow() - start).toFixed(1)}ms`, {
-                    count: 0,
-                });
+            } else {
+                console.error("Failed to fetch notifications:", error);
             }
-        } catch (error) {
-            console.error("Failed to fetch notifications:", error);
         } finally {
             setIsLoading(false);
         }
@@ -93,9 +84,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     const markAsRead = useCallback(async (notificationId: string) => {
         try {
-            const token = localStorage.getItem("authToken");
-            if (!token) return;
-
             // Optimistically update state first, only decrement if it was unread
             setNotifications((prev) => {
                 const target = prev.find((n) => n.id === notificationId);
@@ -104,10 +92,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 return prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n));
             });
 
-            await fetch(`${API_URL}/notifications/${notificationId}/read`, {
-                method: "PATCH",
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            await apiRequest(`/notifications/${notificationId}/read`, { method: "PATCH" });
         } catch (error) {
             console.error("Failed to mark notification as read:", error);
         }
@@ -115,18 +100,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     const markAllAsRead = useCallback(async () => {
         try {
-            const token = localStorage.getItem("authToken");
-            if (!token) return;
-
-            const response = await fetch(`${API_URL}/notifications/read-all`, {
-                method: "PATCH",
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
-            if (response.ok) {
-                setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-                setUnreadCount(0);
-            }
+            await apiRequest("/notifications/read-all", { method: "PATCH" });
+            setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+            setUnreadCount(0);
         } catch (error) {
             console.error("Failed to mark all notifications as read:", error);
         }

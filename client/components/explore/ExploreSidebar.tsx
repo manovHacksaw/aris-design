@@ -4,6 +4,8 @@ import { UserPlus, UserMinus, Star, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useLoginModal } from "@/context/LoginModalContext";
+import { useUser } from "@/context/UserContext";
 
 interface SuggestedItem {
     id: string;
@@ -115,11 +117,14 @@ function SuggestedSection({
 
 function SuggestedItemCard({ item, type }: { item: SuggestedItem; type: "brand" | "user" }) {
     const router = useRouter();
+    const { isAuthenticated } = useUser();
+    const { openLoginModal } = useLoginModal();
     const [followed, setFollowed] = useState(item.isFollowed);
     const [loading, setLoading] = useState(false);
 
     const handleFollow = (e: React.MouseEvent) => {
         e.stopPropagation();
+        if (!isAuthenticated) { openLoginModal(); return; }
         setLoading(true);
         setTimeout(() => {
             setFollowed(!followed);

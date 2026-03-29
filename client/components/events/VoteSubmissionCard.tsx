@@ -55,7 +55,7 @@ export default function VoteSubmissionCard({
                     : isPending
                         ? "border-lime-400/60"
                         : "border-transparent hover:border-white/15",
-                disabled && !isVoted && !isPending && "opacity-50",
+                disabled && !isVoted && !isPending && "",
                 !disabled && "hover:shadow-2xl"
             )}
         >
@@ -127,8 +127,10 @@ export default function VoteSubmissionCard({
                     </div>
                 )}
 
-                {/* Bottom gradient */}
-                <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/85 to-transparent pointer-events-none" />
+                {/* Bottom gradient — only show when voted or pending (to frame the voted card's label) */}
+                {(isVoted || isPending || !disabled) && (
+                    <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/85 to-transparent pointer-events-none" />
+                )}
 
                 {/* Bottom bar: caption left, buttons right */}
                 <div className="absolute bottom-0 inset-x-0 px-3.5 pb-3.5 flex items-end justify-between gap-2">
