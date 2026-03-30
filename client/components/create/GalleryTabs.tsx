@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Heart, Clock, FileImage, Trash2, ArrowRight } from "lucide-react";
+import { Heart, Clock, FileImage, Trash2, ChevronDown } from "lucide-react";
 import { getUserSubmissions } from "@/services/user.service";
-import { getDrafts, deleteDraft, type SubmissionDraft } from "./DraftsSection";
+import { fetchDrafts, deleteDraftFromBackend, type UserDraft } from "@/services/draft.service";
 import { cn } from "@/lib/utils";
 
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
@@ -54,12 +54,13 @@ function timeAgo(dateStr: string) {
 
 /* ──────── Component ──────── */
 
-type Tab = "posted" | "drafts";
+type Tab = "posted" | "saved";
 
 export default function GalleryTabs({ userId }: { userId?: string }) {
     const [activeTab, setActiveTab] = useState<Tab>("posted");
+    const [open, setOpen] = useState(false);
     const [posts, setPosts] = useState<PostedSubmission[]>([]);
-    const [drafts, setDrafts] = useState<SubmissionDraft[]>([]);
+    const [drafts, setDrafts] = useState<UserDraft[]>([]);
     const [loadingPosts, setLoadingPosts] = useState(true);
 
     useEffect(() => {
@@ -74,77 +75,112 @@ export default function GalleryTabs({ userId }: { userId?: string }) {
     }, [userId]);
 
     useEffect(() => {
-        setDrafts(getDrafts());
+        fetchDrafts().then(setDrafts).catch(() => {});
     }, []);
 
-    const handleDeleteDraft = (e: React.MouseEvent, eventId: string) => {
+    const handleDeleteDraft = async (e: React.MouseEvent, id: string) => {
         e.preventDefault();
         e.stopPropagation();
-        deleteDraft(eventId);
-        setDrafts(getDrafts());
+        await deleteDraftFromBackend(id);
+        setDrafts((prev) => prev.filter((d) => d.id !== id));
     };
 
     const hasPosts = !loadingPosts && posts.length > 0;
-    const hasDrafts = drafts.length > 0;
-    if (!loadingPosts && !hasPosts && !hasDrafts) return null;
+    const hasSaved = drafts.length > 0;
+    if (!loadingPosts && !hasPosts && !hasSaved) return null;
+
+    const totalCount = posts.length + drafts.length;
 
     const tabs: { key: Tab; label: string; count: number }[] = [
         { key: "posted", label: "Posted", count: posts.length },
-        { key: "drafts", label: "Drafts", count: drafts.length },
+        { key: "saved", label: "Saved", count: drafts.length },
     ];
 
     return (
         <section>
-            {/* Header + Tabs */}
-            <div className="flex items-end justify-between mb-4">
-                <div>
-                    <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-1">
+            {/* Collapsed header — always visible */}
+            <button
+                onClick={() => setOpen((v) => !v)}
+                className="w-full flex items-center justify-between group mb-1"
+            >
+                <div className="flex items-center gap-3">
+                    <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">
                         Your gallery
                     </p>
-                    <div className="flex items-center gap-4">
-                        {tabs.map((tab) => (
-                            <button
-                                key={tab.key}
-                                onClick={() => setActiveTab(tab.key)}
-                                className={cn(
-                                    "relative pb-1.5 text-sm font-bold uppercase tracking-wide transition-colors",
-                                    activeTab === tab.key
-                                        ? "text-white"
-                                        : "text-white/30 hover:text-white/50"
-                                )}
-                            >
-                                {tab.label}
-                                {tab.count > 0 && (
-                                    <span className="ml-1.5 text-[10px] text-white/20">
-                                        {tab.count}
-                                    </span>
-                                )}
-                                {activeTab === tab.key && (
-                                    <motion.div
-                                        layoutId="gallery-tab-underline"
-                                        className="absolute left-0 right-0 -bottom-px h-[2px] bg-lime-400 rounded-full"
-                                    />
-                                )}
-                            </button>
-                        ))}
-                    </div>
+                    {totalCount > 0 && (
+                        <span className="text-[10px] font-black text-white/15 uppercase tracking-widest">
+                            {totalCount} item{totalCount !== 1 ? "s" : ""}
+                        </span>
+                    )}
                 </div>
-                {activeTab === "posted" && hasPosts && (
-                    <Link
-                        href="/dashboard"
-                        className="text-[10px] font-black text-[#A78BFA] hover:text-[#A78BFA]/80 uppercase tracking-[0.15em] transition-colors"
-                    >
-                        Show all
-                    </Link>
-                )}
-            </div>
+                <ChevronDown
+                    className={cn(
+                        "w-4 h-4 text-white/25 transition-transform duration-300",
+                        open && "rotate-180"
+                    )}
+                />
+            </button>
 
-            {/* Content */}
-            {activeTab === "posted" ? (
-                <PostedGrid posts={posts} loading={loadingPosts} />
-            ) : (
-                <DraftsGrid drafts={drafts} onDelete={handleDeleteDraft} />
-            )}
+            <AnimatePresence initial={false}>
+                {open && (
+                    <motion.div
+                        key="gallery-content"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                        className="overflow-hidden"
+                    >
+                        <div className="pt-3">
+                            {/* Tabs + Show all */}
+                            <div className="flex items-end justify-between mb-4">
+                                <div className="flex items-center gap-4">
+                                    {tabs.map((tab) => (
+                                        <button
+                                            key={tab.key}
+                                            onClick={() => setActiveTab(tab.key)}
+                                            className={cn(
+                                                "relative pb-1.5 text-sm font-bold uppercase tracking-wide transition-colors",
+                                                activeTab === tab.key
+                                                    ? "text-white"
+                                                    : "text-white/30 hover:text-white/50"
+                                            )}
+                                        >
+                                            {tab.label}
+                                            {tab.count > 0 && (
+                                                <span className="ml-1.5 text-[10px] text-white/20">
+                                                    {tab.count}
+                                                </span>
+                                            )}
+                                            {activeTab === tab.key && (
+                                                <motion.div
+                                                    layoutId="gallery-tab-underline"
+                                                    className="absolute left-0 right-0 -bottom-px h-[2px] bg-lime-400 rounded-full"
+                                                />
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                                {activeTab === "posted" && hasPosts && (
+                                    <Link
+                                        href="/dashboard"
+                                        className="text-[10px] font-black text-[#A78BFA] hover:text-[#A78BFA]/80 uppercase tracking-[0.15em] transition-colors"
+                                    >
+                                        Show all
+                                    </Link>
+                                )}
+                            </div>
+
+                            {/* Content */}
+                            {activeTab === "posted" ? (
+                                <PostedGrid posts={posts} loading={loadingPosts} />
+                            ) : (
+                                <DraftsGrid drafts={drafts} onDelete={handleDeleteDraft} />
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </section>
     );
 }
@@ -239,21 +275,21 @@ function PostedGrid({
     );
 }
 
-/* ──── Drafts Grid ──── */
+/* ──── Saved Grid ──── */
 
 function DraftsGrid({
     drafts,
     onDelete,
 }: {
-    drafts: SubmissionDraft[];
-    onDelete: (e: React.MouseEvent, eventId: string) => void;
+    drafts: UserDraft[];
+    onDelete: (e: React.MouseEvent, id: string) => void;
 }) {
     if (drafts.length === 0) {
         return (
             <div className="py-12 text-center rounded-2xl border border-dashed border-white/[0.06] bg-white/[0.01]">
                 <FileImage className="w-8 h-8 text-white/10 mx-auto mb-2" />
                 <p className="text-xs text-white/25 font-medium">
-                    No drafts saved
+                    No saved images yet
                 </p>
             </div>
         );
@@ -262,22 +298,21 @@ function DraftsGrid({
     return (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {drafts.map((draft, i) => (
-                <Link
+                <div
                     key={draft.id}
-                    href={`/events/${draft.eventId}`}
                     className="block group"
                 >
                     <motion.div
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.03, duration: 0.25 }}
-                        className="opacity-60 hover:opacity-90 hover:-translate-y-0.5 transition-all duration-200"
+                        className="opacity-80 hover:opacity-100 hover:-translate-y-0.5 transition-all duration-200"
                     >
                         <div className="relative aspect-[4/5] rounded-xl overflow-hidden bg-white/[0.04] mb-2">
-                            {draft.imagePreview || draft.eventImage ? (
+                            {draft.imageUrl ? (
                                 <img
-                                    src={draft.imagePreview || draft.eventImage}
-                                    alt={draft.eventTitle}
+                                    src={draft.imageUrl}
+                                    alt={draft.prompt ?? "Saved image"}
                                     className="w-full h-full object-cover"
                                 />
                             ) : (
@@ -285,38 +320,23 @@ function DraftsGrid({
                                     <FileImage className="w-6 h-6 text-white/10" />
                                 </div>
                             )}
-                            {/* Draft badge */}
-                            <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-orange-500/20 border border-orange-500/30 backdrop-blur-sm">
-                                <span className="text-[8px] font-black text-orange-400 uppercase tracking-wider">
-                                    Draft
-                                </span>
-                            </div>
                             {/* Delete button */}
                             <button
-                                onClick={(e) => onDelete(e, draft.eventId)}
+                                onClick={(e) => onDelete(e, draft.id)}
                                 className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/20"
                             >
                                 <Trash2 className="w-2.5 h-2.5 text-white/50" />
                             </button>
-                            {/* Continue overlay */}
-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30">
-                                <div className="flex items-center gap-1 px-2.5 py-1 bg-white/90 rounded-full">
-                                    <span className="text-[10px] font-black text-black">
-                                        Continue
-                                    </span>
-                                    <ArrowRight className="w-2.5 h-2.5 text-black" />
-                                </div>
-                            </div>
                         </div>
                         <h3 className="text-[11px] font-semibold text-white/70 line-clamp-1 leading-snug mb-0.5">
-                            {draft.eventTitle || "Untitled"}
+                            {draft.prompt ? `"${draft.prompt}"` : "Saved image"}
                         </h3>
                         <p className="text-[10px] text-white/20 flex items-center gap-1">
                             <Clock className="w-2.5 h-2.5" />
-                            {timeAgo(draft.savedAt)}
+                            {timeAgo(draft.createdAt)}
                         </p>
                     </motion.div>
-                </Link>
+                </div>
             ))}
         </div>
     );

@@ -59,6 +59,7 @@ model User {
 
   activityLogs        ActivityLog[]
   brandSubscriptions  BrandSubscription[]
+  drafts              UserDraft[]
   ownedBrands         Brand[]              @relation("BrandOwner")
   notifications       Notification[]
   referralReceived    Referral?            @relation("ReferralReceived")
@@ -613,4 +614,19 @@ enum InteractionType {
   SHARE
   EXPAND
   VOTE
+}
+
+model UserDraft {
+  id        String   @id @default(uuid())
+  userId    String
+  imageUrl  String?
+  imageCid  String?
+  prompt    String?
+  caption   String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_drafts")
 }

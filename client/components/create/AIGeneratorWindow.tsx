@@ -18,6 +18,7 @@ import {
   Clock,
   Users,
   Pencil,
+  Bookmark,
 } from "lucide-react";
 import { getEvents, type Event } from "@/services/event.service";
 import { createSubmission } from "@/services/submission.service";
@@ -28,6 +29,7 @@ import {
   base64ToFile,
   base64ToObjectUrl,
 } from "@/services/image-generation.service";
+import { saveDraftToBackend } from "@/services/draft.service";
 import { PinturaImageEditor } from "@/components/create/PinturaImageEditor";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -137,6 +139,10 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
   const [postSuccess, setPostSuccess] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
 
+  // Saving draft
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
   // Pintura editor state
   const [pinturaOpen, setPinturaOpen] = useState(false);
   const [editedImageFile, setEditedImageFile] = useState<File | null>(null);
@@ -185,6 +191,8 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
       setRemainingGenerations(null);
       setPinturaOpen(false);
       setEditedImageFile(null);
+      setIsSaving(false);
+      setSaveSuccess(false);
       limitCheckedRef.current = false;
       isGeneratingRef.current = false;
     }
@@ -288,6 +296,24 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
     setSelectedEvent(null);
     setEditedImageFile(null);
     setStep("prompt");
+  };
+
+  const handleSave = async () => {
+    if (!generatedImage) return;
+    setIsSaving(true);
+    try {
+      const file = editedImageFile ?? base64ToFile(generatedImage.data, generatedImage.mimeType, "ai-draft.png");
+      const { imageUrl } = await uploadToPinata(file);
+      await saveDraftToBackend({ imageUrl, prompt: currentPrompt });
+      setSaveSuccess(true);
+      setTimeout(() => {
+        onClose();
+      }, 1200);
+    } catch {
+      // silently fail — user can still post
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handlePinturaDone = (editedFile: File, editedPreview: string) => {
@@ -565,30 +591,50 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                       </div>
                     )}
 
-                    {/* Actions — Discard | Edit | Post */}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleDiscard}
-                        className="flex-1 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-xs font-black text-white/50 uppercase tracking-widest hover:bg-white/8 hover:text-white/70 transition-all active:scale-95"
-                      >
-                        Discard
-                      </button>
-                      <button
-                        onClick={() => setPinturaOpen(true)}
-                        className="flex items-center justify-center gap-1.5 px-4 py-3.5 rounded-2xl bg-white/5 border border-white/15 text-xs font-black text-white/60 uppercase tracking-widest hover:bg-white/10 hover:text-white/80 transition-all active:scale-95"
-                      >
-                        <Pencil className="w-3 h-3" />
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => {
-                          setStep("selecting_event");
-                          loadEvents();
-                        }}
-                        className="flex-1 py-3.5 rounded-2xl bg-primary text-white text-xs font-black uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95 shadow-lg shadow-primary/20"
-                      >
-                        Post
-                      </button>
+                    {/* Actions — Row 1: Cancel + Edit | Row 2: Save + Post */}
+                    <div className="space-y-2">
+                      {/* Row 1: Cancel + Edit */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleDiscard}
+                          className="flex-1 py-3 rounded-2xl bg-white/5 border border-white/10 text-xs font-black text-white/50 uppercase tracking-widest hover:bg-white/8 hover:text-white/70 transition-all active:scale-95"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => setPinturaOpen(true)}
+                          className="flex items-center justify-center gap-1.5 px-4 py-3 rounded-2xl bg-white/5 border border-white/15 text-xs font-black text-white/60 uppercase tracking-widest hover:bg-white/10 hover:text-white/80 transition-all active:scale-95"
+                        >
+                          <Pencil className="w-3 h-3" />
+                          Edit
+                        </button>
+                      </div>
+                      {/* Row 2: Save + Post */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleSave}
+                          disabled={isSaving || saveSuccess}
+                          className="flex-1 py-3 rounded-2xl bg-white/5 border border-white/15 text-xs font-black text-white/60 uppercase tracking-widest hover:bg-white/8 hover:text-white/80 transition-all active:scale-95 flex items-center justify-center gap-1.5 disabled:opacity-60"
+                        >
+                          {saveSuccess ? (
+                            <><Check className="w-3 h-3 text-emerald-400" /> Saved</>
+                          ) : isSaving ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <><Bookmark className="w-3 h-3" /> Save</>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setStep("selecting_event");
+                            loadEvents();
+                          }}
+                          disabled={isSaving}
+                          className="flex-1 py-3 rounded-2xl bg-primary text-black text-xs font-black uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95 shadow-lg shadow-primary/20 disabled:opacity-60"
+                        >
+                          Post
+                        </button>
+                      </div>
                     </div>
 
                     {/* Regenerate hint */}

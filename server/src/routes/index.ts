@@ -19,6 +19,7 @@ import brandXpRoutes from './brandXpRoutes';
 import rewardsRoutes from './rewardsRoutes';
 import debugRoutes from './debugRoutes.js';
 import exploreRoutes from './exploreRoutes.js';
+import draftRoutes from './draftRoutes.js';
 
 const router = Router();
 
@@ -89,6 +90,9 @@ router.use('/rewards', rewardsRoutes);
 
 // Explore routes
 router.use('/explore', exploreRoutes);
+
+// Draft routes
+router.use('/drafts', draftRoutes);
 
 // Admin routes
 console.log('Mounting admin routes at /admin');
