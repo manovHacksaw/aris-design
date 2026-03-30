@@ -198,7 +198,16 @@ const SOCIAL_SLOTS = [
     { key: "website", label: "Website", icon: <Globe className="w-3.5 h-3.5" /> },
 ];
 
-function SocialLinks({ links }: { links?: Record<string, string> }) {
+function SocialLinks({ links, eventId }: { links?: Record<string, string>; eventId?: string }) {
+    const trackLink = (platform: string) => {
+        if (!eventId) return;
+        fetch(`/api/analytics/events/${eventId}/click`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ target: platform === 'website' ? 'website' : 'social', platform }),
+        }).catch(() => {});
+    };
+
     return (
         <div className="pt-3 border-t border-white/[0.06] mt-3">
             <p className="text-[9px] font-black uppercase tracking-widest text-foreground/30 mb-2.5">Brand Links</p>
@@ -212,6 +221,7 @@ function SocialLinks({ links }: { links?: Record<string, string> }) {
                             target="_blank"
                             rel="noopener noreferrer"
                             title={label}
+                            onClick={() => trackLink(key)}
                             className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-white/[0.05] border border-white/[0.08] text-foreground/60 hover:text-foreground hover:bg-white/[0.08] hover:border-white/[0.15] transition-all"
                         >
                             {icon}
@@ -979,7 +989,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
                         {/* Prev */}
                         {hasPrev && (
-                            <button type="button" onClick={() => goTo(previewIdx - 1)}
+                            <button type="button" onClick={(e) => { e.stopPropagation(); goTo(previewIdx - 1); }}
                                 className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors z-10">
                                 <ChevronLeft className="w-5 h-5" />
                             </button>
@@ -987,14 +997,14 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
                         {/* Next */}
                         {hasNext && (
-                            <button type="button" onClick={() => goTo(previewIdx + 1)}
+                            <button type="button" onClick={(e) => { e.stopPropagation(); goTo(previewIdx + 1); }}
                                 className="absolute right-16 md:right-20 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors z-10">
                                 <ChevronRight className="w-5 h-5" />
                             </button>
                         )}
 
                         {/* Counter */}
-                        <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/10 border border-white/10">
+                        <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/10 border border-white/10" onClick={(e) => e.stopPropagation()}>
                             <span className="text-[11px] font-black text-white/50">{previewIdx + 1} / {sortedSubmissions.length}</span>
                         </div>
 

@@ -61,18 +61,15 @@ export default function VoteSubmissionCard({
         >
             {/* Image fills the card */}
             <div
+                role={onOpenImage ? "button" : undefined}
+                tabIndex={onOpenImage ? -1 : undefined}
+                onClick={onOpenImage}
                 className={cn(
                     "relative bg-black overflow-hidden",
-                    listView ? "aspect-[16/9]" : "aspect-[3/4]"
+                    listView ? "aspect-[16/9]" : "aspect-[3/4]",
+                    onOpenImage ? "cursor-zoom-in" : undefined
                 )}
             >
-                {/* Click to zoom */}
-                <button
-                    type="button"
-                    onClick={onOpenImage}
-                    className={cn("absolute inset-0 w-full h-full", onOpenImage ? "cursor-zoom-in" : "cursor-default")}
-                    tabIndex={-1}
-                />
 
                 {submission.mediaType === "text" ? (
                     <div className="w-full h-full flex items-center justify-center p-8 bg-gradient-to-br from-card to-secondary">
@@ -133,7 +130,7 @@ export default function VoteSubmissionCard({
                 )}
 
                 {/* Bottom bar: caption left, buttons right */}
-                <div className="absolute bottom-0 inset-x-0 px-3.5 pb-3.5 flex items-end justify-between gap-2">
+                <div className="absolute bottom-0 inset-x-0 px-3.5 pb-3.5 flex items-end justify-between gap-2 z-10">
                     {/* Caption */}
                     <div className="flex-1 min-w-0">
                         {submission.textContent && (
