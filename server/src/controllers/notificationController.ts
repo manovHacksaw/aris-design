@@ -22,16 +22,23 @@ export const getNotifications = async (req: Request, res: Response): Promise<voi
             return;
         }
 
+        const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+        const cursor = req.query.cursor as string | undefined;
+
+        const where = {
+            userId,
+            OR: [
+                { expiresAt: null },
+                { expiresAt: { gt: new Date() } },
+            ],
+            ...(cursor ? { createdAt: { lt: new Date(cursor) } } : {}),
+        };
+
+        // Fetch one extra to determine if there are more pages
         const notifications = await prisma.notification.findMany({
-            where: {
-                userId,
-                // Optionally filter out expired notifications
-                OR: [
-                    { expiresAt: null },
-                    { expiresAt: { gt: new Date() } },
-                ],
-            },
+            where,
             orderBy: { createdAt: 'desc' },
+            take: limit + 1,
             include: {
                 brand: {
                     select: {
@@ -43,7 +50,26 @@ export const getNotifications = async (req: Request, res: Response): Promise<voi
             },
         });
 
-        res.json({ notifications });
+        const hasMore = notifications.length > limit;
+        const items = hasMore ? notifications.slice(0, limit) : notifications;
+        const nextCursor = hasMore ? items[items.length - 1].createdAt.toISOString() : undefined;
+
+        // Only compute unreadCount on first page (no cursor)
+        let unreadCount: number | undefined;
+        if (!cursor) {
+            unreadCount = await prisma.notification.count({
+                where: {
+                    userId,
+                    isRead: false,
+                    OR: [
+                        { expiresAt: null },
+                        { expiresAt: { gt: new Date() } },
+                    ],
+                },
+            });
+        }
+
+        res.json({ notifications: items, nextCursor, ...(unreadCount !== undefined ? { unreadCount } : {}) });
     } catch (error) {
         console.error('Failed to get notifications:', error);
         res.status(500).json({ error: 'Failed to fetch notifications' });

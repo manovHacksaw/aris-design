@@ -161,9 +161,57 @@ export default function WalletPage() {
     return (
       <div className="min-h-screen bg-background text-white font-sans">
         <SidebarLayout>
-          <main className="w-full pt-6 lg:pt-10 pb-20 md:pb-12">
-            <div className="flex items-center justify-center h-64">
-              <RefreshCw className="w-6 h-6 animate-spin text-white/20" />
+          <main className="w-full pt-6 lg:pt-10 pb-20 md:pb-12 space-y-8 max-w-2xl">
+            {/* Header skeleton */}
+            <div className="space-y-2">
+              <div className="h-14 w-36 rounded-xl bg-white/[0.07] animate-pulse" />
+              <div className="h-3 w-48 rounded-lg bg-white/[0.04] animate-pulse" />
+            </div>
+            {/* Balance card skeleton */}
+            <div className="rounded-[28px] bg-white/[0.03] border border-white/[0.06] p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <div className="h-3 w-20 rounded-md bg-white/[0.06] animate-pulse" />
+                  <div className="h-10 w-32 rounded-xl bg-white/[0.07] animate-pulse" />
+                </div>
+                <div className="h-8 w-8 rounded-full bg-white/[0.05] animate-pulse" />
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-28 rounded-md bg-white/[0.05] animate-pulse" />
+                <div className="h-3 w-16 rounded-md bg-white/[0.04] animate-pulse" />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <div className="h-10 flex-1 rounded-xl bg-white/[0.05] animate-pulse" />
+                <div className="h-10 flex-1 rounded-xl bg-white/[0.05] animate-pulse" />
+              </div>
+            </div>
+            {/* Rewards skeleton */}
+            <div className="rounded-[28px] bg-white/[0.03] border border-white/[0.06] p-6 space-y-4">
+              <div className="h-3 w-32 rounded-md bg-white/[0.05] animate-pulse" />
+              {[1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-white/[0.06] animate-pulse shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-2/3 rounded-md bg-white/[0.06] animate-pulse" />
+                    <div className="h-2.5 w-1/3 rounded-md bg-white/[0.04] animate-pulse" />
+                  </div>
+                  <div className="h-4 w-10 rounded-md bg-white/[0.06] animate-pulse" />
+                </div>
+              ))}
+            </div>
+            {/* History skeleton */}
+            <div className="rounded-[28px] bg-white/[0.03] border border-white/[0.06] p-6 space-y-4">
+              <div className="h-3 w-28 rounded-md bg-white/[0.05] animate-pulse" />
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-white/[0.06] animate-pulse shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-3/5 rounded-md bg-white/[0.06] animate-pulse" />
+                    <div className="h-2.5 w-2/5 rounded-md bg-white/[0.04] animate-pulse" />
+                  </div>
+                  <div className="h-3 w-12 rounded-md bg-white/[0.06] animate-pulse" />
+                </div>
+              ))}
             </div>
           </main>
         </SidebarLayout>
@@ -353,8 +401,18 @@ export default function WalletPage() {
 
                   <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] overflow-hidden">
                     {rewardsLoading ? (
-                      <div className="flex items-center justify-center py-10">
-                        <RefreshCw className="w-5 h-5 animate-spin text-white/20" />
+                      <div className="p-5 space-y-3">
+                        {[1, 2].map((i) => (
+                          <div key={i} className="flex items-center gap-3">
+                            <div className="w-11 h-11 rounded-xl bg-white/[0.06] animate-pulse shrink-0" />
+                            <div className="flex-1 space-y-2">
+                              <div className="h-3 w-2/3 rounded-md bg-white/[0.06] animate-pulse" />
+                              <div className="h-2.5 w-1/3 rounded-md bg-white/[0.04] animate-pulse" />
+                            </div>
+                            <div className="h-4 w-10 rounded-md bg-white/[0.06] animate-pulse shrink-0" />
+                          </div>
+                        ))}
+                        <div className="h-11 w-full rounded-xl bg-white/[0.04] animate-pulse mt-2" />
                       </div>
                     ) : allClaimed ? (
                       <div className="flex items-center gap-4 p-6">
@@ -454,8 +512,20 @@ export default function WalletPage() {
 
                 <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] overflow-hidden">
                   {historyLoading ? (
-                    <div className="flex items-center justify-center py-10">
-                      <RefreshCw className="w-5 h-5 animate-spin text-white/20" />
+                    <div className="p-5 space-y-4">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-white/[0.06] animate-pulse shrink-0" />
+                          <div className="flex-1 space-y-2">
+                            <div className="h-3 w-3/5 rounded-md bg-white/[0.06] animate-pulse" />
+                            <div className="h-2.5 w-2/5 rounded-md bg-white/[0.04] animate-pulse" />
+                          </div>
+                          <div className="space-y-1.5 items-end flex flex-col shrink-0">
+                            <div className="h-3 w-12 rounded-md bg-white/[0.06] animate-pulse" />
+                            <div className="h-2.5 w-8 rounded-md bg-white/[0.04] animate-pulse" />
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ) : claimHistory.length > 0 ? (() => {
                     // Group by event

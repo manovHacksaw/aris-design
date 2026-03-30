@@ -105,7 +105,7 @@ export function AppSkeleton() {
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isConnected, isInitialized, isLoading: walletLoading } = useWallet();
   const { isOnboarded: authIsOnboarded, role: authRole, isLoading: authLoading } = useAuth();
-  const { user } = useUser();
+  const { user, isLoading: userLoading } = useUser();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -115,8 +115,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   // Brand is active only after admin approval + claim. Null/undefined ownedBrands means not yet claimed.
   const brandIsActive = user?.ownedBrands?.[0]?.isActive === true;
 
-  // Keep route protection responsive, but do not block first paint on user profile fetch.
-  const isLoading = !isInitialized || walletLoading || authLoading;
+  // Block routing decisions while Privy/wallet initializes OR while the user API call
+  // is in-flight and we don't yet have a confirmed onboarding status. Without this,
+  // a refresh on any protected route redirects to /onboard/* because user=null
+  // transiently while syncWithBackend() is running.
+  const isLoading = !isInitialized || walletLoading || authLoading || (isConnected && userLoading && !isOnboarded);
   const loadStartRef = useRef<number | null>(null);
 
   useEffect(() => {
