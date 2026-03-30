@@ -36,7 +36,7 @@ export default function Sidebar() {
     const navItems = [
         { label: "Home",          href: "/home",          icon: IoHomeOutline,          activeIcon: IoHome,          requiresAuth: true },
         { label: "Explore",       href: "/explore",       icon: IoCompassOutline,       activeIcon: IoCompass,       requiresAuth: false },
-        { label: "Create",        href: "/create",        icon: IoAddCircleOutline,     activeIcon: IoAddCircle,     requiresAuth: true },
+        { label: "Create",        href: "/create",        icon: IoAddCircleOutline,     activeIcon: IoAddCircle,     requiresAuth: false },
         { label: "Leaderboard",   href: "/leaderboard",   icon: IoTrophyOutline,        activeIcon: IoTrophy,        requiresAuth: false },
         { label: "Dashboard",     href: "/dashboard",     icon: IoGridOutline,          activeIcon: IoGrid,          requiresAuth: true },
         { label: "Notifications", href: "/notifications", icon: IoNotificationsOutline, activeIcon: IoNotifications, requiresAuth: true },

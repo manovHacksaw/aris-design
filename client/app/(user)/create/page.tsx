@@ -10,14 +10,11 @@ import { useUser } from "@/context/UserContext";
 import { useLoginModal } from "@/context/LoginModalContext";
 import { getEvents } from "@/services/event.service";
 import type { Event } from "@/services/event.service";
-import type { EventData } from "@/types/events";
-import SpotifyEventCard from "@/components/home/SpotifyEventCard";
+import PremiumEventCard, { PremiumEventCardSkeleton } from "@/components/events/PremiumEventCard";
 import CreateHero from "@/components/create/CreateHero";
 import GalleryTabs from "@/components/create/GalleryTabs";
 import { cn } from "@/lib/utils";
 import { ScrollIndicator } from "@/components/ui/ScrollIndicator";
-
-const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
 const categoryTabs = [
     { label: "ALL", icon: Sparkles },
@@ -27,59 +24,6 @@ const categoryTabs = [
     { label: "BRANDS", icon: Building2 },
     { label: "STARTUPS", icon: Rocket },
 ];
-
-function computeTimeRemaining(endTime: string): string {
-    const diff = new Date(endTime).getTime() - Date.now();
-    if (diff <= 0) return "Ended";
-    const h = Math.floor(diff / 3600000);
-    if (h < 24) return `${h}h left`;
-    const d = Math.floor(h / 24);
-    return `${d}d ${h % 24}h`;
-}
-
-function toEventData(e: Event): EventData {
-    const statusMap: Record<string, EventData["status"]> = {
-        posting: "live",
-        voting: "live",
-        scheduled: "upcoming",
-        draft: "upcoming",
-        completed: "ended",
-    };
-    return {
-        id: e.id,
-        mode: e.eventType === "vote_only" ? "vote" : "post",
-        status: statusMap[e.status] ?? "upcoming",
-        title: e.title,
-        creator: {
-            name: e.brand?.name ?? "Unknown",
-            avatar: e.brand?.logoUrl || (e.brand?.logoCid ? `${PINATA_GW}/${e.brand.logoCid}` : ""),
-            handle: `@${(e.brand?.name ?? "").toLowerCase().replace(/\s+/g, "")}`,
-        },
-        rewardPool: `$${(e.leaderboardPool ?? 0).toLocaleString()}`,
-        baseReward: `$${(e.baseReward ?? 0).toFixed(2)}`,
-        topReward: e.topReward ? `$${e.topReward.toLocaleString()}` : undefined,
-        participationCount: e._count?.submissions ?? e._count?.votes ?? 0,
-        timeRemaining: computeTimeRemaining(e.endTime),
-        image: e.imageUrl || (e.imageCid ? `${PINATA_GW}/${e.imageCid}` : "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80"),
-        description: e.description ?? "",
-        progress: undefined,
-        userState: undefined,
-    };
-}
-
-function EventRowSkeleton() {
-    return (
-        <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
-            {Array.from({ length: 5 }).map((_, i) => (
-                <div
-                    key={i}
-                    className="flex-shrink-0 w-[260px] sm:w-[290px] aspect-[4/5] rounded-2xl bg-white/[0.04] animate-pulse border border-white/[0.06]"
-                    style={{ animationDelay: `${i * 80}ms` }}
-                />
-            ))}
-        </div>
-    );
-}
 
 export default function Create() {
     const { user } = useUser();
@@ -110,8 +54,6 @@ export default function Create() {
         }, 0);
     }, [openEvents]);
 
-    const eventCards = useMemo(() => openEvents.map(toEventData), [openEvents]);
-
     return (
         <div className="min-h-screen bg-background text-foreground font-sans">
             <SidebarLayout>
@@ -126,9 +68,11 @@ export default function Create() {
                         <CreateHero
                             onGenerate={(p) => {
                                 if (!user?.id) { openLoginModal(); return; }
+                                if (!p.trim()) return;
                                 setHeroPrompt(p);
                                 setGeneratorOpen(true);
                             }}
+                            onRequireAuth={!user?.id ? openLoginModal : undefined}
                             events={openEvents}
                         />
                     </motion.section>
@@ -188,19 +132,25 @@ export default function Create() {
 
                     {/* Events — horizontal scroll row matching home page */}
                     {loading ? (
-                        <EventRowSkeleton />
-                    ) : eventCards.length > 0 ? (
+                        <div className="flex gap-3 overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                                <div key={i} className="flex-shrink-0 w-[300px] sm:w-[340px]">
+                                    <PremiumEventCardSkeleton />
+                                </div>
+                            ))}
+                        </div>
+                    ) : openEvents.length > 0 ? (
                         <div className="relative">
-                            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
-                                {eventCards.map((event, i) => (
+                            <div className="flex gap-3 overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
+                                {openEvents.map((event, i) => (
                                     <motion.div
                                         key={event.id}
-                                        className="flex-shrink-0"
+                                        className="flex-shrink-0 w-[300px] sm:w-[340px]"
                                         initial={{ opacity: 0, y: 8 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: i * 0.04, duration: 0.25 }}
                                     >
-                                        <SpotifyEventCard event={event} />
+                                        <PremiumEventCard event={event} />
                                     </motion.div>
                                 ))}
                             </div>

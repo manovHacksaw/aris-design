@@ -26,10 +26,11 @@ const HINTS = ["4K Bokeh", "Cyberpunk", "Cinematic", "Minimalist"];
 
 interface CreateHeroProps {
     onGenerate?: (prompt: string) => void;
+    onRequireAuth?: () => void;
     events?: any[];
 }
 
-export default function CreateHero({ onGenerate, events = [] }: CreateHeroProps) {
+export default function CreateHero({ onGenerate, onRequireAuth, events = [] }: CreateHeroProps) {
     const [prompt, setPrompt] = useState("");
 
     const handleHint = (hint: string) => {
@@ -87,9 +88,8 @@ export default function CreateHero({ onGenerate, events = [] }: CreateHeroProps)
                                 placeholders={AI_PLACEHOLDERS}
                                 onChange={(e) => setPrompt(e.target.value)}
                                 onSubmit={(_, val) => {
-                                    if (val.trim() && onGenerate) {
-                                        onGenerate(val.trim());
-                                    }
+                                    if (onRequireAuth) { onRequireAuth(); return; }
+                                    if (val.trim() && onGenerate) onGenerate(val.trim());
                                 }}
                                 className="group focus-within:shadow-[0_0_0_1px_rgba(163,230,53,0.3),0_8px_32px_rgba(163,230,53,0.1)]"
                             >
@@ -97,22 +97,23 @@ export default function CreateHero({ onGenerate, events = [] }: CreateHeroProps)
                                 <div className="flex items-center gap-2 pr-1 shrink-0">
                                     <button
                                         type="button"
+                                        onClick={() => onRequireAuth?.()}
                                         className="p-3 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all group/btn"
                                     >
                                         <Paperclip className="w-4 h-4 group-hover/btn:rotate-12 transition-transform" />
                                     </button>
                                     <button
                                         type="button"
+                                        onClick={() => onRequireAuth?.()}
                                         className="p-3 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all"
                                     >
                                         <Settings2 className="w-4 h-4" />
                                     </button>
                                     <button
-                                        type="submit"
+                                        type="button"
                                         onClick={() => {
-                                            if (prompt.trim() && onGenerate) {
-                                                onGenerate(prompt.trim());
-                                            }
+                                            if (onRequireAuth) { onRequireAuth(); return; }
+                                            if (prompt.trim() && onGenerate) onGenerate(prompt.trim());
                                         }}
                                         className="px-7 py-3 rounded-2xl bg-lime-400 text-black font-black uppercase tracking-widest text-[11px] shadow-[0_4px_24px_rgba(163,230,53,0.3)] hover:bg-lime-300 hover:scale-[1.02] active:scale-95 transition-all whitespace-nowrap"
                                     >
@@ -129,7 +130,7 @@ export default function CreateHero({ onGenerate, events = [] }: CreateHeroProps)
                                         type="button"
                                         whileHover={{ scale: 1.04 }}
                                         whileTap={{ scale: 0.97 }}
-                                        onClick={() => handleHint(hint)}
+                                        onClick={() => onRequireAuth ? onRequireAuth() : handleHint(hint)}
                                         className="px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.07] text-[10px] font-black uppercase tracking-wider text-white/30 hover:text-white/70 hover:bg-white/[0.08] hover:border-white/[0.14] transition-all"
                                     >
                                         {hint}
@@ -145,6 +146,7 @@ export default function CreateHero({ onGenerate, events = [] }: CreateHeroProps)
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.6, delay: 0.3 }}
                         className="hidden lg:block h-full min-h-[280px]"
+                        onClick={() => onRequireAuth?.()}
                     >
                         <HeroPreviewPanel events={events} />
                     </motion.div>

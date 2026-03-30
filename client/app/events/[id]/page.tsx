@@ -1351,6 +1351,14 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                             <div className="space-y-3">
                                                     {/* Create-page style prompt row */}
                                                     <div className="flex items-center gap-2 px-4 py-3 rounded-[14px] border border-white/[0.1] bg-white/[0.03] focus-within:border-lime-400/40 focus-within:shadow-[0_0_0_1px_rgba(163,230,53,0.15)] transition-all">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => { if (!isAuthenticated) { openLoginModal(); return; } fileRef.current?.click(); }}
+                                                            className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all shrink-0"
+                                                            title="Upload your own image"
+                                                        >
+                                                            <Upload className="w-4 h-4" />
+                                                        </button>
                                                         <input
                                                             value={aiPrompt}
                                                             onChange={(e) => setAiPrompt(e.target.value)}
@@ -1410,8 +1418,8 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                         </div>
                                                     )}
 
-                                                    {/* Review pill — shown after generation */}
-                                                    {aiImageUrl && (
+                                                    {/* Review pill — shown after generation or upload */}
+                                                    {(aiImageUrl || preview) && (
                                                         <div className="flex items-center gap-2">
                                                             {submitting ? (
                                                                 <div className="flex items-center gap-2 flex-1 px-3 py-2 rounded-xl bg-purple-500/10 border border-purple-500/25">
@@ -1427,7 +1435,12 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                                         Review &amp; Submit
                                                                     </button>
                                                                     <button
-                                                                        onClick={() => { if (aiImageUrl?.startsWith("blob:")) URL.revokeObjectURL(aiImageUrl); setAiImageUrl(null); setAiImageFile(null); setPreview(null); }}
+                                                                        onClick={() => {
+                                                                            if (aiImageUrl?.startsWith("blob:")) URL.revokeObjectURL(aiImageUrl);
+                                                                            setAiImageUrl(null); setAiImageFile(null);
+                                                                            if (preview) URL.revokeObjectURL(preview);
+                                                                            setFile(null); setPreview(null);
+                                                                        }}
                                                                         className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-white/40 hover:bg-red-500/20 hover:text-red-400 transition-colors shrink-0"
                                                                     >
                                                                         <X className="w-3.5 h-3.5" />
@@ -1444,7 +1457,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
                                 {/* ── Submit modal ── */}
                                 <AnimatePresence>
-                                    {submitModalOpen && aiImageUrl && (
+                                    {submitModalOpen && (aiImageUrl || preview) && (
                                         <motion.div
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
@@ -1462,14 +1475,14 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                 {/* Left — image */}
                                                 <div className="md:w-[52%] shrink-0 relative bg-black flex items-center justify-center min-h-[320px]">
                                                     <img
-                                                        src={aiImageUrl}
+                                                        src={aiImageUrl || preview!}
                                                         className="w-full h-full object-contain"
                                                         style={{ maxHeight: "520px" }}
-                                                        alt="AI Generated"
+                                                        alt="Submission preview"
                                                     />
-                                                    <div className="absolute top-3 left-3 bg-lime-400/80 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1.5">
-                                                        <Sparkles className="w-3 h-3 text-black" />
-                                                        <span className="text-[9px] font-black text-black uppercase tracking-widest">AI Generated</span>
+                                                    <div className="absolute top-3 left-3 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1.5" style={{ background: aiImageUrl ? "rgba(163,230,53,0.8)" : "rgba(255,255,255,0.15)" }}>
+                                                        {aiImageUrl ? <Sparkles className="w-3 h-3 text-black" /> : <Upload className="w-3 h-3 text-white" />}
+                                                        <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: aiImageUrl ? "black" : "white" }}>{aiImageUrl ? "AI Generated" : "Your Upload"}</span>
                                                     </div>
                                                 </div>
 
@@ -1532,7 +1545,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
                                                     <button
                                                         onClick={() => { setSubmitModalOpen(false); handleSubmit(); }}
-                                                        disabled={!aiImageFile || submitting}
+                                                        disabled={(!aiImageFile && !file) || submitting}
                                                         className="mt-auto w-full py-4 bg-purple-500 hover:bg-purple-400 text-white rounded-[14px] text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2.5 active:scale-[0.99] transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:shadow-[0_0_20px_rgba(168,85,247,0.4)]"
                                                     >
                                                         {submitting
