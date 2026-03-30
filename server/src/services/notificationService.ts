@@ -111,6 +111,20 @@ export const createStreakNotification = async (userId: string, streakCount: numb
             return null;
         }
 
+        // Deduplicate: skip if a streak notification was already sent in the last 24 hours
+        const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const recent = await prisma.notification.findFirst({
+            where: {
+                userId,
+                type: 'STREAK',
+                createdAt: { gte: since },
+            },
+            select: { id: true },
+        });
+        if (recent) {
+            return null;
+        }
+
         // Get user details
         const user = await prisma.user.findUnique({
             where: { id: userId },
