@@ -1351,14 +1351,6 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                             <div className="space-y-3">
                                                     {/* Create-page style prompt row */}
                                                     <div className="flex items-center gap-2 px-4 py-3 rounded-[14px] border border-white/[0.1] bg-white/[0.03] focus-within:border-lime-400/40 focus-within:shadow-[0_0_0_1px_rgba(163,230,53,0.15)] transition-all">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => { if (!isAuthenticated) { openLoginModal(); return; } fileRef.current?.click(); }}
-                                                            className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all shrink-0"
-                                                            title="Upload your own image"
-                                                        >
-                                                            <Upload className="w-4 h-4" />
-                                                        </button>
                                                         <input
                                                             value={aiPrompt}
                                                             onChange={(e) => setAiPrompt(e.target.value)}
@@ -1366,15 +1358,27 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                             placeholder={`Describe the image for "${event.title}"…`}
                                                             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-foreground/30 focus:outline-none min-w-0"
                                                         />
-                                                        <button
-                                                            type="button"
-                                                            onClick={handleRefinePrompt}
-                                                            disabled={!aiPrompt.trim() || aiRefining}
-                                                            className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all disabled:opacity-30 shrink-0"
-                                                            title="Enhance prompt"
-                                                        >
-                                                            {aiRefining ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
-                                                        </button>
+                                                        {/* Upload when empty, enhance when typing */}
+                                                        {aiPrompt.trim() ? (
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleRefinePrompt}
+                                                                disabled={aiRefining}
+                                                                className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all disabled:opacity-30 shrink-0"
+                                                                title="Enhance prompt"
+                                                            >
+                                                                {aiRefining ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => { if (!isAuthenticated) { openLoginModal(); return; } fileRef.current?.click(); }}
+                                                                className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all shrink-0"
+                                                                title="Upload your own image"
+                                                            >
+                                                                <Upload className="w-4 h-4" />
+                                                            </button>
+                                                        )}
                                                         <button
                                                             onClick={handleAiGenerate}
                                                             disabled={!aiPrompt.trim() || aiGenerating}
