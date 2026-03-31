@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import {
     ChevronLeft, ChevronRight, Info, Rocket, Sparkles, Loader2, Plus, Minus,
     Users, Trophy, Clock, ThumbsUp, Wallet, AlertCircle, RefreshCw,
-    Upload, Pencil, X, LayoutGrid, List, Tag, Vote, PlusCircle, ShieldCheck, ImageIcon,
+    Upload, Pencil, X, LayoutGrid, List, Tag, Vote, PlusCircle, ShieldCheck, ImageIcon, Save,
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,6 +18,11 @@ import { readBrandRefundBalance } from "@/lib/blockchain/contracts";
 import { useWallet } from "@/context/WalletContext";
 import { useUser } from "@/context/UserContext";
 import { BrandImageGeneratorModal } from "@/components/create/BrandImageGeneratorModal";
+import { getBrandEvents, createEvent, updateEvent } from "@/services/event.service";
+import type { Event } from "@/services/event.service";
+import { uploadToPinata } from "@/lib/pinata-upload";
+import EventDraftPanel from "@/components/brand/createEvent/EventDraftPanel";
+import AiEventPanel from "@/components/brand/createEvent/AiEventPanel";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const BASE_RATE = 0.030;   // $0.030/participant — base voter reward
@@ -153,6 +158,13 @@ export default function CreateEventPage() {
     const scrollContainerRef = useRef<HTMLDivElement | null>(null);
     const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
+    // ── Landing / Draft state ──────────────────────────────────────────────────
+    const [viewMode, setViewMode] = useState<"landing" | "form">("landing");
+    const [drafts, setDrafts] = useState<Event[]>([]);
+    const [draftsLoading, setDraftsLoading] = useState(true);
+    const [savingDraft, setSavingDraft] = useState(false);
+    const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+
     const [form, setForm] = useState<FormData>({
         type: "vote",
         title: "",
@@ -192,7 +204,104 @@ export default function CreateEventPage() {
             .catch(() => {});
     }, [address]);
 
+    // Load drafts on mount
+    useEffect(() => {
+        setDraftsLoading(true);
+        getBrandEvents("draft")
+            .then((events) => setDrafts(events))
+            .catch(() => setDrafts([]))
+            .finally(() => setDraftsLoading(false));
+    }, []);
+
     const set = useCallback((patch: Partial<FormData>) => setForm((f) => ({ ...f, ...patch })), []);
+
+    // ── Resume a draft event → pre-fill form ──────────────────────────────────
+    const handleResumeDraft = useCallback((event: Event) => {
+        setCurrentDraftId(event.id);
+        set({
+            type: event.eventType === "post_and_vote" ? "post" : "vote",
+            title: event.title ?? "",
+            description: event.description ?? "",
+            domain: event.category ?? "",
+            tagline: (event as any).tagline ?? "",
+            hashtags: (event as any).hashtags ?? [],
+            regions: (event as any).regions ?? [],
+            preferredGender: (event as any).preferredGender ?? "All",
+            ageGroup: (event as any).ageGroup ?? "All Ages",
+            maxParticipants: event.capacity ? String(event.capacity) : "",
+            baseReward: event.baseReward ? String(event.baseReward) : String(BASE_RATE),
+            topPrize: event.topReward ? String(event.topReward) : "",
+            leaderboardPool: event.leaderboardPool ? String(event.leaderboardPool) : "",
+        });
+        // If event has an imageUrl set banner preview
+        if (event.imageUrl) {
+            setBannerPreview(event.imageUrl);
+        } else if (event.imageCid) {
+            setBannerPreview(`https://gateway.pinata.cloud/ipfs/${event.imageCid}`);
+        }
+        setCurrentStep(0);
+        setViewMode("form");
+    }, [set]);
+
+    // ── Save current form state as a draft ────────────────────────────────────
+    const handleSaveDraft = useCallback(async () => {
+        if (!form.title.trim()) {
+            toast.error("Add an event name before saving as draft");
+            return;
+        }
+        setSavingDraft(true);
+        try {
+            // Upload banner if a new file has been selected
+            let imageUrl: string | undefined;
+            if (form.coverImage instanceof File) {
+                const uploadResult = await uploadToPinata(form.coverImage);
+                imageUrl = uploadResult.imageUrl;
+            } else if (bannerPreview && !bannerPreview.startsWith("blob:")) {
+                imageUrl = bannerPreview;
+            }
+
+            const payload = {
+                title: form.title,
+                description: form.description || undefined,
+                category: form.domain || undefined,
+                eventType: form.type === "post" ? "post_and_vote" : "vote_only",
+                capacity: form.maxParticipants ? parseInt(form.maxParticipants) : undefined,
+                baseReward: parseFloat(form.baseReward) || undefined,
+                topReward: parseFloat(form.topPrize) || undefined,
+                leaderboardPool: parseFloat(form.leaderboardPool) || undefined,
+                tagline: form.tagline || undefined,
+                hashtags: form.hashtags,
+                regions: form.regions,
+                preferredGender: form.preferredGender,
+                ageGroup: form.ageGroup,
+                startTime: new Date(Date.now() + 86400000).toISOString(),
+                endTime: new Date(Date.now() + 86400000 * 2).toISOString(),
+                status: "draft" as const,
+                imageUrl,
+            };
+
+            if (currentDraftId) {
+                await updateEvent(currentDraftId, payload as any);
+                setDrafts((prev) => prev.map((d) => d.id === currentDraftId ? { ...d, ...payload } : d));
+                toast.success("Draft updated");
+            } else {
+                const created = await createEvent(payload as any);
+                setCurrentDraftId(created.id);
+                setDrafts((prev) => [created, ...prev]);
+                toast.success("Saved as draft");
+            }
+            router.push("/brand/create-event");
+        } catch (err: any) {
+            toast.error(err?.message || "Failed to save draft");
+        } finally {
+            setSavingDraft(false);
+        }
+    }, [form, currentDraftId]);
+
+    // ── Delete a draft ────────────────────────────────────────────────────────
+    const handleDeleteDraft = useCallback((id: string) => {
+        setDrafts((prev) => prev.filter((d) => d.id !== id));
+    }, []);
 
     // ── Derived reward values ──────────────────────────────────────────────────
     const isPost = form.type === "post";
@@ -1786,14 +1895,69 @@ export default function CreateEventPage() {
         );
     }
 
+    // ── Landing view ───────────────────────────────────────────────────────────
+    if (viewMode === "landing") {
+        return (
+            <div className="min-h-screen w-full bg-background font-sans">
+                {/* Header */}
+                <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border/40 px-4 sm:px-6 py-4 flex items-center justify-between">
+                    <Link href="/brand/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group">
+                        <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
+                        <span className="text-xs font-black tracking-widest uppercase">Dashboard</span>
+                    </Link>
+                    <h1 className="text-sm font-black uppercase tracking-widest text-foreground/60">Create Event</h1>
+                    <div className="w-20" />
+                </div>
+
+                <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+                    {/* Event Draft Panel — top */}
+                    <EventDraftPanel
+                        drafts={drafts}
+                        loading={draftsLoading}
+                        onResume={handleResumeDraft}
+                        onCreateNew={() => { setCurrentDraftId(null); setViewMode("form"); }}
+                        onDeleteDraft={handleDeleteDraft}
+                    />
+
+                    {/* AI Studio Panel — bottom */}
+                    <AiEventPanel
+                        onApplyEvent={(data) => {
+                            if (data.title) set({ title: data.title });
+                            if (data.description) set({ description: data.description });
+                            if (data.domain) set({ domain: data.domain });
+                            if (data.type) set({ type: data.type });
+                            if (data.proposals) set({ proposals: data.proposals });
+                            setCurrentDraftId(null);
+                            setViewMode("form");
+                            toast.success("AI event applied — review and launch");
+                        }}
+                        onApplyProposals={(proposals) => {
+                            set({ proposals });
+                            setCurrentDraftId(null);
+                            setViewMode("form");
+                            toast.success("Proposals applied");
+                        }}
+                        onApplyImage={(imageUrl) => {
+                            setBannerPreview(imageUrl);
+                            toast.success("Image set as banner");
+                        }}
+                    />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="h-screen w-full bg-background flex flex-col relative overflow-hidden font-sans">
             {/* Top Bar */}
             <div className="absolute top-0 left-0 right-0 px-4 py-6 sm:px-6 sm:py-8 flex justify-between items-center z-20 pointer-events-none">
-                <Link href="/brand/dashboard" className="pointer-events-auto flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group">
+                <button
+                    onClick={() => setViewMode("landing")}
+                    className="pointer-events-auto flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
+                >
                     <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
-                    <span className="text-xs font-black tracking-widest uppercase">Exit</span>
-                </Link>
+                    <span className="text-xs font-black tracking-widest uppercase">Back</span>
+                </button>
 
                 {/* Wallet badge */}
                 <div className="pointer-events-auto hidden md:flex items-center bg-card/90 backdrop-blur-md border border-border/40 rounded-2xl px-4 py-2 gap-4 shadow-sm">
@@ -1880,9 +2044,19 @@ export default function CreateEventPage() {
                 ) : <div />}
 
                 {!isLastStep ? (
-                    <button onClick={goNext} className="pointer-events-auto flex items-center gap-2 px-8 py-3.5 bg-foreground text-background rounded-2xl text-sm font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl hover:bg-accent hover:text-white group">
-                        Continue <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                    </button>
+                    <div className="pointer-events-auto flex items-center gap-3">
+                        <button
+                            onClick={handleSaveDraft}
+                            disabled={savingDraft}
+                            className="flex items-center gap-2 px-5 py-3.5 rounded-2xl border border-border text-sm font-bold text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all disabled:opacity-50"
+                        >
+                            {savingDraft ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                            Save Draft
+                        </button>
+                        <button onClick={goNext} className="flex items-center gap-2 px-8 py-3.5 bg-foreground text-background rounded-2xl text-sm font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl hover:bg-accent hover:text-white group">
+                            Continue <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                        </button>
+                    </div>
                 ) : (
                     <button
                         onClick={() => {

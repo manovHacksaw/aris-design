@@ -72,7 +72,7 @@ export class EventService {
     }
 
     // IPFS CID validation (only if imageUrl is not provided)
-    if (data.imageCid !== undefined && data.imageCid.length > 0 && !data.imageUrl) {
+    if (data.imageCid != null && data.imageCid.length > 0 && !data.imageUrl) {
       if (!/^(Qm[1-9A-HJ-NP-Za-km-z]{44}|bafy[a-z0-9]{50,})$/.test(data.imageCid)) {
         errors.push('Invalid IPFS CID format');
       }
