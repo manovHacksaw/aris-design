@@ -103,7 +103,7 @@ const AGE_LABELS: Record<string, string> = {
     "45_54": "45-54", "55_64": "55-64", "65_plus": "65+"
 };
 
-function ChartTooltip({ active, payload, label }: TooltipProps<any, any>) {
+function ChartTooltip({ active, payload, label }: TooltipProps<any, any> & { payload?: any[]; label?: any }) {
     if (!active || !payload?.length) return null;
     return (
         <div className="bg-[#0f1117] border border-white/10 rounded-xl px-3 py-2.5 shadow-2xl text-xs">

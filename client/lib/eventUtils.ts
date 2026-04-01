@@ -72,6 +72,20 @@ export function formatCount(n: number | undefined | null): string {
     return n.toString();
 }
 
+export function formatTimeRemaining(endTime: string | Date | null | undefined): string {
+    if (!endTime) return "Ended";
+    const end = new Date(endTime);
+    const now = new Date();
+    const diff = end.getTime() - now.getTime();
+    if (diff <= 0) return "Ended";
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    if (days > 0) return `${days}d ${hours}h left`;
+    if (hours > 0) return `${hours}h ${minutes}m left`;
+    return `${minutes}m left`;
+}
+
 /**
  * Calculates sum of all reward pools for an event
  */

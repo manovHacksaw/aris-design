@@ -70,7 +70,7 @@ const CHART_COLORS = {
 const TICK_STYLE = { fill: "rgba(255,255,255,0.3)", fontSize: 10, fontWeight: 700 };
 const GRID_STYLE = { stroke: "rgba(255,255,255,0.05)", strokeDasharray: "0" };
 
-function ChartTooltip({ active, payload, label }: TooltipProps<any, any>) {
+function ChartTooltip({ active, payload, label }: TooltipProps<any, any> & { payload?: any[]; label?: any }) {
     if (!active || !payload?.length) return null;
     return (
         <div className="bg-[#0f1117] border border-white/10 rounded-xl px-3 py-2.5 shadow-2xl text-xs backdrop-blur-xl">

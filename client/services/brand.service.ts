@@ -38,6 +38,7 @@ export interface UpsertBrandData {
   tagline?: string;
   description?: string;
   logoCid?: string;
+  logoUrl?: string;
   categories?: string[];
   socialLinks?: Record<string, string>;
 }

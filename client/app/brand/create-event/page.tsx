@@ -282,7 +282,7 @@ export default function CreateEventPage() {
 
             if (currentDraftId) {
                 await updateEvent(currentDraftId, payload as any);
-                setDrafts((prev) => prev.map((d) => d.id === currentDraftId ? { ...d, ...payload } : d));
+                setDrafts((prev) => prev.map((d) => d.id === currentDraftId ? { ...d, ...payload } as Event : d));
                 toast.success("Draft updated");
             } else {
                 const created = await createEvent(payload as any);

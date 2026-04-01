@@ -839,7 +839,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         // Revoke previous object URL to avoid memory leaks
         if (aiImageUrl && aiImageUrl.startsWith("blob:")) URL.revokeObjectURL(aiImageUrl);
         try {
-            const res = await generateImage(aiPrompt.trim(), user.id, "user");
+            const res = await generateImage(aiPrompt.trim(), user!.id, "user");
             if (res.success && res.image) {
                 const objectUrl = base64ToObjectUrl(res.image.data, res.image.mimeType);
                 const imgFile = base64ToFile(res.image.data, res.image.mimeType, `ai-generated-${Date.now()}.png`);

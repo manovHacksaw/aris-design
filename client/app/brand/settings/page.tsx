@@ -87,7 +87,7 @@ export default function BrandSettingsPage() {
     });
     const obAny = ob as any;
     if (obAny?.logoUrl || ob?.logoCid) {
-      const resolvedLogo = obAny.logoUrl || (ob.logoCid ? `https://gateway.pinata.cloud/ipfs/${ob.logoCid}` : null);
+      const resolvedLogo = obAny.logoUrl || (ob?.logoCid ? `https://gateway.pinata.cloud/ipfs/${ob.logoCid}` : null);
       setLogoUrl(resolvedLogo);
       setLogoPreview(resolvedLogo);
     } else if (user.avatarUrl) {

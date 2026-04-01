@@ -56,10 +56,10 @@ export function ClientProviders({ children }: { children: ReactNode }) {
           <SmartWalletsProvider
             config={{
               // Auto-approve transactions to these contracts — no popup needed
-              allowlistContractAddresses: [
+              ...(({ allowlistContractAddresses: [
                 (process.env.NEXT_PUBLIC_REWARDS_VAULT_ADDRESS || "0x34C5A617e32c84BC9A54c862723FA5538f42F221") as `0x${string}`,
                 (process.env.NEXT_PUBLIC_TEST_USDC_ADDRESS || "0x61d11C622Bd98A71aD9361833379A2066Ad29CCa") as `0x${string}`,
-              ],
+              ] }) as any),
             }}
           >
             <WalletProvider>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import SidebarLayout from "@/components/home/SidebarLayout";
 import BottomNav from "@/components/BottomNav";
@@ -26,7 +26,7 @@ const TIMELINES: { key: TimelineKey; label: string }[] = [
     { key: "A", label: "1yr" },
 ];
 
-export default function Leaderboard() {
+function LeaderboardContent() {
     const searchParams = useSearchParams();
     const initialTab = (searchParams.get("tab") as TabType) || "users";
     const [activeTab, setActiveTab] = useState<TabType>(initialTab);
@@ -128,5 +128,13 @@ export default function Leaderboard() {
                 </div>
             </SidebarLayout>
         </div>
+    );
+}
+
+export default function Leaderboard() {
+    return (
+        <Suspense>
+            <LeaderboardContent />
+        </Suspense>
     );
 }
