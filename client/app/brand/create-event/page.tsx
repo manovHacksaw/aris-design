@@ -1921,6 +1921,8 @@ export default function CreateEventPage() {
 
                     {/* AI Studio Panel — bottom */}
                     <AiEventPanel
+                        brandName={user?.ownedBrands?.[0]?.name}
+                        brandBio={user?.ownedBrands?.[0]?.description}
                         onApplyEvent={(data) => {
                             if (data.title) set({ title: data.title });
                             if (data.description) set({ description: data.description });

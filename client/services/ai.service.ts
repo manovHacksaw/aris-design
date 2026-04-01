@@ -54,6 +54,27 @@ export async function generateTagline(title: string, description?: string): Prom
     }
 }
 
+export async function generateAiEventDetails(params: {
+    prompt: string;
+    brandName?: string;
+    brandBio?: string;
+}): Promise<{ success: boolean; title?: string; description?: string; error?: string }> {
+    try {
+        return await apiRequest<{ success: boolean; title: string; description: string }>(
+            '/ai/generate-event-details',
+            {
+                method: 'POST',
+                body: JSON.stringify(params),
+            }
+        );
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error?.message || 'Failed to generate event details',
+        };
+    }
+}
+
 export async function generateAiProposals(params: {
     title: string;
     description: string;

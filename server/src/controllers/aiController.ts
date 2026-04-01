@@ -109,6 +109,34 @@ export const generateTagline = async (req: Request, res: Response): Promise<Resp
     }
 };
 
+export const generateEventDetails = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const { prompt, brandName, brandBio } = req.body;
+
+        if (!prompt) {
+            return res.status(400).json({
+                success: false,
+                error: 'Prompt is required'
+            });
+        }
+
+        const details = await AiService.generateEventDetails(prompt, brandName || '', brandBio || '');
+
+        return res.json({
+            success: true,
+            title: details.title,
+            description: details.description,
+        });
+    } catch (error: any) {
+        console.error('Error in AI generateEventDetails:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'AI Event Details Generation failed',
+            message: error.message
+        });
+    }
+};
+
 export const generateProposals = async (req: Request, res: Response): Promise<Response> => {
     try {
         const { title, description, category, count } = req.body;

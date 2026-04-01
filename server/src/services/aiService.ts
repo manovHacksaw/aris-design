@@ -99,6 +99,41 @@ export class AiService {
     }
 
     /**
+     * Generate an event title and description from a brand prompt
+     */
+    static async generateEventDetails(
+        prompt: string,
+        brandName: string,
+        brandBio: string
+    ): Promise<{ title: string; description: string }> {
+        try {
+            const model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+            const aiPrompt = `You are a creative event strategist for a brand. Given the following context, generate a compelling event title and description.
+
+Brand Name: ${brandName || "Unknown Brand"}
+Brand Bio: ${brandBio || "No bio provided"}
+Event Idea: ${prompt}
+
+Return ONLY a JSON object with two fields:
+- "title": A catchy, concise event title (max 60 characters)
+- "description": An engaging event description (2-3 sentences, max 250 characters)
+
+Format: {"title": "...", "description": "..."}`;
+
+            const result = await model.generateContent(aiPrompt);
+            const response = await result.response;
+            const text = response.text().trim();
+
+            const jsonMatch = text.match(/\{.*\}/s);
+            const jsonStr = jsonMatch ? jsonMatch[0] : text;
+            return JSON.parse(jsonStr);
+        } catch (error) {
+            console.error('Error generating event details:', error);
+            throw new Error('Failed to generate event details');
+        }
+    }
+
+    /**
      * Generate text proposals based on event details
      */
     static async generateProposals(title: string, description: string, category: string, count: number = 4): Promise<Array<{ title: string, content: string }>> {

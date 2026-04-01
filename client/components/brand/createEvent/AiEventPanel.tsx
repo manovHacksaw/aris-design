@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { generateAiProposals, generateAiImage } from "@/services/ai.service";
+import { generateAiProposals, generateAiImage, generateAiEventDetails } from "@/services/ai.service";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -28,6 +28,8 @@ interface FormData {
 }
 
 interface AiEventPanelProps {
+  brandName?: string;
+  brandBio?: string;
   onApplyEvent?: (eventData: Partial<FormData>) => void;
   onApplyProposals?: (proposals: Array<{ title: string; order: number }>) => void;
   onApplyImage?: (imageUrl: string) => void;
@@ -145,10 +147,19 @@ interface GeneratedEvent {
   proposals?: Array<{ title: string; order: number }>;
 }
 
-function EventTab({ onApplyEvent }: { onApplyEvent?: AiEventPanelProps["onApplyEvent"] }) {
+function EventTab({
+  onApplyEvent,
+  brandName,
+  brandBio,
+}: {
+  onApplyEvent?: AiEventPanelProps["onApplyEvent"];
+  brandName?: string;
+  brandBio?: string;
+}) {
   const [prompt, setPrompt] = useState("");
   const [domain, setDomain] = useState("");
   const [eventType, setEventType] = useState<"vote" | "post">("vote");
+  const [voteCount, setVoteCount] = useState(4);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<GeneratedEvent | null>(null);
 
@@ -161,19 +172,28 @@ function EventTab({ onApplyEvent }: { onApplyEvent?: AiEventPanelProps["onApplyE
     setResult(null);
 
     try {
-      // Derive a title from the first sentence / up to 60 chars of the prompt
-      const derivedTitle =
-        prompt.split(/[.\n]/)[0].trim().slice(0, 60) ||
-        "My New Event";
+      // Generate proper title + description via AI
+      const detailsRes = await generateAiEventDetails({
+        prompt,
+        brandName,
+        brandBio,
+      });
+
+      if (!detailsRes.success) {
+        throw new Error(detailsRes.error || "Failed to generate event details");
+      }
+
+      const aiTitle = detailsRes.title || prompt.split(/[.\n]/)[0].trim().slice(0, 60) || "My New Event";
+      const aiDescription = detailsRes.description || prompt;
 
       let proposals: Array<{ title: string; order: number }> | undefined;
 
       if (eventType === "vote") {
         const res = await generateAiProposals({
-          title: derivedTitle,
-          description: prompt,
+          title: aiTitle,
+          description: aiDescription,
           category: domain || "General",
-          count: 4,
+          count: voteCount,
         });
 
         if (!res.success) {
@@ -187,10 +207,10 @@ function EventTab({ onApplyEvent }: { onApplyEvent?: AiEventPanelProps["onApplyE
       }
 
       setResult({
-        title: derivedTitle,
-        description: prompt,
+        title: aiTitle,
+        description: aiDescription,
         domain: domain || "",
-        type: eventType === "vote" ? "vote" : "post",
+        type: eventType,
         proposals,
       });
     } catch (err: any) {
@@ -262,6 +282,33 @@ function EventTab({ onApplyEvent }: { onApplyEvent?: AiEventPanelProps["onApplyE
           ))}
         </div>
       </div>
+
+      {/* Vote count selector — only for vote type */}
+      {eventType === "vote" && (
+        <div>
+          <p className="text-xs text-muted-foreground mb-2 font-medium">
+            Number of Voting Options
+          </p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setVoteCount((c) => Math.max(2, c - 1))}
+              className="w-8 h-8 rounded-lg border border-border text-muted-foreground hover:border-primary/40 hover:text-foreground flex items-center justify-center text-sm font-black transition-all"
+            >
+              −
+            </button>
+            <span className="text-sm font-black text-foreground w-6 text-center">
+              {voteCount}
+            </span>
+            <button
+              onClick={() => setVoteCount((c) => Math.min(10, c + 1))}
+              className="w-8 h-8 rounded-lg border border-border text-muted-foreground hover:border-primary/40 hover:text-foreground flex items-center justify-center text-sm font-black transition-all"
+            >
+              +
+            </button>
+            <span className="text-xs text-muted-foreground">options (2–10)</span>
+          </div>
+        </div>
+      )}
 
       <GenerateButton loading={loading} onClick={handleGenerate} label="Generate Event" />
 
@@ -535,6 +582,8 @@ function ImageTab({ onApplyImage }: { onApplyImage?: AiEventPanelProps["onApplyI
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 export default function AiEventPanel({
+  brandName,
+  brandBio,
   onApplyEvent,
   onApplyProposals,
   onApplyImage,
@@ -542,7 +591,7 @@ export default function AiEventPanel({
   const [activeTab, setActiveTab] = useState<TabId>("Event");
 
   return (
-    <div className="bg-card/50 border border-border/60 rounded-[24px] overflow-hidden">
+    <div className="bg-card/50 border border-border/60 rounded-3xl overflow-hidden">
       {/* Header */}
       <div className="px-6 py-4 border-b border-border/40 flex items-center gap-3">
         <Sparkles className="w-5 h-5 text-primary shrink-0" />
@@ -562,7 +611,7 @@ export default function AiEventPanel({
       {/* Content */}
       <div className="px-6 pb-6">
         {activeTab === "Event" && (
-          <EventTab onApplyEvent={onApplyEvent} />
+          <EventTab onApplyEvent={onApplyEvent} brandName={brandName} brandBio={brandBio} />
         )}
         {activeTab === "Proposals" && (
           <ProposalsTab onApplyProposals={onApplyProposals} />
