@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
-    Plus, ChevronDown, ChevronUp, LayoutList, LayoutGrid,
+    Plus, ChevronDown, ChevronUp, ChevronsUpDown, LayoutList, LayoutGrid,
     Eye, Trophy, Users, DollarSign, Radio, ChevronRight,
     Layers, XCircle, Lightbulb, CheckCircle2,
     Save, ArrowUpRight
@@ -96,7 +96,7 @@ function formatPool(n?: number) {
 // ─── Chart theme ──────────────────────────────────────────────────────────────
 
 const CC = { cyan: "#06b6d4", blue: "#3B82F6", violet: "#8B5CF6", gray: "#6B7280", emerald: "#10b981", amber: "#f59e0b" };
-const TICK = { fill: "rgba(255,255,255,0.3)", fontSize: 10, fontWeight: 700 as const };
+const TICK = { fill: "rgba(255,255,255,0.3)", fontSize: 12, fontWeight: 700 as const };
 const GRID = { stroke: "rgba(255,255,255,0.05)", strokeDasharray: "0" };
 const AGE_LABELS: Record<string, string> = {
     "24_under": "≤24", "25_34": "25-34", "35_44": "35-44",
@@ -106,11 +106,11 @@ const AGE_LABELS: Record<string, string> = {
 function ChartTooltip({ active, payload, label }: TooltipProps<any, any> & { payload?: any[]; label?: any }) {
     if (!active || !payload?.length) return null;
     return (
-        <div className="bg-[#0f1117] border border-white/10 rounded-xl px-3 py-2.5 shadow-2xl text-xs">
-            <p className="font-black text-white/60 uppercase tracking-wider mb-1.5 text-[10px]">{label}</p>
+        <div className="bg-[#0f1117] border border-white/10 rounded-xl px-3 py-2.5 shadow-2xl text-sm">
+            <p className="font-black text-white/60 uppercase tracking-wider mb-1.5 text-xs">{label}</p>
             {payload.map((p: any) => (
                 <div key={p.dataKey} className="flex items-center gap-2 mb-1">
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: p.color }} />
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: p.color }} />
                     <span className="font-bold text-white/50 capitalize">{p.name}</span>
                     <span className="font-black text-white ml-1">{p.value?.toLocaleString()}</span>
                 </div>
@@ -183,7 +183,7 @@ function BrandBanner({ brand, stats, loading }: { brand: Brand | null; stats: Da
                     {truncated && (
                         <button
                             onClick={() => setShowMore(v => !v)}
-                            className="mt-1 text-[11px] font-bold text-primary hover:underline flex items-center gap-1"
+                            className="mt-1 text-sm font-bold text-primary hover:underline flex items-center gap-1"
                         >
                             {showMore ? <><ChevronUp className="w-3 h-3" /> Show less</> : <><ChevronDown className="w-3 h-3" /> Show more</>}
                         </button>
@@ -202,7 +202,7 @@ function BrandBanner({ brand, stats, loading }: { brand: Brand | null; stats: Da
                                 <Radio className="w-4 h-4 text-emerald-500" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Total Events</p>
+                                <p className="text-xs font-black text-muted-foreground uppercase tracking-wider">Total Events</p>
                                 <p className="text-base font-black text-foreground">{stats.totalEvents}</p>
                             </div>
                         </div>
@@ -211,7 +211,7 @@ function BrandBanner({ brand, stats, loading }: { brand: Brand | null; stats: Da
                                 <Users className="w-4 h-4 text-blue-400" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Followers</p>
+                                <p className="text-xs font-black text-muted-foreground uppercase tracking-wider">Followers</p>
                                 <p className="text-base font-black text-foreground">
                                     {brand?.followerCount != null ? brand.followerCount.toLocaleString() : "—"}
                                 </p>
@@ -222,7 +222,7 @@ function BrandBanner({ brand, stats, loading }: { brand: Brand | null; stats: Da
                                 <DollarSign className="w-4 h-4 text-primary" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Total Spend</p>
+                                <p className="text-xs font-black text-muted-foreground uppercase tracking-wider">Total Spend</p>
                                 <p className="text-base font-black text-foreground">
                                     {stats.totalCost > 0 ? `$${stats.totalCost.toLocaleString()}` : "—"}
                                 </p>
@@ -289,7 +289,7 @@ function TabHeader({
                             key={t}
                             onClick={() => onChange(t)}
                             className={cn(
-                                "px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap",
+                                "px-3 py-1.5 rounded-full text-sm font-bold transition-all whitespace-nowrap",
                                 active === t
                                     ? "bg-primary text-primary-foreground"
                                     : "text-muted-foreground hover:text-foreground"
@@ -333,17 +333,150 @@ function OverviewTab({ events, loading, viewMode }: { events: Event[]; loading: 
     return viewMode === "list" ? <OverviewListView events={events} /> : <OverviewCardView events={events} />;
 }
 
+type SortKey = "views" | "votes" | "posts" | "cost";
+type SortDir = "asc" | "desc";
+
 function OverviewListView({ events }: { events: Event[] }) {
+    const [statusFilter, setStatusFilter] = useState<string>("all");
+    const [typeFilter, setTypeFilter] = useState<string>("all");
+    const [domainFilter, setDomainFilter] = useState<string>("all");
+    const [sortKey, setSortKey] = useState<SortKey | null>(null);
+    const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+    const domains = useMemo(() => {
+        const s = new Set<string>();
+        events.forEach(e => { if (e.category) s.add(e.category); });
+        return Array.from(s).sort();
+    }, [events]);
+
+    const statuses = useMemo(() => {
+        const s = new Set<string>();
+        events.forEach(e => s.add(e.status));
+        return Array.from(s).sort();
+    }, [events]);
+
+    function toggleSort(key: SortKey) {
+        if (sortKey === key) setSortDir(d => d === "desc" ? "asc" : "desc");
+        else { setSortKey(key); setSortDir("desc"); }
+    }
+
+    const filtered = useMemo(() => {
+        let list = events;
+        if (statusFilter !== "all") list = list.filter(e => e.status === statusFilter);
+        if (typeFilter !== "all") list = list.filter(e => e.eventType === typeFilter);
+        if (domainFilter !== "all") list = list.filter(e => e.category === domainFilter);
+        if (sortKey) {
+            list = [...list].sort((a, b) => {
+                let av = 0, bv = 0;
+                if (sortKey === "views") { av = a.eventAnalytics?.totalViews ?? 0; bv = b.eventAnalytics?.totalViews ?? 0; }
+                if (sortKey === "votes") { av = a.eventAnalytics?.totalVotes ?? a._count?.votes ?? 0; bv = b.eventAnalytics?.totalVotes ?? b._count?.votes ?? 0; }
+                if (sortKey === "posts") { av = a._count?.submissions ?? a.eventAnalytics?.totalSubmissions ?? 0; bv = b._count?.submissions ?? b.eventAnalytics?.totalSubmissions ?? 0; }
+                if (sortKey === "cost") { av = calculateTotalPool(a); bv = calculateTotalPool(b); }
+                return sortDir === "desc" ? bv - av : av - bv;
+            });
+        }
+        return list;
+    }, [events, statusFilter, typeFilter, domainFilter, sortKey, sortDir]);
+
+    // label shown in header — active filter value or default column name
+    const statusLabel = statusFilter === "all" ? "Status" : (STATUS_LABELS[statusFilter] ?? statusFilter);
+    const typeLabel = typeFilter === "all" ? "Type" : (typeFilter === "post_and_vote" ? "Post & Vote" : "Vote Only");
+    const domainLabel = domainFilter === "all" ? "Domain" : domainFilter;
+
+    function SortIcon({ k }: { k: SortKey }) {
+        if (sortKey !== k) return <ChevronsUpDown className="w-3 h-3 opacity-40" />;
+        return sortDir === "desc" ? <ChevronDown className="w-3 h-3 text-primary" /> : <ChevronUp className="w-3 h-3 text-primary" />;
+    }
+
+    function FilterHeader({ label, value, onChange, options }: {
+        label: string; value: string; onChange: (v: string) => void;
+        options: { value: string; label: string }[];
+    }) {
+        const [open, setOpen] = useState(false);
+        const ref = useRef<HTMLDivElement>(null);
+        const isActive = value !== "all";
+
+        useEffect(() => {
+            function handler(e: MouseEvent) {
+                if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+            }
+            if (open) document.addEventListener("mousedown", handler);
+            return () => document.removeEventListener("mousedown", handler);
+        }, [open]);
+
+        return (
+            <div ref={ref} className="relative">
+                <button
+                    onClick={() => setOpen(v => !v)}
+                    className="flex items-center gap-1 hover:text-foreground transition-colors"
+                >
+                    <span className={cn("text-xs font-black uppercase tracking-wider", isActive ? "text-primary" : "text-muted-foreground")}>
+                        {label}
+                    </span>
+                    <ChevronDown className={cn("w-3 h-3 shrink-0 transition-transform", isActive ? "text-primary" : "text-muted-foreground opacity-50", open && "rotate-180")} />
+                </button>
+                {open && (
+                    <div className="absolute top-full left-0 mt-1.5 z-50 min-w-[130px] bg-[#0f1117] border border-white/10 rounded-xl shadow-2xl overflow-hidden py-1">
+                        {options.map(opt => (
+                            <button
+                                key={opt.value}
+                                onClick={() => { onChange(opt.value); setOpen(false); }}
+                                className={cn(
+                                    "w-full text-left px-3 py-2 text-xs font-bold transition-colors hover:bg-white/5",
+                                    value === opt.value ? "text-primary" : "text-white/70"
+                                )}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    }
+
     return (
         <div className="bg-card border border-border/60 rounded-[20px] overflow-hidden">
             {/* Table header */}
-            <div className="hidden md:grid grid-cols-[32px_80px_1fr_100px_110px_80px_60px_90px_80px_100px] gap-3 px-4 py-2.5 border-b border-border/40 bg-secondary/20">
-                {["#", "Status", "Event Title", "Type", "Domain", "Cost", "Views", "Votes", "Posts", "Confidence"].map(h => (
-                    <span key={h} className="text-[10px] font-black text-muted-foreground uppercase tracking-wider truncate">{h}</span>
-                ))}
+            <div className="hidden md:grid grid-cols-[32px_100px_1fr_120px_130px_90px_80px_90px_80px_100px] gap-3 px-4 py-2.5 border-b border-border/40 bg-secondary/20 items-center">
+                <span className="text-xs font-black text-muted-foreground uppercase tracking-wider">#</span>
+
+                <FilterHeader
+                    label={statusLabel} value={statusFilter} onChange={setStatusFilter}
+                    options={[{ value: "all", label: "All" }, ...statuses.map(s => ({ value: s, label: STATUS_LABELS[s] ?? s }))]}
+                />
+
+                <span className="text-xs font-black text-muted-foreground uppercase tracking-wider">Event Title</span>
+
+                <FilterHeader
+                    label={typeLabel} value={typeFilter} onChange={setTypeFilter}
+                    options={[{ value: "all", label: "All" }, { value: "post_and_vote", label: "Post & Vote" }, { value: "vote_only", label: "Vote Only" }]}
+                />
+
+                <FilterHeader
+                    label={domainLabel} value={domainFilter} onChange={setDomainFilter}
+                    options={[{ value: "all", label: "All" }, ...domains.map(d => ({ value: d, label: d }))]}
+                />
+
+                <button onClick={() => toggleSort("cost")} className="flex items-center gap-1 text-xs font-black uppercase tracking-wider hover:text-foreground transition-colors" style={{ color: sortKey === "cost" ? "hsl(var(--primary))" : undefined }}>
+                    Cost <SortIcon k="cost" />
+                </button>
+                <button onClick={() => toggleSort("views")} className="flex items-center gap-1 text-xs font-black uppercase tracking-wider hover:text-foreground transition-colors" style={{ color: sortKey === "views" ? "hsl(var(--primary))" : undefined }}>
+                    Views <SortIcon k="views" />
+                </button>
+                <button onClick={() => toggleSort("votes")} className="flex items-center gap-1 text-xs font-black uppercase tracking-wider hover:text-foreground transition-colors" style={{ color: sortKey === "votes" ? "hsl(var(--primary))" : undefined }}>
+                    Votes <SortIcon k="votes" />
+                </button>
+                <button onClick={() => toggleSort("posts")} className="flex items-center gap-1 text-xs font-black uppercase tracking-wider hover:text-foreground transition-colors" style={{ color: sortKey === "posts" ? "hsl(var(--primary))" : undefined }}>
+                    Posts <SortIcon k="posts" />
+                </button>
+                <span className="text-xs font-black text-muted-foreground uppercase tracking-wider">Confidence</span>
             </div>
+
             <div className="divide-y divide-border/30">
-                {events.map((ev, idx) => {
+                {filtered.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">No events match the current filters.</p>
+                ) : filtered.map((ev, idx) => {
                     const pool = calculateTotalPool(ev);
                     const views = ev.eventAnalytics?.totalViews ?? 0;
                     const votes = ev.eventAnalytics?.totalVotes ?? ev._count?.votes ?? 0;
@@ -354,27 +487,27 @@ function OverviewListView({ events }: { events: Event[] }) {
                         <Link
                             key={ev.id}
                             href={`/brand/events/${ev.id}`}
-                            className="flex flex-col md:grid md:grid-cols-[32px_80px_1fr_100px_110px_80px_60px_90px_80px_100px] gap-3 px-4 py-3.5 hover:bg-secondary/20 transition-colors group items-center"
+                            className="flex flex-col md:grid md:grid-cols-[32px_100px_1fr_120px_130px_90px_80px_90px_80px_100px] gap-3 px-4 py-3.5 hover:bg-secondary/20 transition-colors group items-center"
                         >
                             <span className="hidden md:block text-xs text-muted-foreground/40 font-bold">{idx + 1}</span>
                             <span className={cn(
-                                "px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border w-fit",
+                                "px-2 py-0.5 rounded text-xs font-black uppercase tracking-wider border w-fit",
                                 STATUS_STYLES[ev.status] ?? STATUS_STYLES.draft
                             )}>
                                 {STATUS_LABELS[ev.status] ?? ev.status}
                             </span>
-                            <span className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors truncate">
+                            <span className="font-semibold text-base text-foreground group-hover:text-primary transition-colors truncate">
                                 {ev.title}
                             </span>
-                            <span className="hidden md:block text-xs text-muted-foreground capitalize">
+                            <span className="hidden md:block text-sm text-muted-foreground capitalize">
                                 {ev.eventType === "post_and_vote" ? "Post & Vote" : "Vote Only"}
                             </span>
-                            <span className="hidden md:block text-xs text-muted-foreground truncate">{ev.category ?? "—"}</span>
-                            <span className="hidden md:block text-xs font-bold text-foreground">{pool > 0 ? `$${pool.toLocaleString()}` : "—"}</span>
-                            <span className="hidden md:block text-xs text-muted-foreground">{views > 0 ? views.toLocaleString() : "—"}</span>
-                            <span className="hidden md:block text-xs text-muted-foreground">{votes > 0 ? votes.toLocaleString() : "—"}</span>
-                            <span className="hidden md:block text-xs text-muted-foreground">{isPostEvent ? (posts > 0 ? posts.toLocaleString() : "—") : "N/A"}</span>
-                            <span className="hidden md:block text-xs text-muted-foreground">—</span>
+                            <span className="hidden md:block text-sm text-muted-foreground truncate">{ev.category ?? "—"}</span>
+                            <span className="hidden md:block text-sm font-bold text-foreground">{pool > 0 ? `$${pool.toLocaleString()}` : "—"}</span>
+                            <span className="hidden md:block text-sm text-muted-foreground">{views > 0 ? views.toLocaleString() : "—"}</span>
+                            <span className="hidden md:block text-sm text-muted-foreground">{votes > 0 ? votes.toLocaleString() : "—"}</span>
+                            <span className="hidden md:block text-sm text-muted-foreground">{isPostEvent ? (posts > 0 ? posts.toLocaleString() : "—") : "N/A"}</span>
+                            <span className="hidden md:block text-sm text-muted-foreground">—</span>
                         </Link>
                     );
                 })}
@@ -406,7 +539,7 @@ function OverviewCardView({ events }: { events: Event[] }) {
                             }
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                             <span className={cn(
-                                "absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border backdrop-blur-sm",
+                                "absolute top-2 left-2 px-2 py-0.5 rounded text-xs font-black uppercase tracking-wider border backdrop-blur-sm",
                                 STATUS_STYLES[ev.status] ?? STATUS_STYLES.draft
                             )}>
                                 {STATUS_LABELS[ev.status] ?? ev.status}
@@ -414,20 +547,20 @@ function OverviewCardView({ events }: { events: Event[] }) {
                         </div>
                         <div className="p-4 space-y-3">
                             <div>
-                                <h4 className="font-black text-sm text-foreground leading-tight line-clamp-1 group-hover:text-primary transition-colors">
+                                <h4 className="font-black text-base text-foreground leading-tight line-clamp-1 group-hover:text-primary transition-colors">
                                     {ev.title}
                                 </h4>
-                                <p className="text-[11px] text-muted-foreground mt-0.5 capitalize">
+                                <p className="text-sm text-muted-foreground mt-0.5 capitalize">
                                     {ev.eventType === "post_and_vote" ? "Post & Vote" : "Vote Only"}
                                 </p>
                             </div>
                             {isCancelled && ev.cancelReason ? (
                                 <div className="flex items-start gap-1.5 p-2 rounded-lg bg-red-500/10 border border-red-500/20">
                                     <XCircle className="w-3 h-3 text-red-400 shrink-0 mt-0.5" />
-                                    <p className="text-[10px] text-red-400 leading-tight line-clamp-2">{ev.cancelReason}</p>
+                                    <p className="text-xs text-red-400 leading-tight line-clamp-2">{ev.cancelReason}</p>
                                 </div>
                             ) : (
-                                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                <div className="flex items-center justify-between text-sm text-muted-foreground">
                                     <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {(ev.eventAnalytics?.totalViews ?? 0) > 0 ? ev.eventAnalytics!.totalViews.toLocaleString() : "—"}</span>
                                     <span className="flex items-center gap-1"><Trophy className="w-3 h-3" /> {votes > 0 ? votes.toLocaleString() : "—"}</span>
                                     <span className="font-bold text-foreground">{formatPool(pool)}</span>
@@ -441,7 +574,7 @@ function OverviewCardView({ events }: { events: Event[] }) {
                                         const pct = totalVotes > 0 ? Math.round((p.voteCount / totalVotes) * 100) : 0;
                                         return (
                                             <div key={p.id} className="space-y-0.5">
-                                                <div className="flex justify-between text-[10px]">
+                                                <div className="flex justify-between text-xs">
                                                     <span className="text-muted-foreground truncate max-w-[70%]">{p.title}</span>
                                                     <span className="font-bold text-foreground">{pct}%</span>
                                                 </div>
@@ -455,7 +588,7 @@ function OverviewCardView({ events }: { events: Event[] }) {
                             )}
                         </div>
                         <div className="px-4 pb-3 flex items-center justify-between">
-                            <span className="text-[10px] text-muted-foreground">
+                            <span className="text-xs text-muted-foreground">
                                 {new Date(ev.endTime).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                             </span>
                             <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -573,7 +706,7 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                 <select
                     value={domainFilter}
                     onChange={e => setDomainFilter(e.target.value)}
-                    className="px-3 py-2 rounded-full text-xs font-bold bg-card border border-border focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="px-3 py-2 rounded-full text-sm font-bold bg-card border border-border focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
                     <option value="all">All Domains</option>
                     {domains.map(d => <option key={d} value={d}>{d}</option>)}
@@ -583,7 +716,7 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                 <select
                     value={eventFilter}
                     onChange={e => setEventFilter(e.target.value)}
-                    className="px-3 py-2 rounded-full text-xs font-bold bg-card border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 max-w-[200px]"
+                    className="px-3 py-2 rounded-full text-sm font-bold bg-card border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 max-w-[200px]"
                 >
                     <option value="all">All Events</option>
                     {events.map(e => <option key={e.id} value={e.id}>{e.title}</option>)}
@@ -596,7 +729,7 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                             key={t}
                             onClick={() => setTimeFilter(t)}
                             className={cn(
-                                "px-3 py-1.5 rounded-full text-xs font-bold border transition-all",
+                                "px-3 py-1.5 rounded-full text-sm font-bold border transition-all",
                                 timeFilter === t
                                     ? "bg-primary text-primary-foreground border-primary"
                                     : "bg-card text-muted-foreground border-border hover:border-primary/40"
@@ -614,10 +747,10 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                 {/* Time vs Views/Votes/Posts */}
                 <div className="bg-card border border-border/60 rounded-[20px] overflow-hidden">
                     <div className="px-5 py-4 border-b border-border/40">
-                        <h3 className="font-bold text-sm">Views, Votes & Posts per Event</h3>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">Engagement across selected events</p>
+                        <h3 className="font-bold text-base">Views, Votes & Posts per Event</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">Engagement across selected events</p>
                     </div>
-                    <div className="px-2 py-3 h-[220px]">
+                    <div className="px-2 py-3 h-[260px]">
                         {!hasData ? (
                             <div className="h-full flex items-center justify-center text-sm text-muted-foreground">Not available</div>
                         ) : (
@@ -650,10 +783,10 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                 {/* Demographics double bar chart */}
                 <div className="bg-card border border-border/60 rounded-[20px] overflow-hidden">
                     <div className="px-5 py-4 border-b border-border/40">
-                        <h3 className="font-bold text-sm">Voter Demographics</h3>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">Age × Gender breakdown across all events</p>
+                        <h3 className="font-bold text-base">Voter Demographics</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">Age × Gender breakdown across all events</p>
                     </div>
-                    <div className="px-2 py-3 h-[220px]">
+                    <div className="px-2 py-3 h-[260px]">
                         {!filteredAgg || !demoData.some(d => d.male + d.female + d.others > 0) ? (
                             <div className="h-full flex items-center justify-center text-sm text-muted-foreground">Not available</div>
                         ) : (
@@ -675,10 +808,10 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                 {/* Decision quality metrics */}
                 <div className="bg-card border border-border/60 rounded-[20px] overflow-hidden">
                     <div className="px-5 py-4 border-b border-border/40">
-                        <h3 className="font-bold text-sm">Decision Quality per Event</h3>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">Entropy, winning margin, historical alignment</p>
+                        <h3 className="font-bold text-base">Decision Quality per Event</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">Entropy, winning margin, historical alignment</p>
                     </div>
-                    <div className="px-2 py-3 h-[220px]">
+                    <div className="px-2 py-3 h-[260px]">
                         {!analytics || analytics.eventsSummary.filter(s => s.totalVotes > 0).length === 0 ? (
                             <div className="h-full flex items-center justify-center text-sm text-muted-foreground">Not available</div>
                         ) : (
@@ -707,7 +840,7 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
 
                 {/* Decision Confidence + key metrics */}
                 <div className="bg-card border border-border/60 rounded-[20px] p-5 space-y-4">
-                    <h3 className="font-bold text-sm">Decision Confidence & Quality</h3>
+                    <h3 className="font-bold text-base">Decision Confidence & Quality</h3>
                     {!analytics ? (
                         <p className="text-sm text-muted-foreground">Not available</p>
                     ) : (
@@ -723,13 +856,13 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                                         { label: "Unique Voters", value: analytics.totalUniqueParticipants.toLocaleString(), color: "text-cyan-400" },
                                     ].map(m => (
                                         <div key={m.label} className="flex items-center justify-between">
-                                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{m.label}</span>
-                                            <span className={cn("text-xs font-black", m.color)}>{m.value}</span>
+                                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{m.label}</span>
+                                            <span className={cn("text-sm font-black", m.color)}>{m.value}</span>
                                         </div>
                                     ))}
                                 </div>
                             </div>
-                            <p className="text-[11px] text-muted-foreground border-t border-border/40 pt-3">
+                            <p className="text-xs text-muted-foreground border-t border-border/40 pt-3">
                                 Profile visits and follower growth require additional backend integration.
                             </p>
                         </>
@@ -743,8 +876,8 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                 {/* Clicks Breakdown Pie */}
                 <div className="bg-card border border-border/60 rounded-[20px] overflow-hidden">
                     <div className="px-5 py-4 border-b border-border/40">
-                        <h3 className="font-bold text-sm">Clicks Breakdown</h3>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">Vote · Event · Website · Social</p>
+                        <h3 className="font-bold text-base">Clicks Breakdown</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">Vote · Event · Website · Social</p>
                     </div>
                     <div className="px-4 py-4">
                         {(() => {
@@ -790,9 +923,9 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                                             <div key={d.name} className="flex items-center justify-between gap-2">
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="w-2 h-2 rounded-full shrink-0" style={{ background: d.color }} />
-                                                    <span className="text-[10px] font-bold text-muted-foreground">{d.name}</span>
+                                                    <span className="text-xs font-bold text-muted-foreground">{d.name}</span>
                                                 </div>
-                                                <span className="text-[10px] font-black text-foreground">{Math.round(d.value / total * 100)}%</span>
+                                                <span className="text-xs font-black text-foreground">{Math.round(d.value / total * 100)}%</span>
                                             </div>
                                         ))}
                                     </div>
@@ -805,8 +938,8 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                 {/* Profile Visits */}
                 <div className="bg-card border border-border/60 rounded-[20px] p-5 flex flex-col gap-3">
                     <div>
-                        <h3 className="font-bold text-sm">Profile Visits</h3>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">Unique profile views across events</p>
+                        <h3 className="font-bold text-base">Profile Visits</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">Unique profile views across events</p>
                     </div>
                     {!hasData ? (
                         <p className="text-sm text-muted-foreground flex-1 flex items-center">Not available</p>
@@ -824,13 +957,13 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                                     const maxV = Math.max(...filteredEvents.map(ev => ev.eventAnalytics?.totalViews ?? 0), 1);
                                     return (
                                         <div key={e.id} className="flex items-center gap-2">
-                                            <span className="text-[9px] font-bold text-muted-foreground truncate w-20 shrink-0">
+                                            <span className="text-xs font-bold text-muted-foreground truncate w-20 shrink-0">
                                                 {e.title.length > 14 ? e.title.slice(0, 13) + "…" : e.title}
                                             </span>
                                             <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
                                                 <div className="h-full rounded-full bg-blue-500/60" style={{ width: `${(v / maxV) * 100}%` }} />
                                             </div>
-                                            <span className="text-[9px] font-black text-foreground w-8 text-right">{v.toLocaleString()}</span>
+                                            <span className="text-xs font-black text-foreground w-8 text-right">{v.toLocaleString()}</span>
                                         </div>
                                     );
                                 })}
@@ -842,8 +975,8 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                 {/* Average Engagement Time */}
                 <div className="bg-card border border-border/60 rounded-[20px] p-5 flex flex-col gap-3">
                     <div>
-                        <h3 className="font-bold text-sm">Avg Engagement Time</h3>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">Estimated time users spend per event</p>
+                        <h3 className="font-bold text-base">Avg Engagement Time</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">Estimated time users spend per event</p>
                     </div>
                     {!hasData ? (
                         <p className="text-sm text-muted-foreground flex-1 flex items-center">Not available</p>
@@ -870,11 +1003,11 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                                         <div className="space-y-1.5 border-t border-border/40 pt-3">
                                             {rows.slice(0, 4).map((r, i) => (
                                                 <div key={i} className="flex items-center gap-2">
-                                                    <span className="text-[9px] font-bold text-muted-foreground truncate w-20 shrink-0">{r.title}</span>
+                                                    <span className="text-xs font-bold text-muted-foreground truncate w-20 shrink-0">{r.title}</span>
                                                     <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
                                                         <div className="h-full rounded-full bg-cyan-500/60" style={{ width: `${(r.secs / maxSecs) * 100}%` }} />
                                                     </div>
-                                                    <span className="text-[9px] font-black text-foreground w-10 text-right">{fmt(r.secs)}</span>
+                                                    <span className="text-xs font-black text-foreground w-10 text-right">{fmt(r.secs)}</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -889,8 +1022,8 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
             {/* ── Row 3: Time vs Follower Growth ── */}
             <div className="bg-card border border-border/60 rounded-[20px] overflow-hidden">
                 <div className="px-5 py-4 border-b border-border/40">
-                    <h3 className="font-bold text-sm">Time vs Follower Growth</h3>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">Cumulative unique participants over events (proxy for audience growth)</p>
+                    <h3 className="font-bold text-base">Time vs Follower Growth</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">Cumulative unique participants over events (proxy for audience growth)</p>
                 </div>
                 <div className="px-2 py-3 h-[220px]">
                     {!analytics || analytics.eventsSummary.length === 0 ? (
@@ -940,7 +1073,7 @@ function DCSGaugeSmall({ score }: { score: number }) {
     const label = pct >= 0.7 ? "High" : pct >= 0.45 ? "Moderate" : "Low";
     return (
         <div className="flex flex-col items-center gap-1 shrink-0">
-            <div className="relative w-[60px] h-[60px]">
+            <div className="relative w-[80px] h-[80px]">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 72 72">
                     <circle cx="36" cy="36" r="30" strokeWidth="6" fill="transparent" stroke="rgba(255,255,255,0.07)" />
                     <motion.circle
@@ -953,11 +1086,11 @@ function DCSGaugeSmall({ score }: { score: number }) {
                     />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-sm font-black text-foreground">{Math.round(pct * 100)}%</span>
+                    <span className="text-base font-black text-foreground">{Math.round(pct * 100)}%</span>
                 </div>
             </div>
-            <p className="text-[9px] font-black uppercase tracking-widest" style={{ color }}>{label}</p>
-            <p className="text-[9px] text-muted-foreground text-center leading-tight">Decision Confidence</p>
+            <p className="text-xs font-black uppercase tracking-widest" style={{ color }}>{label}</p>
+            <p className="text-xs text-muted-foreground text-center leading-tight">Decision Confidence</p>
         </div>
     );
 }
@@ -994,9 +1127,9 @@ function InsightsTab({ events, analytics, loading }: { events: Event[]; analytic
             {/* Overall insight panel */}
             <div className="bg-card border border-border/60 rounded-[20px] p-6 space-y-5">
                 <div className="flex items-center gap-2 mb-1">
-                    <Lightbulb className="w-5 h-5 text-primary" />
-                    <h3 className="font-bold text-base">Overall Brand Insights</h3>
-                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider ml-auto">Across all events</span>
+                    <Lightbulb className="w-6 h-6 text-primary" />
+                    <h3 className="font-bold text-lg">Overall Brand Insights</h3>
+                    <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider ml-auto">Across all events</span>
                 </div>
 
                 {!analytics ? (
@@ -1005,7 +1138,7 @@ function InsightsTab({ events, analytics, loading }: { events: Event[]; analytic
                     <div className="grid md:grid-cols-3 gap-4">
                         {/* Result */}
                         <div className="space-y-2">
-                            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-400">Result</p>
+                            <p className="text-xs font-black uppercase tracking-[0.15em] text-emerald-400">Result</p>
                             <p className="text-sm text-muted-foreground leading-relaxed">
                                 {analytics.totalVotesAcrossEvents > 0
                                     ? `${analytics.totalVotesAcrossEvents.toLocaleString()} total votes across ${analytics.totalEvents} events with ${analytics.totalUniqueParticipants.toLocaleString()} unique participants.`
@@ -1023,7 +1156,7 @@ function InsightsTab({ events, analytics, loading }: { events: Event[]; analytic
 
                         {/* Reason */}
                         <div className="space-y-2">
-                            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-amber-400">Reason</p>
+                            <p className="text-xs font-black uppercase tracking-[0.15em] text-amber-400">Reason</p>
                             <p className="text-sm text-muted-foreground leading-relaxed">
                                 {analytics.averageWinningMargin > 0
                                     ? `Average winning margin of ${analytics.averageWinningMargin.toFixed(1)}% indicates ${analytics.averageWinningMargin > 20 ? "strong audience preference clarity" : "moderate audience split"}. `
@@ -1036,7 +1169,7 @@ function InsightsTab({ events, analytics, loading }: { events: Event[]; analytic
 
                         {/* Next action */}
                         <div className="space-y-2">
-                            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-400">Next Action</p>
+                            <p className="text-xs font-black uppercase tracking-[0.15em] text-blue-400">Next Action</p>
                             <p className="text-sm text-muted-foreground leading-relaxed">
                                 {dcs >= 0.75
                                     ? "Decision confidence is high (≥75%). You can move forward confidently with your creative decisions."
@@ -1057,7 +1190,7 @@ function InsightsTab({ events, analytics, loading }: { events: Event[]; analytic
                 <p className="text-sm text-muted-foreground text-center py-8">No events to show insights for.</p>
             ) : (
                 <div className="space-y-3">
-                    <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground">Per Event Insights</p>
+                    <p className="text-xs font-black uppercase tracking-[0.15em] text-muted-foreground">Per Event Insights</p>
                     {events.map(ev => (
                         <EventInsightCard key={ev.id} event={ev} summary={summaryMap.get(ev.id)} />
                     ))}
@@ -1098,14 +1231,14 @@ function EventInsightCard({ event, summary }: { event: Event; summary?: EventSum
             >
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className={cn("text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded border", STATUS_STYLES[event.status] ?? STATUS_STYLES.draft)}>
+                        <span className={cn("text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded border", STATUS_STYLES[event.status] ?? STATUS_STYLES.draft)}>
                             {STATUS_LABELS[event.status] ?? event.status}
                         </span>
-                        <span className="text-[10px] text-muted-foreground font-medium uppercase">
+                        <span className="text-xs text-muted-foreground font-medium uppercase">
                             {event.eventType === "post_and_vote" ? "Post & Vote" : "Vote Only"}
                         </span>
                     </div>
-                    <h4 className="font-bold text-sm text-foreground truncate">{event.title}</h4>
+                    <h4 className="font-bold text-base text-foreground truncate">{event.title}</h4>
                 </div>
 
                 <div className="hidden md:flex items-center gap-5 shrink-0 text-center">
@@ -1118,8 +1251,8 @@ function EventInsightCard({ event, summary }: { event: Event; summary?: EventSum
                         ] : []),
                     ].map(s => (
                         <div key={s.label}>
-                            <p className="text-sm font-black text-foreground">{s.value}</p>
-                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{s.label}</p>
+                            <p className="text-base font-black text-foreground">{s.value}</p>
+                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{s.label}</p>
                         </div>
                     ))}
                 </div>
@@ -1139,10 +1272,10 @@ function EventInsightCard({ event, summary }: { event: Event; summary?: EventSum
                         <div className="border-t border-border/40 px-4 py-5 space-y-5">
                             {/* 3-section insights */}
                             <div className="grid md:grid-cols-3 gap-4">
-                                <div className="space-y-1.5">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-400">Result</p>
+                                <div className="space-y-2">
+                                    <p className="text-xs font-black uppercase tracking-[0.15em] text-emerald-400">Result</p>
                                     {summary ? (
-                                        <p className="text-xs text-muted-foreground leading-relaxed">
+                                        <p className="text-sm text-muted-foreground leading-relaxed">
                                             {`Top content received ${summary.topContentVotePercent.toFixed(1)}% of votes with a ${summary.winningMargin.toFixed(1)}% margin over runner-up. `}
                                             {summary.votesByGender && votes > 0 && (() => {
                                                 const mp = Math.round(summary.votesByGender.male / votes * 100);
@@ -1150,19 +1283,19 @@ function EventInsightCard({ event, summary }: { event: Event; summary?: EventSum
                                                 return `Voters: ${mp}% male, ${fp}% female.`;
                                             })()}
                                         </p>
-                                    ) : <p className="text-xs text-muted-foreground">Not available — no analytics data yet.</p>}
+                                    ) : <p className="text-sm text-muted-foreground">Not available — no analytics data yet.</p>}
                                 </div>
-                                <div className="space-y-1.5">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.15em] text-amber-400">Reason</p>
+                                <div className="space-y-2">
+                                    <p className="text-xs font-black uppercase tracking-[0.15em] text-amber-400">Reason</p>
                                     {summary && summary.totalVotes > 0 ? (
-                                        <p className="text-xs text-muted-foreground leading-relaxed">
+                                        <p className="text-sm text-muted-foreground leading-relaxed">
                                             {`Entropy of ${summary.entropy.toFixed(2)} (norm. ${summary.normalizedEntropy.toFixed(2)}) indicates ${summary.normalizedEntropy < 0.5 ? "a clear winner with focused audience preference" : "a spread vote suggesting mixed audience preference"}. Historical alignment at ${(summary.historicalAlignment * 100).toFixed(1)}%.`}
                                         </p>
-                                    ) : <p className="text-xs text-muted-foreground">Not enough vote data to analyze.</p>}
+                                    ) : <p className="text-sm text-muted-foreground">Not enough vote data to analyze.</p>}
                                 </div>
-                                <div className="space-y-1.5">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-400">Next Action</p>
-                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                <div className="space-y-2">
+                                    <p className="text-xs font-black uppercase tracking-[0.15em] text-blue-400">Next Action</p>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
                                         {nextAction ?? "Run this event to completion to generate action recommendations."}
                                     </p>
                                 </div>
@@ -1171,8 +1304,8 @@ function EventInsightCard({ event, summary }: { event: Event; summary?: EventSum
                             {/* Notes */}
                             <div className="space-y-2">
                                 <div className="flex items-center gap-2">
-                                    <Lightbulb className="w-3.5 h-3.5 text-primary" />
-                                    <h4 className="text-xs font-black uppercase tracking-[0.15em] text-muted-foreground">Outcome Notes</h4>
+                                    <Lightbulb className="w-4 h-4 text-primary" />
+                                    <h4 className="text-sm font-black uppercase tracking-[0.15em] text-muted-foreground">Outcome Notes</h4>
                                 </div>
                                 <textarea
                                     value={note}
@@ -1181,17 +1314,17 @@ function EventInsightCard({ event, summary }: { event: Event; summary?: EventSum
                                     className="w-full min-h-[72px] bg-secondary/20 border border-border/60 rounded-[12px] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 resize-y focus:outline-none focus:border-primary/50 transition-colors font-medium leading-relaxed"
                                 />
                                 <div className="flex items-center justify-between">
-                                    <Link href={`/brand/events/${event.id}`} className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1">
-                                        <ArrowUpRight className="w-3.5 h-3.5" /> Full Campaign Analytics
+                                    <Link href={`/brand/events/${event.id}`} className="text-sm font-bold text-primary hover:underline flex items-center gap-1">
+                                        <ArrowUpRight className="w-4 h-4" /> Full Campaign Analytics
                                     </Link>
                                     <button
                                         onClick={handleSave}
                                         className={cn(
-                                            "flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-black uppercase tracking-wider transition-all",
+                                            "flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all",
                                             saved ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20" : "bg-primary text-primary-foreground hover:opacity-90"
                                         )}
                                     >
-                                        {saved ? <><CheckCircle2 className="w-3.5 h-3.5" /> Saved</> : <><Save className="w-3.5 h-3.5" /> Save Note</>}
+                                        {saved ? <><CheckCircle2 className="w-4 h-4" /> Saved</> : <><Save className="w-4 h-4" /> Save Note</>}
                                     </button>
                                 </div>
                             </div>

@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
     IoGridOutline,
-    IoMegaphoneOutline,
     IoAddCircleOutline,
     IoWalletOutline,
     IoNotificationsOutline,
@@ -15,8 +14,6 @@ import {
     IoChevronForwardOutline,
     IoLogOutOutline,
     IoEyeOutline,
-    IoRefreshOutline,
-    IoStatsChartOutline,
     IoRibbonOutline
 } from "react-icons/io5";
 import { useNotifications } from "@/context/NotificationContext";
@@ -65,9 +62,7 @@ export default function BrandSidebar() {
 
     const navItems = [
         { label: "Dashboard", href: "/brand/dashboard", icon: IoGridOutline },
-        { label: "Campaigns", href: "/brand/events", icon: IoMegaphoneOutline },
         { label: "Create Campaign", href: "/brand/create-event", icon: IoAddCircleOutline },
-        { label: "Insights", href: "/brand/insights", icon: IoStatsChartOutline },
         { label: "Milestones", href: "/brand/milestones", icon: IoRibbonOutline },
         { label: "Wallet", href: "/brand/wallet", icon: IoWalletOutline },
         { label: "Notifications", href: "/brand/notifications", icon: IoNotificationsOutline, badge: unreadCount },
@@ -110,7 +105,7 @@ export default function BrandSidebar() {
             {/* Divider removed to match image */}
 
             {/* Navigation */}
-            <nav className="flex-1 flex flex-col px-3 pt-2 overflow-y-auto scrollbar-hide">
+            <nav className="flex-1 flex flex-col px-3 pt-2">
                 {/* Main nav items */}
                 <div className="flex flex-col gap-1.5">
                     {navItems.map((item) => {
@@ -139,7 +134,7 @@ export default function BrandSidebar() {
                 </div>
 
                 {/* Footer cluster */}
-                <div className="pb-4 pt-4 mt-2">
+                <div className="pb-4 pt-4 mt-auto">
                     {/* Subtle separator */}
                     <div className="mx-1 h-[1px] bg-border mb-2" />
 

@@ -925,9 +925,11 @@ export default function CreateEventPage() {
                                 setBannerGeneratorOpen(false);
                             }}
                             brandId={user?.ownedBrands?.[0]?.id ?? ""}
+                            brandName={user?.ownedBrands?.[0]?.name}
                             eventTitle={form.title}
                             eventDescription={form.description}
                             optionLabel="Event Banner (16:9)"
+                            isBanner
                         />
 
                         {/* Sample images — post events only */}
@@ -1288,6 +1290,7 @@ export default function CreateEventPage() {
                                     setAiGeneratorProposalIdx(null);
                                 }}
                                 brandId={user?.ownedBrands?.[0]?.id ?? ""}
+                                brandName={user?.ownedBrands?.[0]?.name}
                                 eventTitle={form.title}
                                 eventDescription={form.description}
                                 optionLabel={`Option ${aiGeneratorProposalIdx + 1}`}

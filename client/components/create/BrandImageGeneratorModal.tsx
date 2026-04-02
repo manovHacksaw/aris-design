@@ -28,8 +28,12 @@ interface BrandImageGeneratorModalProps {
   /** Event context injected into the prompt */
   eventTitle?: string;
   eventDescription?: string;
+  /** Brand name shown in header and injected into prompt */
+  brandName?: string;
   /** Label for the option this image is going into, e.g. "Option 2" */
   optionLabel?: string;
+  /** Whether this modal is generating the event banner (vs a vote option image) */
+  isBanner?: boolean;
 }
 
 interface GeneratedImage {
@@ -40,15 +44,40 @@ interface GeneratedImage {
 
 const MAX_DAILY = 5;
 
-function buildBrandPrompt(userPrompt: string, title?: string, description?: string): string {
-  const parts: string[] = [];
-  if (title) parts.push(`Event Title: "${title}"`);
-  if (description) {
-    const desc = description.length > 200 ? description.slice(0, 200) + "..." : description;
-    parts.push(`Event Description: ${desc}`);
-  }
-  if (parts.length === 0) return userPrompt;
-  return `Create a high-quality image for a brand event voting option.\n\n${parts.join("\n")}\n\nImage Request: ${userPrompt}\n\nGenerate a visually compelling image that fits the event theme and is suitable as a voting option.`;
+function buildBannerPrompt(userPrompt: string, title?: string, brandName?: string): string {
+  const lines: string[] = [
+    "Create a wide-format (16:9) event banner image.",
+    "Rules:",
+    "- NO text, words, titles, or captions anywhere on the image.",
+    "- NO overlaid graphics, labels, or watermarks.",
+    brandName
+      ? `- Place the brand logo or brand name "${brandName}" only in the top-left corner, small and unobtrusive.`
+      : "- Keep the top-left corner clear for a brand logo overlay.",
+    "- The rest of the image must be a clean, visually rich scene — no typography.",
+    "",
+  ];
+  if (title) lines.push(`Event Theme: "${title}"`);
+  lines.push(`Visual Direction: ${userPrompt}`);
+  lines.push("", "Generate a cinematic, high-quality banner that fits the event theme.");
+  return lines.join("\n");
+}
+
+function buildOptionPrompt(userPrompt: string, title?: string, brandName?: string, optionLabel?: string): string {
+  const lines: string[] = [
+    `Create a square voting option image${optionLabel ? ` for "${optionLabel}"` : ""}.`,
+    "Rules:",
+    "- NO text, words, labels, or captions anywhere on the image.",
+    "- NO overlaid graphics or watermarks.",
+    brandName
+      ? `- Place the brand logo or brand name "${brandName}" only in the top-left corner, small and subtle.`
+      : "- Keep the top-left corner clear for a brand logo overlay.",
+    "- The image must stand alone as a compelling visual choice for voters.",
+    "",
+  ];
+  if (title) lines.push(`Event Theme: "${title}"`);
+  lines.push(`Visual Direction: ${userPrompt}`);
+  lines.push("", "Generate a clean, high-quality image suitable as a voting option.");
+  return lines.join("\n");
 }
 
 export function BrandImageGeneratorModal({
@@ -58,7 +87,9 @@ export function BrandImageGeneratorModal({
   brandId,
   eventTitle,
   eventDescription,
+  brandName,
   optionLabel,
+  isBanner = false,
 }: BrandImageGeneratorModalProps) {
   const [mounted, setMounted] = useState(false);
   const [prompt, setPrompt] = useState("");
@@ -114,7 +145,9 @@ export function BrandImageGeneratorModal({
       setGeneratedImage(null);
     }
 
-    const apiPrompt = buildBrandPrompt(userPrompt, eventTitle, eventDescription);
+    const apiPrompt = isBanner
+      ? buildBannerPrompt(userPrompt, eventTitle, brandName)
+      : buildOptionPrompt(userPrompt, eventTitle, brandName, optionLabel);
     const result = await generateImage(apiPrompt, brandId, "brand");
 
     if (result.remainingGenerations !== undefined) {
