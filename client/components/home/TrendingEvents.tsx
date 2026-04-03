@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { EventData } from "@/types/events";
+import type { Event } from "@/services/event.service";
 import EventRow from "./EventRow";
 import { getHomeFeedData } from "./homeFeedData";
 
 export default function TrendingEvents() {
-    const [events, setEvents] = useState<EventData[]>([]);
+    const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {

@@ -11,6 +11,7 @@ import { motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { cn } from "@/lib/utils";
 import { useWallet } from "@/context/WalletContext";
+import { useUser } from "@/context/UserContext";
 import { formatUnits } from "@/lib/blockchain/client";
 import {
   getClaimableRewards,
@@ -46,6 +47,12 @@ export default function WalletPage() {
     isLoading: walletLoading,
     refreshBalance,
   } = useWallet();
+  const {
+    user,
+    isAuthenticated: userAuthenticated,
+    isLoading: userLoading,
+  } = useUser();
+  const userId = user?.id ?? null;
 
   const [withdrawAddress, setWithdrawAddress] = useState("");
   const [copied, setCopied] = useState(false);
@@ -62,6 +69,7 @@ export default function WalletPage() {
   const countUpRef = useRef<number | null>(null);
   const [claimHistory, setClaimHistory] = useState<ClaimHistoryEntry[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const recentNonClaimableRewards = claimHistory.slice(0, 3);
 
   const fetchMaticBalance = useCallback(async () => {
     if (!address || !publicClient) return;
@@ -77,28 +85,45 @@ export default function WalletPage() {
   }, [address, publicClient]);
 
   const fetchRewards = useCallback(async () => {
+    if (!userAuthenticated || !userId) {
+      setRewards(null);
+      setRewardsLoading(false);
+      return;
+    }
+
     setRewardsLoading(true);
     try {
       const data = await getClaimableRewards();
       setRewards(data);
-    } catch {
-      // Silently fail — rewards section just won't show
+      if (data.totalClaimableUsdc > 0) {
+        setAllClaimed(false);
+      }
+    } catch (error) {
+      console.warn("WalletPage: failed to fetch claimable rewards", error);
+      setRewards(null);
     } finally {
       setRewardsLoading(false);
     }
-  }, [allClaimed]);
+  }, [userAuthenticated, userId]);
 
   const fetchHistory = useCallback(async () => {
+    if (!userAuthenticated || !userId) {
+      setClaimHistory([]);
+      setHistoryLoading(false);
+      return;
+    }
+
     setHistoryLoading(true);
     try {
       const data = await getRewardHistory();
       setClaimHistory(data);
-    } catch {
-      // No history endpoint yet — silently fail
+    } catch (error) {
+      console.warn("WalletPage: failed to fetch reward history", error);
+      setClaimHistory([]);
     } finally {
       setHistoryLoading(false);
     }
-  }, []);
+  }, [userAuthenticated, userId]);
 
   /** Animate USDC display value from `from` to `to` over ~1200ms */
   function animateCountUp(from: number, to: number) {
@@ -136,14 +161,31 @@ export default function WalletPage() {
   );
 
   useEffect(() => {
-    if (isConnected && address) {
-      fetchMaticBalance();
-      refreshBalance();
+    if (!isConnected || !address) {
+      setRewards(null);
+      setClaimHistory([]);
+      setAllClaimed(false);
+      return;
+    }
+
+    fetchMaticBalance();
+    refreshBalance();
+
+    if (!userLoading && userAuthenticated && userId) {
       fetchRewards();
       fetchHistory();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, isConnected]);
+  }, [
+    address,
+    fetchHistory,
+    fetchMaticBalance,
+    fetchRewards,
+    isConnected,
+    refreshBalance,
+    userId,
+    userAuthenticated,
+    userLoading,
+  ]);
 
   const handleCopy = (val: string) => {
     navigator.clipboard.writeText(val);
@@ -382,12 +424,12 @@ export default function WalletPage() {
               </div>
 
               {/* Claimable Rewards */}
-              {(rewardsLoading || (rewards && rewards.totalClaimableUsdc > 0) || allClaimed) && (
+              {(rewardsLoading || (rewards && rewards.totalClaimableUsdc > 0) || allClaimed || recentNonClaimableRewards.length > 0) && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] flex items-center gap-2">
                       <Gift className="w-3.5 h-3.5" />
-                      Claimable Rewards
+                      {rewards && rewards.totalClaimableUsdc > 0 ? "Claimable Rewards" : "Rewards"}
                     </h3>
                     {rewards && rewards.totalClaimableUsdc > 0 && !allClaimed && (
                       <div className="flex items-center gap-1.5 px-2 py-1 bg-primary/10 rounded-full border border-primary/20">
@@ -484,6 +526,58 @@ export default function WalletPage() {
                             <img src="/usdc.png" alt="USDC" className="w-4 h-4" />
                             USDC
                           </motion.button>
+                        </div>
+                      </div>
+                    ) : recentNonClaimableRewards.length > 0 ? (
+                      <div className="p-5 space-y-4">
+                        <div className="flex items-start gap-3 rounded-[20px] border border-white/[0.06] bg-white/[0.02] p-4">
+                          <div className="w-10 h-10 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0">
+                            <CheckCircle2 className="w-5 h-5 text-lime-400" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-black text-white text-sm">No claimable rewards right now</p>
+                            <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">
+                              Your recent non-claimable rewards are shown below.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          {recentNonClaimableRewards.map((entry) => {
+                            const rewardDate = entry.claimedAt
+                              ? new Date(entry.claimedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                              : null;
+
+                            return (
+                              <div key={entry.id} className="flex items-center gap-3 rounded-[20px] border border-white/[0.05] bg-white/[0.015] px-4 py-3">
+                                <div className="w-11 h-11 rounded-xl overflow-hidden border border-white/[0.08] bg-white/[0.04] shrink-0 flex items-center justify-center">
+                                  {entry.eventImageUrl ? (
+                                    <img src={entry.eventImageUrl} alt="" className="w-full h-full object-cover" />
+                                  ) : entry.contentImageUrl ? (
+                                    <img src={entry.contentImageUrl} alt="" className="w-full h-full object-cover" />
+                                  ) : entry.brandLogoUrl ? (
+                                    <img src={entry.brandLogoUrl} alt={entry.brandName ?? ""} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <Gift className="w-4 h-4 text-white/20" />
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[11px] font-black text-white truncate leading-tight">
+                                    {entry.event?.title ?? "Reward Claim"}
+                                  </p>
+                                  <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mt-0.5 truncate">
+                                    {CLAIM_TYPE_LABEL[entry.claimType]}
+                                  </p>
+                                </div>
+                                <div className="text-right shrink-0">
+                                  <p className="text-sm font-black text-lime-400">+${entry.finalAmount.toFixed(2)}</p>
+                                  {rewardDate && (
+                                    <p className="text-[9px] font-black text-white/20 uppercase tracking-wide mt-0.5">{rewardDate}</p>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     ) : null}

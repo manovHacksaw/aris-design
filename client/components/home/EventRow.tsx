@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import type { EventData } from "@/types/events";
-import SpotifyEventCard from "./SpotifyEventCard";
+import type { Event } from "@/services/event.service";
+import PremiumEventCard from "@/components/events/PremiumEventCard";
 
 interface EventRowProps {
     title: string;
     madeFor?: string;        // e.g. "Made For" above the title like Spotify
-    events: EventData[];
+    events: Event[];
     loading?: boolean;
     showAllHref?: string;
 }
@@ -44,17 +44,19 @@ export default function EventRow({
 
             {/* Horizontal scroll row */}
             <div className="relative">
-                <div className="flex gap-1 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
+                <div className="flex gap-3 overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
                     {loading
                         ? Array.from({ length: 4 }).map((_, i) => (
                             <div
                                 key={i}
-                                className="flex-shrink-0 w-[280px] sm:w-[300px] aspect-[4/5] rounded-2xl bg-foreground/[0.05] animate-pulse border border-border"
+                                className="flex-shrink-0 w-[300px] sm:w-[340px] aspect-[4/5] rounded-2xl bg-foreground/[0.05] animate-pulse border border-border"
                                 style={{ animationDelay: `${i * 80}ms` }}
                             />
                         ))
                         : events.map((event) => (
-                            <SpotifyEventCard key={event.id} event={event} />
+                            <div key={event.id} className="flex-shrink-0 w-[300px] sm:w-[340px]">
+                                <PremiumEventCard event={event} />
+                            </div>
                         ))}
 
                     {!loading && events.length === 0 && (

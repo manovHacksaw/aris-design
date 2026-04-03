@@ -87,3 +87,103 @@ export const checkVotingState = async (req: AuthenticatedRequest, res: Response)
         });
     }
 };
+
+/**
+ * GET /api/debug/rewards-pending
+ * Development-only debug endpoint to inspect users with PENDING/CREDITED reward claims
+ */
+export const getPendingRewardUsers = async (_req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const claims = await prisma.rewardClaim.findMany({
+            where: {
+                status: { in: ['PENDING', 'CREDITED'] }
+            },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        username: true,
+                        email: true,
+                        walletAddress: true,
+                        eoaAddress: true,
+                    }
+                },
+                pool: {
+                    include: {
+                        event: {
+                            select: {
+                                id: true,
+                                title: true,
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: [
+                { userId: 'asc' },
+                { createdAt: 'desc' }
+            ]
+        });
+
+        const byUser = new Map<string, {
+            userId: string;
+            username: string | null;
+            email: string | null;
+            walletAddress: string | null;
+            eoaAddress: string | null;
+            totalAmount: number;
+            statuses: string[];
+            claims: Array<{
+                id: string;
+                status: string;
+                claimType: string;
+                finalAmount: number;
+                eventId: string;
+                eventTitle: string;
+            }>;
+        }>();
+
+        for (const claim of claims) {
+            const key = claim.userId;
+            if (!byUser.has(key)) {
+                byUser.set(key, {
+                    userId: claim.user.id,
+                    username: claim.user.username,
+                    email: claim.user.email,
+                    walletAddress: claim.user.walletAddress,
+                    eoaAddress: claim.user.eoaAddress,
+                    totalAmount: 0,
+                    statuses: [],
+                    claims: [],
+                });
+            }
+
+            const entry = byUser.get(key)!;
+            entry.totalAmount += claim.finalAmount;
+            if (!entry.statuses.includes(claim.status)) {
+                entry.statuses.push(claim.status);
+            }
+            entry.claims.push({
+                id: claim.id,
+                status: claim.status,
+                claimType: claim.claimType,
+                finalAmount: claim.finalAmount,
+                eventId: claim.pool.event.id,
+                eventTitle: claim.pool.event.title,
+            });
+        }
+
+        res.json({
+            success: true,
+            totalUsers: byUser.size,
+            totalClaims: claims.length,
+            users: Array.from(byUser.values()),
+        });
+    } catch (error: any) {
+        console.error('Error in getPendingRewardUsers:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+        });
+    }
+};

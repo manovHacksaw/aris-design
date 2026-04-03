@@ -9,6 +9,14 @@ import { EventType, REWARDS_CONSTANTS } from '../types/rewards.js';
  * Handles all reward pool and claim-related endpoints
  */
 export class RewardsController {
+  private static setNoStore(res: Response): void {
+    res.set({
+      'Cache-Control': 'private, no-store, no-cache, max-age=0, must-revalidate',
+      Pragma: 'no-cache',
+      Expires: '0',
+    });
+  }
+
   // ==================== POOL ENDPOINTS ====================
   // Note: Pool creation is now automatic during event creation (Web2 only)
 
@@ -292,6 +300,7 @@ export class RewardsController {
    */
   static async getMyRewards(req: Request, res: Response): Promise<void> {
     try {
+      RewardsController.setNoStore(res);
       const userId = req.user?.id;
 
       if (!userId) {
@@ -419,6 +428,7 @@ export class RewardsController {
    */
   static async getClaimableRewards(req: Request, res: Response): Promise<void> {
     try {
+      RewardsController.setNoStore(res);
       const userId = req.user?.id;
 
       if (!userId) {
@@ -453,6 +463,7 @@ export class RewardsController {
    */
   static async getClaimHistory(req: Request, res: Response): Promise<void> {
     try {
+      RewardsController.setNoStore(res);
       const userId = req.user?.id;
 
       if (!userId) {

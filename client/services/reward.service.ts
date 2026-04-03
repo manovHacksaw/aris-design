@@ -48,7 +48,8 @@ export const CLAIM_TYPE_LABEL: Record<ClaimType, string> = {
 /** GET /api/rewards/user/claimable — returns PENDING + CREDITED claims grouped by event */
 export async function getClaimableRewards(): Promise<ClaimableRewardsResponse> {
   const res = await apiRequest<{ success: boolean; data: ClaimableRewardsResponse }>(
-    "/rewards/user/claimable"
+    "/rewards/user/claimable",
+    { noCache: true }
   );
   return res.data;
 }
@@ -87,7 +88,7 @@ export async function getRewardHistory(): Promise<ClaimHistoryEntry[]> {
   const res = await apiRequest<{
     success: boolean;
     data: { claims: RawClaimHistoryItem[]; totalClaimedUsdc: number };
-  }>("/rewards/user/history");
+  }>("/rewards/user/history", { noCache: true });
   return (res.data?.claims ?? []).map((c) => ({
     id: c.id,
     claimType: c.claimType,

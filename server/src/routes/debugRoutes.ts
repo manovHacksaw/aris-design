@@ -1,10 +1,13 @@
 import { Router } from 'express';
-import { checkVotingState } from '../controllers/debugController.js';
+import { checkVotingState, getPendingRewardUsers } from '../controllers/debugController.js';
 import { authenticateJWT } from '../middlewares/authMiddleware.js';
 
 const router = Router();
 
 // Debug endpoint to check voting state
 router.get('/voting-state/:eventId', authenticateJWT, checkVotingState);
+
+// Development-only endpoint to inspect users with pending/credited reward claims
+router.get('/rewards-pending', getPendingRewardUsers);
 
 export default router;

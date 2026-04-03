@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Award } from "lucide-react";
-import ExploreEventCard from "@/components/events/ExploreEventCard";
+import PremiumEventCard from "@/components/events/PremiumEventCard";
 import { cn } from "@/lib/utils";
 
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
@@ -77,10 +77,10 @@ export default function BrandRow({ brand }: BrandRowProps) {
                     onScroll={(e) => setIsMoved(e.currentTarget.scrollLeft > 0)}
                 >
                     {brand.events.map((ev: any, i: number) => {
-                        const evtWithBrand = { ...ev, brand: { name: brand.name, categories: brand.categories } };
+                        const evtWithBrand = { ...ev, brand: { name: brand.name, logoUrl: brand.logoUrl, logoCid: brand.logoCid, categories: brand.categories } };
                         return (
-                            <div key={ev.id || i} className="shrink-0 w-[240px] sm:w-[280px] transition-transform duration-300 hover:z-10 relative object-center group-hover/row:hover:scale-105">
-                                <ExploreEventCard event={evtWithBrand} />
+                            <div key={ev.id || i} className="shrink-0 w-[280px] sm:w-[320px] transition-transform duration-300 hover:z-10 relative object-center group-hover/row:hover:scale-105">
+                                <PremiumEventCard event={evtWithBrand} />
                             </div>
                         );
                     })}

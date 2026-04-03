@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { EventData } from "@/types/events";
+import type { Event } from "@/services/event.service";
 import EventRow from "./EventRow";
 import { useUser } from "@/context/UserContext";
 import { getHomeFeedData } from "./homeFeedData";
@@ -10,9 +10,9 @@ export default function EventsTabFeed() {
     const { user } = useUser();
     const username = user?.displayName ?? user?.username ?? "You";
 
-    const [curated, setCurated] = useState<EventData[]>([]);
-    const [voteEvents, setVoteEvents] = useState<EventData[]>([]);
-    const [postEvents, setPostEvents] = useState<EventData[]>([]);
+    const [curated, setCurated] = useState<Event[]>([]);
+    const [voteEvents, setVoteEvents] = useState<Event[]>([]);
+    const [postEvents, setPostEvents] = useState<Event[]>([]);
 
     const [loadingCurated, setLoadingCurated] = useState(true);
     const [loadingVote, setLoadingVote] = useState(true);

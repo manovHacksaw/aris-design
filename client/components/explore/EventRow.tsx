@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import ExploreEventCard from "@/components/events/ExploreEventCard";
+import PremiumEventCard from "@/components/events/PremiumEventCard";
 import { cn } from "@/lib/utils";
 
 interface EventRowProps {
@@ -51,8 +51,8 @@ export default function EventRow({ title, events }: EventRowProps) {
                     onScroll={(e) => setIsMoved(e.currentTarget.scrollLeft > 0)}
                 >
                     {events.map((ev, i) => (
-                        <div key={ev.id || i} className="shrink-0 w-[280px] sm:w-[320px] transition-transform duration-300 hover:z-10 relative object-center group-hover/row:hover:scale-105">
-                            <ExploreEventCard event={ev} />
+                        <div key={ev.id || i} className="shrink-0 w-[320px] sm:w-[380px] transition-transform duration-300 hover:z-10 relative object-center group-hover/row:hover:scale-105">
+                            <PremiumEventCard event={ev} />
                         </div>
                     ))}
                 </div>
