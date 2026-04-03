@@ -2,13 +2,27 @@
 
 import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Award } from "lucide-react";
+import type { Event } from "@/services/event.service";
 import PremiumEventCard from "@/components/events/PremiumEventCard";
-import { cn } from "@/lib/utils";
 
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
+type BrandEvent = Event & {
+    brand?: Event["brand"] & {
+        categories?: string[];
+    };
+};
+
 interface BrandRowProps {
-    brand: any;
+    brand: {
+        name: string;
+        tagline?: string;
+        logoUrl?: string;
+        logoCid?: string;
+        liveRewardSize?: number;
+        categories?: string[];
+        events: BrandEvent[];
+    };
 }
 
 export default function BrandRow({ brand }: BrandRowProps) {
@@ -76,7 +90,7 @@ export default function BrandRow({ brand }: BrandRowProps) {
                     className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth pl-4 sm:pl-0 pr-4 sm:pr-0 pb-4 pt-2"
                     onScroll={(e) => setIsMoved(e.currentTarget.scrollLeft > 0)}
                 >
-                    {brand.events.map((ev: any, i: number) => {
+                    {brand.events.map((ev, i) => {
                         const evtWithBrand = { ...ev, brand: { name: brand.name, logoUrl: brand.logoUrl, logoCid: brand.logoCid, categories: brand.categories } };
                         return (
                             <div key={ev.id || i} className="shrink-0 w-[280px] sm:w-[320px] transition-transform duration-300 hover:z-10 relative object-center group-hover/row:hover:scale-105">

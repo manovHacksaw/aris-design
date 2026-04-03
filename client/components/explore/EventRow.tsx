@@ -2,12 +2,12 @@
 
 import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { Event } from "@/services/event.service";
 import PremiumEventCard from "@/components/events/PremiumEventCard";
-import { cn } from "@/lib/utils";
 
 interface EventRowProps {
     title: string;
-    events: any[];
+    events: Event[];
 }
 
 export default function EventRow({ title, events }: EventRowProps) {

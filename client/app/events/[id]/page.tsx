@@ -81,8 +81,8 @@ function BigCountdown({ targetDate }: { targetDate: string | Date }) {
         return () => clearInterval(id);
     }, [target]);
 
-    const days    = Math.floor(timeLeft / 86400000);
-    const hours   = Math.floor((timeLeft / 3600000) % 24);
+    const days = Math.floor(timeLeft / 86400000);
+    const hours = Math.floor((timeLeft / 3600000) % 24);
     const minutes = Math.floor((timeLeft / 60000) % 60);
     const seconds = Math.floor((timeLeft / 1000) % 60);
 
@@ -205,7 +205,7 @@ function SocialLinks({ links, eventId }: { links?: Record<string, string>; event
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ target: platform === 'website' ? 'website' : 'social', platform }),
-        }).catch(() => {});
+        }).catch(() => { });
     };
 
     return (
@@ -967,123 +967,123 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                     const hasNext = previewIdx < sortedSubmissions.length - 1;
                     const goTo = (idx: number) => setPreviewSubmissionId(sortedSubmissions[idx].id);
                     return (
-                    <motion.div
-                        key="submission-preview"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[200] bg-black/92 backdrop-blur-sm flex items-center justify-center p-4 md:p-8"
-                        onClick={() => setPreviewSubmissionId(null)}
-                        onKeyDown={(e) => {
-                            if (e.key === "ArrowLeft" && hasPrev) goTo(previewIdx - 1);
-                            if (e.key === "ArrowRight" && hasNext) goTo(previewIdx + 1);
-                            if (e.key === "Escape") setPreviewSubmissionId(null);
-                        }}
-                        tabIndex={-1}
-                        ref={(el) => el?.focus()}
-                    >
-                        <button type="button" onClick={() => setPreviewSubmissionId(null)}
-                            className="absolute top-4 right-4 md:top-6 md:right-6 w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors z-10">
-                            <X className="w-4 h-4" />
-                        </button>
-
-                        {/* Prev */}
-                        {hasPrev && (
-                            <button type="button" onClick={(e) => { e.stopPropagation(); goTo(previewIdx - 1); }}
-                                className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors z-10">
-                                <ChevronLeft className="w-5 h-5" />
+                        <motion.div
+                            key="submission-preview"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[200] bg-black/92 backdrop-blur-sm flex items-center justify-center p-4 md:p-8"
+                            onClick={() => setPreviewSubmissionId(null)}
+                            onKeyDown={(e) => {
+                                if (e.key === "ArrowLeft" && hasPrev) goTo(previewIdx - 1);
+                                if (e.key === "ArrowRight" && hasNext) goTo(previewIdx + 1);
+                                if (e.key === "Escape") setPreviewSubmissionId(null);
+                            }}
+                            tabIndex={-1}
+                            ref={(el) => el?.focus()}
+                        >
+                            <button type="button" onClick={() => setPreviewSubmissionId(null)}
+                                className="absolute top-4 right-4 md:top-6 md:right-6 w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors z-10">
+                                <X className="w-4 h-4" />
                             </button>
-                        )}
 
-                        {/* Next */}
-                        {hasNext && (
-                            <button type="button" onClick={(e) => { e.stopPropagation(); goTo(previewIdx + 1); }}
-                                className="absolute right-16 md:right-20 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors z-10">
-                                <ChevronRight className="w-5 h-5" />
-                            </button>
-                        )}
+                            {/* Prev */}
+                            {hasPrev && (
+                                <button type="button" onClick={(e) => { e.stopPropagation(); goTo(previewIdx - 1); }}
+                                    className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors z-10">
+                                    <ChevronLeft className="w-5 h-5" />
+                                </button>
+                            )}
 
-                        {/* Counter */}
-                        <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/10 border border-white/10" onClick={(e) => e.stopPropagation()}>
-                            <span className="text-[11px] font-black text-white/50">{previewIdx + 1} / {sortedSubmissions.length}</span>
-                        </div>
+                            {/* Next */}
+                            {hasNext && (
+                                <button type="button" onClick={(e) => { e.stopPropagation(); goTo(previewIdx + 1); }}
+                                    className="absolute right-16 md:right-20 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors z-10">
+                                    <ChevronRight className="w-5 h-5" />
+                                </button>
+                            )}
 
-                        <div className="w-full max-w-[960px] flex flex-col md:flex-row gap-6 items-center md:items-stretch h-[90vh]" onClick={(e) => e.stopPropagation()}>
-                            {/* Image */}
-                            <div className="flex-1 flex items-center justify-center overflow-hidden">
-                                <img
-                                    src={previewSub.imageUrl || `${PINATA_GW}/${previewSub.imageCid}`}
-                                    alt="Submission preview"
-                                    className="max-w-full max-h-full object-contain rounded-[18px] border border-white/15"
-                                />
+                            {/* Counter */}
+                            <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/10 border border-white/10" onClick={(e) => e.stopPropagation()}>
+                                <span className="text-[11px] font-black text-white/50">{previewIdx + 1} / {sortedSubmissions.length}</span>
                             </div>
 
-                            {/* Details panel */}
-                            <div className="w-full md:w-[260px] shrink-0 flex flex-col gap-3">
-                                {/* Caption */}
-                                {previewSub.content && (
-                                    <div className="bg-white/[0.04] border border-white/[0.08] rounded-[16px] p-4">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2">Caption</p>
-                                        <p className="text-sm text-white/80 leading-relaxed">{previewSub.content}</p>
-                                    </div>
-                                )}
+                            <div className="w-full max-w-[960px] flex flex-col md:flex-row gap-6 items-center md:items-stretch h-[90vh]" onClick={(e) => e.stopPropagation()}>
+                                {/* Image */}
+                                <div className="flex-1 flex items-center justify-center overflow-hidden">
+                                    <img
+                                        src={previewSub.imageUrl || `${PINATA_GW}/${previewSub.imageCid}`}
+                                        alt="Submission preview"
+                                        className="max-w-full max-h-full object-contain rounded-[18px] border border-white/15"
+                                    />
+                                </div>
 
-                                {/* Guaranteed reward */}
-                                {(event.baseReward ?? 0) > 0 && (
-                                    <div className="bg-lime-400/8 border border-lime-400/20 rounded-[16px] p-4">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-lime-400/60 mb-1">Vote & Earn</p>
-                                        <p className="text-2xl font-black text-lime-400">${event.baseReward?.toFixed(2)}</p>
-                                        <p className="text-[11px] text-white/40 mt-0.5">Guaranteed per vote, paid on completion</p>
-                                    </div>
-                                )}
+                                {/* Details panel */}
+                                <div className="w-full md:w-[260px] shrink-0 flex flex-col gap-3">
+                                    {/* Caption */}
+                                    {previewSub.content && (
+                                        <div className="bg-white/[0.04] border border-white/[0.08] rounded-[16px] p-4">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2">Caption</p>
+                                            <p className="text-sm text-white/80 leading-relaxed">{previewSub.content}</p>
+                                        </div>
+                                    )}
 
-                                {/* Top prize */}
-                                {(event.topReward ?? event.leaderboardPool ?? 0) > 0 && (
-                                    <div className="bg-[#A78BFA]/8 border border-[#A78BFA]/20 rounded-[16px] p-4">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-[#A78BFA]/60 mb-1">Top Prize Pool</p>
-                                        <p className="text-2xl font-black text-[#A78BFA]">${(event.topReward ?? event.leaderboardPool ?? 0).toFixed(2)}</p>
-                                        <p className="text-[11px] text-white/40 mt-0.5 leading-snug">
-                                            If this entry wins most votes, you become eligible for the grand prize
-                                        </p>
-                                    </div>
-                                )}
+                                    {/* Guaranteed reward */}
+                                    {(event.baseReward ?? 0) > 0 && (
+                                        <div className="bg-lime-400/8 border border-lime-400/20 rounded-[16px] p-4">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-lime-400/60 mb-1">Vote & Earn</p>
+                                            <p className="text-2xl font-black text-lime-400">${event.baseReward?.toFixed(2)}</p>
+                                            <p className="text-[11px] text-white/40 mt-0.5">Guaranteed per vote, paid on completion</p>
+                                        </div>
+                                    )}
 
-                                {/* Actions */}
-                                <div className="mt-auto flex flex-col gap-2 pt-1">
-                                    {!votedSubmissionId && !(event.eventType !== "vote_only" && previewSub.userId === user?.id) && (
+                                    {/* Top prize */}
+                                    {(event.topReward ?? event.leaderboardPool ?? 0) > 0 && (
+                                        <div className="bg-[#A78BFA]/8 border border-[#A78BFA]/20 rounded-[16px] p-4">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-[#A78BFA]/60 mb-1">Top Prize Pool</p>
+                                            <p className="text-2xl font-black text-[#A78BFA]">${(event.topReward ?? event.leaderboardPool ?? 0).toFixed(2)}</p>
+                                            <p className="text-[11px] text-white/40 mt-0.5 leading-snug">
+                                                If this entry wins most votes, you become eligible for the grand prize
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Actions */}
+                                    <div className="mt-auto flex flex-col gap-2 pt-1">
+                                        {!votedSubmissionId && !(event.eventType !== "vote_only" && previewSub.userId === user?.id) && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    handleVote(previewSub.id);
+                                                    setPreviewSubmissionId(null);
+                                                }}
+                                                className="w-full py-3.5 rounded-[14px] bg-lime-400 text-black text-sm font-black uppercase tracking-widest hover:bg-lime-300 transition-colors"
+                                            >
+                                                Vote for This
+                                            </button>
+                                        )}
+                                        {votedSubmissionId === previewSub.id && (
+                                            <div className="w-full py-3.5 rounded-[14px] bg-lime-400/15 border border-lime-400/30 flex items-center justify-center gap-2">
+                                                <CheckCircle2 className="w-4 h-4 text-lime-400" />
+                                                <span className="text-sm font-black text-lime-400 uppercase tracking-widest">Voted</span>
+                                            </div>
+                                        )}
+                                        {votedSubmissionId && votedSubmissionId !== previewSub.id && (
+                                            <div className="w-full py-3.5 rounded-[14px] bg-white/5 border border-white/10 text-center">
+                                                <span className="text-xs font-black text-white/30 uppercase tracking-widest">Vote already cast</span>
+                                            </div>
+                                        )}
                                         <button
                                             type="button"
-                                            onClick={() => {
-                                                handleVote(previewSub.id);
-                                                setPreviewSubmissionId(null);
-                                            }}
-                                            className="w-full py-3.5 rounded-[14px] bg-lime-400 text-black text-sm font-black uppercase tracking-widest hover:bg-lime-300 transition-colors"
+                                            onClick={() => handleShareSubmission(previewSub.id)}
+                                            className="w-full py-3 rounded-[14px] border border-white/15 text-white/60 text-xs font-black uppercase tracking-widest hover:bg-white/5 transition-colors"
                                         >
-                                            Vote for This
+                                            Share
                                         </button>
-                                    )}
-                                    {votedSubmissionId === previewSub.id && (
-                                        <div className="w-full py-3.5 rounded-[14px] bg-lime-400/15 border border-lime-400/30 flex items-center justify-center gap-2">
-                                            <CheckCircle2 className="w-4 h-4 text-lime-400" />
-                                            <span className="text-sm font-black text-lime-400 uppercase tracking-widest">Voted</span>
-                                        </div>
-                                    )}
-                                    {votedSubmissionId && votedSubmissionId !== previewSub.id && (
-                                        <div className="w-full py-3.5 rounded-[14px] bg-white/5 border border-white/10 text-center">
-                                            <span className="text-xs font-black text-white/30 uppercase tracking-widest">Vote already cast</span>
-                                        </div>
-                                    )}
-                                    <button
-                                        type="button"
-                                        onClick={() => handleShareSubmission(previewSub.id)}
-                                        className="w-full py-3 rounded-[14px] border border-white/15 text-white/60 text-xs font-black uppercase tracking-widest hover:bg-white/5 transition-colors"
-                                    >
-                                        Share
-                                    </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </motion.div>
+                        </motion.div>
                     );
                 })()}
             </AnimatePresence>
@@ -1278,6 +1278,18 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                         <p className="text-4xl md:text-5xl font-black text-green-400 leading-none tabular-nums">{activeViewers}</p>
                                                     </div>
                                                 </div>
+                                                {calculateTotalPool(event) > 0 && (
+                                                    <>
+                                                        <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
+                                                        <div>
+                                                            <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Total Prize Pool</p>
+                                                            <div className="flex items-center gap-2">
+                                                                <Trophy className="w-5 h-5 text-yellow-400 shrink-0" />
+                                                                <p className="text-4xl md:text-5xl font-black text-yellow-400 leading-none tabular-nums">${calculateTotalPool(event).toLocaleString()}</p>
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                )}
                                             </>
                                         )}
                                     </div>
@@ -1289,66 +1301,66 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                 {/* ── Left: Submit panel ── */}
                                 <div className="flex-1 min-w-0 space-y-5">
 
-                                {/* ── Already submitted ── */}
-                                {hasSubmitted && mySubmission ? (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 8 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        className="rounded-[24px] border border-lime-400/30 bg-lime-400/5 overflow-hidden"
-                                    >
-                                        <div className="px-5 py-4 border-b border-lime-400/20 flex items-center gap-3">
-                                            <motion.div
-                                                initial={{ scale: 0.92, opacity: 0.7 }}
-                                                animate={{ scale: 1, opacity: 1 }}
-                                                transition={{ duration: 0.22 }}
-                                                className="w-8 h-8 rounded-xl bg-lime-400/15 flex items-center justify-center shrink-0"
-                                            >
-                                                <CheckCircle2 className="w-4 h-4 text-lime-400" />
-                                            </motion.div>
-                                            <div>
-                                                <p className="text-sm font-black text-foreground">Your post has been submitted </p>
-                                                <p className="text-[10px] text-foreground/40 font-medium">Submitted successfully · waiting for voting phase</p>
+                                    {/* ── Already submitted ── */}
+                                    {hasSubmitted && mySubmission ? (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 8 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="rounded-[24px] border border-lime-400/30 bg-lime-400/5 overflow-hidden"
+                                        >
+                                            <div className="px-5 py-4 border-b border-lime-400/20 flex items-center gap-3">
+                                                <motion.div
+                                                    initial={{ scale: 0.92, opacity: 0.7 }}
+                                                    animate={{ scale: 1, opacity: 1 }}
+                                                    transition={{ duration: 0.22 }}
+                                                    className="w-8 h-8 rounded-xl bg-lime-400/15 flex items-center justify-center shrink-0"
+                                                >
+                                                    <CheckCircle2 className="w-4 h-4 text-lime-400" />
+                                                </motion.div>
+                                                <div>
+                                                    <p className="text-sm font-black text-foreground">Your post has been submitted </p>
+                                                    <p className="text-[10px] text-foreground/40 font-medium">Submitted successfully · waiting for voting phase</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                        {(mySubmission.imageUrl || mySubmission.imageCid) && (
-                                            <div className="p-4">
-                                                <img
-                                                    src={mySubmission.imageUrl || `${PINATA_GW}/${mySubmission.imageCid}`}
-                                                    className="w-full rounded-[16px] border border-lime-400/20 object-contain bg-black"
-                                                    alt="Your submission"
-                                                />
-                                                {(mySubmission as any).caption && (
-                                                    <p className="mt-3 text-sm text-foreground/60 font-medium leading-relaxed">{(mySubmission as any).caption}</p>
-                                                )}
+                                            {(mySubmission.imageUrl || mySubmission.imageCid) && (
+                                                <div className="p-4">
+                                                    <img
+                                                        src={mySubmission.imageUrl || `${PINATA_GW}/${mySubmission.imageCid}`}
+                                                        className="w-full rounded-[16px] border border-lime-400/20 object-contain bg-black"
+                                                        alt="Your submission"
+                                                    />
+                                                    {(mySubmission as any).caption && (
+                                                        <p className="mt-3 text-sm text-foreground/60 font-medium leading-relaxed">{(mySubmission as any).caption}</p>
+                                                    )}
+                                                </div>
+                                            )}
+                                            {/* Voting phase info */}
+                                            <div className="mx-4 mb-4 rounded-[14px] bg-white/[0.03] border border-white/[0.07] px-4 py-3 space-y-1.5">
+                                                <p className="text-[9px] font-black uppercase tracking-widest text-foreground/35">What happens next?</p>
+                                                <p className="text-[11px] text-foreground/55 leading-relaxed">
+                                                    Once the posting phase ends, the <span className="text-foreground/80 font-semibold">voting phase begins</span>. You'll be able to see all other submissions and vote on your favourite. Other participants will also see your entry and can vote for it — every vote earns you <span className="text-lime-400 font-semibold">$0.05 USDC</span>.
+                                                </p>
                                             </div>
-                                        )}
-                                        {/* Voting phase info */}
-                                        <div className="mx-4 mb-4 rounded-[14px] bg-white/[0.03] border border-white/[0.07] px-4 py-3 space-y-1.5">
-                                            <p className="text-[9px] font-black uppercase tracking-widest text-foreground/35">What happens next?</p>
-                                            <p className="text-[11px] text-foreground/55 leading-relaxed">
-                                                Once the posting phase ends, the <span className="text-foreground/80 font-semibold">voting phase begins</span>. You'll be able to see all other submissions and vote on your favourite. Other participants will also see your entry and can vote for it — every vote earns you <span className="text-lime-400 font-semibold">$0.05 USDC</span>.
-                                            </p>
-                                        </div>
-                                    </motion.div>
-                                ) : (
-                                    /* ── Submit hero panel (CreateHero-style) ── */
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 8 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        className="rounded-[28px] bg-[#0c0c10] border border-white/[0.07]"
-                                    >
-                                        <div className="px-6 py-8 sm:px-8 space-y-6">
-                                            {/* Heading */}
-                                            <div>
-                                                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">{event.brand?.name}</p>
-                                                <h2 className="font-display text-4xl md:text-5xl text-white leading-[0.9] uppercase tracking-tight">
-                                                    Compete for the{" "}
-                                                    <span className="bg-gradient-to-r from-lime-300 via-lime-400 to-green-400 bg-clip-text text-transparent">top spot</span>
-                                                </h2>
-                                            </div>
+                                        </motion.div>
+                                    ) : (
+                                        /* ── Submit hero panel (CreateHero-style) ── */
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 8 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="rounded-[28px] bg-[#0c0c10] border border-white/[0.07]"
+                                        >
+                                            <div className="px-6 py-8 sm:px-8 space-y-6">
+                                                {/* Heading */}
+                                                <div>
+                                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">{event.brand?.name}</p>
+                                                    <h2 className="font-display text-4xl md:text-5xl text-white leading-[0.9] uppercase tracking-tight">
+                                                        Compete for the{" "}
+                                                        <span className="bg-gradient-to-r from-lime-300 via-lime-400 to-green-400 bg-clip-text text-transparent">top spot</span>
+                                                    </h2>
+                                                </div>
 
-                                            {/* AI prompt + generate — always shown */}
-                                            <div className="space-y-3">
+                                                {/* AI prompt + generate — always shown */}
+                                                <div className="space-y-3">
                                                     {/* Create-page style prompt row */}
                                                     <div className="flex items-center gap-2 px-4 py-3 rounded-[14px] border border-white/[0.1] bg-white/[0.03] focus-within:border-lime-400/40 focus-within:shadow-[0_0_0_1px_rgba(163,230,53,0.15)] transition-all">
                                                         <input
@@ -1454,274 +1466,274 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                         </div>
                                                     )}
                                                 </div>
-                                        </div>
-                                    </motion.div>
-                                )}
-
-
-                                {/* ── Submit modal ── */}
-                                <AnimatePresence>
-                                    {submitModalOpen && (aiImageUrl || preview) && (
-                                        <motion.div
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            exit={{ opacity: 0 }}
-                                            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-                                            onClick={(e) => { if (e.target === e.currentTarget) setSubmitModalOpen(false); }}
-                                        >
-                                            <motion.div
-                                                initial={{ opacity: 0, scale: 0.95, y: 12 }}
-                                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                                exit={{ opacity: 0, scale: 0.95, y: 12 }}
-                                                transition={{ duration: 0.22 }}
-                                                className="w-full max-w-3xl bg-[#0e0e12] border border-white/[0.08] rounded-[28px] overflow-hidden flex flex-col md:flex-row"
-                                            >
-                                                {/* Left — image */}
-                                                <div className="md:w-[52%] shrink-0 relative bg-black flex items-center justify-center min-h-[320px]">
-                                                    <img
-                                                        src={aiImageUrl || preview!}
-                                                        className="w-full h-full object-contain"
-                                                        style={{ maxHeight: "520px" }}
-                                                        alt="Submission preview"
-                                                    />
-                                                    <div className="absolute top-3 left-3 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1.5" style={{ background: aiImageUrl ? "rgba(163,230,53,0.8)" : "rgba(255,255,255,0.15)" }}>
-                                                        {aiImageUrl ? <Sparkles className="w-3 h-3 text-black" /> : <Upload className="w-3 h-3 text-white" />}
-                                                        <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: aiImageUrl ? "black" : "white" }}>{aiImageUrl ? "AI Generated" : "Your Upload"}</span>
-                                                    </div>
-                                                </div>
-
-                                                {/* Right — caption + rewards + submit */}
-                                                <div className="flex-1 flex flex-col p-6 gap-4">
-                                                    <div className="flex items-start justify-between">
-                                                        <div>
-                                                            <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">{event.brand?.name}</p>
-                                                            <h3 className="font-display text-2xl text-white uppercase leading-tight">Submit Entry</h3>
-                                                        </div>
-                                                        <button
-                                                            onClick={() => setSubmitModalOpen(false)}
-                                                            className="w-8 h-8 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.1] transition-colors shrink-0"
-                                                        >
-                                                            <X className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
-
-                                                    {/* Optional caption */}
-                                                    <div>
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">
-                                                            Optional Caption
-                                                        </label>
-                                                        <textarea
-                                                            value={caption}
-                                                            onChange={(e) => setCaption(e.target.value)}
-                                                            placeholder="Describe your entry…"
-                                                            rows={3}
-                                                            maxLength={280}
-                                                            className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-foreground/30 resize-none focus:outline-none focus:border-white/20 transition-colors"
-                                                        />
-                                                        <p className="text-[10px] text-white/25 text-right mt-1">{caption.length}/280</p>
-                                                    </div>
-
-                                                    {/* Reward info */}
-                                                    <div className="rounded-[14px] bg-white/[0.03] border border-white/[0.07] p-3 space-y-2">
-                                                        <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-1">Your Earnings</p>
-                                                        <div className="flex items-center justify-between">
-                                                            <p className="text-[11px] text-white/55">Per vote received on your post</p>
-                                                            <p className="text-xs font-black text-lime-400">$0.05 USDC</p>
-                                                        </div>
-                                                        {(event.leaderboardPool ?? 0) > 0 && (
-                                                            <>
-                                                                <div className="border-t border-white/[0.06] pt-2 space-y-1.5">
-                                                                    <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-1">Leaderboard Pool · ${(event.leaderboardPool ?? 0).toLocaleString()} USDC</p>
-                                                                    {([
-                                                                        { place: "🥇 1st", pct: 0.50 },
-                                                                        { place: "🥈 2nd", pct: 0.35 },
-                                                                        { place: "🥉 3rd", pct: 0.15 },
-                                                                    ] as const).map(({ place, pct }) => (
-                                                                        <div key={place} className="flex items-center justify-between">
-                                                                            <p className="text-[11px] text-white/55">{place} Place</p>
-                                                                            <p className="text-xs font-black text-white/70">${((event.leaderboardPool ?? 0) * pct).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC</p>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            </>
-                                                        )}
-                                                    </div>
-
-                                                    <button
-                                                        onClick={() => { setSubmitModalOpen(false); handleSubmit(); }}
-                                                        disabled={(!aiImageFile && !file) || submitting}
-                                                        className="mt-auto w-full py-4 bg-purple-500 hover:bg-purple-400 text-white rounded-[14px] text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2.5 active:scale-[0.99] transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:shadow-[0_0_20px_rgba(168,85,247,0.4)]"
-                                                    >
-                                                        {submitting
-                                                            ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</>
-                                                            : <><Sparkles className="w-4 h-4" /> Enter Competition</>
-                                                        }
-                                                    </button>
-                                                </div>
-                                            </motion.div>
+                                            </div>
                                         </motion.div>
                                     )}
-                                </AnimatePresence>
 
-                                {/* ── Rules (quick) ── */}
-                                <div className="rounded-[24px] border border-border/40 bg-white/[0.02] p-5 space-y-4">
-                                    <div className="flex items-center gap-2">
-                                        <Info className="w-3.5 h-3.5 text-foreground/40" />
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Rules (quick)</p>
-                                    </div>
-                                    <ul className="space-y-2">
-                                        {[
-                                            "1 submission per user",
-                                            "Max 5MB",
-                                            "No copyrighted content",
-                                        ].map((rule) => (
-                                            <li key={rule} className="text-sm text-foreground/60 flex items-center gap-2.5">
-                                                <span className="w-1 h-1 rounded-full bg-foreground/45 shrink-0" />
-                                                {rule}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowFullRules((v) => !v)}
-                                        className="text-xs font-black uppercase tracking-widest text-orange-400/90 hover:text-orange-300 transition-colors"
-                                    >
-                                        {showFullRules ? "Hide full rules" : "View full rules"}
-                                    </button>
+
+                                    {/* ── Submit modal ── */}
                                     <AnimatePresence>
-                                        {showFullRules && (
-                                            <motion.ol
-                                                initial={{ opacity: 0, y: -6 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: -6 }}
-                                                transition={{ duration: 0.18 }}
-                                                className="space-y-2.5 pt-2 border-t border-border/30"
+                                        {submitModalOpen && (aiImageUrl || preview) && (
+                                            <motion.div
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
+                                                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+                                                onClick={(e) => { if (e.target === e.currentTarget) setSubmitModalOpen(false); }}
                                             >
-                                                {(event.submissionGuidelines
-                                                    ? event.submissionGuidelines.split("\n").filter(Boolean)
-                                                    : [
-                                                        "Upload a high-resolution image (JPEG or PNG, max 5 MB).",
-                                                        "Preferred aspect ratio: 4:5 or 1:1.",
-                                                        "Add an optional caption to describe your work.",
-                                                        "One submission per participant — make it count.",
-                                                        "No offensive or copyrighted content.",
-                                                    ]
-                                                ).map((rule, i) => (
-                                                    <li key={i} className="text-xs text-foreground/55 leading-relaxed">
-                                                        {i + 1}. {rule}
-                                                    </li>
-                                                ))}
-                                            </motion.ol>
+                                                <motion.div
+                                                    initial={{ opacity: 0, scale: 0.95, y: 12 }}
+                                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                    exit={{ opacity: 0, scale: 0.95, y: 12 }}
+                                                    transition={{ duration: 0.22 }}
+                                                    className="w-full max-w-3xl bg-[#0e0e12] border border-white/[0.08] rounded-[28px] overflow-hidden flex flex-col md:flex-row"
+                                                >
+                                                    {/* Left — image */}
+                                                    <div className="md:w-[52%] shrink-0 relative bg-black flex items-center justify-center min-h-[320px]">
+                                                        <img
+                                                            src={aiImageUrl || preview!}
+                                                            className="w-full h-full object-contain"
+                                                            style={{ maxHeight: "520px" }}
+                                                            alt="Submission preview"
+                                                        />
+                                                        <div className="absolute top-3 left-3 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1.5" style={{ background: aiImageUrl ? "rgba(163,230,53,0.8)" : "rgba(255,255,255,0.15)" }}>
+                                                            {aiImageUrl ? <Sparkles className="w-3 h-3 text-black" /> : <Upload className="w-3 h-3 text-white" />}
+                                                            <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: aiImageUrl ? "black" : "white" }}>{aiImageUrl ? "AI Generated" : "Your Upload"}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Right — caption + rewards + submit */}
+                                                    <div className="flex-1 flex flex-col p-6 gap-4">
+                                                        <div className="flex items-start justify-between">
+                                                            <div>
+                                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">{event.brand?.name}</p>
+                                                                <h3 className="font-display text-2xl text-white uppercase leading-tight">Submit Entry</h3>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => setSubmitModalOpen(false)}
+                                                                className="w-8 h-8 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.1] transition-colors shrink-0"
+                                                            >
+                                                                <X className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Optional caption */}
+                                                        <div>
+                                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">
+                                                                Optional Caption
+                                                            </label>
+                                                            <textarea
+                                                                value={caption}
+                                                                onChange={(e) => setCaption(e.target.value)}
+                                                                placeholder="Describe your entry…"
+                                                                rows={3}
+                                                                maxLength={280}
+                                                                className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-foreground/30 resize-none focus:outline-none focus:border-white/20 transition-colors"
+                                                            />
+                                                            <p className="text-[10px] text-white/25 text-right mt-1">{caption.length}/280</p>
+                                                        </div>
+
+                                                        {/* Reward info */}
+                                                        <div className="rounded-[14px] bg-white/[0.03] border border-white/[0.07] p-3 space-y-2">
+                                                            <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-1">Your Earnings</p>
+                                                            <div className="flex items-center justify-between">
+                                                                <p className="text-[11px] text-white/55">Per vote received on your post</p>
+                                                                <p className="text-xs font-black text-lime-400">$0.05 USDC</p>
+                                                            </div>
+                                                            {(event.leaderboardPool ?? 0) > 0 && (
+                                                                <>
+                                                                    <div className="border-t border-white/[0.06] pt-2 space-y-1.5">
+                                                                        <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-1">Leaderboard Pool · ${(event.leaderboardPool ?? 0).toLocaleString()} USDC</p>
+                                                                        {([
+                                                                            { place: "🥇 1st", pct: 0.50 },
+                                                                            { place: "🥈 2nd", pct: 0.35 },
+                                                                            { place: "🥉 3rd", pct: 0.15 },
+                                                                        ] as const).map(({ place, pct }) => (
+                                                                            <div key={place} className="flex items-center justify-between">
+                                                                                <p className="text-[11px] text-white/55">{place} Place</p>
+                                                                                <p className="text-xs font-black text-white/70">${((event.leaderboardPool ?? 0) * pct).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC</p>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </>
+                                                            )}
+                                                        </div>
+
+                                                        <button
+                                                            onClick={() => { setSubmitModalOpen(false); handleSubmit(); }}
+                                                            disabled={(!aiImageFile && !file) || submitting}
+                                                            className="mt-auto w-full py-4 bg-purple-500 hover:bg-purple-400 text-white rounded-[14px] text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2.5 active:scale-[0.99] transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:shadow-[0_0_20px_rgba(168,85,247,0.4)]"
+                                                        >
+                                                            {submitting
+                                                                ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</>
+                                                                : <><Sparkles className="w-4 h-4" /> Enter Competition</>
+                                                            }
+                                                        </button>
+                                                    </div>
+                                                </motion.div>
+                                            </motion.div>
                                         )}
                                     </AnimatePresence>
+
+                                    {/* ── Rules (quick) ── */}
+                                    <div className="rounded-[24px] border border-border/40 bg-white/[0.02] p-5 space-y-4">
+                                        <div className="flex items-center gap-2">
+                                            <Info className="w-3.5 h-3.5 text-foreground/40" />
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Rules (quick)</p>
+                                        </div>
+                                        <ul className="space-y-2">
+                                            {[
+                                                "1 submission per user",
+                                                "Max 5MB",
+                                                "No copyrighted content",
+                                            ].map((rule) => (
+                                                <li key={rule} className="text-sm text-foreground/60 flex items-center gap-2.5">
+                                                    <span className="w-1 h-1 rounded-full bg-foreground/45 shrink-0" />
+                                                    {rule}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowFullRules((v) => !v)}
+                                            className="text-xs font-black uppercase tracking-widest text-orange-400/90 hover:text-orange-300 transition-colors"
+                                        >
+                                            {showFullRules ? "Hide full rules" : "View full rules"}
+                                        </button>
+                                        <AnimatePresence>
+                                            {showFullRules && (
+                                                <motion.ol
+                                                    initial={{ opacity: 0, y: -6 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: -6 }}
+                                                    transition={{ duration: 0.18 }}
+                                                    className="space-y-2.5 pt-2 border-t border-border/30"
+                                                >
+                                                    {(event.submissionGuidelines
+                                                        ? event.submissionGuidelines.split("\n").filter(Boolean)
+                                                        : [
+                                                            "Upload a high-resolution image (JPEG or PNG, max 5 MB).",
+                                                            "Preferred aspect ratio: 4:5 or 1:1.",
+                                                            "Add an optional caption to describe your work.",
+                                                            "One submission per participant — make it count.",
+                                                            "No offensive or copyrighted content.",
+                                                        ]
+                                                    ).map((rule, i) => (
+                                                        <li key={i} className="text-xs text-foreground/55 leading-relaxed">
+                                                            {i + 1}. {rule}
+                                                        </li>
+                                                    ))}
+                                                </motion.ol>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+
+
+                                    {preview && (
+                                        <PinturaImageEditor
+                                            isOpen={pinturaOpen}
+                                            imageSrc={preview}
+                                            onDone={(f, p) => { if (preview) URL.revokeObjectURL(preview); setFile(f); setPreview(p); setPinturaOpen(false); }}
+                                            onClose={() => setPinturaOpen(false)}
+                                        />
+                                    )}
                                 </div>
 
+                                {/* ── Right: Event info + Rewards ── */}
+                                <div className="lg:w-[300px] shrink-0">
+                                    <div className="sticky top-6 space-y-4">
 
-                                {preview && (
-                                    <PinturaImageEditor
-                                        isOpen={pinturaOpen}
-                                        imageSrc={preview}
-                                        onDone={(f, p) => { if (preview) URL.revokeObjectURL(preview); setFile(f); setPreview(p); setPinturaOpen(false); }}
-                                        onClose={() => setPinturaOpen(false)}
-                                    />
-                                )}
-                            </div>
 
-                            {/* ── Right: Event info + Rewards ── */}
-                            <div className="lg:w-[300px] shrink-0">
-                                <div className="sticky top-6 space-y-4">
-                                   
+                                        {/* Rewards card */}
+                                        <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5">
+                                            <div className="mb-4">
+                                                <span className="text-sm font-black text-foreground">Reward Breakdown</span>
+                                            </div>
 
-                                    {/* Rewards card */}
-                                    <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5">
-                                        <div className="mb-4">
-                                            <span className="text-sm font-black text-foreground">Reward Breakdown</span>
-                                        </div>
-
-                                        {/* Two incentive rows */}
-                                        <div className="space-y-2 mb-4">
-                                            {/* Creator incentive — per vote received */}
-                                            <div className="flex items-center justify-between bg-lime-400/5 border border-lime-400/15 rounded-[12px] px-3 py-3">
-                                                <div>
-                                                    <p className="text-[9px] font-black uppercase tracking-widest text-lime-400/70 mb-0.5">You post</p>
-                                                    <p className="text-[11px] text-foreground/60 leading-tight">Per vote received on your post</p>
+                                            {/* Two incentive rows */}
+                                            <div className="space-y-2 mb-4">
+                                                {/* Creator incentive — per vote received */}
+                                                <div className="flex items-center justify-between bg-lime-400/5 border border-lime-400/15 rounded-[12px] px-3 py-3">
+                                                    <div>
+                                                        <p className="text-[9px] font-black uppercase tracking-widest text-lime-400/70 mb-0.5">You post</p>
+                                                        <p className="text-[11px] text-foreground/60 leading-tight">Per vote received on your post</p>
+                                                    </div>
+                                                    <div className="text-right shrink-0 ml-2">
+                                                        <p className="text-base font-black text-lime-400">$0.05</p>
+                                                        <p className="text-[9px] text-foreground/40">USDC</p>
+                                                    </div>
                                                 </div>
-                                                <div className="text-right shrink-0 ml-2">
-                                                    <p className="text-base font-black text-lime-400">$0.05</p>
-                                                    <p className="text-[9px] text-foreground/40">USDC</p>
+                                                {/* Voter incentive — per vote cast */}
+                                                <div className="flex items-center justify-between bg-sky-400/5 border border-sky-400/15 rounded-[12px] px-3 py-3">
+                                                    <div>
+                                                        <p className="text-[9px] font-black uppercase tracking-widest text-sky-400/70 mb-0.5">You vote</p>
+                                                        <p className="text-[11px] text-foreground/60 leading-tight">Per vote you cast in this event</p>
+                                                    </div>
+                                                    <div className="text-right shrink-0 ml-2">
+                                                        <p className="text-base font-black text-sky-400">$0.03</p>
+                                                        <p className="text-[9px] text-foreground/40">USDC</p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            {/* Voter incentive — per vote cast */}
-                                            <div className="flex items-center justify-between bg-sky-400/5 border border-sky-400/15 rounded-[12px] px-3 py-3">
-                                                <div>
-                                                    <p className="text-[9px] font-black uppercase tracking-widest text-sky-400/70 mb-0.5">You vote</p>
-                                                    <p className="text-[11px] text-foreground/60 leading-tight">Per vote you cast in this event</p>
-                                                </div>
-                                                <div className="text-right shrink-0 ml-2">
-                                                    <p className="text-base font-black text-sky-400">$0.03</p>
-                                                    <p className="text-[9px] text-foreground/40">USDC</p>
-                                                </div>
-                                            </div>
-                                        </div>
 
-                                        {/* Leaderboard prizes — 50 / 35 / 15 */}
-                                        {(event.leaderboardPool ?? 0) > 0 && (() => {
-                                            const pool = event.leaderboardPool ?? 0;
-                                            const prize1 = pool * 0.50;
-                                            const prize2 = pool * 0.35;
-                                            const prize3 = pool * 0.15;
-                                            return (
-                                                <div>
-                                                    <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-0.5">Leaderboard Rewards</p>
-                                                    <p className="text-[10px] text-foreground/35 mb-2.5">Top 3 creators ranked by votes received</p>
-                                                    <div className="space-y-1.5">
-                                                        <div className="flex items-center justify-between bg-yellow-400/5 border border-yellow-400/15 rounded-[12px] px-3 py-2.5">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-sm leading-none">🥇</span>
-                                                                <div>
-                                                                    <p className="text-xs font-black text-foreground">1st Place</p>
-                                                                    <p className="text-[9px] text-foreground/40">Most votes · 50% of pool</p>
+                                            {/* Leaderboard prizes — 50 / 35 / 15 */}
+                                            {(event.leaderboardPool ?? 0) > 0 && (() => {
+                                                const pool = event.leaderboardPool ?? 0;
+                                                const prize1 = pool * 0.50;
+                                                const prize2 = pool * 0.35;
+                                                const prize3 = pool * 0.15;
+                                                return (
+                                                    <div>
+                                                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-0.5">Leaderboard Rewards</p>
+                                                        <p className="text-[10px] text-foreground/35 mb-2.5">Top 3 creators ranked by votes received</p>
+                                                        <div className="space-y-1.5">
+                                                            <div className="flex items-center justify-between bg-yellow-400/5 border border-yellow-400/15 rounded-[12px] px-3 py-2.5">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-sm leading-none">🥇</span>
+                                                                    <div>
+                                                                        <p className="text-xs font-black text-foreground">1st Place</p>
+                                                                        <p className="text-[9px] text-foreground/40">Most votes · 50% of pool</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="text-right">
+                                                                    <p className="text-sm font-black text-yellow-400">${prize1.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                                                    <p className="text-[9px] text-foreground/40">USDC</p>
                                                                 </div>
                                                             </div>
-                                                            <div className="text-right">
-                                                                <p className="text-sm font-black text-yellow-400">${prize1.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                                                                <p className="text-[9px] text-foreground/40">USDC</p>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center justify-between bg-white/[0.03] border border-white/[0.07] rounded-[12px] px-3 py-2.5">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-sm leading-none">🥈</span>
-                                                                <div>
-                                                                    <p className="text-xs font-black text-foreground">2nd Place</p>
-                                                                    <p className="text-[9px] text-foreground/40">2nd most votes · 35% of pool</p>
+                                                            <div className="flex items-center justify-between bg-white/[0.03] border border-white/[0.07] rounded-[12px] px-3 py-2.5">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-sm leading-none">🥈</span>
+                                                                    <div>
+                                                                        <p className="text-xs font-black text-foreground">2nd Place</p>
+                                                                        <p className="text-[9px] text-foreground/40">2nd most votes · 35% of pool</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="text-right">
+                                                                    <p className="text-sm font-black text-foreground/70">${prize2.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                                                    <p className="text-[9px] text-foreground/40">USDC</p>
                                                                 </div>
                                                             </div>
-                                                            <div className="text-right">
-                                                                <p className="text-sm font-black text-foreground/70">${prize2.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                                                                <p className="text-[9px] text-foreground/40">USDC</p>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center justify-between bg-white/[0.03] border border-white/[0.07] rounded-[12px] px-3 py-2.5">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-sm leading-none">🥉</span>
-                                                                <div>
-                                                                    <p className="text-xs font-black text-foreground">3rd Place</p>
-                                                                    <p className="text-[9px] text-foreground/40">3rd most votes · 15% of pool</p>
+                                                            <div className="flex items-center justify-between bg-white/[0.03] border border-white/[0.07] rounded-[12px] px-3 py-2.5">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-sm leading-none">🥉</span>
+                                                                    <div>
+                                                                        <p className="text-xs font-black text-foreground">3rd Place</p>
+                                                                        <p className="text-[9px] text-foreground/40">3rd most votes · 15% of pool</p>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <p className="text-sm font-black text-foreground/50">${prize3.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                                                                <p className="text-[9px] text-foreground/40">USDC</p>
+                                                                <div className="text-right">
+                                                                    <p className="text-sm font-black text-foreground/50">${prize3.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                                                    <p className="text-[9px] text-foreground/40">USDC</p>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            );
-                                        })()}
+                                                );
+                                            })()}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
                         </>
                     ) : (
                         /* ══════════════════════════════════════════════
@@ -1772,6 +1784,14 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                             <p className="font-display text-4xl md:text-5xl lg:text-6xl text-lime-400 uppercase leading-[0.88] tracking-tight mt-1">
                                                 {event.tagline}
                                             </p>
+                                        )}
+                                        {event.description && (
+                                            <div className="mt-4 max-w-2xl">
+                                                <ExpandableDescription
+                                                    text={event.description}
+                                                    className="text-sm md:text-base text-white/70 font-medium leading-relaxed"
+                                                />
+                                            </div>
                                         )}
                                     </div>
 
@@ -1836,10 +1856,22 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                         <p className="text-4xl md:text-5xl font-black text-green-400 leading-none tabular-nums">{activeViewers}</p>
                                                     </div>
                                                 </div>
+                                                {calculateTotalPool(event) > 0 && (
+                                                    <>
+                                                        <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
+                                                        <div>
+                                                            <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Total Prize Pool</p>
+                                                            <div className="flex items-center gap-2">
+
+                                                                <p className="text-4xl md:text-5xl font-black text-yellow-400 leading-none tabular-nums">${calculateTotalPool(event).toLocaleString()}</p>
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                )}
                                             </>
 
                                         </div>
-                                       
+
 
                                     </div>
                                 </div>
@@ -2095,9 +2127,9 @@ function CompletedView({ event, submissions, currentUserId, gridView, votedSubmi
                             <span className={cn(
                                 "text-[10px] font-black px-2 py-0.5 rounded-full",
                                 myPost.rank === 1 ? "bg-yellow-400 text-black" :
-                                myPost.rank === 2 ? "bg-slate-300 text-black" :
-                                myPost.rank === 3 ? "bg-amber-600 text-white" :
-                                "bg-white/10 text-white/70"
+                                    myPost.rank === 2 ? "bg-slate-300 text-black" :
+                                        myPost.rank === 3 ? "bg-amber-600 text-white" :
+                                            "bg-white/10 text-white/70"
                             )}>#{myPost.rank}</span>
                         )}
                     </div>
@@ -2148,8 +2180,8 @@ function CompletedView({ event, submissions, currentUserId, gridView, votedSubmi
                                     <div className={cn(
                                         "absolute -top-3 left-4 z-10 px-2.5 py-0.5 rounded-md text-xs font-black",
                                         i === 0 ? "bg-yellow-400 text-black" :
-                                        i === 1 ? "bg-slate-300 text-black" :
-                                        "bg-amber-600 text-white"
+                                            i === 1 ? "bg-slate-300 text-black" :
+                                                "bg-amber-600 text-white"
                                     )}>
                                         #{i + 1}
                                     </div>
