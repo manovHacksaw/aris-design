@@ -138,7 +138,7 @@ export default function LoginModal() {
                 <button
                   onClick={handleSignIn}
                   disabled={isLoading}
-                  className="w-full py-4 bg-primary hover:bg-primary/90 text-white rounded-2xl text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all disabled:opacity-50 shadow-[0_0_24px_rgba(59,130,246,0.25)]"
+                  className="w-full py-4 bg-primary hover:bg-primary/90 text-black rounded-2xl text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all disabled:opacity-50 shadow-[0_0_24px_rgba(59,130,246,0.25)]"
                 >
                   {isLoading ? (
                     <span className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />

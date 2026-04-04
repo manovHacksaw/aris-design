@@ -13,7 +13,9 @@ import {
 import { cn } from "@/lib/utils";
 import { useUser } from "@/context/UserContext";
 import { followUser, unfollowUser, getUserSubmissions } from "@/services/user.service";
+import { getEventsVotedByUser } from "@/services/event.service";
 import type { User, UserStats } from "@/types/user";
+import type { Event } from "@/services/event.service";
 
 // ─── Tiers ───────────────────────────────────────────────────────
 const TIERS = [
@@ -84,7 +86,9 @@ export default function ProfileView({
 
   const [copied, setCopied] = useState(false);
   const [contentFilter, setContentFilter] = useState<ContentFilter>("all");
+  const [activeTab, setActiveTab] = useState<"events" | "creations">("events");
   const [submissions, setSubmissions] = useState<any[]>([]);
+  const [votedEvents, setVotedEvents] = useState<Event[]>([]);
   const [subsLoading, setSubsLoading] = useState(true);
   const [showAllAchievements, setShowAllAchievements] = useState(false);
   const [showSocialModal, setShowSocialModal] = useState<{
@@ -97,9 +101,19 @@ export default function ProfileView({
   useEffect(() => {
     if (!user?.id) return;
     setSubsLoading(true);
-    getUserSubmissions(user.id)
-      .then(setSubmissions)
-      .catch(() => setSubmissions([]))
+    Promise.all([
+      getUserSubmissions(user.id),
+      getEventsVotedByUser(user.id)
+    ])
+      .then(([subs, voted]) => {
+        setSubmissions(subs);
+        setVotedEvents(voted);
+      })
+      .catch((err) => {
+        console.error("Error fetching profile content:", err);
+        setSubmissions([]);
+        setVotedEvents([]);
+      })
       .finally(() => setSubsLoading(false));
   }, [user?.id]);
 
@@ -174,6 +188,35 @@ export default function ProfileView({
     : 0;
   const engagementLabel = engagementScore >= 80 ? "Legendary" : engagementScore >= 50 ? "High" : engagementScore >= 20 ? "Rising" : "Building";
   const engagementColor = engagementScore >= 80 ? "text-lime-400" : engagementScore >= 50 ? "text-yellow-400" : engagementScore >= 20 ? "text-blue-400" : "text-white/30";
+
+  const participatedEvents = (votedEvents || []).map(event => ({
+    event,
+    type: "vote",
+    date: event.endTime,
+    earnings: (event as any).earnings || 0
+  })).concat(
+    (submissions || []).map(sub => ({
+      event: sub.event,
+      type: "post",
+      date: sub.createdAt,
+      earnings: sub.earnings || 0
+    }))
+  ).reduce((acc: any[], current) => {
+    const existing = acc.find(item => item.event?.id === current.event?.id);
+    if (existing) {
+      if (existing.type !== current.type) existing.type = "both";
+      existing.earnings += current.earnings;
+    } else {
+      acc.push({ ...current });
+    }
+    return acc;
+  }, []).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const filteredParticipated = participatedEvents.filter(item => {
+    if (contentFilter === "live") return ["posting", "voting", "scheduled"].includes(item.event?.status);
+    if (contentFilter === "completed") return item.event?.status === "completed";
+    return true;
+  });
 
   const filteredSubmissions = submissions.filter(s => {
     if (contentFilter === "live") return ["posting", "voting", "scheduled"].includes(s.event?.status);
@@ -330,15 +373,6 @@ export default function ProfileView({
                     <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-1">Followers</p>
                   </button>
                   <button
-                    onClick={() => setShowSocialModal({ show: true, type: "following" })}
-                    className="text-left group"
-                  >
-                    <p className="font-display text-3xl text-white tracking-tight leading-none group-hover:text-primary transition-colors">
-                      {formatK(following.length)}
-                    </p>
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-1">Following</p>
-                  </button>
-                  <button
                     type="button"
                     onClick={() => setShowSocialModal({ show: true, type: "following" })}
                     className="text-left group"
@@ -351,11 +385,37 @@ export default function ProfileView({
                 </div>
               </div>
 
-              {/* ── Content Portfolio ── */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="font-display text-2xl text-white uppercase tracking-tight">Content Portfolio</h2>
-                  <div className="flex items-center gap-1 p-1 bg-white/[0.04] border border-white/[0.06] rounded-2xl">
+              {/* ── Showcase Section ── */}
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                  <div className="space-y-1">
+                    <h2 className="font-display text-4xl text-white uppercase tracking-tight">Showcase</h2>
+                    {/* Tab Switcher */}
+                    <div className="flex items-center gap-6">
+                      <button
+                        onClick={() => setActiveTab("events")}
+                        className={cn(
+                          "pb-1 text-xs font-black uppercase tracking-widest transition-all relative",
+                          activeTab === "events" ? "text-primary" : "text-white/30 hover:text-white/50"
+                        )}
+                      >
+                        Activity
+                        {activeTab === "events" && <motion.div layoutId="tab-underline" className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary" />}
+                      </button>
+                      <button
+                        onClick={() => setActiveTab("creations")}
+                        className={cn(
+                          "pb-1 text-xs font-black uppercase tracking-widest transition-all relative",
+                          activeTab === "creations" ? "text-primary" : "text-white/30 hover:text-white/50"
+                        )}
+                      >
+                        Creations
+                        {activeTab === "creations" && <motion.div layoutId="tab-underline" className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1 p-1 bg-white/[0.04] border border-white/[0.06] rounded-2xl h-fit">
                     {(["all", "live", "completed"] as ContentFilter[]).map(f => (
                       <button
                         key={f}
@@ -372,125 +432,155 @@ export default function ProfileView({
                 </div>
 
                 {subsLoading ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                      <div key={i} className="h-[100px] rounded-[20px] bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+                  <div className="space-y-3">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="h-[80px] rounded-[24px] bg-white/[0.02] border border-white/[0.04] animate-pulse" />
                     ))}
                   </div>
-                ) : filteredSubmissions.length === 0 ? (
-                  <div className="py-16 text-center bg-white/[0.02] rounded-[24px] border border-dashed border-white/[0.07]">
-                    <div className="w-12 h-12 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
-                      <ImageIcon className="w-5 h-5 text-white/20" />
-                    </div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">No posts yet</p>
-                  </div>
-                ) : (
+                ) : activeTab === "events" ? (
+                  /* ── Activity Tab: Participated Events List ── */
                   <div className="space-y-3">
-                    {/* Most voted — highlighted banner */}
-                    {mostVoted && contentFilter === "all" && (
-                      <div className="bg-white/[0.03] border border-primary/20 rounded-[20px] p-4 flex items-center gap-4 group hover:bg-white/[0.05] hover:border-primary/30 transition-all">
-                        <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 bg-white/[0.05] border border-white/[0.06]">
-                          {mostVoted.imageCid ? (
-                            <img
-                              src={`https://gateway.pinata.cloud/ipfs/${mostVoted.imageCid}`}
-                              alt={mostVoted.event?.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-primary/10">
-                              <ImageIcon className="w-6 h-6 text-primary/50" />
-                            </div>
-                          )}
+                    {filteredParticipated.length === 0 ? (
+                      <div className="py-16 text-center bg-white/[0.02] rounded-[24px] border border-dashed border-white/[0.07]">
+                        <div className="w-12 h-12 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
+                          <MousePointerClick className="w-5 h-5 text-white/20" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 border border-primary/20 rounded-full text-[9px] font-black text-primary uppercase tracking-widest mb-1.5">
-                            <Star className="w-2.5 h-2.5" /> Most Voted Post
-                          </span>
-                          <h4 className="font-black text-white text-sm truncate">{mostVoted.event?.title || "Untitled Event"}</h4>
-                          <div className="flex items-center gap-3 mt-1">
-                            <span className="text-[10px] font-black text-white/30 uppercase tracking-wide truncate">
-                              {mostVoted.event?.brand?.name || "Unknown Brand"}
-                            </span>
-                            <span className="text-white/15">·</span>
-                            <ThumbsUp className="w-3 h-3 text-white/20 shrink-0" />
-                            <span className="text-[10px] font-black text-white/40 shrink-0">
-                              {(mostVoted._count?.votes || 0).toLocaleString()} Votes
-                            </span>
-                          </div>
-                        </div>
-                        {mostVoted.finalRank != null && (
-                          <div className="shrink-0">
-                            {mostVoted.finalRank === 1 ? (
-                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 text-[10px] font-black border border-yellow-500/20">
-                                <Crown className="w-3 h-3" /> #1
-                              </span>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">No activity yet</p>
+                      </div>
+                    ) : (
+                      filteredParticipated.map((item, i) => (
+                        <motion.div
+                          key={item.event.id}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.05 }}
+                          className="group relative bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.12] rounded-[24px] p-4 flex items-center gap-4 transition-all"
+                        >
+                          {/* Left: Brand Logo */}
+                          <div className="w-12 h-12 rounded-2xl overflow-hidden bg-white/[0.05] border border-white/[0.08] shrink-0">
+                            {item.event.brand?.logoCid || item.event.brand?.logoUrl ? (
+                              <img
+                                src={item.event.brand.logoUrl || `https://gateway.pinata.cloud/ipfs/${item.event.brand.logoCid}`}
+                                alt={item.event.brand.name}
+                                className="w-full h-full object-cover"
+                              />
                             ) : (
-                              <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-white/40 text-[10px] font-bold border border-white/[0.08]">
-                                #{mostVoted.finalRank}
-                              </span>
+                              <div className="w-full h-full flex items-center justify-center bg-white/5">
+                                <Building2 className="w-6 h-6 text-white/20" />
+                              </div>
                             )}
                           </div>
-                        )}
-                      </div>
-                    )}
 
-                    {/* Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {filteredSubmissions
-                        .filter(s => contentFilter !== "all" || s.id !== mostVoted?.id)
-                        .map((s, i) => (
+                          {/* Center: Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="text-[9px] font-black text-white/30 uppercase tracking-widest truncate">
+                                {item.event.brand?.name || "Unknown Brand"}
+                              </span>
+                              <span className="w-1 h-1 rounded-full bg-white/10" />
+                              <span className={cn(
+                                "text-[9px] font-black uppercase tracking-widest",
+                                item.event.status === "completed" ? "text-white/20" : "text-lime-400"
+                              )}>
+                                {item.event.status}
+                              </span>
+                            </div>
+                            <h4 className="text-base font-black text-white truncate group-hover:text-primary transition-colors">
+                              {item.event.title}
+                            </h4>
+                          </div>
+
+                          {/* Right: Type & Earnings */}
+                          <div className="flex items-center gap-4 shrink-0">
+                            <div className="text-right flex flex-col items-end">
+                              <div className="flex gap-1">
+                                {item.type === "both" || item.type === "post" ? (
+                                  <span className="px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-[8px] font-black text-blue-400 uppercase tracking-widest">
+                                    Creator
+                                  </span>
+                                ) : null}
+                                {item.type === "both" || item.type === "vote" ? (
+                                  <span className="px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-[8px] font-black text-purple-400 uppercase tracking-widest">
+                                    Voter
+                                  </span>
+                                ) : null}
+                              </div>
+                              <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mt-1">
+                                {new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                              </p>
+                            </div>
+
+                            {item.earnings > 0 && (
+                              <div className="min-w-[70px] text-right">
+                                <p className="text-sm font-black text-lime-400 font-mono tracking-tighter">
+                                  +${item.earnings.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </p>
+                                <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">USDC Earned</p>
+                              </div>
+                            )}
+                          </div>
+
+                          <Link href={`/events/${item.event.id}`} className="absolute inset-0 z-10" />
+                        </motion.div>
+                      ))
+                    )}
+                  </div>
+                ) : (
+                  /* ── Creations Tab: Visual Grid ── */
+                  <div className="space-y-4">
+                    {filteredSubmissions.length === 0 ? (
+                      <div className="py-16 text-center bg-white/[0.02] rounded-[24px] border border-dashed border-white/[0.07]">
+                        <div className="w-12 h-12 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
+                          <ImageIcon className="w-5 h-5 text-white/20" />
+                        </div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">No creations yet</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {filteredSubmissions.map((s, i) => (
                           <motion.div
                             key={s.id}
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.04 }}
-                            className="bg-white/[0.02] border border-white/[0.05] rounded-[20px] overflow-hidden group hover:bg-white/[0.04] hover:border-white/[0.1] transition-all"
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: i * 0.05 }}
+                            className="group relative aspect-[4/5] bg-white/[0.02] border border-white/[0.06] hover:border-white/20 rounded-[28px] overflow-hidden transition-all"
                           >
-                            <div className="w-full aspect-video bg-white/[0.03] overflow-hidden">
-                              {s.imageCid ? (
-                                <img
-                                  src={`https://gateway.pinata.cloud/ipfs/${s.imageCid}`}
-                                  alt={s.event?.title}
-                                  className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <ImageIcon className="w-8 h-8 text-white/10" />
-                                </div>
-                              )}
-                            </div>
-                            <div className="p-3 space-y-1">
-                              <p className="text-[9px] font-black text-white/30 uppercase tracking-widest truncate">
-                                {s.event?.brand?.name || "Unknown"}
+                            <img
+                              src={`https://gateway.pinata.cloud/ipfs/${s.imageCid}`}
+                              alt={s.event?.title}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                            <div className="absolute bottom-0 left-0 right-0 p-5 space-y-2">
+                              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">
+                                {s.event?.brand?.name || "Brand"}
                               </p>
-                              <h4 className="text-sm font-black text-white truncate">{s.event?.title || "Untitled"}</h4>
-                              <div className="flex items-center justify-between">
+                              <h5 className="text-lg font-black text-white uppercase tracking-tight line-clamp-2">
+                                {s.event?.title}
+                              </h5>
+                              <div className="flex items-center justify-between pt-2 border-t border-white/10">
                                 <div className="flex items-center gap-1.5">
-                                  <ThumbsUp className="w-3 h-3 text-white/20" />
-                                  <span className="text-[10px] font-black text-white/30">
-                                    {(s._count?.votes || 0).toLocaleString()}
-                                  </span>
+                                  <ThumbsUp className="w-3.5 h-3.5 text-white/40" />
+                                  <span className="text-xs font-black text-white/60">{(s._count?.votes || 0).toLocaleString()}</span>
                                 </div>
                                 {s.finalRank != null && (
-                                  s.finalRank === 1 ? (
-                                    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 text-[9px] font-black border border-yellow-500/20">
-                                      <Crown className="w-2.5 h-2.5" /> #1
-                                    </span>
-                                  ) : (
-                                    <span className="px-1.5 py-0.5 rounded-full bg-white/[0.06] text-white/30 text-[9px] font-bold border border-white/[0.08]">
-                                      #{s.finalRank}
-                                    </span>
-                                  )
+                                  <div className={cn(
+                                    "px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-widest",
+                                    s.finalRank === 1 ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/20" : "bg-white/10 text-white/40"
+                                  )}>
+                                    #{s.finalRank} Rank
+                                  </div>
                                 )}
                               </div>
                             </div>
+                            <Link href={`/events/${s.eventId}`} className="absolute inset-0 z-10" />
                           </motion.div>
                         ))}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-
             </div>
 
             {/* ── Right Column ── */}

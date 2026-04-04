@@ -386,7 +386,7 @@ export default function BrandApplicationPage() {
                   "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0",
                   done ? "bg-primary border-primary" : active ? "border-primary" : "border-border/40"
                 )}>
-                  {done && <Check className="w-3 h-3 text-white" />}
+                  {done && <Check className="w-3 h-3 text-black" />}
                   {active && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
                 </div>
                 <span className={cn(
@@ -417,7 +417,7 @@ export default function BrandApplicationPage() {
             </Link>
             <Link
               href="/claim-brand"
-              className="flex-1 py-3.5 rounded-[14px] bg-primary text-white font-black text-xs uppercase tracking-widest text-center hover:bg-primary/90 transition-colors"
+              className="flex-1 py-3.5 rounded-[14px] bg-primary text-black font-black text-xs uppercase tracking-widest text-center hover:bg-primary/90 transition-colors"
             >
               Already Approved?
             </Link>
@@ -510,7 +510,7 @@ export default function BrandApplicationPage() {
                 <div className={cn(
                   "w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-black transition-all",
                   step > s.id
-                    ? "bg-primary border-primary text-white"
+                    ? "bg-primary border-primary text-black"
                     : step === s.id
                     ? "border-primary text-primary"
                     : "border-border/30 text-foreground/25"
@@ -640,7 +640,7 @@ export default function BrandApplicationPage() {
                           className={cn(
                             "px-3.5 py-2 rounded-full text-xs font-bold border transition-all",
                             selected
-                              ? "bg-primary text-white border-primary shadow-sm shadow-primary/20"
+                              ? "bg-primary text-black border-primary shadow-sm shadow-primary/20"
                               : "bg-card text-foreground/50 border-border/40 hover:border-border hover:text-foreground/70"
                           )}
                         >
@@ -671,7 +671,7 @@ export default function BrandApplicationPage() {
                             "w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors",
                             selected ? "bg-primary border-primary" : "border-border/50"
                           )}>
-                            {selected && <Check className="w-2.5 h-2.5 text-white" />}
+                            {selected && <Check className="w-2.5 h-2.5 text-black" />}
                           </div>
                           {label}
                         </button>
@@ -1180,7 +1180,7 @@ export default function BrandApplicationPage() {
                 <button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className="w-full py-4 rounded-[16px] bg-primary text-white font-black text-sm uppercase tracking-[0.15em] flex items-center justify-center gap-3 hover:bg-primary/90 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
+                  className="w-full py-4 rounded-[16px] bg-primary text-black font-black text-sm uppercase tracking-[0.15em] flex items-center justify-center gap-3 hover:bg-primary/90 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
                 >
                   {isSubmitting ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> Submitting Application...</>

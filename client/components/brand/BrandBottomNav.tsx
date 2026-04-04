@@ -48,7 +48,7 @@ export default function BrandBottomNav() {
                         >
                             <Icon className="w-5 h-5 mb-0.5" strokeWidth={isActive ? "20" : "16"} />
                             {showBadge && (
-                                <span className="absolute -top-0.5 right-2 min-w-[14px] h-3.5 flex items-center justify-center rounded-full bg-primary text-white text-[8px] font-black px-0.5">
+                                <span className="absolute -top-0.5 right-2 min-w-[14px] h-3.5 flex items-center justify-center rounded-full bg-primary text-black text-[8px] font-black px-0.5">
                                     {unreadCount > 9 ? "9+" : unreadCount}
                                 </span>
                             )}

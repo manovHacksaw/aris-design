@@ -44,22 +44,26 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
             : ((event._count?.submissions || 0) + (event._count?.votes || 0))
     );
 
-    // Human-readable brand name for URL
-    const brandPath = brand.name ? `/brand/${encodeURIComponent(brand.name)}` : "#";
+    // Slugify brand name for consistent URLs
+    const toBrandSlug = (name: string) => {
+        return name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    };
+
+    const brandPath = brand.name ? `/brand/${toBrandSlug(brand.name)}` : "#";
 
     return (
         <div className={cn("relative block group w-full outline-none", className)}>
             {/* Primary Event Link acting as a clickable overlay */}
             <Link
                 href={`/events/${event.id}`}
-                className="absolute inset-0 z-10 w-full h-full rounded-2xl focus:outline-none"
+                className="absolute inset-0 z-0 w-full h-full rounded-2xl focus:outline-none"
                 aria-label={`View ${event.title}`}
             />
 
-            <div className="relative w-full aspect-[4/5] rounded-2xl overflow-hidden bg-[#111] border border-white/5 transition-all duration-500 ease-out group-hover:border-white/20 group-hover:-translate-y-2 group-hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.8)] active:scale-[0.98] cursor-pointer">
+            <div className="relative z-10 pointer-events-none w-full aspect-[4/5] rounded-2xl overflow-hidden bg-[#111] border border-white/5 transition-all duration-500 ease-out group-hover:border-white/20 group-hover:-translate-y-2 group-hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.8)] active:scale-[0.98] cursor-pointer">
 
                 {/* Background Image Area */}
-                <div className="absolute inset-0 w-full h-full pointer-events-none">
+                <div className="absolute inset-0 w-full h-full">
                     {displayImage ? (
                         <img
                             src={displayImage}
@@ -72,8 +76,8 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
                 </div>
 
                 {/* Gradients for text readability */}
-                <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-b from-black/80 via-black/40 to-transparent opacity-90 pointer-events-none" />
-                <div className="absolute bottom-0 left-0 w-full h-2/3 bg-gradient-to-t from-[#0a0a0c] via-[#0a0a0c]/80 to-transparent opacity-95 pointer-events-none" />
+                <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-b from-black/80 via-black/40 to-transparent opacity-90" />
+                <div className="absolute bottom-0 left-0 w-full h-2/3 bg-gradient-to-t from-[#0a0a0c] via-[#0a0a0c]/80 to-transparent opacity-95" />
 
                 {/* Content Layout */}
                 <div className="absolute inset-0 flex flex-col justify-between p-4 sm:p-5">
@@ -82,7 +86,9 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
                     <div className="flex justify-between items-start">
                         <Link
                             href={brandPath}
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                            }}
                             className="relative z-20 pointer-events-auto flex items-center gap-2 w-fit transition-colors group/brand"
                         >
                             <div className="w-6 h-6 rounded-full bg-black/40 backdrop-blur-md overflow-hidden flex-shrink-0 flex items-center justify-center border border-white/10 group-hover/brand:border-white/30 transition-colors">

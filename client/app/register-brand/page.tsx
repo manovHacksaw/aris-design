@@ -217,9 +217,9 @@ export default function BrandValuePropositionPage() {
               This area is for Brand Owners only. Redirecting you to the home page in a moment...
             </p>
           </div>
-          <button
+            <button
             onClick={() => router.push("/")}
-            className="w-full py-3 px-6 rounded-[14px] bg-primary text-white font-black text-xs uppercase tracking-widest hover:bg-primary/90 transition-colors"
+            className="w-full py-3 px-6 rounded-[14px] bg-primary text-black font-black text-xs uppercase tracking-widest hover:bg-primary/90 transition-colors"
           >
             Go to Home
           </button>
@@ -266,7 +266,7 @@ export default function BrandValuePropositionPage() {
           </button>
           <Link
             href="/register-brand/application"
-            className="px-5 py-2.5 bg-primary text-white text-xs font-black uppercase tracking-widest rounded-full hover:bg-primary/90 transition-colors"
+            className="px-5 py-2.5 bg-primary text-black text-xs font-black uppercase tracking-widest rounded-full hover:bg-primary/90 transition-colors"
           >
             Apply Now
           </Link>
@@ -305,7 +305,7 @@ export default function BrandValuePropositionPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
             <Link
               href="/register-brand/application"
-              className="flex items-center gap-3 px-8 py-4 bg-primary text-white font-black text-sm uppercase tracking-[0.18em] rounded-[14px] hover:bg-primary/90 active:scale-95 transition-all shadow-lg shadow-primary/20 w-full sm:w-auto justify-center"
+              className="flex items-center gap-3 px-8 py-4 bg-primary text-black font-black text-sm uppercase tracking-[0.18em] rounded-[14px] hover:bg-primary/90 active:scale-95 transition-all shadow-lg shadow-primary/20 w-full sm:w-auto justify-center"
             >
               Start Application <ArrowRight className="w-4 h-4" />
             </Link>
@@ -470,7 +470,7 @@ export default function BrandValuePropositionPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/register-brand/application"
-              className="inline-flex items-center gap-3 px-10 py-5 bg-primary text-white font-black text-sm uppercase tracking-[0.18em] rounded-[14px] hover:bg-primary/90 active:scale-95 transition-all shadow-xl shadow-primary/20 w-full sm:w-auto justify-center"
+              className="inline-flex items-center gap-3 px-10 py-5 bg-primary text-black font-black text-sm uppercase tracking-[0.18em] rounded-[14px] hover:bg-primary/90 active:scale-95 transition-all shadow-xl shadow-primary/20 w-full sm:w-auto justify-center"
             >
               Continue to Application <ArrowRight className="w-5 h-5" />
             </Link>

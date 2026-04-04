@@ -45,7 +45,7 @@ export default function LandingVisual() {
                         <div className="h-12 w-full flex items-center justify-between gap-2">
                             <div className="h-8 w-8 rounded-full bg-primary/20" />
                             <div className="h-3 w-24 bg-foreground/10 rounded-full" />
-                            <div className="h-8 w-16 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                            <div className="h-8 w-16 bg-primary text-black text-[10px] font-bold rounded-full flex items-center justify-center">
                                 VOTE
                             </div>
                         </div>

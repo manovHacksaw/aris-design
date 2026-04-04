@@ -11,7 +11,7 @@ import {
     GitBranch, Target, Swords, UserCheck,
 } from "lucide-react";
 import {
-    AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
+    AreaChart, Area, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip,
     ResponsiveContainer, CartesianGrid,
 } from "recharts";
 import { cn } from "@/lib/utils";
@@ -871,7 +871,7 @@ export default function DashboardPage() {
                 status: s.event?.status || "unknown",
                 rank: s.finalRank || null,
                 votesReceived: s._count?.votes || 0,
-                earnings: 0,
+                earnings: s.earnings || 0,
                 xpEarned: 0,
                 imageUrl: s.imageUrls?.thumbnail || s.imageUrl || (s.imageCid ? `https://gateway.pinata.cloud/ipfs/${s.imageCid}` : undefined),
             })));
@@ -889,7 +889,7 @@ export default function DashboardPage() {
                     : "—",
                 status: e.status || "completed",
                 votesCast: e._count?.votes || 0,
-                earnings: 0,
+                earnings: e.earnings || 0,
                 imageUrl: e.previewImageUrls?.[0] || e.imageUrls?.thumbnail || (e.imageCid ? `https://gateway.pinata.cloud/ipfs/${e.imageCid}` : undefined),
             })));
         }).finally(() => setLoading(false));
@@ -1784,6 +1784,7 @@ export default function DashboardPage() {
                                                 ]}
                                             />
                                             <Area type="monotone" dataKey="earnings" stroke="#A3E635" strokeWidth={2} fill="url(#earningsGrad)" dot={false} activeDot={{ r: 3, fill: "#A3E635", strokeWidth: 0 }} />
+                                            <Line type="monotone" dataKey="daily" stroke="#3B82F6" strokeWidth={2} dot={false} activeDot={{ r: 3, fill: "#3B82F6", strokeWidth: 0 }} />
                                         </AreaChart>
                                     </ResponsiveContainer>
                                 )}

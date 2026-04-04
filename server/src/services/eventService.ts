@@ -839,21 +839,36 @@ export class EventService {
             submissions: true,
             votes: true,
           }
+        },
+        rewardsPool: {
+          include: {
+            claims: {
+              where: { userId: userId },
+              select: {
+                finalAmount: true,
+                claimType: true
+              }
+            }
+          }
         }
       },
       orderBy: { createdAt: 'desc' }
     });
 
     // Post-process to extract images and add IPFS URLs
-    return events.map(event => {
+    return events.map((event: any) => {
       // Extract images from votes
       const voteImages = event.votes
-        .map(v => v.submission?.imageCid || v.proposal?.imageCid)
-        .filter((cid): cid is string => !!cid)
-        .map(cid => getIPFSUrl(cid, 'thumbnail'));
+        .map((v: any) => v.submission?.imageCid || v.proposal?.imageCid)
+        .filter((cid: any): cid is string => !!cid)
+        .map((cid: string) => getIPFSUrl(cid, 'thumbnail'));
+
+      // Calculate earnings from claims
+      const earnings = event.rewardsPool?.claims?.reduce((acc: number, claim: any) => acc + (claim.finalAmount || 0), 0) || 0;
 
       return this.addImageUrls({
         ...event,
+        earnings,
         previewImageUrls: voteImages
       });
     });

@@ -246,7 +246,7 @@ export default function BrandPublicPage() {
                                                     "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all",
                                                     subscribed
                                                         ? "bg-foreground/5 border-border text-foreground/50 hover:bg-red-500/10 hover:text-red-400 hover:border-red-400/20"
-                                                        : "bg-primary border-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90"
+                                                        : "bg-primary border-primary text-black shadow-lg shadow-primary/20 hover:bg-primary/90"
                                                 )}
                                             >
                                                 {subscribed ? <><BellOff className="w-3.5 h-3.5" /> Subscribed</> : <><Bell className="w-3.5 h-3.5" /> Subscribe</>}

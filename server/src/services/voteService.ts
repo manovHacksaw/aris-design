@@ -245,6 +245,9 @@ export class VoteService {
             }
 
             return { vote, shouldClose };
+        }, {
+            maxWait: 20000, // 20s to get a connection
+            timeout: 30000, // 30s for the transaction
         });
 
         // Send anonymous vote notification to brand owner and submission owner
@@ -447,6 +450,9 @@ export class VoteService {
             }
 
             return { createdVotes, shouldClose };
+        }, {
+            maxWait: 20000,
+            timeout: 30000,
         });
 
         // Trigger event completion logic if auto-closed

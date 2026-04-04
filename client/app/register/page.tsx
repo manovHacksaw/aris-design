@@ -147,7 +147,7 @@ export default function Register() {
             className={clsx(
               "w-full py-4 rounded-[16px] font-bold text-lg transition-all duration-150 ease-out shadow-[0_10px_30px_rgba(0,0,0,0.25)] flex items-center justify-center gap-3",
               selectedRole && !isConnecting && isInitialized && !walletLoading && !authLoading
-                ? "bg-primary text-white hover:bg-primary/90 hover:-translate-y-[1px] cursor-pointer"
+                ? "bg-primary text-black hover:bg-primary/90 hover:-translate-y-[1px] cursor-pointer"
                 : "bg-card text-foreground/20 cursor-not-allowed border border-border"
             )}
           >

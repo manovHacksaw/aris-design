@@ -217,6 +217,9 @@ export class SubmissionService {
       });
 
       return submission;
+    }, {
+      maxWait: 20000,
+      timeout: 30000,
     });
 
     // Send anonymous submission notification to brand owner
@@ -522,10 +525,42 @@ export class SubmissionService {
       orderBy: { createdAt: 'desc' }
     });
 
+    // Fetch reward claims for these submissions separately to calculate earnings
+    const submissionIds = submissions.map(s => s.id);
+    const rewardClaims = await prisma.rewardClaim.findMany({
+      where: {
+        userId,
+        claimType: { in: ['CREATOR', 'LEADERBOARD'] as any },
+        pool: {
+          event: {
+            submissions: {
+              some: { id: { in: submissionIds } }
+            }
+          }
+        }
+      },
+      select: {
+        finalAmount: true,
+        pool: {
+          select: { eventId: true }
+        }
+      }
+    });
+
+    // Map claims to events
+    const earningsByEvent = rewardClaims.reduce((acc: any, claim: any) => {
+      const eventId = claim.pool.eventId;
+      acc[eventId] = (acc[eventId] || 0) + (claim.finalAmount || 0);
+      return acc;
+    }, {});
+
     return submissions.map((s: any) => {
       const isCompleted = s.event?.status === EventStatus.COMPLETED;
+      const earnings = earningsByEvent[s.eventId] || 0;
+
       return {
         ...this.addImageUrls(s),
+        earnings,
         _count: !isCompleted && s._count ? { ...s._count, votes: 0 } : s._count,
         event: s.event ? {
           ...s.event,

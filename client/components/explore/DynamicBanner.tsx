@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, Users, Sparkles } from "lucide-react";
+import { ChevronRight, Users, Sparkle, Award, Sparkles } from "lucide-react";
 
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
@@ -39,7 +39,7 @@ export default function DynamicBanner({ events }: { events: BannerEvent[] }) {
     const domains = currentEvent.brand?.categories || ["OTHER"];
 
     return (
-        <div className="relative w-full h-[400px] sm:h-[450px] lg:h-[500px] rounded-3xl overflow-hidden mb-10 group">
+        <div className="relative w-full h-[400px] sm:h-[450px] lg:h-[500px] rounded-none md:rounded-2xl overflow-hidden mb-10 group shadow-2xl">
             {/* Background Image Carousel */}
             <AnimatePresence mode="wait">
                 <motion.div
@@ -63,50 +63,61 @@ export default function DynamicBanner({ events }: { events: BannerEvent[] }) {
             <div className="absolute inset-0 bg-gradient-to-r from-background via-background/40 to-transparent" />
 
             {/* Content overlay */}
-            <div className="absolute bottom-0 left-0 p-6 sm:p-10 lg:p-16 w-full max-w-4xl space-y-4">
-                <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-2">JOIN EVENTS. EARN DOLLARS.</h2>
+            <div className="absolute bottom-0 left-0 p-8 sm:p-12 lg:p-20 w-full max-w-5xl space-y-6">
+                <div className="flex flex-col gap-2">
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex items-center gap-2 w-fit px-3 py-1 rounded-full bg-primary/20 border border-primary/30 backdrop-blur-md"
+                    >
+                        <Sparkles className="w-3 h-3 text-primary" />
+                        <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">JOIN EVENTS. EARN DOLLARS.</span>
+                    </motion.div>
 
-                <motion.h1
-                    key={`title-${currentIndex}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-3xl sm:text-4xl lg:text-6xl font-display font-black text-white leading-[1.1] uppercase drop-shadow-lg"
-                >
-                    {currentEvent.title}
-                </motion.h1>
+                    <motion.h1
+                        key={`title-${currentIndex}`}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-4xl sm:text-6xl lg:text-8xl font-display font-black text-white leading-[0.95] uppercase drop-shadow-2xl italic tracking-tighter"
+                    >
+                        {currentEvent.title}
+                    </motion.h1>
+                </div>
 
                 <motion.div
                     key={`stats-${currentIndex}`}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.2 }}
-                    className="flex flex-wrap items-center gap-4 text-sm font-semibold text-white/80"
+                    className="flex flex-wrap items-center gap-3 text-xs font-bold text-white/90"
                 >
-                    <span className="bg-white/10 px-3 py-1 rounded-full backdrop-blur-md border border-white/20">
+                    <div className="bg-white/5 px-4 py-2 rounded-xl backdrop-blur-xl border border-white/10 flex items-center gap-2 group-hover:bg-white/10 transition-colors">
+                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                         {currentEvent.brand?.name || "Unknown Brand"}
-                    </span>
-                    <span className="flex items-center gap-1.5 bg-lime-400/20 text-lime-400 px-3 py-1 rounded-full backdrop-blur-md border border-lime-400/30">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        ${totalReward.toFixed(2)} USDC Rewards
-                    </span>
-                    <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full backdrop-blur-md border border-white/20">
-                        <Users className="w-3.5 h-3.5" />
-                        {participants} Participants
-                    </span>
-                    <span className="bg-white/10 px-3 py-1 rounded-full backdrop-blur-md border border-white/20 uppercase tracking-wider text-[10px]">
-                        {domains.join(", ")}
-                    </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-lime-400/10 text-lime-400 px-4 py-2 rounded-xl backdrop-blur-xl border border-lime-400/20 shadow-[0_0_20px_rgba(163,230,53,0.1)]">
+                        <Award className="w-4 h-4" />
+                        <span className="tracking-tight">${totalReward.toLocaleString()} Rewards</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl backdrop-blur-xl border border-white/10">
+                        <Users className="w-4 h-4 text-white/60" />
+                        {participants.toLocaleString()}
+                    </div>
                 </motion.div>
 
                 <motion.div
                     key={`actions-${currentIndex}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
-                    className="pt-4 flex gap-4"
+                    className="pt-6 flex items-center gap-6"
                 >
-                    <a href={`/events/${currentEvent.id}`} className="flex items-center gap-2 bg-primary text-primary-foreground px-8 py-3.5 rounded-xl font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all text-sm shadow-xl shadow-primary/20">
-                        Participate <ChevronRight className="w-4 h-4" />
+                    <a href={`/events/${currentEvent.id}`} className="group/btn relative flex items-center gap-3 bg-white text-black px-10 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all overflow-hidden shadow-2xl shadow-white/10">
+                        <span className="relative z-10 text-sm">Join Event</span>
+                        <ChevronRight className="relative z-10 w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
+                        <div className="absolute inset-0 bg-primary translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
                     </a>
                 </motion.div>
             </div>

@@ -251,7 +251,7 @@ export default function OnboardingPage() {
                             ) : (
                                 <button
                                     onClick={handleComplete}
-                                    className="w-full lg:w-auto px-10 py-4 rounded-[16px] bg-primary text-white font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20"
+                                    className="w-full lg:w-auto px-10 py-4 rounded-[16px] bg-primary text-black font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20"
                                 >
                                     <Check className="w-4 h-4" />
                                     Launch Aris
