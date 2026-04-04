@@ -4,8 +4,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
     Clock, Trophy, Users, ImageIcon, AlertCircle, Crown, Medal,
     ChevronRight, Twitter, Instagram, Globe, LayoutGrid, List,
-    Tag, UserCircle2
+    Tag, UserCircle2, BarChart2, Target, Shuffle, Scale, Vote, PieChart as PieChartIcon, 
+    MousePointerClick, Timer, Activity
 } from "lucide-react";
+import {
+    AreaChart, Area, BarChart, Bar, XAxis, YAxis,
+    CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+    LineChart, Line, TooltipProps, PieChart, Pie, Cell
+} from "recharts";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -20,6 +26,34 @@ import Countdown from "@/components/events/Countdown";
 import VoteSubmissionCard from "@/components/events/VoteSubmissionCard";
 import { VoteSubmission } from "@/types/events";
 import { use } from "react";
+import { apiRequest } from "@/services/api";
+
+const CHART_COLORS = {
+    cyan: "#06b6d4",
+    blue: "#3B82F6",
+    violet: "#8B5CF6",
+    gray: "#6B7280",
+    emerald: "#10b981",
+    amber: "#f59e0b",
+};
+const TICK_STYLE = { fill: "rgba(255,255,255,0.3)", fontSize: 10, fontWeight: 700 };
+const GRID_STYLE = { stroke: "rgba(255,255,255,0.05)", strokeDasharray: "0" };
+
+function ChartTooltip({ active, payload, label }: TooltipProps<any, any> & { payload?: any[]; label?: any }) {
+    if (!active || !payload?.length) return null;
+    return (
+        <div className="bg-[#0f1117] border border-white/10 rounded-xl px-3 py-2.5 shadow-2xl text-xs backdrop-blur-xl">
+            <p className="font-black text-white/60 uppercase tracking-wider mb-2 text-[10px]">{label}</p>
+            {payload.map((p: any) => (
+                <div key={p.dataKey} className="flex items-center gap-2 mb-1">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: p.color || p.payload.fill }} />
+                    <span className="font-bold text-white/50 capitalize">{p.name}</span>
+                    <span className="font-black text-white ml-2">{p.value?.toLocaleString()}</span>
+                </div>
+            ))}
+        </div>
+    );
+}
 
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
@@ -499,6 +533,9 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
     const [fetchError, setFetchError] = useState<string | null>(null);
     const [activeViewers, setActiveViewers] = useState<number>(0);
     const [gridView, setGridView] = useState(true);
+    const [activeTab, setActiveTab] = useState<"participants" | "results">("participants");
+    const [eventSummary, setEventSummary] = useState<any>(null);
+    const [extraAnalytics, setExtraAnalytics] = useState<any>(null);
 
     useEffect(() => {
         if (!socket || !id) return;
@@ -533,6 +570,22 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                         const p = await getEventParticipants(id);
                         setParticipants(p);
                     } catch { /* non-fatal */ }
+                }
+
+                if (ev.status === "completed") {
+                    try {
+                        const { getDetailedEventAnalytics } = await import("@/services/event.service");
+                        const detailed = await getDetailedEventAnalytics(id);
+                        setEventSummary(detailed);
+                        
+                        const [engRes, clickRes] = await Promise.all([
+                            apiRequest<any>(`/analytics/events/${id}/engagement`).catch(() => ({ averageViewTime: 0 })),
+                            apiRequest<any>(`/analytics/events/${id}/clicks-breakdown`).catch(() => ({ vote: 0, event: 0, website: 0, social: 0, other: 0 }))
+                        ]);
+                        setExtraAnalytics({ engagement: engRes, clicks: clickRes });
+                    } catch (err) {
+                        console.error(err);
+                    }
                 }
 
                 if (ev.eventType === "post_and_vote" && (ev.status === "posting" || ev.status === "voting" || ev.status === "completed")) {
@@ -680,67 +733,253 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
 
                         {/* Tab bar */}
                         {displayMode !== "upcoming" && (
-                            <div className="flex items-center justify-between mb-5 border-b border-border/40 pb-3">
-                                <div className="flex items-center gap-2">
-                                    <Users className="w-3.5 h-3.5 text-foreground/40" />
-                                    <span className="text-xs font-black uppercase tracking-[0.15em] text-foreground">
-                                        Participants
-                                    </span>
-                                    <span className="text-[10px] font-black text-foreground/30 bg-white/[0.05] px-2 py-0.5 rounded-full border border-border/40">
-                                        {enrichedSubmissions.length}
-                                    </span>
+                            <div className="flex items-center justify-between mb-5 border-b border-border/40 pb-0">
+                                <div className="flex items-center gap-6">
+                                    <button 
+                                        onClick={() => setActiveTab("participants")}
+                                        className={cn("flex items-center gap-2 pb-3 border-b-2 transition-colors", activeTab === "participants" ? "border-primary text-foreground" : "border-transparent text-foreground/40 hover:text-foreground/70")}
+                                    >
+                                        <Users className="w-3.5 h-3.5" />
+                                        <span className="text-xs font-black uppercase tracking-[0.15em]">Participants</span>
+                                        <span className={cn("text-[10px] font-black px-2 py-0.5 rounded-full border", activeTab === "participants" ? "bg-primary/10 text-primary border-primary/20" : "bg-white/[0.05] text-foreground/30 border-border/40")}>
+                                            {enrichedSubmissions.length}
+                                        </span>
+                                    </button>
+                                    
+                                    {displayMode === "completed" && eventSummary && (
+                                        <button 
+                                            onClick={() => setActiveTab("results")}
+                                            className={cn("flex items-center gap-2 pb-3 border-b-2 transition-colors", activeTab === "results" ? "border-emerald-500 text-foreground" : "border-transparent text-foreground/40 hover:text-foreground/70")}
+                                        >
+                                            <BarChart2 className="w-3.5 h-3.5" />
+                                            <span className="text-xs font-black uppercase tracking-[0.15em]">Analytics & Results</span>
+                                        </button>
+                                    )}
                                 </div>
-                                <div className="flex border border-border/40 rounded-lg overflow-hidden">
-                                    <button onClick={() => setGridView(true)} className={cn("p-1.5 transition-colors", gridView ? "bg-white/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}>
-                                        <LayoutGrid className="w-3.5 h-3.5" />
-                                    </button>
-                                    <button onClick={() => setGridView(false)} className={cn("p-1.5 transition-colors", !gridView ? "bg-white/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}>
-                                        <List className="w-3.5 h-3.5" />
-                                    </button>
+                                {activeTab === "participants" && (
+                                    <div className="flex border border-border/40 rounded-lg overflow-hidden mb-3">
+                                        <button onClick={() => setGridView(true)} className={cn("p-1.5 transition-colors", gridView ? "bg-white/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}>
+                                            <LayoutGrid className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button onClick={() => setGridView(false)} className={cn("p-1.5 transition-colors", !gridView ? "bg-white/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}>
+                                            <List className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {activeTab === "results" && eventSummary && (
+                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                {/* Top KPI Row */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    <div className="bg-white/[0.03] border border-white/[0.06] rounded-[14px] p-4 text-center">
+                                        <Target className="w-5 h-5 text-emerald-400 mx-auto mb-2" />
+                                        <p className="text-xl font-black text-emerald-400 mb-0.5">{eventSummary.winningMargin.toFixed(1)}%</p>
+                                        <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-wider">Winning Margin</p>
+                                    </div>
+                                    <div className="bg-white/[0.03] border border-white/[0.06] rounded-[14px] p-4 text-center">
+                                        <Vote className="w-5 h-5 text-blue-400 mx-auto mb-2" />
+                                        <p className="text-xl font-black text-blue-400 mb-0.5">{eventSummary.voteCompletionPct.toFixed(1)}%</p>
+                                        <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-wider">Voter Capacity</p>
+                                    </div>
+                                    <div className="bg-white/[0.03] border border-white/[0.06] rounded-[14px] p-4 text-center">
+                                        <Shuffle className="w-5 h-5 text-amber-400 mx-auto mb-2" />
+                                        <p className="text-xl font-black text-amber-400 mb-0.5">{eventSummary.entropy.toFixed(2)}</p>
+                                        <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-wider">Entropy</p>
+                                    </div>
+                                    <div className="bg-white/[0.03] border border-white/[0.06] rounded-[14px] p-4 text-center">
+                                        <Activity className="w-5 h-5 text-violet-400 mx-auto mb-2" />
+                                        <p className="text-xl font-black text-violet-400 mb-0.5">{(( (1 - eventSummary.normalizedEntropy)*0.6 + eventSummary.avgParticipantTrustScore*0.4 ) * 100).toFixed(0)}%</p>
+                                        <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-wider">Decision Confidence</p>
+                                    </div>
+                                </div>
+
+                                {/* Overview Metrics & Cost */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="md:col-span-2">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <MousePointerClick className="w-5 h-5 text-emerald-400" />
+                                            <h3 className="font-display uppercase tracking-widest text-white text-base">Outcome Insights</h3>
+                                        </div>
+                                        <p className="text-[15px] font-medium text-white/80 leading-relaxed mb-8">
+                                            {`Entropy of ${eventSummary.entropy.toFixed(2)} (normalized ${eventSummary.normalizedEntropy.toFixed(2)}) indicates ${eventSummary.normalizedEntropy < 0.5 ? "a clear winner with focused audience preference" : "a spread vote suggesting mixed audience preference"}. Historical alignment stands at ${(eventSummary.historicalAlignment * 100).toFixed(1)}%, with a winning margin of ${eventSummary.winningMargin.toFixed(1)}%.`}
+                                        </p>
+                                        <div className="flex flex-wrap gap-3">
+                                            <div className="bg-[#111111] border border-white/5 px-5 py-3 rounded-2xl min-w-[120px]">
+                                                <span className="text-white/40 block text-[11px] font-black uppercase tracking-[0.2em] mb-1">Posts</span>
+                                                <strong className="text-2xl font-black">{eventSummary.totalSubmissions}</strong>
+                                            </div>
+                                            <div className="bg-[#111111] border border-white/5 px-5 py-3 rounded-2xl min-w-[120px]">
+                                                <span className="text-white/40 block text-[11px] font-black uppercase tracking-[0.2em] mb-1">Votes</span>
+                                                <strong className="text-2xl font-black">{eventSummary.totalVotes}</strong>
+                                            </div>
+                                            <div className="bg-[#111111] border border-emerald-500/20 px-5 py-3 rounded-2xl min-w-[120px]">
+                                                <span className="text-emerald-400 block text-[11px] font-black uppercase tracking-[0.2em] mb-1">Cost</span>
+                                                <strong className="text-2xl font-black text-emerald-400">
+                                                    ${(eventSummary.cost || (event.topReward || 0) + (event.leaderboardPool || event.baseReward || 0)).toFixed(2)}
+                                                </strong>
+                                            </div>
+                                            <div className="bg-[#111111] border border-white/5 px-5 py-3 rounded-2xl min-w-[120px]">
+                                                <span className="text-white/40 block text-[11px] font-black uppercase tracking-[0.2em] mb-1">Views</span>
+                                                <strong className="text-2xl font-black">{eventSummary.totalViews}</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Action Breakdown removed as requested */}
+                                </div>
+
+                                {/* Graphs Row */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* Vote Split Chart */}
+                                    <div className="bg-card border border-white/[0.06] rounded-[22px] overflow-hidden p-5">
+                                        <h3 className="font-display uppercase tracking-widest text-white text-sm mb-3">Vote Split by Content</h3>
+                                        {eventSummary.contentMetrics && eventSummary.contentMetrics.length > 0 ? (
+                                            <div className="h-[220px]">
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart layout="vertical" data={eventSummary.contentMetrics.slice(0, 5)} margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
+                                                        <XAxis type="number" hide />
+                                                        <YAxis dataKey="title" type="category" width={80} tick={TICK_STYLE} axisLine={false} tickLine={false} 
+                                                            tickFormatter={(val) => val.length > 10 ? val.substring(0, 8) + '...' : val} />
+                                                        <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(255,255,255,0.05)" }} />
+                                                        <Bar dataKey="votePercentage" name="% of Votes" fill={CHART_COLORS.cyan} radius={[0, 4, 4, 0]} maxBarSize={20} />
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        ) : (
+                                            <div className="h-[220px] flex items-center justify-center text-xs text-white/30 font-bold uppercase tracking-wider">No content data</div>
+                                        )}
+                                    </div>
+
+                                    {/* Demographics Double Bar Chart */}
+                                    <div className="bg-card border border-white/[0.06] rounded-[22px] overflow-hidden p-5">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h3 className="font-display uppercase tracking-widest text-white text-sm">Voter Demographics</h3>
+                                            <div className="flex gap-3">
+                                                <div className="flex gap-1.5 items-center"><span className="w-2 h-2 rounded bg-cyan-400" /><span className="text-[9px] font-bold text-white/50 uppercase">Male</span></div>
+                                                <div className="flex gap-1.5 items-center"><span className="w-2 h-2 rounded bg-blue-500" /><span className="text-[9px] font-bold text-white/50 uppercase">Female</span></div>
+                                            </div>
+                                        </div>
+                                        {eventSummary.votesByAgeGroup ? (() => {
+                                            const total = eventSummary.totalVotes || 1;
+                                            const malePct = eventSummary.votesByGender?.male / total;
+                                            const femalePct = eventSummary.votesByGender?.female / total;
+                                            const ageKeys = ['24_under', '25_34', '35_44', '45_54', '55_64', '65_plus'];
+                                            const labels: Record<string,string> = { '24_under': '<24', '25_34': '25-34', '35_44': '35-44', '45_54': '45-54', '55_64': '55-64', '65_plus': '65+'};
+                                            const demoData = ageKeys.map(k => {
+                                                const raw = eventSummary.votesByAgeGroup[k] || 0;
+                                                return { age: labels[k], male: Math.round(raw * malePct), female: Math.round(raw * femalePct) };
+                                            });
+                                            return (
+                                                <div className="h-[220px]">
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <BarChart data={demoData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                                                            <CartesianGrid {...GRID_STYLE} vertical={false} />
+                                                            <XAxis dataKey="age" tick={TICK_STYLE} axisLine={false} tickLine={false} />
+                                                            <YAxis tick={TICK_STYLE} axisLine={false} tickLine={false} />
+                                                            <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(255,255,255,0.05)" }} />
+                                                            <Bar dataKey="male" name="Male" fill={CHART_COLORS.cyan} radius={[3, 3, 0, 0]} maxBarSize={16} />
+                                                            <Bar dataKey="female" name="Female" fill={CHART_COLORS.blue} radius={[3, 3, 0, 0]} maxBarSize={16} />
+                                                        </BarChart>
+                                                    </ResponsiveContainer>
+                                                </div>
+                                            )
+                                        })() : (
+                                            <div className="h-[220px] flex items-center justify-center text-xs text-white/30 font-bold uppercase tracking-wider">No demographic data</div>
+                                        )}
+                                    </div>
+                                    
+                                    {/* Number of views & votes graph */}
+                                    <div className="bg-card border border-white/[0.06] rounded-[22px] overflow-hidden p-5 md:col-span-2">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h3 className="font-display uppercase tracking-widest text-white text-sm">Views & Votes Timeline</h3>
+                                            <div className="flex gap-3">
+                                                <div className="flex gap-1.5 items-center"><span className="w-2 h-2 rounded bg-amber-400" /><span className="text-[9px] font-bold text-white/50 uppercase">Views</span></div>
+                                                <div className="flex gap-1.5 items-center"><span className="w-2 h-2 rounded bg-emerald-400" /><span className="text-[9px] font-bold text-white/50 uppercase">Votes</span></div>
+                                            </div>
+                                        </div>
+                                        {eventSummary.viewsOverTime && eventSummary.viewsOverTime.length > 0 ? (() => {
+                                            // Merge views and votes by timestamp
+                                            const timeMap = new Map();
+                                            eventSummary.viewsOverTime.forEach((v:any) => timeMap.set(v.timestamp, { time: new Date(v.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), views: v.count, votes: 0 }));
+                                            if (eventSummary.votesOverTime) {
+                                                eventSummary.votesOverTime.forEach((v:any) => {
+                                                    if(timeMap.has(v.timestamp)) { timeMap.get(v.timestamp).votes = v.count; }
+                                                    else { timeMap.set(v.timestamp, { time: new Date(v.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), views: 0, votes: v.count }); }
+                                                });
+                                            }
+                                            const timeData = Array.from(timeMap.values());
+                                            return (
+                                                <div className="h-[220px]">
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <AreaChart data={timeData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                                                            <defs>
+                                                                <linearGradient id="gradOrange" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={CHART_COLORS.amber} stopOpacity={0.3}/><stop offset="95%" stopColor={CHART_COLORS.amber} stopOpacity={0}/></linearGradient>
+                                                                <linearGradient id="gradEmerald" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={CHART_COLORS.emerald} stopOpacity={0.3}/><stop offset="95%" stopColor={CHART_COLORS.emerald} stopOpacity={0}/></linearGradient>
+                                                            </defs>
+                                                            <CartesianGrid {...GRID_STYLE} vertical={false} />
+                                                            <XAxis dataKey="time" tick={{...TICK_STYLE, fontSize: 8}} axisLine={false} tickLine={false} />
+                                                            <YAxis tick={TICK_STYLE} axisLine={false} tickLine={false} />
+                                                            <Tooltip content={<ChartTooltip />} />
+                                                            <Area type="monotone" dataKey="views" name="Views" stroke={CHART_COLORS.amber} fill="url(#gradOrange)" strokeWidth={2} />
+                                                            <Area type="monotone" dataKey="votes" name="Votes" stroke={CHART_COLORS.emerald} fill="url(#gradEmerald)" strokeWidth={2} />
+                                                        </AreaChart>
+                                                    </ResponsiveContainer>
+                                                </div>
+                                            )
+                                        })() : (
+                                            <div className="h-[220px] flex items-center justify-center text-xs text-white/30 font-bold uppercase tracking-wider">No timeline data recorded</div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         )}
 
-                        {/* Participants grid */}
-                        {displayMode === "upcoming" ? (
-                            <div className="py-16 flex flex-col items-center text-center gap-4">
-                                <div className="w-14 h-14 rounded-3xl bg-primary/10 flex items-center justify-center">
-                                    <Clock className="w-7 h-7 text-primary" />
-                                </div>
-                                <div>
-                                    <h2 className="font-display text-[2rem] md:text-[3rem] text-foreground uppercase leading-[0.92] tracking-tight mb-1">Coming Soon</h2>
-                                    <p className="text-sm text-foreground/50 font-medium">
-                                        Goes live on <strong>{new Date(event.startTime).toLocaleString()}</strong>
-                                    </p>
-                                </div>
-                            </div>
-                        ) : event.eventType === "vote_only" && displayMode !== "completed" ? (
-                            /* ── Vote-only: show proposal cards (read-only for brand) ── */
-                            <AnimatePresence>
-                                {enrichedSubmissions.length === 0 ? (
-                                    <div className="text-center py-20">
-                                        <p className="text-sm text-foreground/30 font-bold">No voting options yet</p>
+                        {activeTab === "participants" && (
+                            <>
+                                {/* Participants grid */}
+                                {displayMode === "upcoming" ? (
+                                    <div className="py-16 flex flex-col items-center text-center gap-4">
+                                        <div className="w-14 h-14 rounded-3xl bg-primary/10 flex items-center justify-center">
+                                            <Clock className="w-7 h-7 text-primary" />
+                                        </div>
+                                        <div>
+                                            <h2 className="font-display text-[2rem] md:text-[3rem] text-foreground uppercase leading-[0.92] tracking-tight mb-1">Coming Soon</h2>
+                                            <p className="text-sm text-foreground/50 font-medium">
+                                                Goes live on <strong>{new Date(event.startTime).toLocaleString()}</strong>
+                                            </p>
+                                        </div>
                                     </div>
+                                ) : event.eventType === "vote_only" && displayMode !== "completed" ? (
+                                    /* ── Vote-only: show proposal cards (read-only for brand) ── */
+                                    <AnimatePresence>
+                                        {enrichedSubmissions.length === 0 ? (
+                                            <div className="text-center py-20">
+                                                <p className="text-sm text-foreground/30 font-bold">No voting options yet</p>
+                                            </div>
+                                        ) : (
+                                            <div className={gridView ? "grid grid-cols-2 md:grid-cols-3 gap-4" : "flex flex-col gap-3"}>
+                                                {enrichedSubmissions.map((sub, idx) => (
+                                                    <motion.div key={sub.id} layout initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2, delay: idx * 0.03 }}>
+                                                        <VoteSubmissionCard
+                                                            submission={toVoteSubmission(sub)}
+                                                            isVoted={false}
+                                                            isPending={false}
+                                                            onVote={() => {}}
+                                                            disabled={true}
+                                                            optionIndex={idx}
+                                                            showVoteCount={true}
+                                                        />
+                                                    </motion.div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </AnimatePresence>
                                 ) : (
-                                    <div className={gridView ? "grid grid-cols-2 md:grid-cols-3 gap-4" : "flex flex-col gap-3"}>
-                                        {enrichedSubmissions.map((sub, idx) => (
-                                            <motion.div key={sub.id} layout initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2, delay: idx * 0.03 }}>
-                                                <VoteSubmissionCard
-                                                    submission={toVoteSubmission(sub)}
-                                                    isVoted={false}
-                                                    isPending={false}
-                                                    onVote={() => {}}
-                                                    disabled={true}
-                                                    optionIndex={idx}
-                                                    showVoteCount={true}
-                                                />
-                                            </motion.div>
-                                        ))}
-                                    </div>
+                                    <ParticipantsGrid submissions={enrichedSubmissions} event={event} gridView={gridView} />
                                 )}
-                            </AnimatePresence>
-                        ) : (
-                            <ParticipantsGrid submissions={enrichedSubmissions} event={event} gridView={gridView} />
+                            </>
                         )}
                     </div>
 
