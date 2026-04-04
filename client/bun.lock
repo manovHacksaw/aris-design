@@ -1,11 +1,8 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "dependencies": {
-        "@pqina/pintura": "^8.95.6",
-        "@pqina/react-pintura": "^9.0.4",
         "@privy-io/react-auth": "^3.14.1",
         "@privy-io/wagmi": "^4.0.2",
         "@tanstack/react-query": "^5.90.21",
@@ -306,10 +303,6 @@
     "@phosphor-icons/webcomponents": ["@phosphor-icons/webcomponents@2.1.5", "", { "dependencies": { "lit": "^3" } }, "sha512-JcvQkZxvcX2jK+QCclm8+e8HXqtdFW9xV4/kk2aL9Y3dJA2oQVt+pzbv1orkumz3rfx4K9mn9fDoMr1He1yr7Q=="],
 
     "@pinojs/redact": ["@pinojs/redact@0.4.0", "", {}, "sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg=="],
-
-    "@pqina/pintura": ["@pqina/pintura@8.96.1", "", {}, "sha512-E6p6vZHgMKEC4kcNvV8lz42/y1DC+/Kn/oLMvWdFHdNiA0FIKeTfc3QSJnjIu3w20CLnhxut1cP4ZSaMX8cJng=="],
-
-    "@pqina/react-pintura": ["@pqina/react-pintura@9.0.4", "", { "peerDependencies": { "@pqina/pintura": "^8.x" } }, "sha512-KTJ6cXRGw59fgyxis63FyHzMR6kOf4P/sxIoaoHLkEyKX5plPTX5CXW6z9joMX23pZUutYAIXKUm0y61ITX6ZQ=="],
 
     "@privy-io/api-base": ["@privy-io/api-base@1.8.2", "", { "dependencies": { "zod": "^3.24.3" } }, "sha512-pEvZ73GnC2OB/w35MGCPhqZ8mnApXgUpXxM0t9qZmNzvDNoMKBLPgysUXouAx7E4jO8REJPuwX70Y1AqJ/51kg=="],
 
