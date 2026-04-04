@@ -62,7 +62,7 @@ echo "🔧 Generating Prisma Client..."
 bun run prisma:generate
 
 # Check if DATABASE_URL is set (basic check)
-if grep -q 'postgresql://user:password@host:5432/database' .env 2>/dev/null; then
+if grep -q 'postgresql://<USER>:<PASSWORD>@<HOST>:5432/<DATABASE>' .env 2>/dev/null; then
     echo ""
     echo "⚠️  WARNING: DATABASE_URL appears to be the default template value!"
     echo "   Please update it with your actual database connection string."
