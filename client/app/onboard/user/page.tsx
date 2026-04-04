@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, User, IdCard, Target, Heart, Users, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -133,7 +133,15 @@ function getErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
-export default function UserOnboarding() {
+export default function UserOnboardingPage() {
+  return (
+    <Suspense fallback={null}>
+      <UserOnboarding />
+    </Suspense>
+  );
+}
+
+function UserOnboarding() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get("redirect");

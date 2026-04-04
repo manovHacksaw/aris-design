@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
@@ -11,7 +11,15 @@ import { useAuth } from "@/context/AuthContext";
 import { useUser } from "@/context/UserContext";
 import { Captcha } from "@privy-io/react-auth";
 
-export default function Register() {
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <Register />
+    </Suspense>
+  );
+}
+
+function Register() {
   const [selectedRole, setSelectedRole] = useState<"user" | "brand" | null>("user");
   const [isConnecting, setIsConnecting] = useState(false);
   const router = useRouter();

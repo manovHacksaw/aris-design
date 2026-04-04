@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useWallet } from "@/context/WalletContext";
 import { useAuth } from "@/context/AuthContext";
@@ -84,7 +84,15 @@ const STEP_META: StepMeta[] = [
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export default function BrandSignup() {
+export default function BrandSignupPage() {
+  return (
+    <Suspense fallback={<AppSkeleton />}>
+      <BrandSignup />
+    </Suspense>
+  );
+}
+
+function BrandSignup() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get("redirect");
