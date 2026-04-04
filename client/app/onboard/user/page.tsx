@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, User, IdCard, Target, Heart, Users, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
@@ -135,6 +135,9 @@ function getErrorMessage(error: unknown, fallback: string) {
 
 export default function UserOnboarding() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectPath = searchParams.get("redirect");
+
   const { isConnected, isInitialized, isLoading: walletLoading, userInfo } = useWallet();
   const { completeOnboarding, setOnboardingData, isOnboarded, onboardingData, isLoading: authLoading } = useAuth();
   const { updateProfile } = useUser();
@@ -166,8 +169,10 @@ export default function UserOnboarding() {
   }, [isConnected, isInitialized, walletLoading, router]);
 
   useEffect(() => {
-    if (!authLoading && isOnboarded) router.replace("/");
-  }, [isOnboarded, authLoading, router]);
+    if (!authLoading && isOnboarded) {
+      router.replace(redirectPath || "/");
+    }
+  }, [isOnboarded, authLoading, router, redirectPath]);
 
   useEffect(() => {
     if (!authLoading && onboardingData && !hasResumed.current) {
@@ -269,7 +274,7 @@ export default function UserOnboarding() {
       }
 
       toast.success("Welcome to Aris!");
-      router.push("/");
+      router.push(redirectPath || "/");
     } catch (err: unknown) {
       console.error(err);
       toast.error(getErrorMessage(err, "Something went wrong. Please try again."));

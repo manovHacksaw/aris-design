@@ -456,9 +456,15 @@ export default function ProfileView({
                           transition={{ delay: i * 0.05 }}
                           className="group relative bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.12] rounded-[24px] p-4 flex items-center gap-4 transition-all"
                         >
-                          {/* Left: Brand Logo */}
+                          {/* Left: Event Banner / Logo */}
                           <div className="w-12 h-12 rounded-2xl overflow-hidden bg-white/[0.05] border border-white/[0.08] shrink-0">
-                            {item.event.brand?.logoCid || item.event.brand?.logoUrl ? (
+                            {item.event.imageUrl || item.event.imageCid ? (
+                              <img
+                                src={item.event.imageUrl || `https://gateway.pinata.cloud/ipfs/${item.event.imageCid}`}
+                                alt={item.event.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : item.event.brand?.logoUrl || item.event.brand?.logoCid ? (
                               <img
                                 src={item.event.brand.logoUrl || `https://gateway.pinata.cloud/ipfs/${item.event.brand.logoCid}`}
                                 alt={item.event.brand.name}
@@ -546,9 +552,16 @@ export default function ProfileView({
                             className="group relative aspect-[4/5] bg-white/[0.02] border border-white/[0.06] hover:border-white/20 rounded-[28px] overflow-hidden transition-all"
                           >
                             <img
-                              src={`https://gateway.pinata.cloud/ipfs/${s.imageCid}`}
+                              src={s.imageUrl || `https://gateway.pinata.cloud/ipfs/${s.imageCid}`}
                               alt={s.event?.title}
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                              onError={(e) => {
+                                // Fallback for broken IPFS links
+                                const target = e.target as HTMLImageElement;
+                                if (s.imageCid && !target.src.includes('infura-ipfs.io')) {
+                                  target.src = `https://skywalker.infura-ipfs.io/ipfs/${s.imageCid}`;
+                                }
+                              }}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                             <div className="absolute bottom-0 left-0 right-0 p-5 space-y-2">

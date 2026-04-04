@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma.js';
 import { calculateEventScore } from './exploreService.js';
+import { enforceEventDemographics } from '../utils/eventUtils.js';
 
 /**
  * Calculates a personalized Home Score for a given user and event.
@@ -12,16 +13,11 @@ function calculateHomeScore(
     followedUserIds: Set<string>,
     userStats: { topCategory: string | null }
 ) {
-    // 1. Hard Filters (Strict Exclusion)
-    // If the user doesn't meet requirements, hide from the feed.
-    if (event.ageRestriction) {
-        if (!user.dateOfBirth) return -1; // Protect anonymous/incomplete profiles
-        const age = (new Date().getTime() - new Date(user.dateOfBirth).getTime()) / (31557600000);
-        if (age < event.ageRestriction) return -1;
-    }
-
-    if (event.genderRestriction && user.gender) {
-        if (user.gender.toUpperCase() !== event.genderRestriction.toUpperCase()) return -1;
+    // 1. Hard Filters (Strict Exclusion) using central utility
+    try {
+        enforceEventDemographics(event as any, user as any);
+    } catch (e) {
+        return -1; // Hide from feed if ineligible
     }
 
     // 2. Base Universal Score

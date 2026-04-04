@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { ExploreService } from '../services/exploreService.js';
+import { authenticateOptional } from '../middlewares/authMiddleware.js';
 
 const router = Router();
 
@@ -7,9 +8,9 @@ const router = Router();
  * GET /api/explore/events
  * Get grouped events data for the explore page (Trending, Closed, Domain-categorized).
  */
-router.get('/events', async (_req: Request, res: Response) => {
+router.get('/events', authenticateOptional, async (req: Request, res: Response) => {
     try {
-        const eventsData = await ExploreService.getExploreEvents();
+        const eventsData = await ExploreService.getExploreEvents((req as any).user?.id);
         return res.status(200).json(eventsData);
     } catch (error: any) {
         console.error('Failed to get explore events:', error);
@@ -35,9 +36,9 @@ router.get('/brands', async (_req: Request, res: Response) => {
  * GET /api/explore/content
  * Get past top voted submissions to form a content mosaic.
  */
-router.get('/content', async (_req: Request, res: Response) => {
+router.get('/content', authenticateOptional, async (req: Request, res: Response) => {
     try {
-        const contentData = await ExploreService.getExploreContent();
+        const contentData = await ExploreService.getExploreContent((req as any).user?.id);
         return res.status(200).json(contentData);
     } catch (error: any) {
         console.error('Failed to get explore content:', error);

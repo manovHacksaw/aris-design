@@ -1,4 +1,5 @@
 import { prisma } from '../lib/prisma.js';
+import { enforceEventDemographics } from '../utils/eventUtils.js';
 
 /**
  * Universal Ranking Algorithm for Events
@@ -113,9 +114,18 @@ function calculateCreatorScore(user: any) {
 export const ExploreService = {
     /**
      * Get explore events including trending, domain-grouped events, and closed events.
+     * Applies hard filters if userId is provided.
      */
-    async getExploreEvents() {
+    async getExploreEvents(userId?: string) {
         try {
+            // Fetch current user demographics if logged in
+            let currentUser = null;
+            if (userId) {
+                currentUser = await prisma.user.findUnique({
+                    where: { id: userId },
+                    select: { gender: true, dateOfBirth: true }
+                });
+            }
             // 1. Fetch all live candidates (posting/voting)
             const allLive = await prisma.event.findMany({
                 where: {
@@ -128,8 +138,17 @@ export const ExploreService = {
                 }
             });
 
+            const filteredLive = allLive.filter(event => {
+                try {
+                    enforceEventDemographics(event as any, currentUser as any);
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            });
+
             // 2. Apply Universal Ranking
-            const scoredEvents = allLive.map(event => ({
+            const scoredEvents = filteredLive.map(event => ({
                 ...event,
                 rankScore: calculateEventScore(event)
             })).sort((a, b) => b.rankScore - a.rankScore);
@@ -246,22 +265,46 @@ export const ExploreService = {
 
     /**
      * Get content mosaic (past highly voted submissions)
+     * Filters out content from restricted events for the current user.
      */
-    async getExploreContent() {
+    async getExploreContent(userId?: string) {
         try {
+            // Fetch current user demographics
+            let currentUser = null;
+            if (userId) {
+                currentUser = await prisma.user.findUnique({
+                    where: { id: userId },
+                    select: { gender: true, dateOfBirth: true }
+                });
+            }
+
             const content = await prisma.submission.findMany({
-                orderBy: {
-                    voteCount: 'desc'
+                where: {
+                    status: 'approved',
                 },
-                take: 30,
                 include: {
-                    user: { select: { id: true, displayName: true, username: true, avatarUrl: true } },
-                    event: { select: { id: true, title: true, status: true, brand: { select: { id: true, name: true } } } },
+                    user: { select: { username: true, avatarUrl: true } },
+                    event: { select: { title: true, ageRestriction: true, genderRestriction: true } },
                     _count: { select: { votes: true } }
+                },
+                orderBy: { voteCount: 'desc' },
+                take: 50
+            });
+
+            // Filter content based on event restrictions
+            const filteredContent = content.filter(sub => {
+                const event = sub.event as any;
+                if (!event) return true;
+
+                try {
+                    enforceEventDemographics(event, currentUser as any);
+                    return true;
+                } catch (e) {
+                    return false;
                 }
             });
 
-            return content;
+            return filteredContent;
         } catch (error) {
             console.error('Failed to get explore content:', error);
             throw error;

@@ -81,6 +81,12 @@ export interface CreateEventRequest {
   moderationRules?: string;
   hashtags?: string[];
   regions?: string[];
+  
+  // Audince Targeting Hard Filters
+  ageRestriction?: number;
+  genderRestriction?: string;
+  intendedCategories?: string[];
+
   proposals?: Array<{
     type: 'IMAGE' | 'TEXT';
     title: string;
@@ -110,6 +116,9 @@ export interface UpdateEventRequest {
   baseReward?: number;
   topReward?: number;
   capacity?: number;
+  ageRestriction?: number;
+  genderRestriction?: string;
+  intendedCategories?: string[];
 }
 
 export interface UpdateEventStatusRequest {

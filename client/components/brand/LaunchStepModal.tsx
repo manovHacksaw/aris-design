@@ -41,6 +41,9 @@ export interface LaunchFormData {
   baseReward: string;
   leaderboardPool: string;
   topPrize: string;
+  ageRestriction?: number;
+  genderRestriction?: string;
+  intendedCategories?: string[];
   coverImage: File | string | null;
   participantInstructions?: string;
   submissionGuidelines?: string;
@@ -298,6 +301,9 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
         regions: form.regions,
         preferredGender: form.preferredGender,
         ageGroup: form.ageGroup,
+        ageRestriction: form.ageRestriction,
+        genderRestriction: form.genderRestriction,
+        intendedCategories: form.intendedCategories,
         samples: form.type === "post" ? [] : undefined,
         proposals: form.type === "vote"
           ? (uploadedProposals.length >= 2

@@ -9,88 +9,7 @@ import {
 import { EventStatus } from '../types/event.js';
 import { XpService } from './xpService.js';
 import { EventService } from './eventService.js';
-
-// ---------------------------------------------------------------------------
-// Demographic eligibility helpers (duplicated from submissionService for isolation)
-// ---------------------------------------------------------------------------
-
-function getAgeGroupLabel(dateOfBirth: Date | null): string {
-  if (!dateOfBirth) return 'unknown';
-  const age = Math.floor((Date.now() - dateOfBirth.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
-  if (age < 18) return 'under_18';
-  if (age <= 24) return '18_24';
-  if (age <= 34) return '25_34';
-  if (age <= 44) return '35_44';
-  if (age <= 54) return '45_54';
-  if (age <= 64) return '55_64';
-  return '65_plus';
-}
-
-function enforceEventDemographics(
-  event: { 
-    preferredGender: string | null; 
-    ageGroup: string | null; 
-    regions: string[];
-    ageRestriction: number | null;
-    genderRestriction: string | null;
-  },
-  user: { gender: string | null; dateOfBirth: Date | null; region: string | null }
-): void {
-  // --- New Hard Gender Filter ---
-  if (event.genderRestriction) {
-    const userGender = (user.gender ?? '').trim().toUpperCase();
-    if (userGender !== event.genderRestriction.toUpperCase()) {
-      throw new Error(`This event is restricted to ${event.genderRestriction.toLowerCase()} participants only`);
-    }
-  }
-
-  // --- New Hard Age Filter ---
-  if (event.ageRestriction) {
-    if (!user.dateOfBirth) {
-      throw new Error('Your date of birth is required to participate in this event');
-    }
-    const age = (Date.now() - user.dateOfBirth.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
-    if (age < event.ageRestriction) {
-      throw new Error(`You must be at least ${event.ageRestriction} years old to participate in this event`);
-    }
-  }
-
-  // --- Legacy Gender (Soft/Preferred) ---
-  const genderFilter = (event.preferredGender ?? 'All').trim();
-  if (genderFilter !== 'All' && !event.genderRestriction) {
-    const userGender = (user.gender ?? '').trim().toUpperCase();
-    if (userGender !== genderFilter.toUpperCase()) {
-      throw new Error('You do not meet the gender requirement for this event');
-    }
-  }
-
-  // --- Legacy Age (Soft/Preferred) ---
-  const ageFilter = (event.ageGroup ?? 'All Ages').trim();
-  if (ageFilter !== 'All Ages' && !event.ageRestriction) {
-    const ageGroupLabel = getAgeGroupLabel(user.dateOfBirth);
-    if (ageGroupLabel === 'unknown') {
-      throw new Error('Your date of birth is required to participate in this event');
-    }
-    const normalisedFilter = ageFilter.replace('-', '_').replace('+', '_plus');
-    if (ageGroupLabel !== normalisedFilter) {
-      throw new Error('You do not meet the age requirement for this event');
-    }
-  }
-
-  // --- Region ---
-  if (event.regions && event.regions.length > 0) {
-    const userRegion = (user.region ?? '').trim().toLowerCase();
-    if (!userRegion) {
-      throw new Error('Your region is required to participate in this event');
-    }
-    const allowed = event.regions.map((r) => r.trim().toLowerCase());
-    if (!allowed.includes(userRegion)) {
-      throw new Error('You do not meet the region requirement for this event');
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
+import { enforceEventDemographics } from '../utils/eventUtils.js';
 
 export class VoteService {
     /**
@@ -170,7 +89,7 @@ export class VoteService {
             select: { gender: true, dateOfBirth: true, region: true },
         });
         if (!voter) throw new Error('User not found');
-        enforceEventDemographics(event, voter);
+        enforceEventDemographics(event as any, voter as any);
 
         // 8. Create vote and update analytics/stats in transaction
         const { vote, shouldClose } = await prisma.$transaction(async (tx) => {
@@ -382,7 +301,7 @@ export class VoteService {
             select: { gender: true, dateOfBirth: true, region: true },
         });
         if (!voter) throw new Error('User not found');
-        enforceEventDemographics(event, voter);
+        enforceEventDemographics(event as any, voter as any);
 
         // 9. Create votes in transaction
         const result = await prisma.$transaction(async (tx) => {

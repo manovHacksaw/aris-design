@@ -395,6 +395,10 @@ export class EventService {
           moderationRules: data.moderationRules || null,
           hashtags: data.hashtags || [],
           regions: data.regions || [],
+          // Audience Targeting Hard Filters
+          ageRestriction: data.ageRestriction || null,
+          genderRestriction: data.genderRestriction || null,
+          intendedCategories: data.intendedCategories || [],
           // Web3 Fields
           blockchainStatus: data.blockchainStatus || 'PENDING_BLOCKCHAIN',
         },
@@ -1009,6 +1013,18 @@ export class EventService {
 
     if (!lockedFields.includes('autoTransition') && data.autoTransition !== undefined) {
       updateData.autoTransition = data.autoTransition;
+    }
+
+    if (!lockedFields.includes('ageRestriction') && data.ageRestriction !== undefined) {
+      updateData.ageRestriction = data.ageRestriction;
+    }
+
+    if (!lockedFields.includes('genderRestriction') && data.genderRestriction !== undefined) {
+      updateData.genderRestriction = data.genderRestriction;
+    }
+
+    if (!lockedFields.includes('intendedCategories') && data.intendedCategories !== undefined) {
+      updateData.intendedCategories = data.intendedCategories;
     }
 
     // Handle timestamp updates

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 import { RoleCard } from "@/components/RoleCard";
@@ -15,6 +15,8 @@ export default function Register() {
   const [selectedRole, setSelectedRole] = useState<"user" | "brand" | null>("user");
   const [isConnecting, setIsConnecting] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectPath = searchParams.get("redirect");
 
   const { isConnected, isInitialized, isLoading: walletLoading, connect } = useWallet();
   const { isOnboarded, role, isLoading: authLoading, setOnboardingData } = useAuth();
@@ -27,7 +29,9 @@ export default function Register() {
   useEffect(() => {
     if (!isInitialized) return;
     if (isConnected && isOnboarded) {
-      if (isBrand) {
+      if (redirectPath) {
+        router.replace(redirectPath);
+      } else if (isBrand) {
         router.replace("/brand/dashboard");
       } else {
         router.replace("/");
@@ -48,10 +52,11 @@ export default function Register() {
     setIsConnecting(true);
     try {
       setOnboardingData({ role: selectedRole, isOnboarded: false });
+      const redirectUrl = redirectPath ? `?redirect=${encodeURIComponent(redirectPath)}` : "";
       if (!isConnected) {
         connect();
       } else {
-        router.push("/onboard/user");
+        router.push(`/onboard/user${redirectUrl}`);
       }
     } catch (err) {
       console.error("Connection failed:", err);
@@ -66,10 +71,11 @@ export default function Register() {
   useEffect(() => {
     if (!isInitialized || walletLoading || authLoading) return;
     if (isConnected && !isOnboarded) {
+      const redirectUrl = redirectPath ? `?redirect=${encodeURIComponent(redirectPath)}` : "";
       if (role === "brand") {
-        router.push("/onboard/brand");
+        router.push(`/onboard/brand${redirectUrl}`);
       } else {
-        router.push("/onboard/user");
+        router.push(`/onboard/user${redirectUrl}`);
       }
     }
   }, [isConnected, isOnboarded, isInitialized, walletLoading, authLoading, role, router]);

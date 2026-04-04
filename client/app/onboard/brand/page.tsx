@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useWallet } from "@/context/WalletContext";
 import { useAuth } from "@/context/AuthContext";
 import { useUser } from "@/context/UserContext";
@@ -86,6 +86,8 @@ const STEP_META: StepMeta[] = [
 
 export default function BrandSignup() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectPath = searchParams.get("redirect");
   const { isConnected, isInitialized, isLoading: walletLoading, userInfo } = useWallet();
   const { completeOnboarding, isOnboarded: authIsOnboarded, isLoading: authLoading } = useAuth();
   const { updateProfile, user, isLoading: userLoading } = useUser();
@@ -117,8 +119,10 @@ export default function BrandSignup() {
   }, [isConnected, isInitialized, walletLoading, router]);
 
   useEffect(() => {
-    if (!authLoading && !userLoading && isOnboarded) router.replace("/brand/pending");
-  }, [isOnboarded, authLoading, userLoading, router]);
+    if (!authLoading && !userLoading && isOnboarded) {
+      router.replace(redirectPath || "/brand/pending");
+    }
+  }, [isOnboarded, authLoading, userLoading, router, redirectPath]);
 
   const toggleCategory = (cat: string) => {
     setForm((f) => ({
@@ -206,7 +210,7 @@ export default function BrandSignup() {
       await updateProfile({ isOnboarded: true });
 
       toast.success("Application submitted! Awaiting admin approval.");
-      router.push("/brand/pending");
+      router.push(redirectPath || "/brand/pending");
     } catch (err) {
       console.error(err);
       toast.error("Something went wrong. Please try again.");

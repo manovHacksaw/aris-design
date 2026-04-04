@@ -145,7 +145,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     // Not authenticated — redirect to register
     if (!isAuthenticated) {
       if (!isPublicPath(pathname)) {
-        router.replace("/explore");
+        router.replace(`/register?redirect=${encodeURIComponent(pathname)}`);
       }
       return;
     }
@@ -156,10 +156,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     // Authenticated but not onboarded — send to signup to complete onboarding
     if (!isOnboarded) {
       if (!isPublicPath(pathname)) {
+        const redirectUrl = `?redirect=${encodeURIComponent(pathname)}`;
         if (isBrand) {
-          router.replace("/onboard/brand");
+          router.replace(`/onboard/brand${redirectUrl}`);
         } else {
-          router.replace("/onboard/user");
+          router.replace(`/onboard/user${redirectUrl}`);
         }
       }
       return;
@@ -169,7 +170,13 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     // But only redirect away from truly "public" paths (not /admin, /claim-brand, /brand/pending)
     const isAuthOnlyPublicPath = pathname === "/register" || pathname.startsWith("/register/") || pathname === "/onboard" || pathname.startsWith("/onboard/");
     if (isOnboarded && isAuthOnlyPublicPath) {
-      if (isBrand) {
+      // Check for 'redirect' query param in URL to return to original destination
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirectPath = searchParams.get("redirect");
+      
+      if (redirectPath) {
+        router.replace(redirectPath);
+      } else if (isBrand) {
         router.replace(brandIsActive ? "/brand/dashboard" : "/brand/pending");
       } else {
         router.replace("/");

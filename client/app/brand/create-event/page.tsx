@@ -74,6 +74,11 @@ interface FormData {
     preferredGender: string;
     ageGroup: string;
     regions: string[];
+    // Hard & Soft Filters
+    ageRestriction: string;
+    genderRestriction: string;
+    intendedCategories: string[];
+
     // fields required by LaunchFormData but set to defaults
     tagline: string;
     startImmediately: boolean;
@@ -178,6 +183,9 @@ export default function CreateEventPage() {
         preferredGender: "All",
         ageGroup: "All Ages",
         regions: [],
+        ageRestriction: "",
+        genderRestriction: "All",
+        intendedCategories: [],
         tagline: "",
         startImmediately: true,
         startDate: "",
@@ -232,6 +240,9 @@ export default function CreateEventPage() {
             baseReward: event.baseReward ? String(event.baseReward) : String(BASE_RATE),
             topPrize: event.topReward ? String(event.topReward) : "",
             leaderboardPool: event.leaderboardPool ? String(event.leaderboardPool) : "",
+            ageRestriction: (event as any).ageRestriction ? String((event as any).ageRestriction) : "",
+            genderRestriction: (event as any).genderRestriction ?? "All",
+            intendedCategories: (event as any).intendedCategories ?? [],
         });
         // If event has an imageUrl set banner preview
         if (event.imageUrl) {
@@ -274,6 +285,9 @@ export default function CreateEventPage() {
                 regions: form.regions,
                 preferredGender: form.preferredGender,
                 ageGroup: form.ageGroup,
+                ageRestriction: form.ageRestriction ? parseInt(form.ageRestriction) : null,
+                genderRestriction: form.genderRestriction === "All" ? null : form.genderRestriction,
+                intendedCategories: form.intendedCategories,
                 startTime: new Date(Date.now() + 86400000).toISOString(),
                 endTime: new Date(Date.now() + 86400000 * 2).toISOString(),
                 status: "draft" as const,
@@ -828,6 +842,89 @@ export default function CreateEventPage() {
                                     <p className="text-xs text-muted-foreground/60 mt-1.5">No region selected — all regions allowed</p>
                                 )}
                             </div>
+
+                            {/* --- New Hard Filters --- */}
+                            <div className="pt-4 border-t border-border/50">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <ShieldCheck className="w-4 h-4 text-orange-400" />
+                                    <span className="text-sm font-black text-orange-400">Strict Enforcement (Hard Filters)</span>
+                                    <InfoTooltip text="Strictly blocks users who don't meet these requirements. Use for 18+ or gender-locked content." />
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div>
+                                        <Label optional>Minimum Age</Label>
+                                        <Input
+                                            type="number"
+                                            placeholder="e.g. 18"
+                                            value={form.ageRestriction}
+                                            onChange={(e) => set({ ageRestriction: e.target.value })}
+                                        />
+                                        <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-1">
+                                            <AlertCircle className="w-3 h-3" />
+                                            Users below this age won't see or enter the event.
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <Label optional>Strict Gender Lock</Label>
+                                        <div className="flex gap-2">
+                                            {["All", "M", "F"].map((g) => (
+                                                <button
+                                                    key={g}
+                                                    type="button"
+                                                    onClick={() => set({ genderRestriction: g })}
+                                                    className={cn(
+                                                        "px-4 py-2 rounded-xl text-xs font-bold border transition-all flex-1",
+                                                        form.genderRestriction === g
+                                                            ? "border-orange-400 bg-orange-400/10 text-orange-400"
+                                                            : "border-border text-muted-foreground hover:border-orange-400/50"
+                                                    )}
+                                                >
+                                                    {g === "All" ? "None" : g === "M" ? "Male" : "Female"}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* --- Interest Targeting (Soft Filter) --- */}
+                            <div className="pt-4 border-t border-border/50">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Sparkles className="w-4 h-4 text-blue-400" />
+                                    <span className="text-sm font-black text-blue-400">Personalization Interests (Soft Filter)</span>
+                                    <InfoTooltip text="Boosts your event's ranking for users with these interests in their personalized feed." />
+                                </div>
+
+                                <div>
+                                    <Label optional>Target Interests</Label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {EVENT_DOMAINS.filter(d => d !== "Other").map((d) => {
+                                            const active = form.intendedCategories.includes(d);
+                                            return (
+                                                <button
+                                                    key={d}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const next = active
+                                                            ? form.intendedCategories.filter(c => c !== d)
+                                                            : [...form.intendedCategories, d];
+                                                        set({ intendedCategories: next });
+                                                    }}
+                                                    className={cn(
+                                                        "px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all",
+                                                        active
+                                                            ? "border-blue-400 bg-blue-400/10 text-blue-400"
+                                                            : "border-border text-muted-foreground hover:border-blue-400/50 hover:text-foreground"
+                                                    )}
+                                                >
+                                                    {d}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Banner upload */}
@@ -1310,6 +1407,8 @@ export default function CreateEventPage() {
         postingEndDate: "",
         proposals: form.proposals.filter((p) => p.title.trim()),
         category: form.domain,
+        ageRestriction: form.ageRestriction ? parseInt(form.ageRestriction) : undefined,
+        genderRestriction: form.genderRestriction === "All" ? undefined : form.genderRestriction,
     } as LaunchFormData & { category: string };
 
     const isLastStep = currentStep === visibleSteps.length - 1;
