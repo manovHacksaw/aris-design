@@ -28,6 +28,16 @@ export const getExploreBrands = async (): Promise<any[]> => {
     }
 };
 
+export const getExploreCreators = async (): Promise<any[]> => {
+    try {
+        const response = await axios.get(`${API_URL}/explore/creators`);
+        return response.data;
+    } catch (error) {
+        console.error('Failed to fetch explore creators:', error);
+        throw error;
+    }
+};
+
 export const getExploreContent = async (): Promise<any[]> => {
     try {
         const response = await axios.get(`${API_URL}/explore/content`);

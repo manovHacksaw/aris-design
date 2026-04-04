@@ -46,19 +46,8 @@ export default function ExploreSidebar({
                 <SuggestedSection title="Rising Creators" items={creators} type="user" />
             )}
 
-            {/* Aris Pro Banner */}
-            <div className="relative rounded-3xl overflow-hidden p-6 cursor-pointer border border-border group">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-blue-900/10 to-transparent" />
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br from-primary/20 via-blue-900/15 to-transparent" />
-                <div className="relative z-10 space-y-3">
-                    <Star className="w-5 h-5 text-primary fill-primary" />
-                    <p className="text-sm font-black text-foreground uppercase leading-tight tracking-tight">Level up your<br />Creator Game</p>
-                    <p className="text-[10px] font-bold text-foreground/30 leading-relaxed">Unlock pro tools, analytics, and exclusive events.</p>
-                    <button className="flex items-center gap-1 text-[10px] font-black text-primary uppercase tracking-widest hover:gap-2 transition-all">
-                        Go Pro <ChevronRight className="w-3 h-3" />
-                    </button>
-                </div>
-            </div>
+
+
         </aside>
     );
 }
@@ -159,8 +148,15 @@ function SuggestedItemCard({ item, type }: { item: SuggestedItem; type: "brand" 
                         <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background" />
                     )}
                 </div>
-                <div className="min-w-0">
-                    <p className="text-[11px] font-black text-foreground truncate group-hover:text-primary transition-colors">{item.name}</p>
+                <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                        <p className="text-[11px] font-black text-foreground truncate group-hover:text-primary transition-colors">{item.name}</p>
+                        {type === "user" && (
+                            <div className="flex items-center justify-center bg-primary/20 text-primary text-[8px] font-black px-1.5 py-0.5 rounded-full border border-primary/20">
+                                LVL {(item as any).level || 1}
+                            </div>
+                        )}
+                    </div>
                     <p className="text-[10px] font-bold text-foreground/25 truncate uppercase tracking-widest">{item.handle}</p>
                 </div>
             </div>

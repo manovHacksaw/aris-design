@@ -40,6 +40,12 @@ export interface Event {
     poolTxHash?: string;
     preferredGender?: string;
     ageGroup?: string;
+    
+    // Hard Filter Fields
+    ageRestriction?: number;
+    genderRestriction?: string;
+    intendedCategories?: string[];
+
     tagline?: string;
     regions?: string[];
     submissionGuidelines?: string;
@@ -130,6 +136,12 @@ export interface CreateEventRequest {
     moderationRules?: string;
     hashtags?: string[];
     regions?: string[];
+    
+    // Filter fields
+    ageRestriction?: number;
+    genderRestriction?: string;
+    intendedCategories?: string[];
+
     onChainEventId?: string;
     poolTransactionHash?: string;
     blockchainStatus?: string;
@@ -153,6 +165,9 @@ export interface UpdateEventRequest {
     nextPhaseAt?: string;
     preferredGender?: string;
     ageGroup?: string;
+    ageRestriction?: number;
+    genderRestriction?: string;
+    intendedCategories?: string[];
 }
 
 export interface EventFilters {

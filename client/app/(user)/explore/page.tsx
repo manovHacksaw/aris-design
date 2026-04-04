@@ -15,7 +15,12 @@ import BrandRow from "@/components/explore/BrandRow";
 import ContentMosaic from "@/components/explore/ContentMosaic";
 import { Search, X , Award} from "lucide-react";
 
-import { getExploreEvents, getExploreBrands, getExploreContent, ExploreEventsResponse } from "@/services/explore.service";
+import { 
+    getExploreEvents, 
+    getExploreBrands, 
+    getExploreCreators,
+    ExploreEventsResponse 
+} from "@/services/explore.service";
 import { getFeaturedBrands } from "@/services/search.service";
 import { useLoginModal } from "@/context/LoginModalContext";
 import { useUser } from "@/context/UserContext";
@@ -43,46 +48,28 @@ export default function Explore() {
     const [searchQuery, setSearchQuery] = useState("");
 
     const [eventsData, setEventsData] = useState<ExploreEventsResponse | null>(null);
-    const [brandsData, setBrandsData] = useState<any[]>([]);
-    const [contentData, setContentData] = useState<any[]>([]);
-    const [suggestedBrands, setSuggestedBrands] = useState<any[]>([]);
-    const [suggestedCreators, setSuggestedCreators] = useState<any[]>([]);
-
+    const [brands, setBrands] = useState<any[]>([]);
+    const [creators, setCreators] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setLoading(true);
-
-        Promise.all([
-            getExploreEvents().catch(() => null),
-            getExploreBrands().catch(() => []),
-            getExploreContent().catch(() => []),
-            getFeaturedBrands(6).catch(() => ({ data: [] })),
-            import("@/services/leaderboard.service").then(m => m.getUserLeaderboard(1, 5)).catch(() => ({ data: [] }))
-        ]).then(([eventsRes, brandsRes, contentRes, featBrands, featCreators]) => {
-            if (eventsRes) setEventsData(eventsRes);
-            setBrandsData(brandsRes || []);
-            setContentData(contentRes || []);
-            setSuggestedBrands(
-                ((featBrands as any)?.data || []).map((b: any) => ({
-                    id: b.id,
-                    name: b.name,
-                    handle: `@${b.name.toLowerCase().replace(/\s+/g, "")}`,
-                    avatar: b.logoUrl || (b.logoCid ? `${PINATA_GW}/${b.logoCid}` : ""),
-                    isFollowed: false,
-                }))
-            );
-            setSuggestedCreators(
-                ((featCreators as any)?.data || []).map((u: any) => ({
-                    id: u.id,
-                    name: u.displayName || u.username,
-                    handle: `@${u.username}`,
-                    avatar: u.avatarUrl || (u.avatar ? `${PINATA_GW}/${u.avatar}` : ""),
-                    isFollowed: false,
-                }))
-            );
-            setLoading(false);
-        });
+        const loadData = async () => {
+            try {
+                const [evData, brandsData, creatorsData] = await Promise.all([
+                    getExploreEvents().catch(() => null),
+                    getExploreBrands().catch(() => []),
+                    getExploreCreators().catch(() => [])
+                ]);
+                setEventsData(evData);
+                setBrands(brandsData);
+                setCreators(creatorsData);
+            } catch (error) {
+                console.error("Failed to load explore data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadData();
     }, []);
 
     // Memoized processing for currently selected secondary tab filters
@@ -115,12 +102,9 @@ export default function Explore() {
         return rows;
     }, [eventsData, activeSector, activeDomain, searchQuery]);
 
-    const displayTrending = (activeDomain === "ALL" || activeDomain === "CLOSED" === false) && !searchQuery.trim() && eventsData?.trending?.length ? true : false;
-    const displayClosed = (activeDomain === "ALL" || activeDomain === "CLOSED") && eventsData?.closed?.length ? true : false;
-
     // Brand filtering
-    const filteredBrandsRows = useMemo(() => {
-        let rows = [...brandsData];
+    const brandsRows = useMemo(() => {
+        let rows = [...brands];
         if (activeSector !== "ALL") {
             rows = rows.filter(b => b.categories?.some((c: string) => c.toUpperCase() === activeSector));
         }
@@ -132,27 +116,26 @@ export default function Explore() {
             rows = rows.filter(b => b.name.toLowerCase().includes(q));
         }
         return rows;
-    }, [brandsData, activeSector, activeDomain, searchQuery]);
+    }, [brands, activeSector, activeDomain, searchQuery]);
+
+    // Creator filtering
+    const creatorsRows = useMemo(() => {
+        if (!creators) return [];
+        return creators.map((creator: any) => ({
+            id: creator.id,
+            name: creator.displayName || creator.username || "Anonymous",
+            handle: `@${creator.username || "user"}`,
+            avatar: creator.avatarUrl || "",
+            isFollowed: false,
+            username: creator.username
+        }));
+    }, [creators]);
 
     // Content filtering
     const filteredContent = useMemo(() => {
-        let subs = [...contentData];
-        if (searchQuery.trim()) {
-            const q = searchQuery.toLowerCase();
-            subs = subs.filter(s =>
-                (s.caption || "").toLowerCase().includes(q) ||
-                (s.user?.username || "").toLowerCase().includes(q) ||
-                (s.event?.title || "").toLowerCase().includes(q)
-            );
-        }
-        // Domain filtering on content based on Event category
-        if (activeDomain !== "ALL" && activeDomain !== "CLOSED") {
-            // we'd filter submissions whose event brand is in that domain
-            // content response includes event.brand.id but maybe not categories. We'll skip deep category filter or approximate.
-            // Simplified: if active domain is not ALL, just skip complex content filtering for now
-        }
-        return subs;
-    }, [contentData, searchQuery, activeDomain]);
+        // Placeholder for content logic
+        return [];
+    }, [searchQuery, activeDomain]);
 
 
     return (
@@ -206,31 +189,6 @@ export default function Explore() {
                     </div>
 
                     <main className="w-full flex flex-col lg:flex-row gap-10 lg:gap-12">
-
-                        {/* ── Mobile: Brand strip ─────────────────────────── */}
-                        {(loading || suggestedBrands.length > 0) && (
-                            <section className="lg:hidden">
-                                <div className="flex items-center justify-between mb-3">
-                                    <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em]">Recommended Brands</p>
-                                    <button
-                                        onClick={() => window.location.href = "/leaderboard?tab=brands"}
-                                        className="text-[9px] font-black text-primary uppercase tracking-widest"
-                                    >
-                                        View All
-                                    </button>
-                                </div>
-                                <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4">
-                                    {loading && suggestedBrands.length === 0
-                                        ? Array.from({ length: 4 }).map((_, i) => (
-                                            <div key={i} className="shrink-0 w-[120px] h-[140px] rounded-2xl bg-white/[0.03] animate-pulse" />
-                                        ))
-                                        : suggestedBrands.map((item) => (
-                                            <MobileBrandCard key={item.id} item={item} />
-                                        ))
-                                    }
-                                </div>
-                            </section>
-                        )}
 
                         {/* ── Main Feed ───────────────────────────────────── */}
                         <div className="flex-1 min-w-0 space-y-8">
@@ -302,9 +260,7 @@ export default function Explore() {
                                             {activeDomain === "ALL" && !searchQuery.trim() && eventsData?.trending && (
                                                 <EventRow
                                                     title="Trending Events"
-                                                    events={eventsData.trending.slice(0, 10).sort((a, b) => 
-                                                        ((b.topReward || 0) + (b.baseReward || 0)) - ((a.topReward || 0) + (a.baseReward || 0))
-                                                    )}
+                                                    events={eventsData.trending.slice(0, 10)}
                                                 />
                                             )}
 
@@ -317,15 +273,15 @@ export default function Explore() {
                                                 />
                                             ))}
 
-                                            {/* Closed Section */}
-                                            {(activeDomain === "ALL" || activeDomain === "CLOSED") && eventsData?.closed && eventsData.closed.length > 0 && (
+                                            {/* Closed Section - Only show when explicitly filtered */}
+                                            {activeDomain === "CLOSED" && eventsData?.closed && eventsData.closed.length > 0 && (
                                                 <EventRow
                                                     title="Closed Events"
                                                     events={eventsData.closed}
                                                 />
                                             )}
 
-                                            {(!displayTrending && !displayClosed && filteredDomains.length === 0) && (
+                                            {((activeDomain === "ALL" && !eventsData?.trending?.length && !filteredDomains.length) || (activeDomain !== "ALL" && activeDomain !== "CLOSED" && filteredDomains.length === 0) || (activeDomain === "CLOSED" && !eventsData?.closed?.length)) && (
                                                 <EmptyState label="No events found" />
                                             )}
                                         </motion.div>
@@ -338,31 +294,26 @@ export default function Explore() {
                                             animate={{ opacity: 1, y: 0 }}
                                             className="space-y-12"
                                         >
-                                            {filteredBrandsRows.length > 0 ? (
-                                                filteredBrandsRows
-                                                    .sort((a, b) => (b.liveRewardSize || 0) - (a.liveRewardSize || 0))
-                                                    .map((brand) => (
+                                            <div className="space-y-12">
+                                                {brandsRows.length > 0 ? (
+                                                    brandsRows.map((brand) => (
                                                         <BrandRow key={brand.id} brand={brand} />
                                                     ))
-                                            ) : (
-                                                <EmptyState label="No brands found" />
-                                            )}
+                                                ) : (
+                                                    <EmptyState label="No brands found" />
+                                                )}
+                                            </div>
                                         </motion.div>
                                     )}
 
                                     {/* ── Content Tab ───────────────────────────── */}
                                     {activeTab === "content" && (
                                         <motion.div
-                                            initial={{ opacity: 0, y: 15 }}
+                                            key="content"
+                                            initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
                                         >
-                                            {filteredContent.length > 0 ? (
-                                                <ContentMosaic 
-                                                    submissions={[...filteredContent].sort((a, b) => (b.voteCount || 0) - (a.voteCount || 0))} 
-                                                />
-                                            ) : (
-                                                <EmptyState label="No content found" />
-                                            )}
+                                            <ContentMosaic submissions={[]} />
                                         </motion.div>
                                     )}
                                 </>
@@ -370,11 +321,19 @@ export default function Explore() {
                         </div>
 
                         {/* ── Desktop Sidebar ─────────────────────────────── */}
-                        <ExploreSidebar
-                            brands={suggestedBrands}
-                            creators={[]}
-                            loading={loading && suggestedBrands.length === 0}
-                        />
+                        <div className="hidden lg:block">
+                            <ExploreSidebar
+                                brands={brandsRows.slice(0, 5).map(b => ({
+                                    id: b.id,
+                                    name: b.name,
+                                    handle: `@${b.name.toLowerCase().replace(/\s+/g, "")}`,
+                                    avatar: b.logoCid ? `${PINATA_GW}/${b.logoCid}` : "",
+                                    isFollowed: false
+                                }))}
+                                creators={creatorsRows}
+                                loading={loading}
+                            />
+                        </div>
                     </main>
                 </div>
 
@@ -386,37 +345,3 @@ export default function Explore() {
     );
 }
 
-// ─── Mobile Brand Card ────────────────────────────────────────────────────────
-function MobileBrandCard({ item }: {
-    item: { id: string; name: string; handle: string; avatar: string; isFollowed: boolean };
-}) {
-    const [followed, setFollowed] = useState(item.isFollowed);
-    const { isAuthenticated } = useUser();
-    const { openLoginModal } = useLoginModal();
-    return (
-        <a href={`/brand/${item.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`} className="shrink-0 w-[120px] bg-white/[0.03] border border-white/[0.05] rounded-2xl p-3 flex flex-col items-center gap-2.5">
-            <div className="w-12 h-12 rounded-xl border border-white/[0.08] bg-white/[0.04] overflow-hidden flex items-center justify-center">
-                {item.avatar ? (
-                    <img src={item.avatar} className="w-full h-full object-cover" alt={item.name} />
-                ) : (
-                    <span className="text-base font-black text-foreground/30">{item.name[0]}</span>
-                )}
-            </div>
-            <div className="text-center w-full">
-                <p className="text-[10px] font-black text-foreground truncate">{item.name}</p>
-                <p className="text-[8px] text-foreground/25 uppercase tracking-widest truncate mt-0.5">{item.handle}</p>
-            </div>
-            <button
-                onClick={(e) => { e.preventDefault(); if (!isAuthenticated) { openLoginModal(); return; } setFollowed((p) => !p); }}
-                className={cn(
-                    "w-full py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border",
-                    followed
-                        ? "bg-white/[0.04] border-white/[0.06] text-foreground/25"
-                        : "bg-primary/10 border-primary/20 text-primary"
-                )}
-            >
-                {followed ? "Following" : "Follow"}
-            </button>
-        </a>
-    );
-}

@@ -1,4 +1,4 @@
-import { getEvents, type Event } from "@/services/event.service";
+import { type Event } from "@/services/event.service";
 import { perfLog, perfNow } from "@/lib/perf";
 const CACHE_TTL_MS = 30_000;
 
@@ -23,16 +23,13 @@ export async function getHomeFeedData(force = false): Promise<HomeFeedData> {
 
   const start = perfNow();
   inFlight = (async () => {
-    const [curatedRes, voteRes, postRes] = await Promise.all([
-      getEvents({ limit: 10 }),
-      getEvents({ limit: 10, eventType: "vote_only" }),
-      getEvents({ limit: 10, eventType: "post_and_vote" }),
-    ]);
+    const { getHomeEvents } = await import("@/services/home.service");
+    const res = await getHomeEvents();
 
     const data: HomeFeedData = {
-      curated: curatedRes.events || [],
-      voteEvents: voteRes.events || [],
-      postEvents: postRes.events || [],
+      curated: res.curated || [],
+      voteEvents: res.voteEvents || [],
+      postEvents: res.postEvents || [],
     };
 
     cache = { data, ts: Date.now() };

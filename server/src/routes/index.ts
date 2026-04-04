@@ -20,6 +20,7 @@ import rewardsRoutes from './rewardsRoutes';
 import debugRoutes from './debugRoutes.js';
 import exploreRoutes from './exploreRoutes.js';
 import draftRoutes from './draftRoutes.js';
+import feedRoutes from './feedRoutes.js';
 
 const router = Router();
 
@@ -93,6 +94,9 @@ router.use('/explore', exploreRoutes);
 
 // Draft routes
 router.use('/drafts', draftRoutes);
+
+// Feed routes
+router.use('/feed', feedRoutes);
 
 // Admin routes
 console.log('Mounting admin routes at /admin');

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, Users, Sparkle, Award, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
@@ -21,14 +22,27 @@ interface BannerEvent {
 
 export default function DynamicBanner({ events }: { events: BannerEvent[] }) {
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [progress, setProgress] = useState(0);
 
     useEffect(() => {
         if (!events || events.length === 0) return;
+        
+        const duration = 6000; // 6 seconds per slide
+        const interval = 100; // update progress every 100ms
+        const increment = (interval / duration) * 100;
+
         const timer = setInterval(() => {
-            setCurrentIndex((prev) => (prev + 1) % events.length);
-        }, 5000);
+            setProgress((prev) => {
+                if (prev >= 100) {
+                    setCurrentIndex((curr) => (curr + 1) % events.length);
+                    return 0;
+                }
+                return prev + increment;
+            });
+        }, interval);
+
         return () => clearInterval(timer);
-    }, [events]);
+    }, [events, currentIndex]);
 
     if (!events || events.length === 0) return null;
 
@@ -36,101 +50,145 @@ export default function DynamicBanner({ events }: { events: BannerEvent[] }) {
     const image = currentEvent.imageUrl || (currentEvent.imageCid ? `${PINATA_GW}/${currentEvent.imageCid}` : "");
     const totalReward = (currentEvent.topReward || 0) + (currentEvent.baseReward || 0) + (currentEvent.leaderboardPool || 0);
     const participants = (currentEvent._count?.submissions || 0) + (currentEvent._count?.votes || 0);
-    const domains = currentEvent.brand?.categories || ["OTHER"];
 
     return (
-        <div className="relative w-full h-[400px] sm:h-[450px] lg:h-[500px] rounded-none md:rounded-2xl overflow-hidden mb-10 group shadow-2xl">
+        <div className="relative w-full h-[450px] sm:h-[500px] lg:h-[550px] rounded-2xl overflow-hidden mb-12 group bg-black shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
             {/* Background Image Carousel */}
             <AnimatePresence mode="wait">
                 <motion.div
                     key={currentIndex}
-                    initial={{ opacity: 0, scale: 1.05 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.8 }}
+                    initial={{ opacity: 0, scale: 1.1, filter: "blur(20px)" }}
+                    animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                    exit={{ opacity: 0, scale: 0.95, filter: "blur(20px)" }}
+                    transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
                     className="absolute inset-0"
                 >
                     {image ? (
-                        <img src={image} alt={currentEvent.title} className="w-full h-full object-cover" />
+                        <div className="relative w-full h-full">
+                            <img src={image} alt={currentEvent.title} className="w-full h-full object-cover brightness-[0.7] transform transition-transform duration-10000 group-hover:scale-110" />
+                            <div className="absolute inset-0 bg-gradient-to-tr from-background via-transparent to-primary/5" />
+                        </div>
                     ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-primary/20 to-blue-900/40" />
+                        <div className="w-full h-full bg-gradient-to-br from-[#121212] via-[#1a1a1a] to-[#252525]" />
                     )}
                 </motion.div>
             </AnimatePresence>
 
-            {/* Gradient Overlays for Netflix style */}
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/40 to-transparent" />
+            {/* Premium Overlays */}
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-background/10 to-transparent" />
+            <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-2xl pointer-events-none" />
 
             {/* Content overlay */}
-            <div className="absolute bottom-0 left-0 p-8 sm:p-12 lg:p-20 w-full max-w-5xl space-y-6">
-                <div className="flex flex-col gap-2">
+            <div className="absolute inset-0 flex flex-col justify-end p-8 sm:p-14 lg:p-20 z-10">
+                <div className="max-w-4xl space-y-8">
+                    <div className="space-y-4">
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex items-center gap-3"
+                        >
+                            <div className="h-px w-8 bg-primary/40" />
+                            <span className="text-[10px] font-black text-primary uppercase tracking-[0.4em] drop-shadow-[0_0_10px_rgba(163,230,53,0.3)]">
+                                Featured Opportunity
+                            </span>
+                        </motion.div>
+
+                        <motion.h1
+                            key={`title-${currentIndex}`}
+                            initial={{ opacity: 0, x: -30 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                            className="text-5xl sm:text-7xl lg:text-8xl font-black text-white leading-[0.9] uppercase tracking-tighter"
+                        >
+                            {currentEvent.title.split(' ').map((word, i) => (
+                                <span key={i} className={i % 2 === 1 ? "text-primary/90 italic" : "text-white"}>
+                                    {word}{' '}
+                                </span>
+                            ))}
+                        </motion.h1>
+                    </div>
+
                     <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="flex items-center gap-2 w-fit px-3 py-1 rounded-full bg-primary/20 border border-primary/30 backdrop-blur-md"
+                        key={`stats-${currentIndex}`}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                        className="flex flex-wrap items-center gap-4"
                     >
-                        <Sparkles className="w-3 h-3 text-primary" />
-                        <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">JOIN EVENTS. EARN DOLLARS.</span>
+                        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 px-5 py-2.5 rounded-full flex items-center gap-3">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_10px_#a3e635]" />
+                            <span className="text-[10px] font-black text-white/80 uppercase tracking-widest">
+                                {currentEvent.brand?.name || "Global"}
+                            </span>
+                        </div>
+
+                        <div className="bg-primary text-black px-5 py-2.5 rounded-full flex items-center gap-2.5 shadow-[0_10px_20px_rgba(163,230,53,0.2)]">
+                            <Award className="w-4 h-4 fill-black/20" />
+                            <span className="text-[11px] font-black uppercase tracking-tight">
+                                ${totalReward.toLocaleString()} Pool
+                            </span>
+                        </div>
+
+                        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 px-5 py-2.5 rounded-full flex items-center gap-3">
+                            <Users className="w-4 h-4 text-white/40" />
+                            <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">
+                                {participants.toLocaleString()} Active
+                            </span>
+                        </div>
                     </motion.div>
 
-                    <motion.h1
-                        key={`title-${currentIndex}`}
+                    <motion.div
+                        key={`actions-${currentIndex}`}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-4xl sm:text-6xl lg:text-8xl font-display font-black text-white leading-[0.95] uppercase drop-shadow-2xl italic tracking-tighter"
+                        transition={{ delay: 0.5 }}
+                        className="pt-4"
                     >
-                        {currentEvent.title}
-                    </motion.h1>
+                        <a 
+                            href={`/events/${currentEvent.id}`} 
+                            className="group/btn relative inline-flex items-center gap-4 bg-white text-black px-12 py-5 rounded-full font-black uppercase tracking-[0.2em] hover:scale-105 transition-all duration-500 overflow-hidden"
+                        >
+                            <span className="relative z-10 text-[11px]">Secure your spot</span>
+                            <ChevronRight className="relative z-10 w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
+                            <div className="absolute inset-0 bg-primary translate-x-full group-hover/btn:translate-x-0 transition-transform duration-500" />
+                        </a>
+                    </motion.div>
                 </div>
-
-                <motion.div
-                    key={`stats-${currentIndex}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="flex flex-wrap items-center gap-3 text-xs font-bold text-white/90"
-                >
-                    <div className="bg-white/5 px-4 py-2 rounded-xl backdrop-blur-xl border border-white/10 flex items-center gap-2 group-hover:bg-white/10 transition-colors">
-                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                        {currentEvent.brand?.name || "Unknown Brand"}
-                    </div>
-
-                    <div className="flex items-center gap-2 bg-lime-400/10 text-lime-400 px-4 py-2 rounded-xl backdrop-blur-xl border border-lime-400/20 shadow-[0_0_20px_rgba(163,230,53,0.1)]">
-                        <Award className="w-4 h-4" />
-                        <span className="tracking-tight">${totalReward.toLocaleString()} Rewards</span>
-                    </div>
-
-                    <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl backdrop-blur-xl border border-white/10">
-                        <Users className="w-4 h-4 text-white/60" />
-                        {participants.toLocaleString()}
-                    </div>
-                </motion.div>
-
-                <motion.div
-                    key={`actions-${currentIndex}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="pt-6 flex items-center gap-6"
-                >
-                    <a href={`/events/${currentEvent.id}`} className="group/btn relative flex items-center gap-3 bg-white text-black px-10 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all overflow-hidden shadow-2xl shadow-white/10">
-                        <span className="relative z-10 text-sm">Join Event</span>
-                        <ChevronRight className="relative z-10 w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
-                        <div className="absolute inset-0 bg-primary translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
-                    </a>
-                </motion.div>
             </div>
 
-            {/* Pagination Indicators */}
-            <div className="absolute bottom-6 right-6 lg:bottom-10 lg:right-10 flex gap-2">
-                {events.map((_, i) => (
+            {/* Progressive Pagination */}
+            <div className="absolute bottom-8 right-8 lg:bottom-16 lg:right-20 flex items-center gap-5 z-20">
+                {events.slice(0, 5).map((_item, i) => (
                     <button
                         key={i}
-                        onClick={() => setCurrentIndex(i)}
-                        className={`transition-all rounded-full h-1.5 ${i === currentIndex ? "bg-white w-6" : "bg-white/30 w-1.5 hover:bg-white/50"}`}
-                    />
+                        onClick={() => { setCurrentIndex(i); setProgress(0); }}
+                        className="group flex flex-col gap-2 cursor-pointer"
+                    >
+                        <div className="h-1 w-12 sm:w-16 bg-white/10 rounded-full overflow-hidden relative">
+                            {i === currentIndex && (
+                                <motion.div 
+                                    className="absolute inset-0 bg-primary origin-left"
+                                    style={{ width: `${progress}%` }}
+                                />
+                            )}
+                            <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                        <span className={cn(
+                            "text-[10px] font-black uppercase tracking-widest transition-colors",
+                            i === currentIndex ? "text-primary" : "text-white/20 group-hover:text-white/40"
+                        )}>
+                            0{i + 1}
+                        </span>
+                    </button>
                 ))}
+            </div>
+
+            {/* Decorative Side Label */}
+            <div className="absolute top-1/2 -right-8 -rotate-90 origin-center hidden xl:block">
+                <span className="text-[9px] font-black text-white/10 uppercase tracking-[1em] whitespace-nowrap">
+                    ARIS PERFORMANCE DISCOVERY SYSTEM // 2026
+                </span>
             </div>
         </div>
     );

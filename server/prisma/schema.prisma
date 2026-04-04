@@ -166,6 +166,11 @@ model Event {
   samples          String[]
   preferredGender  String?   @default("All")
   ageGroup         String?   @default("All Ages")
+  
+  // New Filter Fields
+  ageRestriction   Int?       // Hard Filter: min age required
+  genderRestriction String?   // Hard Filter: "MALE" | "FEMALE"
+  intendedCategories String[] @default([]) // Soft Filter: targeting specific interests
 
   // Content & campaign fields
   tagline                 String?

@@ -27,19 +27,46 @@ function getAgeGroupLabel(dateOfBirth: Date | null): string {
 }
 
 function enforceEventDemographics(
-  event: { preferredGender: string | null; ageGroup: string | null; regions: string[] },
+  event: { 
+    preferredGender: string | null; 
+    ageGroup: string | null; 
+    regions: string[];
+    ageRestriction: number | null;
+    genderRestriction: string | null;
+  },
   user: { gender: string | null; dateOfBirth: Date | null; region: string | null }
 ): void {
+  // --- New Hard Gender Filter ---
+  if (event.genderRestriction) {
+    const userGender = (user.gender ?? '').trim().toUpperCase();
+    if (userGender !== event.genderRestriction.toUpperCase()) {
+      throw new Error(`This event is restricted to ${event.genderRestriction.toLowerCase()} participants only`);
+    }
+  }
+
+  // --- New Hard Age Filter ---
+  if (event.ageRestriction) {
+    if (!user.dateOfBirth) {
+      throw new Error('Your date of birth is required to participate in this event');
+    }
+    const age = (Date.now() - user.dateOfBirth.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+    if (age < event.ageRestriction) {
+      throw new Error(`You must be at least ${event.ageRestriction} years old to participate in this event`);
+    }
+  }
+
+  // --- Legacy Gender (Soft/Preferred) ---
   const genderFilter = (event.preferredGender ?? 'All').trim();
-  if (genderFilter !== 'All') {
+  if (genderFilter !== 'All' && !event.genderRestriction) {
     const userGender = (user.gender ?? '').trim().toUpperCase();
     if (userGender !== genderFilter.toUpperCase()) {
       throw new Error('You do not meet the gender requirement for this event');
     }
   }
 
+  // --- Legacy Age (Soft/Preferred) ---
   const ageFilter = (event.ageGroup ?? 'All Ages').trim();
-  if (ageFilter !== 'All Ages') {
+  if (ageFilter !== 'All Ages' && !event.ageRestriction) {
     const ageGroupLabel = getAgeGroupLabel(user.dateOfBirth);
     if (ageGroupLabel === 'unknown') {
       throw new Error('Your date of birth is required to participate in this event');
@@ -50,6 +77,7 @@ function enforceEventDemographics(
     }
   }
 
+  // --- Region ---
   if (event.regions && event.regions.length > 0) {
     const userRegion = (user.region ?? '').trim().toLowerCase();
     if (!userRegion) {
