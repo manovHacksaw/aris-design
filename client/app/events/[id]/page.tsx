@@ -246,7 +246,6 @@ function SocialLinks({ links, eventId }: { links?: Record<string, string>; event
 
 function EventSidebar({
     event,
-    activeViewers,
     participantCount,
     mode,
     votedSubmissionId,
@@ -264,7 +263,6 @@ function EventSidebar({
     isBrand,
 }: {
     event: Event;
-    activeViewers: number;
     participantCount: number;
     mode: "post" | "vote" | "completed" | "upcoming";
     votedSubmissionId?: string | null;
@@ -615,7 +613,6 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
     const [hasSubmitted, setHasSubmitted] = useState(false);
     const [mySubmission, setMySubmission] = useState<Submission | null>(null);
-    const [activeViewers, setActiveViewers] = useState<number>(0);
     const [participantCount, setParticipantCount] = useState<number>(0);
     // Tracks whether we've already applied an optimistic +1 for the current user's vote,
     // so the echoed socket broadcast doesn't double-count it.
@@ -655,7 +652,6 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
             setSubmissions((subs) => subs.map((s) => s.id === submissionId ? { ...s, _count: { votes: (s._count?.votes ?? 0) + delta } } : s));
             setOptimisticVoteDelta((prev) => (prev === submissionId ? null : prev));
         };
-        const handlePresenceUpdate = ({ activeCount }: { activeCount: number }) => setActiveViewers(activeCount);
         const handleParticipantUpdate = ({ delta }: { delta: number }) => {
             if (optimisticParticipantPending.current) {
                 optimisticParticipantPending.current = false;
@@ -665,12 +661,10 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
             }
         };
         socket.on("vote-update", handleVoteUpdate);
-        socket.on("presence-update", handlePresenceUpdate);
         socket.on("participant-update", handleParticipantUpdate);
         return () => {
             socket.emit("leave-event", id);
             socket.off("vote-update", handleVoteUpdate);
-            socket.off("presence-update", handlePresenceUpdate);
             socket.off("participant-update", handleParticipantUpdate);
         };
     }, [socket, id]);
@@ -1268,28 +1262,16 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                             <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Submissions So Far</p>
                                             <p className="text-4xl md:text-5xl font-black text-lime-400 leading-none tabular-nums">{sortedSubmissions.length}</p>
                                         </div>
-                                        {activeViewers > 0 && (
+                                        {calculateTotalPool(event) > 0 && (
                                             <>
                                                 <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
                                                 <div>
-                                                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Watching Live</p>
+                                                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Total Prize Pool</p>
                                                     <div className="flex items-center gap-2">
-                                                        <Eye className="w-5 h-5 text-green-400 animate-pulse shrink-0" />
-                                                        <p className="text-4xl md:text-5xl font-black text-green-400 leading-none tabular-nums">{activeViewers}</p>
+                                                        <Trophy className="w-5 h-5 text-yellow-400 shrink-0" />
+                                                        <p className="text-4xl md:text-5xl font-black text-yellow-400 leading-none tabular-nums">${calculateTotalPool(event).toLocaleString()}</p>
                                                     </div>
                                                 </div>
-                                                {calculateTotalPool(event) > 0 && (
-                                                    <>
-                                                        <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
-                                                        <div>
-                                                            <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Total Prize Pool</p>
-                                                            <div className="flex items-center gap-2">
-                                                                <Trophy className="w-5 h-5 text-yellow-400 shrink-0" />
-                                                                <p className="text-4xl md:text-5xl font-black text-yellow-400 leading-none tabular-nums">${calculateTotalPool(event).toLocaleString()}</p>
-                                                            </div>
-                                                        </div>
-                                                    </>
-                                                )}
                                             </>
                                         )}
                                     </div>
@@ -1846,29 +1828,17 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                 )}
                                             </div>
 
-                                            {/* Watching Now — always shown */}
-                                            <>
-                                                <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
-                                                <div>
-                                                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Watching Live</p>
-                                                    <div className="flex items-center gap-2">
-                                                        <Eye className="w-5 h-5 text-green-400 animate-pulse shrink-0" />
-                                                        <p className="text-4xl md:text-5xl font-black text-green-400 leading-none tabular-nums">{activeViewers}</p>
-                                                    </div>
-                                                </div>
-                                                {calculateTotalPool(event) > 0 && (
-                                                    <>
-                                                        <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
-                                                        <div>
-                                                            <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Total Prize Pool</p>
-                                                            <div className="flex items-center gap-2">
-
-                                                                <p className="text-4xl md:text-5xl font-black text-yellow-400 leading-none tabular-nums">${calculateTotalPool(event).toLocaleString()}</p>
-                                                            </div>
+                                            {calculateTotalPool(event) > 0 && (
+                                                <>
+                                                    <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
+                                                    <div>
+                                                        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Total Prize Pool</p>
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="text-4xl md:text-5xl font-black text-yellow-400 leading-none tabular-nums">${calculateTotalPool(event).toLocaleString()}</p>
                                                         </div>
-                                                    </>
-                                                )}
-                                            </>
+                                                    </div>
+                                                </>
+                                            )}
 
                                         </div>
 
@@ -1947,7 +1917,6 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                     <div className="sticky top-6">
                                         <EventSidebar
                                             event={event}
-                                            activeViewers={activeViewers}
                                             participantCount={participantCount}
                                             mode={displayMode}
                                             votedSubmissionId={votedSubmissionId}

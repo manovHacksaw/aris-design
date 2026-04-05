@@ -142,10 +142,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isLoading) return;
 
-    // Not authenticated — redirect to register
+    // Not authenticated — redirect to explore
     if (!isAuthenticated) {
       if (!isPublicPath(pathname)) {
-        router.replace(`/register?redirect=${encodeURIComponent(pathname)}`);
+        router.replace("/explore");
       }
       return;
     }

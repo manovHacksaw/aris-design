@@ -200,12 +200,10 @@ function ParticipantsPanel({ participants, totalCount }: { participants: Partici
 
 function EventSidebar({
     event,
-    activeViewers,
     participants,
     totalParticipants,
 }: {
     event: Event;
-    activeViewers: number;
     participants: Participant[];
     totalParticipants: number;
 }) {
@@ -297,20 +295,6 @@ function EventSidebar({
                     )}
                 </div>
 
-                {/* Active viewers */}
-                {activeViewers > 0 && (
-                    <div className="flex items-center justify-between py-3 border-t border-border/30">
-                          <span className="relative flex h-1.5 w-1.5">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
-                            </span>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Watching Now</span>
-                        <div className="flex items-center  gap-1.5">
-                          
-                            <span className="text-sm font-black text-green-400">{activeViewers}</span>
-                        </div>
-                    </div>
-                )}
 
                 <SocialLinks links={socialLinks} />
             </div>
@@ -531,7 +515,6 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState<string | null>(null);
-    const [activeViewers, setActiveViewers] = useState<number>(0);
     const [gridView, setGridView] = useState(true);
     const [activeTab, setActiveTab] = useState<"participants" | "results">("participants");
     const [eventSummary, setEventSummary] = useState<any>(null);
@@ -543,17 +526,14 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
         const handleVoteUpdate = ({ submissionId, delta }: { submissionId: string; delta: number }) => {
             setSubmissions((subs) => subs.map((s) => s.id === submissionId ? { ...s, _count: { votes: (s._count?.votes ?? 0) + delta } } : s));
         };
-        const handlePresenceUpdate = ({ activeCount }: { activeCount: number }) => setActiveViewers(activeCount);
         const handleParticipantUpdate = () => {
             getEventParticipants(id).then(setParticipants).catch(() => {});
         };
         socket.on("vote-update", handleVoteUpdate);
-        socket.on("presence-update", handlePresenceUpdate);
         socket.on("participant-update", handleParticipantUpdate);
         return () => {
             socket.emit("leave-event", id);
             socket.off("vote-update", handleVoteUpdate);
-            socket.off("presence-update", handlePresenceUpdate);
             socket.off("participant-update", handleParticipantUpdate);
         };
     }, [socket, id]);
@@ -988,7 +968,6 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                         <div className="sticky top-6">
                             <EventSidebar
                                 event={event}
-                                activeViewers={activeViewers}
                                 participants={displayParticipants}
                                 totalParticipants={displayParticipantCount}
                             />

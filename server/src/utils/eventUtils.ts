@@ -26,8 +26,12 @@ export interface UserDemographics {
  */
 export function enforceEventDemographics(
   event: EventDemographics,
-  user: UserDemographics
+  user: UserDemographics | null
 ): void {
+  // If user is unknown (unauthenticated), skip demographic filtering —
+  // restrictions are enforced at participation time, not at discovery.
+  if (!user) return;
+
   // 1. Hard Gender Restriction (Strict Enforcement)
   if (event.genderRestriction) {
     const userGender = (user.gender ?? '').trim().toUpperCase();
