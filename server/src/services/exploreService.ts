@@ -173,11 +173,23 @@ export const ExploreService = {
             });
 
             // 5. Domain grouped (using the ranked list)
+            const CATEGORY_ALIASES: Record<string, string> = {
+                'TECHNOLOGY': 'TECH',
+                'BLOCKCHAIN': 'WEB3',
+                'CRYPTO': 'WEB3',
+                'ARTIFICIAL INTELLIGENCE': 'AI',
+                'MACHINE LEARNING': 'AI',
+                'GRAPHIC DESIGN': 'DESIGN',
+                'UI/UX': 'DESIGN',
+                'FOOD & BEVERAGE': 'FOOD',
+                'FOOD AND BEVERAGE': 'FOOD',
+            };
             const domainMap = new Map<string, any[]>();
             scoredEvents.forEach((event: any) => {
                 const categories: string[] = event.brand?.categories || ['OTHER'];
                 categories.forEach(category => {
-                    const cat = category.toUpperCase();
+                    const raw = category.toUpperCase();
+                    const cat = CATEGORY_ALIASES[raw] ?? raw;
                     if (!domainMap.has(cat)) domainMap.set(cat, []);
                     domainMap.get(cat)!.push(event);
                 });
