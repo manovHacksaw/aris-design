@@ -153,10 +153,46 @@ export const ExploreService = {
                 rankScore: calculateEventScore(event)
             })).sort((a, b) => b.rankScore - a.rankScore);
 
-            // 3. Trending (Top 15 overall)
-            const trending = scoredEvents.slice(0, 15);
+            // 3. Attach participant avatars (top 5 per event, submitters first then voters)
+            const liveEventIds = scoredEvents.map((e: any) => e.id);
+            const [submitterRows, voterRows] = await Promise.all([
+                prisma.submission.findMany({
+                    where: { eventId: { in: liveEventIds }, status: 'active' },
+                    select: { eventId: true, userId: true, user: { select: { id: true, avatarUrl: true } } },
+                    distinct: ['eventId', 'userId'],
+                }),
+                prisma.vote.findMany({
+                    where: { eventId: { in: liveEventIds } },
+                    select: { eventId: true, userId: true, user: { select: { id: true, avatarUrl: true } } },
+                    distinct: ['eventId', 'userId'],
+                }),
+            ]);
 
-            // 4. Closed events (separate fetch, no ranking needed among trending)
+            const avatarsByEvent = new Map<string, { id: string; avatarUrl: string | null }[]>();
+            for (const row of submitterRows) {
+                if (!avatarsByEvent.has(row.eventId)) avatarsByEvent.set(row.eventId, []);
+                avatarsByEvent.get(row.eventId)!.push({ id: row.userId, avatarUrl: (row as any).user?.avatarUrl ?? null });
+            }
+            const submitterIdsByEvent = new Map<string, Set<string>>();
+            for (const row of submitterRows) {
+                if (!submitterIdsByEvent.has(row.eventId)) submitterIdsByEvent.set(row.eventId, new Set());
+                submitterIdsByEvent.get(row.eventId)!.add(row.userId);
+            }
+            for (const row of voterRows) {
+                if (submitterIdsByEvent.get(row.eventId)?.has(row.userId)) continue;
+                if (!avatarsByEvent.has(row.eventId)) avatarsByEvent.set(row.eventId, []);
+                avatarsByEvent.get(row.eventId)!.push({ id: row.userId, avatarUrl: (row as any).user?.avatarUrl ?? null });
+            }
+
+            const scoredEventsWithAvatars = scoredEvents.map((e: any) => ({
+                ...e,
+                participantAvatars: (avatarsByEvent.get(e.id) ?? []).slice(0, 5),
+            }));
+
+            // 4. Trending (Top 15 overall)
+            const trending = scoredEventsWithAvatars.slice(0, 15);
+
+            // 5. Closed events (separate fetch, no ranking needed among trending)
             const closed = await prisma.event.findMany({
                 where: {
                     isDeleted: false,
@@ -172,7 +208,43 @@ export const ExploreService = {
                 }
             });
 
-            // 5. Domain grouped (using the ranked list)
+            // 6. Attach avatars to closed events
+            const closedEventIds = closed.map((e: any) => e.id);
+            const [closedSubmitterRows, closedVoterRows] = await Promise.all([
+                prisma.submission.findMany({
+                    where: { eventId: { in: closedEventIds }, status: 'active' },
+                    select: { eventId: true, userId: true, user: { select: { id: true, avatarUrl: true } } },
+                    distinct: ['eventId', 'userId'],
+                }),
+                prisma.vote.findMany({
+                    where: { eventId: { in: closedEventIds } },
+                    select: { eventId: true, userId: true, user: { select: { id: true, avatarUrl: true } } },
+                    distinct: ['eventId', 'userId'],
+                }),
+            ]);
+
+            const closedAvatarsByEvent = new Map<string, { id: string; avatarUrl: string | null }[]>();
+            for (const row of closedSubmitterRows) {
+                if (!closedAvatarsByEvent.has(row.eventId)) closedAvatarsByEvent.set(row.eventId, []);
+                closedAvatarsByEvent.get(row.eventId)!.push({ id: row.userId, avatarUrl: (row as any).user?.avatarUrl ?? null });
+            }
+            const closedSubmitterIdsByEvent = new Map<string, Set<string>>();
+            for (const row of closedSubmitterRows) {
+                if (!closedSubmitterIdsByEvent.has(row.eventId)) closedSubmitterIdsByEvent.set(row.eventId, new Set());
+                closedSubmitterIdsByEvent.get(row.eventId)!.add(row.userId);
+            }
+            for (const row of closedVoterRows) {
+                if (closedSubmitterIdsByEvent.get(row.eventId)?.has(row.userId)) continue;
+                if (!closedAvatarsByEvent.has(row.eventId)) closedAvatarsByEvent.set(row.eventId, []);
+                closedAvatarsByEvent.get(row.eventId)!.push({ id: row.userId, avatarUrl: (row as any).user?.avatarUrl ?? null });
+            }
+
+            const closedWithAvatars = closed.map((e: any) => ({
+                ...e,
+                participantAvatars: (closedAvatarsByEvent.get(e.id) ?? []).slice(0, 5),
+            }));
+
+            // 6. Domain grouped (using the ranked list)
             const CATEGORY_ALIASES: Record<string, string> = {
                 'TECHNOLOGY': 'TECH',
                 'BLOCKCHAIN': 'WEB3',
@@ -185,7 +257,7 @@ export const ExploreService = {
                 'FOOD AND BEVERAGE': 'FOOD',
             };
             const domainMap = new Map<string, any[]>();
-            scoredEvents.forEach((event: any) => {
+            scoredEventsWithAvatars.forEach((event: any) => {
                 const categories: string[] = event.brand?.categories || ['OTHER'];
                 categories.forEach(category => {
                     const raw = category.toUpperCase();
@@ -200,7 +272,7 @@ export const ExploreService = {
                 events: events.slice(0, 10) // Limit per domain to keep it fresh
             }));
 
-            return { trending, domains, closed };
+            return { trending, domains, closed: closedWithAvatars };
         } catch (error) {
             console.error('Failed to get explore events:', error);
             throw error;

@@ -112,6 +112,43 @@ function imgUrl(imageUrl?: string | null, cid?: string | null): string | undefin
     return undefined;
 }
 
+function ParticipantAvatars({ avatars = [], totalCount }: { avatars?: { id: string; avatarUrl: string | null }[]; totalCount: number }) {
+    const MAX = 4;
+    const shown = avatars.slice(0, MAX);
+    const overflow = totalCount > shown.length ? totalCount - shown.length : 0;
+
+    if (totalCount === 0) return null;
+
+    return (
+        <div className="flex items-center ml-2">
+            <div className="flex -space-x-3">
+                {shown.map((p: any, i: number) => (
+                    <div
+                        key={p.id}
+                        className="relative w-9 h-9 rounded-full border-2 border-zinc-950 bg-zinc-900 ring-1 ring-white/10 overflow-hidden shrink-0 transition-transform hover:scale-110 hover:z-50"
+                        style={{ zIndex: 10 + (MAX - i) }}
+                    >
+                        {p.avatarUrl ? (
+                            <img src={p.avatarUrl} alt="participant" className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-white/5 to-white/15 flex items-center justify-center">
+                                <span className="text-[10px] font-black text-white/30 uppercase tracking-tighter">?</span>
+                            </div>
+                        )}
+                    </div>
+                ))}
+                {overflow > 0 && (
+                    <div 
+                        className="relative w-9 h-9 rounded-full border-2 border-zinc-950 bg-zinc-900 ring-1 ring-white/10 flex items-center justify-center shrink-0 z-0"
+                    >
+                         <span className="text-[10px] font-black text-white/60 tracking-tighter">+{overflow}</span>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
 function avatarUrl(_: unknown, name?: string | null): string {
     const n = encodeURIComponent(name || "User");
     return `https://ui-avatars.com/api/?name=${n}&background=2F6AFF&color=fff`;
@@ -1819,11 +1856,17 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                 {loading ? (
                                                     <div className="h-10 w-20 rounded-lg bg-white/10 animate-pulse" />
                                                 ) : (
-                                                    <div className="flex items-center gap-1">
-                                                        <p className="text-4xl md:text-5xl font-black text-lime-400 leading-none tabular-nums">{participantCount.toLocaleString()}</p>
-                                                        {event.capacity && (
-                                                            <span className="text-2xl md:text-3xl font-black text-white/30 leading-none">/{event.capacity.toLocaleString()}</span>
-                                                        )}
+                                                    <div className="flex items-center gap-3 mt-1">
+                                                        <div className="flex items-center justify-center w-5 h-5 opacity-40">
+                                                            <Users className="w-5 h-5 text-white" />
+                                                        </div>
+                                                        <div className="flex items-baseline gap-1">
+                                                            <p className="text-4xl md:text-5xl font-black text-lime-400 leading-none tabular-nums">{participantCount.toLocaleString()}</p>
+                                                            {event.capacity && (
+                                                                <span className="text-2xl md:text-3xl font-black text-white/30 leading-none">/{event.capacity.toLocaleString()}</span>
+                                                            )}
+                                                        </div>
+                                                        <ParticipantAvatars avatars={(event as any).participantAvatars} totalCount={participantCount} />
                                                     </div>
                                                 )}
                                             </div>

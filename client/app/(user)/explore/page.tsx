@@ -9,7 +9,6 @@ import { ImageOff } from "lucide-react";
 
 import ExploreHeader from "@/components/explore/ExploreHeader";
 import ExploreSidebar from "@/components/explore/ExploreSidebar";
-import DynamicBanner from "@/components/explore/DynamicBanner";
 import EventRow from "@/components/explore/EventRow";
 import BrandRow from "@/components/explore/BrandRow";
 import ContentMosaic from "@/components/explore/ContentMosaic";
@@ -149,14 +148,7 @@ export default function Explore() {
                         onSearchChange={setSearchQuery}
                     />
 
-                    {/* ── Top Section: Full Width Banner ──────────────── */}
-                    {activeTab === "events" && activeDomain === "ALL" && !searchQuery && eventsData?.trending && eventsData.trending.length > 0 && (
-                        <div className="w-full -mt-6 md:-mx-6 lg:-mx-8 md:w-[calc(100%+3rem)] lg:w-[calc(100%+4rem)] mb-10 overflow-hidden">
-                            <DynamicBanner events={eventsData.trending.slice(0, 5)} />
-                        </div>
-                    )}
-
-                    {/* ── Search Bar: Below Banner ────────────────────── */}
+                    {/* ── Search Bar ──────────────────────────────────── */}
                     <div className="w-full mb-10 px-4 md:px-0">
                         <div className="flex flex-col gap-6">
                             <div className="w-full max-w-2xl relative group">

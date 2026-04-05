@@ -63,6 +63,44 @@ function imgUrl(imageUrl?: string | null, cid?: string | null): string | undefin
     return undefined;
 }
 
+function ParticipantAvatars({ event, totalCount }: { event: Event; totalCount: number }) {
+    const avatars = (event as any).participantAvatars ?? [];
+    const brandLogo = event.brand?.logoUrl || (event.brand?.logoCid ? `${PINATA_GW}/${event.brand.logoCid}` : null);
+    const MAX = 5;
+    const shown = avatars.slice(0, MAX);
+    const overflow = totalCount > shown.length ? totalCount - shown.length : 0;
+
+    if (totalCount === 0) return null;
+
+    return (
+        <div className="flex -space-x-2">
+            {brandLogo && (
+                <div className="relative w-6 h-6 rounded-full border-2 border-background ring-1 ring-white/10 overflow-hidden shrink-0 z-10">
+                    <img src={brandLogo} alt="brand" className="w-full h-full object-cover" />
+                </div>
+            )}
+            {shown.map((p: any, i: number) => (
+                <div
+                    key={p.id}
+                    className="relative w-6 h-6 rounded-full border-2 border-background ring-1 ring-white/10 overflow-hidden shrink-0"
+                    style={{ zIndex: MAX - i }}
+                >
+                    {p.avatarUrl ? (
+                        <img src={p.avatarUrl} alt="participant" className="w-full h-full object-cover" />
+                    ) : (
+                        <div className="w-full h-full bg-white/10 flex items-center justify-center text-[8px] font-black text-white/50">?</div>
+                    )}
+                </div>
+            ))}
+            {overflow > 0 && (
+                <div className="w-6 h-6 rounded-full border-2 border-background bg-white/10 flex items-center justify-center text-[8px] font-black text-white/60 shrink-0" style={{ zIndex: 0 }}>
+                    +{overflow}
+                </div>
+            )}
+        </div>
+    );
+}
+
 function avatarUrl(_: unknown, name?: string | null): string {
     const n = encodeURIComponent(name || "User");
     return `https://ui-avatars.com/api/?name=${n}&background=2F6AFF&color=fff`;
@@ -272,7 +310,6 @@ function EventSidebar({
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Participating</span>
                         <div className="flex items-center gap-1.5">
-                            <Users className="w-3 h-3 text-foreground/40" />
                             <span className="text-sm font-black text-foreground">
                                 {formatCount(event.eventType === 'vote_only' ? (event._count?.votes ?? 0) : (event._count?.submissions ?? 0))}
                             </span>
@@ -283,6 +320,7 @@ function EventSidebar({
                             )}
                         </div>
                     </div>
+                    <ParticipantAvatars event={event} totalCount={totalParticipants} />
                     {event.capacity && (
                         <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
                             <motion.div

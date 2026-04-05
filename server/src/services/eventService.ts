@@ -502,6 +502,37 @@ export class EventService {
       }
     }
 
+    // Fetch a sample of participant avatars (Creators and Voters)
+    if (event) {
+      const [recentSubmissions, recentVotes] = await Promise.all([
+        prisma.submission.findMany({
+          where: { eventId: id, status: 'active' },
+          select: { user: { select: { id: true, avatarUrl: true, username: true } } },
+          take: 5,
+          orderBy: { createdAt: 'desc' },
+        }),
+        prisma.vote.findMany({
+          where: { eventId: id },
+          select: { user: { select: { id: true, avatarUrl: true, username: true } } },
+          take: 5,
+          orderBy: { createdAt: 'desc' },
+          distinct: ['userId'],
+        }),
+      ]);
+
+      const participants = new Map();
+      [...recentSubmissions, ...recentVotes].forEach((p: any) => {
+        if (p.user && !participants.has(p.user.id)) {
+          participants.set(p.user.id, {
+            id: p.user.id,
+            avatarUrl: p.user.avatarUrl,
+            username: p.user.username,
+          });
+        }
+      });
+      (event as any).participantAvatars = Array.from(participants.values()).slice(0, 5);
+    }
+
     // Exclude soft-deleted events
     if (!event || (event as any).isDeleted) {
       return null;
@@ -579,23 +610,33 @@ export class EventService {
     const [uniqueVoters, uniquePosters] = await Promise.all([
       prisma.vote.findMany({
         where: { eventId: id },
-        select: { userId: true },
-        distinct: ['userId']
+        select: { userId: true, user: { select: { id: true, avatarUrl: true } } },
+        distinct: ['userId'],
+        take: 10,
       }),
       event.eventType === 'post_and_vote'
         ? prisma.submission.findMany({
           where: { eventId: id, status: 'active' },
-          select: { userId: true },
-          distinct: ['userId']
+          select: { userId: true, user: { select: { id: true, avatarUrl: true } } },
+          distinct: ['userId'],
+          take: 10,
         })
         : Promise.resolve([])
     ]);
 
     const participantSet = new Set([
       ...uniqueVoters.map(v => v.userId),
-      ...uniquePosters.map(p => p.userId)
+      ...(uniquePosters as any[]).map(p => p.userId)
     ]);
     const totalParticipants = participantSet.size;
+
+    // Build avatar list: submitters first, then voters who haven't submitted
+    const submitterIds = new Set((uniquePosters as any[]).map(p => p.userId));
+    const avatarList: { id: string; avatarUrl: string | null }[] = [
+      ...(uniquePosters as any[]).map(p => ({ id: p.userId, avatarUrl: p.user?.avatarUrl ?? null })),
+      ...uniqueVoters.filter(v => !submitterIds.has(v.userId)).map(v => ({ id: v.userId, avatarUrl: (v as any).user?.avatarUrl ?? null })),
+    ];
+    const participantAvatars = avatarList.slice(0, 10);
 
     // Strip vote counts for non-completed events — users and brand owners
     // cannot see individual or total vote counts until the event ends.
@@ -639,6 +680,7 @@ export class EventService {
         hasSubmitted: !!userSubmission,
         userSubmission: userSubmission || null,
         totalParticipants,
+        participantAvatars,
       });
     }
 
@@ -646,6 +688,7 @@ export class EventService {
       ...event,
       submissions,
       totalParticipants,
+      participantAvatars,
     });
   }
 

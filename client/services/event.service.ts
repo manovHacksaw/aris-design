@@ -49,6 +49,8 @@ export interface Event {
     tagline?: string;
     regions?: string[];
     submissionGuidelines?: string;
+    totalParticipants?: number;
+    participantAvatars?: Array<{ id: string; avatarUrl: string | null }>;
     brand?: {
         id: string;
         name: string;

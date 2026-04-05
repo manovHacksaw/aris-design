@@ -23,6 +23,7 @@ interface PremiumEvent {
     _count?: { submissions: number; votes: number };
     brand?: { id?: string; name: string; logoUrl?: string; logoCid?: string } | null;
     eventAnalytics?: { totalViews: number };
+    participantAvatars?: Array<{ id: string; avatarUrl: string | null }>;
 }
 
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
@@ -151,6 +152,25 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
                                 <span className="text-[10px] font-bold text-white/90 tracking-widest uppercase whitespace-nowrap">
                                     {formatCount(rawPCount)}
                                 </span>
+                                {event.participantAvatars && event.participantAvatars.length > 0 && (
+                                    <div className="flex -space-x-2 ml-1">
+                                        {event.participantAvatars.slice(0, 3).map((p: any, i: number) => (
+                                            <div
+                                                key={p.id}
+                                                className="w-6 h-6 rounded-full border border-[#0a0a0c] ring-1 ring-white/10 overflow-hidden shrink-0"
+                                                style={{ zIndex: 10 + (3 - i) }}
+                                            >
+                                                {p.avatarUrl ? (
+                                                    <img src={p.avatarUrl} alt="participant" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full bg-gradient-to-br from-white/5 to-white/15 flex items-center justify-center">
+                                                        <span className="text-[7px] font-black text-white/30 tracking-tighter">?</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Views */}
