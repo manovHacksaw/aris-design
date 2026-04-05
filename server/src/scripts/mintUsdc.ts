@@ -8,13 +8,13 @@ import { resolve } from 'path';
 
 dotenv.config({ path: resolve(process.cwd(), '.env') });
 
-const TO     = (process.env.TO     ?? '0xc6BC85D7631A5272e39449DF8DC5605eB0b832D3') as `0x${string}`;
-const AMOUNT = process.env.AMOUNT  ?? '500';
+const TO = (process.env.TO ?? '0x16bcbd1CD1730fCE96CaAA13fc98Fcc94d40A766') as `0x${string}`;
+const AMOUNT = process.env.AMOUNT ?? '500';
 
-const USDC_ADDRESS     = (process.env.TEST_USDC_ADDRESS ?? '0x61d11C622Bd98A71aD9361833379A2066Ad29CCa') as `0x${string}`;
-const PRIVATE_KEY      = (process.env.BACKEND_SIGNER_PRIVATE_KEY ?? '') as `0x${string}`;
-const RPC_URL          = process.env.RPC_URL ?? 'https://rpc-amoy.polygon.technology';
-const USDC_DECIMALS    = 6;
+const USDC_ADDRESS = (process.env.TEST_USDC_ADDRESS ?? '0x61d11C622Bd98A71aD9361833379A2066Ad29CCa') as `0x${string}`;
+const PRIVATE_KEY = (process.env.BACKEND_SIGNER_PRIVATE_KEY ?? '') as `0x${string}`;
+const RPC_URL = process.env.RPC_URL ?? 'https://rpc-amoy.polygon.technology';
+const USDC_DECIMALS = 6;
 
 const MINT_ABI = [
   {
@@ -22,7 +22,7 @@ const MINT_ABI = [
     type: 'function',
     stateMutability: 'nonpayable',
     inputs: [
-      { name: 'to',     type: 'address' },
+      { name: 'to', type: 'address' },
       { name: 'amount', type: 'uint256' },
     ],
     outputs: [],
