@@ -182,10 +182,10 @@ export default function MilestonesPage() {
                 {/* Top Left: 4 Data Metric Cards */}
                 <div className="lg:col-span-8 grid grid-cols-2 md:grid-cols-2 gap-3 sm:gap-6">
                     {/* Card 1: Lime Hero Card (Discount Reward) */}
-                    <div onClick={() => setProgressModalOpen(true)} className="bg-lime-400 rounded-[28px] p-4 sm:p-8 flex flex-col justify-center min-h-[140px] sm:min-h-[160px] relative overflow-hidden group cursor-pointer">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-black/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-700" />
-                        <h2 className="font-display text-[3rem] lg:text-[4.5rem] text-black uppercase tracking-tight leading-none mb-1 sm:mb-2">{currentReward}%</h2>
-                        <p className="text-[9px] sm:text-[10px] font-black text-black/60 uppercase tracking-[0.2em]">Reward Discount</p>
+                    <div onClick={() => setProgressModalOpen(true)} className="bg-white/[0.03] border border-lime-400/20 rounded-[28px] p-4 sm:p-8 flex flex-col justify-center min-h-[140px] sm:min-h-[160px] relative overflow-hidden group cursor-pointer hover:bg-lime-400/[0.02] transition-all">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-lime-400/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-lime-400/10 transition-colors duration-700" />
+                        <h2 className="font-display text-[3.5rem] lg:text-[4.8rem] text-lime-400 uppercase tracking-tight leading-none mb-1 sm:mb-2">{currentReward}%</h2>
+                        <p className="text-[10px] font-black text-lime-400/40 uppercase tracking-[0.2em]">Reward Discount</p>
                     </div>
 
                     {/* Card 2: Tokens Minted */}
@@ -369,19 +369,19 @@ export default function MilestonesPage() {
                 {/* Bottom Right: Upgrade Info Modal-style Container */}
                 <div className="lg:col-span-4 bg-white/[0.03] border border-white/[0.06] rounded-[28px] overflow-hidden relative h-full flex flex-col group">
                     {/* Top Hero Section of the card */}
-                    <div className="bg-lime-400 p-8 relative flex-shrink-0 z-10">
+                    <div className="bg-white/[0.04] p-8 border-b border-white/[0.06] relative flex-shrink-0 z-10">
                         {/* Decorative glow inside header */}
-                        <div className="absolute top-0 right-0 p-24 bg-black/10 blur-[60px] rounded-full -z-10 translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+                        <div className="absolute top-0 right-0 p-24 bg-lime-400/5 blur-[60px] rounded-full -z-10 translate-x-1/2 -translate-y-1/2 pointer-events-none" />
 
                         <div className="flex justify-between items-start mb-6">
-                            <h3 className="font-bold text-black/70 text-[10px] tracking-[0.2em] uppercase">Upgrade Unlock</h3>
-                            <span className="bg-black/15 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase text-black">Target Level {Math.min(overallLevel + 1, 7)}</span>
+                            <h3 className="font-black text-foreground/30 text-[10px] tracking-[0.2em] uppercase">Next Unlock</h3>
+                            <span className="bg-lime-400/10 border border-lime-400/20 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase text-lime-400">Target Lv. {Math.min(overallLevel + 1, 7)}</span>
                         </div>
 
-                        <h1 className="font-display text-[4rem] text-black uppercase tracking-tight leading-none mb-1 flex items-end">
-                            {targetTier.discount}<span className="text-4xl pb-1">%</span>
+                        <h1 className="font-display text-[4.5rem] text-foreground uppercase tracking-tight leading-none mb-1 flex items-end">
+                            {targetTier.discount}<span className="text-4xl text-lime-400/40 pb-1 ml-1">%</span>
                         </h1>
-                        <p className="font-black text-black/70 text-[11px] uppercase tracking-widest mt-2">Discount Reward on Fees</p>
+                        <p className="font-black text-foreground/40 text-[11px] uppercase tracking-widest mt-2 px-1">Discount Reward on Fees</p>
                     </div>
 
                     {/* Bottom Tasks Section */}

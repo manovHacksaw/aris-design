@@ -172,8 +172,11 @@ export default function BrandPublicPage() {
 
     const bEvents = brand.events || [];
     const socialLinks = brand.socialLinks ?? {};
-    const activeEvents = bEvents.filter((e: any) => e.status === "posting" || e.status === "voting");
-    const pastEvents = bEvents.filter((e: any) => e.status === "completed");
+    
+    // Categorize events including all types
+    const liveEvents = bEvents.filter((e: any) => e.status === "posting" || e.status === "voting");
+    const upcomingEvents = bEvents.filter((e: any) => e.status === "scheduled");
+    const pastEvents = bEvents.filter((e: any) => e.status === "completed" || e.status === "cancelled");
 
     return (
         <div className="min-h-screen bg-background text-foreground font-sans">
@@ -301,25 +304,36 @@ export default function BrandPublicPage() {
 
                     {/* ── Events tab ── */}
                     {activeTab === "events" && (
-                        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-                            {/* Active events */}
-                            {activeEvents.length > 0 && (
+                        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
+                            {/* Live events */}
+                            {liveEvents.length > 0 && (
                                 <section>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30 mb-4">Live Now</p>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                                        {activeEvents.map((ev: any) => <EventCard key={ev.id} event={ev} />)}
+                                    <div className="flex items-center gap-2 mb-5">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-pulse" />
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Live Now</p>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                                        {liveEvents.map((ev: any) => <EventCard key={ev.id} event={ev} />)}
                                     </div>
                                 </section>
                             )}
 
-                            {/* All events */}
-                            {bEvents.filter((e: any) => e.status !== "posting" && e.status !== "voting").length > 0 && (
+                            {/* Upcoming events */}
+                            {upcomingEvents.length > 0 && (
                                 <section>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30 mb-4">
-                                        {activeEvents.length > 0 ? "Past Events" : "Events"}
-                                    </p>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                                        {bEvents.filter((e: any) => e.status !== "posting" && e.status !== "voting").map((ev: any) => <EventCard key={ev.id} event={ev} />)}
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40 mb-5">Upcoming</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                                        {upcomingEvents.map((ev: any) => <EventCard key={ev.id} event={ev} />)}
+                                    </div>
+                                </section>
+                            )}
+
+                            {/* Past events */}
+                            {pastEvents.length > 0 && (
+                                <section>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40 mb-5">Past Events</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                                        {pastEvents.map((ev: any) => <EventCard key={ev.id} event={ev} />)}
                                     </div>
                                 </section>
                             )}
@@ -373,36 +387,51 @@ function EventCard({ event }: { event: Event }) {
     return (
         <Link href={`/events/${event.id}`}>
             <motion.div
-                whileHover={{ y: -2 }}
-                className="relative rounded-[20px] border border-border bg-card overflow-hidden group cursor-pointer"
+                whileHover={{ y: -4 }}
+                className="relative rounded-[24px] border border-border/40 bg-card overflow-hidden group cursor-pointer transition-all hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5"
             >
                 {/* Image */}
-                <div className="relative h-[160px] bg-foreground/5">
+                <div className="relative h-[180px] bg-foreground/5">
                     {imgUrl ? (
-                        <img src={imgUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt={event.title} />
+                        <img src={imgUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={event.title} />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                            <Calendar className="w-8 h-8 text-foreground/15" />
+                            <Calendar className="w-8 h-8 text-foreground/10" />
                         </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    <span className={cn("absolute top-3 right-3 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full border", STATUS_STYLE[event.status] || STATUS_STYLE.draft)}>
-                        {event.status}
-                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent opacity-80" />
+                    
+                    <div className="absolute top-4 right-4 z-10">
+                        <span className={cn(
+                            "text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border backdrop-blur-md",
+                            STATUS_STYLE[event.status] || STATUS_STYLE.draft
+                        )}>
+                            {event.status}
+                        </span>
+                    </div>
                 </div>
 
                 {/* Info */}
-                <div className="p-4">
-                    <p className="text-sm font-black text-foreground leading-tight mb-1 line-clamp-2">{event.title}</p>
-                    <div className="flex items-center justify-between mt-2">
-                        <div className="flex items-center gap-1 text-foreground/30">
-                            <Users className="w-3 h-3" />
-                            <span className="text-[10px] font-bold">{event._count?.submissions ?? 0}</span>
+                <div className="p-5 flex flex-col min-h-[120px]">
+                    <p className="font-display text-lg font-black text-foreground uppercase tracking-tight leading-tight mb-auto line-clamp-2 group-hover:text-primary transition-colors">
+                        {event.title}
+                    </p>
+                    
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/20">
+                        <div className="flex flex-col">
+                            <span className="text-[9px] font-black text-foreground/20 uppercase tracking-widest mb-0.5">Participants</span>
+                            <div className="flex items-center gap-1.5 text-foreground/60">
+                                <Users className="w-3 h-3" />
+                                <span className="text-[11px] font-black">{(event as any)._count?.submissions ?? 0}</span>
+                            </div>
                         </div>
+                        
                         {(event.leaderboardPool ?? event.topReward ?? 0) > 0 && (
-                            <div className="flex items-center gap-1 text-foreground/50">
-                                <Trophy className="w-3 h-3 text-yellow-500/70" />
-                                <span className="text-[10px] font-black">${(event.leaderboardPool ?? event.topReward ?? 0).toLocaleString()}</span>
+                            <div className="flex flex-col items-end">
+                                <span className="text-[9px] font-black text-foreground/20 uppercase tracking-widest mb-0.5">Prize Pool</span>
+                                <div className="flex items-center gap-1 text-primary">
+                                    <span className="text-xs font-black tracking-tight">${(event.leaderboardPool ?? event.topReward ?? 0).toLocaleString()}</span>
+                                </div>
                             </div>
                         )}
                     </div>

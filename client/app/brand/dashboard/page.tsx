@@ -545,53 +545,41 @@ function OverviewCardView({ events }: { events: Event[] }) {
                                 {STATUS_LABELS[ev.status] ?? ev.status}
                             </span>
                         </div>
-                        <div className="p-4 space-y-3">
+                        <div className="p-4 space-y-4 flex-1 flex flex-col">
                             <div>
-                                <h4 className="font-black text-base text-foreground leading-tight line-clamp-1 group-hover:text-primary transition-colors">
+                                <h4 className="font-display text-lg text-foreground uppercase tracking-tight leading-[1.1] line-clamp-2 group-hover:text-primary transition-colors">
                                     {ev.title}
                                 </h4>
-                                <p className="text-sm text-muted-foreground mt-0.5 capitalize">
+                                <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em] mt-1.5">
                                     {ev.eventType === "post_and_vote" ? "Post & Vote" : "Vote Only"}
                                 </p>
                             </div>
+
+                            <div className="flex-1" />
+
                             {isCancelled && ev.cancelReason ? (
-                                <div className="flex items-start gap-1.5 p-2 rounded-lg bg-red-500/10 border border-red-500/20">
-                                    <XCircle className="w-3 h-3 text-red-400 shrink-0 mt-0.5" />
-                                    <p className="text-xs text-red-400 leading-tight line-clamp-2">{ev.cancelReason}</p>
+                                <div className="p-3 rounded-2xl bg-red-500/5 border border-red-500/10">
+                                    <p className="text-[10px] font-bold text-red-400/70 uppercase tracking-wider mb-1">Cancelled</p>
+                                    <p className="text-xs text-red-400/60 leading-tight line-clamp-2 italic">"{ev.cancelReason}"</p>
                                 </div>
                             ) : (
-                                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                    <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {(ev.eventAnalytics?.totalViews ?? 0) > 0 ? ev.eventAnalytics!.totalViews.toLocaleString() : "—"}</span>
-                                    <span className="flex items-center gap-1"><Trophy className="w-3 h-3" /> {votes > 0 ? votes.toLocaleString() : "—"}</span>
-                                    <span className="font-bold text-foreground">{formatPool(pool)}</span>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex flex-col">
+                                            <span className="text-[9px] font-black text-foreground/20 uppercase tracking-widest mb-0.5">Votes</span>
+                                            <span className="text-sm font-black text-foreground/80">{votes.toLocaleString()}</span>
+                                        </div>
+                                        <div className="w-[1px] h-6 bg-border/40" />
+                                        <div className="flex flex-col">
+                                            <span className="text-[9px] font-black text-foreground/20 uppercase tracking-widest mb-0.5">Pool</span>
+                                            <span className="text-sm font-black text-primary">{formatPool(pool)}</span>
+                                        </div>
+                                    </div>
+                                    <div className="w-8 h-8 rounded-full bg-foreground/5 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                                        <ChevronRight className="w-4 h-4 text-foreground/20 group-hover:text-primary transition-colors" />
+                                    </div>
                                 </div>
                             )}
-                            {/* Vote % per proposal preview */}
-                            {ev.proposals && ev.proposals.length > 0 && (
-                                <div className="space-y-1.5">
-                                    {ev.proposals.slice(0, 3).map(p => {
-                                        const totalVotes = ev.proposals!.reduce((s, pp) => s + pp.voteCount, 0);
-                                        const pct = totalVotes > 0 ? Math.round((p.voteCount / totalVotes) * 100) : 0;
-                                        return (
-                                            <div key={p.id} className="space-y-0.5">
-                                                <div className="flex justify-between text-xs">
-                                                    <span className="text-muted-foreground truncate max-w-[70%]">{p.title}</span>
-                                                    <span className="font-bold text-foreground">{pct}%</span>
-                                                </div>
-                                                <div className="h-1 bg-secondary/60 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-primary rounded-full" style={{ width: `${pct}%` }} />
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                        <div className="px-4 pb-3 flex items-center justify-between">
-                            <span className="text-xs text-muted-foreground">
-                                {new Date(ev.endTime).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                            </span>
-                            <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                         </div>
                     </Link>
                 );

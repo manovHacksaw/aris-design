@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
     Clock, Trophy, Users, ImageIcon, AlertCircle, Crown, Medal,
     ChevronRight, Twitter, Instagram, Globe, LayoutGrid, List,
-    Tag, UserCircle2, BarChart2, Target, Shuffle, Scale, Vote, PieChart as PieChartIcon, 
+    Tag, UserCircle2, BarChart2, Target, Shuffle, Scale, Vote, PieChart as PieChartIcon,
     MousePointerClick, Timer, Activity
 } from "lucide-react";
 import {
@@ -398,11 +398,12 @@ function EventSidebar({
 
 // ─── Participant Card ──────────────────────────────────────────────────────────
 
-function ParticipantCard({ sub, rank, showVotes, showThumb }: {
+function ParticipantCard({ sub, rank, showVotes, showThumb, isList = false }: {
     sub: Submission;
     rank?: number;
     showVotes: boolean;
     showThumb: boolean;
+    isList?: boolean;
 }) {
     const name = sub.user?.displayName || sub.user?.username || "Creator";
     const handle = sub.user?.username || "user";
@@ -420,6 +421,7 @@ function ParticipantCard({ sub, rank, showVotes, showThumb }: {
             animate={{ opacity: 1, y: 0 }}
             className={cn(
                 "relative rounded-[20px] border overflow-hidden transition-all hover:shadow-lg",
+                isList ? "flex items-center gap-4 py-2 px-3" : "flex flex-col",
                 isWinner
                     ? "bg-yellow-500/5 border-yellow-500/20"
                     : "bg-white/[0.03] border-white/[0.07] hover:bg-white/[0.05]"
@@ -428,7 +430,8 @@ function ParticipantCard({ sub, rank, showVotes, showThumb }: {
             {/* Rank badge — only on completed */}
             {isPodium && rank && showThumb && (
                 <div className={cn(
-                    "absolute top-3 left-3 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border",
+                    "z-10 flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border shrink-0",
+                    isList ? "" : "absolute top-3 left-3",
                     medalBgs[rank - 1]
                 )}>
                     {rank === 1 ? <Crown className={cn("w-2.5 h-2.5", medalColors[0])} /> : <Medal className={cn("w-2.5 h-2.5", medalColors[rank - 1])} />}
@@ -438,12 +441,15 @@ function ParticipantCard({ sub, rank, showVotes, showThumb }: {
 
             {/* Submission thumbnail — only shown when completed */}
             {showThumb && (
-                <div className="aspect-4/3 w-full bg-white/4 overflow-hidden">
+                <div className={cn(
+                    "bg-white/4 overflow-hidden shrink-0",
+                    isList ? "w-16 h-12 rounded-lg" : "aspect-4/3 w-full"
+                )}>
                     {thumb ? (
                         <img src={thumb} alt={name} className="w-full h-full object-cover" />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                            <ImageIcon className="w-8 h-8 text-foreground/10" />
+                            <ImageIcon className="w-4 h-4 text-foreground/10" />
                         </div>
                     )}
                 </div>
@@ -524,7 +530,7 @@ function ParticipantsGrid({ submissions, event, gridView }: {
                             All Participants ({others.length})
                         </p>
                     )}
-                    <div className={gridView ? "grid grid-cols-2 md:grid-cols-3 gap-4" : "flex flex-col gap-3"}>
+                    <div className={gridView ? "grid grid-cols-2 md:grid-cols-3 gap-4" : "flex flex-col gap-2.5 max-w-2xl"}>
                         {(event.status === "completed" ? others : sorted).map((sub, idx) => (
                             <motion.div
                                 key={sub.id}
@@ -532,7 +538,7 @@ function ParticipantsGrid({ submissions, event, gridView }: {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.03 }}
                             >
-                                <ParticipantCard sub={sub} showVotes={showVotes} showThumb={showThumb} />
+                                <ParticipantCard sub={sub} showVotes={showVotes} showThumb={showThumb} isList={!gridView} />
                             </motion.div>
                         ))}
                     </div>
@@ -566,7 +572,7 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
             setSubmissions((subs) => subs.map((s) => s.id === submissionId ? { ...s, _count: { votes: (s._count?.votes ?? 0) + delta } } : s));
         };
         const handleParticipantUpdate = () => {
-            getEventParticipants(id).then(setParticipants).catch(() => {});
+            getEventParticipants(id).then(setParticipants).catch(() => { });
         };
         socket.on("vote-update", handleVoteUpdate);
         socket.on("participant-update", handleParticipantUpdate);
@@ -597,7 +603,7 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                         const { getDetailedEventAnalytics } = await import("@/services/event.service");
                         const detailed = await getDetailedEventAnalytics(id);
                         setEventSummary(detailed);
-                        
+
                         const [engRes, clickRes] = await Promise.all([
                             apiRequest<any>(`/analytics/events/${id}/engagement`).catch(() => ({ averageViewTime: 0 })),
                             apiRequest<any>(`/analytics/events/${id}/clicks-breakdown`).catch(() => ({ vote: 0, event: 0, website: 0, social: 0, other: 0 }))
@@ -756,7 +762,7 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                         {displayMode !== "upcoming" && (
                             <div className="flex items-center justify-between mb-5 border-b border-border/40 pb-0">
                                 <div className="flex items-center gap-6">
-                                    <button 
+                                    <button
                                         onClick={() => setActiveTab("participants")}
                                         className={cn("flex items-center gap-2 pb-3 border-b-2 transition-colors", activeTab === "participants" ? "border-primary text-foreground" : "border-transparent text-foreground/40 hover:text-foreground/70")}
                                     >
@@ -766,7 +772,7 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                                             {displayParticipantCount}
                                         </span>
                                     </button>
-                                    
+
                                     {displayMode === "completed" && eventSummary && (
                                         <button
                                             onClick={() => setActiveTab("results")}
@@ -815,7 +821,7 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                                     <div className="relative overflow-hidden bg-white/[0.03] border border-[#9D9DFF]/20 rounded-2xl p-4 text-center group">
                                         <div className="absolute inset-0 bg-[#9D9DFF]/[0.04] opacity-0 group-hover:opacity-100 transition-opacity" />
                                         <Activity className="w-4 h-4 text-[#9D9DFF] mx-auto mb-2" />
-                                        <p className="text-2xl font-black text-[#9D9DFF] mb-0.5 leading-none">{(( (1 - eventSummary.normalizedEntropy)*0.6 + eventSummary.avgParticipantTrustScore*0.4 ) * 100).toFixed(0)}%</p>
+                                        <p className="text-2xl font-black text-[#9D9DFF] mb-0.5 leading-none">{(((1 - eventSummary.normalizedEntropy) * 0.6 + eventSummary.avgParticipantTrustScore * 0.4) * 100).toFixed(0)}%</p>
                                         <p className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.15em] mt-1">Decision Confidence</p>
                                     </div>
                                 </div>
@@ -893,7 +899,7 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                                             const malePct = eventSummary.votesByGender?.male / total;
                                             const femalePct = eventSummary.votesByGender?.female / total;
                                             const ageKeys = ['24_under', '25_34', '35_44', '45_54', '55_64', '65_plus'];
-                                            const labels: Record<string,string> = { '24_under': '<24', '25_34': '25-34', '35_44': '35-44', '45_54': '45-54', '55_64': '55-64', '65_plus': '65+'};
+                                            const labels: Record<string, string> = { '24_under': '<24', '25_34': '25-34', '35_44': '35-44', '45_54': '45-54', '55_64': '55-64', '65_plus': '65+' };
                                             const demoData = ageKeys.map(k => {
                                                 const raw = eventSummary.votesByAgeGroup[k] || 0;
                                                 return { age: labels[k], male: Math.round(raw * malePct), female: Math.round(raw * femalePct) };
@@ -931,10 +937,10 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                                         </div>
                                         {eventSummary.viewsOverTime && eventSummary.viewsOverTime.length > 0 ? (() => {
                                             const timeMap = new Map();
-                                            eventSummary.viewsOverTime.forEach((v:any) => timeMap.set(v.timestamp, { time: new Date(v.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), views: v.count, votes: 0 }));
+                                            eventSummary.viewsOverTime.forEach((v: any) => timeMap.set(v.timestamp, { time: new Date(v.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), views: v.count, votes: 0 }));
                                             if (eventSummary.votesOverTime) {
-                                                eventSummary.votesOverTime.forEach((v:any) => {
-                                                    if(timeMap.has(v.timestamp)) { timeMap.get(v.timestamp).votes = v.count; }
+                                                eventSummary.votesOverTime.forEach((v: any) => {
+                                                    if (timeMap.has(v.timestamp)) { timeMap.get(v.timestamp).votes = v.count; }
                                                     else { timeMap.set(v.timestamp, { time: new Date(v.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), views: 0, votes: v.count }); }
                                                 });
                                             }
@@ -944,11 +950,11 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                                                     <ResponsiveContainer width="100%" height="100%">
                                                         <AreaChart data={timeData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                                                             <defs>
-                                                                <linearGradient id="gradOrange" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={CHART_COLORS.orange} stopOpacity={0.25}/><stop offset="95%" stopColor={CHART_COLORS.orange} stopOpacity={0}/></linearGradient>
-                                                                <linearGradient id="gradLime" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={CHART_COLORS.lime} stopOpacity={0.25}/><stop offset="95%" stopColor={CHART_COLORS.lime} stopOpacity={0}/></linearGradient>
+                                                                <linearGradient id="gradOrange" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={CHART_COLORS.orange} stopOpacity={0.25} /><stop offset="95%" stopColor={CHART_COLORS.orange} stopOpacity={0} /></linearGradient>
+                                                                <linearGradient id="gradLime" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={CHART_COLORS.lime} stopOpacity={0.25} /><stop offset="95%" stopColor={CHART_COLORS.lime} stopOpacity={0} /></linearGradient>
                                                             </defs>
                                                             <CartesianGrid {...GRID_STYLE} vertical={false} />
-                                                            <XAxis dataKey="time" tick={{...TICK_STYLE, fontSize: 8}} axisLine={false} tickLine={false} />
+                                                            <XAxis dataKey="time" tick={{ ...TICK_STYLE, fontSize: 8 }} axisLine={false} tickLine={false} />
                                                             <YAxis tick={TICK_STYLE} axisLine={false} tickLine={false} />
                                                             <Tooltip content={<ChartTooltip />} />
                                                             <Area type="monotone" dataKey="views" name="Views" stroke={CHART_COLORS.orange} fill="url(#gradOrange)" strokeWidth={1.5} dot={false} />
@@ -995,7 +1001,7 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                                                             submission={toVoteSubmission(sub)}
                                                             isVoted={false}
                                                             isPending={false}
-                                                            onVote={() => {}}
+                                                            onVote={() => { }}
                                                             disabled={true}
                                                             optionIndex={idx}
                                                             showVoteCount={true}

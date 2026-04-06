@@ -407,14 +407,6 @@ export default function BrandWalletPage() {
                         <h2 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40">
                             By Event ({fmt$(dbTotal)} projected)
                         </h2>
-                        {!allCredited && (
-                            <button
-                                onClick={handleUseAllCredit}
-                                className="text-xs font-black text-primary hover:underline flex items-center gap-1"
-                            >
-                                <Plus className="w-3 h-3" /> Use all as credit
-                            </button>
-                        )}
                     </div>
 
                     {refundablePools.map((pool) => {
