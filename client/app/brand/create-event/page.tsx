@@ -154,6 +154,7 @@ export default function CreateEventPage() {
     const [proposalAiLoading, setProposalAiLoading] = useState(false);
     const [availableCredit, setAvailableCredit] = useState(0);
     const [aiGeneratorProposalIdx, setAiGeneratorProposalIdx] = useState<number | null>(null);
+    const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
     const proposalFileRefs = useRef<(HTMLInputElement | null)[]>([]);
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
     const bannerInputRef = useRef<HTMLInputElement | null>(null);
@@ -162,6 +163,7 @@ export default function CreateEventPage() {
     const sampleInputRef = useRef<HTMLInputElement | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement | null>(null);
     const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+    const [aiSuggestionsPool, setAiSuggestionsPool] = useState<string[]>([]);
 
     // ── Landing / Draft state ──────────────────────────────────────────────────
     const [viewMode, setViewMode] = useState<"landing" | "form">("landing");
@@ -403,13 +405,31 @@ export default function CreateEventPage() {
         try {
             const res = await generateAiProposals({ title: form.title, description: form.description, category: form.domain });
             if (res.success && res.proposals) {
-                set({ proposals: res.proposals.slice(0, 6).map((p, i) => ({ title: p.title, order: i })) });
+                setAiSuggestionsPool(res.proposals.slice(0, 6).map((p) => p.title));
             } else {
                 toast.error("Could not generate suggestions");
             }
         } finally {
             setProposalAiLoading(false);
         }
+    };
+
+    const handleAddAllAiSuggestions = () => {
+        if (aiSuggestionsPool.length === 0) return;
+        const updated = [...form.proposals];
+        const toAdd = [...aiSuggestionsPool];
+        // Fill empty slots (no title, no image) first
+        for (let i = 0; i < updated.length && toAdd.length > 0; i++) {
+            if (!updated[i].title.trim() && !updated[i].media && !updated[i].mediaPreview) {
+                updated[i] = { ...updated[i], title: toAdd.shift()! };
+            }
+        }
+        // Append remaining as new options (up to max 10)
+        while (toAdd.length > 0 && updated.length < 10) {
+            updated.push({ title: toAdd.shift()!, order: updated.length });
+        }
+        set({ proposals: updated });
+        setAiSuggestionsPool([]);
     };
 
     // ── Validation ─────────────────────────────────────────────────────────────
@@ -1293,54 +1313,138 @@ export default function CreateEventPage() {
                             </button>
                         </div>
 
-                        {/* Options list */}
-                        <div className="space-y-3 max-h-[55vh] overflow-y-auto pr-1">
-                            {form.proposals.map((p, idx) => (
-                                <div key={idx} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 border border-border rounded-xl bg-secondary/10">
-                                    {/* Number badge */}
-                                    <span className="w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-black flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
-                                        {idx + 1}
-                                    </span>
-
-                                    {/* Text input */}
-                                    <Input
-                                        placeholder={`Option ${idx + 1}`}
-                                        value={p.title}
-                                        onChange={(e) => updateProposal(idx, e.target.value)}
-                                        className="flex-1"
-                                    />
-
-                                    {/* Image area */}
-                                    {p.mediaPreview ? (
-                                        <div className="relative shrink-0 group">
-                                            <img
-                                                src={p.mediaPreview}
-                                                alt={`Option ${idx + 1}`}
-                                                className="w-16 h-16 rounded-xl object-cover border border-border cursor-zoom-in"
-                                                onClick={() => setLightboxSrc(p.mediaPreview!)}
-                                            />
+                        {/* AI Suggestions Pool Panel */}
+                        {aiSuggestionsPool.length > 0 && (
+                            <div className="border border-primary/30 bg-primary/5 rounded-2xl p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-primary text-xs font-bold">
+                                        <Sparkles className="w-3.5 h-3.5" />
+                                        AI Suggestions
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={handleAiProposals}
+                                            disabled={proposalAiLoading}
+                                            className="flex items-center gap-1 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-lg text-xs font-semibold transition-all disabled:opacity-50"
+                                        >
+                                            {proposalAiLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                                            Regenerate
+                                        </button>
+                                        <button
+                                            onClick={handleAddAllAiSuggestions}
+                                            className="flex items-center gap-1 px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-bold transition-all hover:bg-primary/90"
+                                        >
+                                            <Plus className="w-3 h-3" />
+                                            Add All
+                                        </button>
+                                        <button
+                                            onClick={() => setAiSuggestionsPool([])}
+                                            className="p-1.5 hover:bg-red-500/10 text-muted-foreground hover:text-red-500 rounded-lg transition-colors"
+                                        >
+                                            <X className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    {aiSuggestionsPool.map((suggestion, i) => (
+                                        <div key={i} className="flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-xl">
+                                            <span className="flex-1 text-sm text-foreground">{suggestion}</span>
                                             <button
-                                                onClick={() => removeProposalMedia(idx)}
-                                                className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                onClick={() => setAiSuggestionsPool((prev) => prev.filter((_, idx) => idx !== i))}
+                                                className="p-1 hover:bg-red-500/10 text-muted-foreground hover:text-red-500 rounded-lg transition-colors shrink-0"
                                             >
-                                                <X className="w-3 h-3 text-white" />
+                                                <X className="w-3.5 h-3.5" />
                                             </button>
                                         </div>
-                                    ) : (
-                                        <div className="flex items-center gap-2 shrink-0">
-                                            {/* AI Generate image */}
+                                    ))}
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Suggestions will be added to empty slots. Options with uploaded images are preserved.
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Options card grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto pr-1 pb-1">
+                            {form.proposals.map((p, idx) => (
+                                <div key={idx} className="flex flex-col gap-2">
+                                    {/* Image card */}
+                                    <div
+                                        className={cn(
+                                            "relative group aspect-square rounded-2xl border-2 transition-all overflow-hidden",
+                                            dragOverIdx === idx
+                                                ? "border-primary bg-primary/10 scale-[1.02]"
+                                                : p.mediaPreview
+                                                    ? "border-border"
+                                                    : "border-dashed border-border bg-secondary/20 hover:border-primary/50 hover:bg-primary/5"
+                                        )}
+                                        onDragOver={(e) => { e.preventDefault(); setDragOverIdx(idx); }}
+                                        onDragLeave={() => setDragOverIdx(null)}
+                                        onDrop={(e) => {
+                                            e.preventDefault();
+                                            setDragOverIdx(null);
+                                            const f = e.dataTransfer.files?.[0];
+                                            if (f && f.type.startsWith("image/")) updateProposalMedia(idx, f);
+                                        }}
+                                    >
+                                        {/* Number badge */}
+                                        <span className="absolute top-2 left-2 z-10 w-6 h-6 rounded-full bg-black/60 backdrop-blur-sm text-white text-xs font-black flex items-center justify-center">
+                                            {idx + 1}
+                                        </span>
+
+                                        {/* Remove card button */}
+                                        {form.proposals.length > 2 && (
                                             <button
-                                                type="button"
-                                                onClick={() => setAiGeneratorProposalIdx(idx)}
-                                                className="flex items-center gap-1.5 px-3 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-xl text-xs font-semibold transition-all"
+                                                onClick={() => removeProposal(idx)}
+                                                className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
                                             >
-                                                <Sparkles className="w-3.5 h-3.5" />
-                                                Generate
+                                                <X className="w-4 h-4" />
                                             </button>
-                                            {/* Manual upload */}
-                                            <label className="flex items-center gap-1.5 px-3 py-2.5 bg-secondary border border-border rounded-xl text-xs font-semibold cursor-pointer hover:bg-secondary/70 transition-all">
-                                                <Upload className="w-3.5 h-3.5" />
-                                                Upload
+                                        )}
+
+                                        {p.mediaPreview ? (
+                                            /* Image preview */
+                                            <>
+                                                <img
+                                                    src={p.mediaPreview}
+                                                    alt={`Option ${idx + 1}`}
+                                                    className="w-full h-full object-cover cursor-zoom-in"
+                                                    onClick={() => setLightboxSrc(p.mediaPreview!)}
+                                                />
+                                                {/* Replace overlay */}
+                                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                    <button
+                                                        onClick={() => removeProposalMedia(idx)}
+                                                        className="px-2.5 py-1.5 bg-red-500 text-white rounded-lg text-xs font-semibold"
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            /* Empty state — upload/generate/drag */
+                                            <label className="flex flex-col items-center justify-center w-full h-full gap-3 cursor-pointer px-3">
+                                                <div className="flex flex-col items-center gap-1 text-center pointer-events-none">
+                                                    <ImageIcon className="w-6 h-6 text-muted-foreground/50" />
+                                                    <span className="text-[10px] text-muted-foreground/60 leading-tight">
+                                                        Drag & drop<br />or click to upload
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-2 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setAiGeneratorProposalIdx(idx)}
+                                                        className="flex items-center gap-1.5 px-3 py-2 bg-primary/15 hover:bg-primary/25 border border-primary/30 text-primary rounded-lg text-xs font-semibold transition-all"
+                                                    >
+                                                        <Sparkles className="w-3.5 h-3.5" />
+                                                        Generate
+                                                    </button>
+                                                    <span className="text-xs text-muted-foreground/40">or</span>
+                                                    <div className="flex items-center gap-1.5 px-3 py-2 bg-secondary border border-border rounded-lg text-xs font-semibold cursor-pointer hover:bg-secondary/70 transition-all">
+                                                        <Upload className="w-3.5 h-3.5" />
+                                                        Upload
+                                                    </div>
+                                                </div>
                                                 <input
                                                     type="file"
                                                     accept="image/*"
@@ -1353,18 +1457,17 @@ export default function CreateEventPage() {
                                                     }}
                                                 />
                                             </label>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
 
-                                    {/* Remove option */}
-                                    {form.proposals.length > 2 && (
-                                        <button
-                                            onClick={() => removeProposal(idx)}
-                                            className="p-2 hover:bg-red-500/10 text-muted-foreground hover:text-red-500 rounded-xl transition-colors shrink-0"
-                                        >
-                                            <Minus className="w-4 h-4" />
-                                        </button>
-                                    )}
+                                    {/* Option title textarea */}
+                                    <textarea
+                                        placeholder={`Option ${idx + 1} title…`}
+                                        value={p.title}
+                                        rows={2}
+                                        onChange={(e) => updateProposal(idx, e.target.value)}
+                                        className="w-full resize-none rounded-xl border border-border bg-secondary/20 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                                    />
                                 </div>
                             ))}
                         </div>

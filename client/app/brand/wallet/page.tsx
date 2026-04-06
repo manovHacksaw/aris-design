@@ -21,6 +21,7 @@ import {
 import {
     getBrandRefunds,
     saveRefundCredit,
+    getRefundCredit,
     type BrandRefundsResponse,
     type RefundPool,
     type RefundHistoryItem,
@@ -66,6 +67,7 @@ export default function BrandWalletPage() {
 
     const [sendAmount, setSendAmount] = useState("");
     const [sendAddress, setSendAddress] = useState("");
+    const [savedCredit, setSavedCredit] = useState(() => getRefundCredit());
 
     async function loadDbData() {
         try {
@@ -135,20 +137,13 @@ export default function BrandWalletPage() {
         }
     }
 
-    function handleUseCredit(pool: RefundPool) {
-        const amount = pool.refundBreakdown?.totalRefund ?? 0;
-        if (amount <= 0) { toast.error("No refund available for this event."); return; }
-        saveRefundCredit(amount, [pool.eventId]);
-        toast.success(`$${fmt$(amount)} credit saved — apply it when creating your next event.`);
-        router.push("/brand/create-event");
-    }
-
     function handleUseAllCredit() {
         const pools = data?.pools ?? [];
         const refundable = pools.filter((p) => (p.refundBreakdown?.totalRefund ?? 0) > 0);
         const total = refundable.reduce((s, p) => s + (p.refundBreakdown?.totalRefund ?? 0), 0);
         if (total <= 0) return;
         saveRefundCredit(total, refundable.map((p) => p.eventId));
+        setSavedCredit(getRefundCredit());
         toast.success(`$${fmt$(total)} credit saved for your next event.`);
         router.push("/brand/create-event");
     }
@@ -163,6 +158,7 @@ export default function BrandWalletPage() {
         (p) => (p.refundBreakdown?.totalRefund ?? 0) > 0
     );
     const dbTotal = refundablePools.reduce((s, p) => s + (p.refundBreakdown?.totalRefund ?? 0), 0);
+    const allCredited = refundablePools.length > 0 && savedCredit !== null;
 
     const renderWalletTab = () => (
         <div className="space-y-6 animate-in fade-in duration-300">
@@ -411,12 +407,14 @@ export default function BrandWalletPage() {
                         <h2 className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40">
                             By Event ({fmt$(dbTotal)} projected)
                         </h2>
-                        <button
-                            onClick={handleUseAllCredit}
-                            className="text-xs font-black text-primary hover:underline flex items-center gap-1"
-                        >
-                            <Plus className="w-3 h-3" /> Use all as credit
-                        </button>
+                        {!allCredited && (
+                            <button
+                                onClick={handleUseAllCredit}
+                                className="text-xs font-black text-primary hover:underline flex items-center gap-1"
+                            >
+                                <Plus className="w-3 h-3" /> Use all as credit
+                            </button>
+                        )}
                     </div>
 
                     {refundablePools.map((pool) => {
@@ -489,15 +487,6 @@ export default function BrandWalletPage() {
                                     </div>
                                 )}
 
-                                <div className="px-5 pb-5">
-                                    <button
-                                        onClick={() => handleUseCredit(pool)}
-                                        className="w-full flex items-center justify-center gap-2 bg-secondary border border-border/40 text-foreground py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:border-primary/30 hover:text-primary active:scale-[0.98] transition-all"
-                                    >
-                                        <Plus className="w-3.5 h-3.5" />
-                                        Use {fmt$(refund)} as event credit
-                                    </button>
-                                </div>
                             </div>
                         );
                     })}
@@ -1193,12 +1182,14 @@ export default function BrandWalletPage() {
                                         By Event
                                         <span className="text-primary font-black">(${fmt$(dbTotal)} projected)</span>
                                     </h3>
-                                    <button
-                                        onClick={handleUseAllCredit}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black text-primary/70 hover:text-primary bg-primary/5 hover:bg-primary/10 border border-primary/10 hover:border-primary/20 rounded-xl uppercase tracking-widest transition-all"
-                                    >
-                                        <Plus className="w-3 h-3" /> Use all as credit
-                                    </button>
+                                    {!allCredited && (
+                                        <button
+                                            onClick={handleUseAllCredit}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black text-primary/70 hover:text-primary bg-primary/5 hover:bg-primary/10 border border-primary/10 hover:border-primary/20 rounded-xl uppercase tracking-widest transition-all"
+                                        >
+                                            <Plus className="w-3 h-3" /> Use all as credit
+                                        </button>
+                                    )}
                                 </div>
 
                                 <div className="space-y-3">
@@ -1274,15 +1265,6 @@ export default function BrandWalletPage() {
                                                     </div>
                                                 )}
 
-                                                <div className="px-5 pb-5">
-                                                    <button
-                                                        onClick={() => handleUseCredit(pool)}
-                                                        className="w-full flex items-center justify-center gap-2 bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] hover:border-primary/30 text-white/50 hover:text-primary py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest active:scale-[0.98] transition-all"
-                                                    >
-                                                        <Plus className="w-3.5 h-3.5" />
-                                                        Use ${fmt$(refund)} as event credit
-                                                    </button>
-                                                </div>
                                             </div>
                                         );
                                     })}

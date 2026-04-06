@@ -29,12 +29,13 @@ import { use } from "react";
 import { apiRequest } from "@/services/api";
 
 const CHART_COLORS = {
-    cyan: "#06b6d4",
-    blue: "#3B82F6",
-    violet: "#8B5CF6",
+    lime: "#B6FF60",
+    lavender: "#9D9DFF",
+    orange: "#FF7A1A",
+    yellow: "#FFC700",
+    pink: "#FF60B6",
+    blue: "#60B6FF",
     gray: "#6B7280",
-    emerald: "#10b981",
-    amber: "#f59e0b",
 };
 const TICK_STYLE = { fill: "rgba(255,255,255,0.3)", fontSize: 10, fontWeight: 700 };
 const GRID_STYLE = { stroke: "rgba(255,255,255,0.05)", strokeDasharray: "0" };
@@ -179,7 +180,7 @@ function ParticipantsPanel({ participants, totalCount }: { participants: Partici
                 <div className="flex items-center gap-2 mb-4">
                     <Users className="w-4 h-4 text-foreground/40" />
                     <span className="text-sm font-black text-foreground">Participants</span>
-                    <span className="ml-auto text-[9px] bg-foreground/5 text-foreground/40 font-black uppercase tracking-widest px-2 py-0.5 rounded-full border border-border/40">0</span>
+                    <span className="ml-auto text-[9px] bg-foreground/5 text-foreground/40 font-black uppercase tracking-widest px-2 py-0.5 rounded-full border border-border/40">{totalCount}</span>
                 </div>
                 <div className="py-8 flex flex-col items-center gap-2 text-center">
                     <UserCircle2 className="w-8 h-8 text-foreground/10" />
@@ -583,11 +584,12 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                 const ev = await getEventById(id, true);
                 setEvent(ev);
                 // Fetch real participants (voters) for the sidebar
-                if (ev.status === "posting" || ev.status === "voting" || ev.status === "completed") {
+                // Always fetch for vote_only; for post_and_vote fetch once active
+                if (ev.eventType === "vote_only" || ev.status === "posting" || ev.status === "voting" || ev.status === "completed") {
                     try {
                         const p = await getEventParticipants(id);
                         setParticipants(p);
-                    } catch { /* non-fatal */ }
+                    } catch (e) { console.warn("Failed to fetch participants", e); }
                 }
 
                 if (ev.status === "completed") {
@@ -639,6 +641,7 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
     const enrichedSubmissions = submissions;
 
     // For post_and_vote events, derive participants from submitters (not voters)
+    // For vote_only events, use fetched voters; fall back to participantAvatars from event object
     const displayParticipants: Participant[] = event?.eventType === "post_and_vote"
         ? submissions
             .filter((s) => s.user)
@@ -649,11 +652,19 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                 avatarUrl: s.user?.avatarUrl,
                 profilePicCid: undefined,
             }))
-        : participants;
+        : participants.length > 0
+            ? participants
+            : ((event as any)?.participantAvatars ?? []).map((p: any) => ({
+                id: p.id,
+                displayName: null,
+                username: null,
+                avatarUrl: p.avatarUrl,
+                profilePicCid: null,
+            }));
 
     const displayParticipantCount = event?.eventType === "post_and_vote"
         ? submissions.length
-        : (event?._count?.votes ?? participants.length);
+        : (event?.totalParticipants ?? participants.length);
 
     const displayMode: "post" | "vote" | "completed" | "upcoming" =
         event?.status === "completed" ? "completed"
@@ -671,14 +682,6 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                 <span className="text-xs text-foreground/60 font-medium truncate max-w-[260px]">
                     {loading ? "Loading…" : event?.title ?? "Event"}
                 </span>
-                <div className="ml-auto flex items-center gap-2">
-                    <Link
-                        href={`/brand/events/${id}/edit`}
-                        className="px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-xs font-black uppercase tracking-widest text-foreground/50 hover:text-foreground hover:bg-white/[0.07] transition-all"
-                    >
-                        Edit
-                    </Link>
-                </div>
             </div>
 
             {loading ? (
@@ -760,14 +763,14 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                                         <Users className="w-3.5 h-3.5" />
                                         <span className="text-xs font-black uppercase tracking-[0.15em]">Participants</span>
                                         <span className={cn("text-[10px] font-black px-2 py-0.5 rounded-full border", activeTab === "participants" ? "bg-primary/10 text-primary border-primary/20" : "bg-white/[0.05] text-foreground/30 border-border/40")}>
-                                            {enrichedSubmissions.length}
+                                            {displayParticipantCount}
                                         </span>
                                     </button>
                                     
                                     {displayMode === "completed" && eventSummary && (
-                                        <button 
+                                        <button
                                             onClick={() => setActiveTab("results")}
-                                            className={cn("flex items-center gap-2 pb-3 border-b-2 transition-colors", activeTab === "results" ? "border-emerald-500 text-foreground" : "border-transparent text-foreground/40 hover:text-foreground/70")}
+                                            className={cn("flex items-center gap-2 pb-3 border-b-2 transition-colors", activeTab === "results" ? "border-primary text-foreground" : "border-transparent text-foreground/40 hover:text-foreground/70")}
                                         >
                                             <BarChart2 className="w-3.5 h-3.5" />
                                             <span className="text-xs font-black uppercase tracking-[0.15em]">Analytics & Results</span>
@@ -788,95 +791,101 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                         )}
 
                         {activeTab === "results" && eventSummary && (
-                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                 {/* Top KPI Row */}
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                    <div className="bg-white/[0.03] border border-white/[0.06] rounded-[14px] p-4 text-center">
-                                        <Target className="w-5 h-5 text-emerald-400 mx-auto mb-2" />
-                                        <p className="text-xl font-black text-emerald-400 mb-0.5">{eventSummary.winningMargin.toFixed(1)}%</p>
-                                        <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-wider">Winning Margin</p>
+                                    <div className="relative overflow-hidden bg-white/[0.03] border border-[#B6FF60]/20 rounded-2xl p-4 text-center group">
+                                        <div className="absolute inset-0 bg-[#B6FF60]/[0.04] opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        <Target className="w-4 h-4 text-[#B6FF60] mx-auto mb-2" />
+                                        <p className="text-2xl font-black text-[#B6FF60] mb-0.5 leading-none">{eventSummary.winningMargin.toFixed(1)}%</p>
+                                        <p className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.15em] mt-1">Winning Margin</p>
                                     </div>
-                                    <div className="bg-white/[0.03] border border-white/[0.06] rounded-[14px] p-4 text-center">
-                                        <Vote className="w-5 h-5 text-blue-400 mx-auto mb-2" />
-                                        <p className="text-xl font-black text-blue-400 mb-0.5">{eventSummary.voteCompletionPct.toFixed(1)}%</p>
-                                        <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-wider">Voter Capacity</p>
+                                    <div className="relative overflow-hidden bg-white/[0.03] border border-[#60B6FF]/20 rounded-2xl p-4 text-center group">
+                                        <div className="absolute inset-0 bg-[#60B6FF]/[0.04] opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        <Vote className="w-4 h-4 text-[#60B6FF] mx-auto mb-2" />
+                                        <p className="text-2xl font-black text-[#60B6FF] mb-0.5 leading-none">{eventSummary.voteCompletionPct.toFixed(1)}%</p>
+                                        <p className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.15em] mt-1">Voter Capacity</p>
                                     </div>
-                                    <div className="bg-white/[0.03] border border-white/[0.06] rounded-[14px] p-4 text-center">
-                                        <Shuffle className="w-5 h-5 text-amber-400 mx-auto mb-2" />
-                                        <p className="text-xl font-black text-amber-400 mb-0.5">{eventSummary.entropy.toFixed(2)}</p>
-                                        <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-wider">Entropy</p>
+                                    <div className="relative overflow-hidden bg-white/[0.03] border border-[#FFC700]/20 rounded-2xl p-4 text-center group">
+                                        <div className="absolute inset-0 bg-[#FFC700]/[0.04] opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        <Shuffle className="w-4 h-4 text-[#FFC700] mx-auto mb-2" />
+                                        <p className="text-2xl font-black text-[#FFC700] mb-0.5 leading-none">{eventSummary.entropy.toFixed(2)}</p>
+                                        <p className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.15em] mt-1">Entropy</p>
                                     </div>
-                                    <div className="bg-white/[0.03] border border-white/[0.06] rounded-[14px] p-4 text-center">
-                                        <Activity className="w-5 h-5 text-violet-400 mx-auto mb-2" />
-                                        <p className="text-xl font-black text-violet-400 mb-0.5">{(( (1 - eventSummary.normalizedEntropy)*0.6 + eventSummary.avgParticipantTrustScore*0.4 ) * 100).toFixed(0)}%</p>
-                                        <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-wider">Decision Confidence</p>
+                                    <div className="relative overflow-hidden bg-white/[0.03] border border-[#9D9DFF]/20 rounded-2xl p-4 text-center group">
+                                        <div className="absolute inset-0 bg-[#9D9DFF]/[0.04] opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        <Activity className="w-4 h-4 text-[#9D9DFF] mx-auto mb-2" />
+                                        <p className="text-2xl font-black text-[#9D9DFF] mb-0.5 leading-none">{(( (1 - eventSummary.normalizedEntropy)*0.6 + eventSummary.avgParticipantTrustScore*0.4 ) * 100).toFixed(0)}%</p>
+                                        <p className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.15em] mt-1">Decision Confidence</p>
                                     </div>
                                 </div>
 
-                                {/* Overview Metrics & Cost */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="md:col-span-2">
-                                        <div className="flex items-center gap-2 mb-4">
-                                            <MousePointerClick className="w-5 h-5 text-emerald-400" />
-                                            <h3 className="font-display uppercase tracking-widest text-white text-base">Outcome Insights</h3>
+                                {/* Outcome Summary + Stat Pills */}
+                                <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <MousePointerClick className="w-4 h-4 text-[#B6FF60]" />
+                                        <h3 className="font-display uppercase tracking-widest text-foreground text-sm">Outcome Insights</h3>
+                                    </div>
+                                    <p className="text-sm font-medium text-foreground/60 leading-relaxed mb-5">
+                                        {`Entropy of ${eventSummary.entropy.toFixed(2)} (normalized ${eventSummary.normalizedEntropy.toFixed(2)}) indicates ${eventSummary.normalizedEntropy < 0.5 ? "a clear winner with focused audience preference" : "a spread vote suggesting mixed audience preference"}. Historical alignment stands at ${(eventSummary.historicalAlignment * 100).toFixed(1)}%, with a winning margin of ${eventSummary.winningMargin.toFixed(1)}%.`}
+                                    </p>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                        <div className="bg-white/[0.03] border border-white/[0.05] px-4 py-3 rounded-xl">
+                                            <span className="text-foreground/40 block text-[10px] font-black uppercase tracking-[0.18em] mb-1">Posts</span>
+                                            <strong className="text-xl font-black text-foreground">{eventSummary.totalSubmissions}</strong>
                                         </div>
-                                        <p className="text-[15px] font-medium text-white/80 leading-relaxed mb-8">
-                                            {`Entropy of ${eventSummary.entropy.toFixed(2)} (normalized ${eventSummary.normalizedEntropy.toFixed(2)}) indicates ${eventSummary.normalizedEntropy < 0.5 ? "a clear winner with focused audience preference" : "a spread vote suggesting mixed audience preference"}. Historical alignment stands at ${(eventSummary.historicalAlignment * 100).toFixed(1)}%, with a winning margin of ${eventSummary.winningMargin.toFixed(1)}%.`}
-                                        </p>
-                                        <div className="flex flex-wrap gap-3">
-                                            <div className="bg-[#111111] border border-white/5 px-5 py-3 rounded-2xl min-w-[120px]">
-                                                <span className="text-white/40 block text-[11px] font-black uppercase tracking-[0.2em] mb-1">Posts</span>
-                                                <strong className="text-2xl font-black">{eventSummary.totalSubmissions}</strong>
-                                            </div>
-                                            <div className="bg-[#111111] border border-white/5 px-5 py-3 rounded-2xl min-w-[120px]">
-                                                <span className="text-white/40 block text-[11px] font-black uppercase tracking-[0.2em] mb-1">Votes</span>
-                                                <strong className="text-2xl font-black">{eventSummary.totalVotes}</strong>
-                                            </div>
-                                            <div className="bg-[#111111] border border-emerald-500/20 px-5 py-3 rounded-2xl min-w-[120px]">
-                                                <span className="text-emerald-400 block text-[11px] font-black uppercase tracking-[0.2em] mb-1">Cost</span>
-                                                <strong className="text-2xl font-black text-emerald-400">
-                                                    ${(eventSummary.cost || (event.topReward || 0) + (event.leaderboardPool || event.baseReward || 0)).toFixed(2)}
-                                                </strong>
-                                            </div>
-                                            <div className="bg-[#111111] border border-white/5 px-5 py-3 rounded-2xl min-w-[120px]">
-                                                <span className="text-white/40 block text-[11px] font-black uppercase tracking-[0.2em] mb-1">Views</span>
-                                                <strong className="text-2xl font-black">{eventSummary.totalViews}</strong>
-                                            </div>
+                                        <div className="bg-white/[0.03] border border-white/[0.05] px-4 py-3 rounded-xl">
+                                            <span className="text-foreground/40 block text-[10px] font-black uppercase tracking-[0.18em] mb-1">Votes</span>
+                                            <strong className="text-xl font-black text-foreground">{eventSummary.totalVotes}</strong>
+                                        </div>
+                                        <div className="bg-[#B6FF60]/[0.06] border border-[#B6FF60]/20 px-4 py-3 rounded-xl">
+                                            <span className="text-[#B6FF60] block text-[10px] font-black uppercase tracking-[0.18em] mb-1">Cost</span>
+                                            <strong className="text-xl font-black text-[#B6FF60]">
+                                                ${(eventSummary.cost || (event.topReward || 0) + (event.leaderboardPool || event.baseReward || 0)).toFixed(2)}
+                                            </strong>
+                                        </div>
+                                        <div className="bg-white/[0.03] border border-white/[0.05] px-4 py-3 rounded-xl">
+                                            <span className="text-foreground/40 block text-[10px] font-black uppercase tracking-[0.18em] mb-1">Views</span>
+                                            <strong className="text-xl font-black text-foreground">{eventSummary.totalViews}</strong>
                                         </div>
                                     </div>
-
-                                    {/* Action Breakdown removed as requested */}
                                 </div>
 
                                 {/* Graphs Row */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {/* Vote Split Chart */}
-                                    <div className="bg-card border border-white/[0.06] rounded-[22px] overflow-hidden p-5">
-                                        <h3 className="font-display uppercase tracking-widest text-white text-sm mb-3">Vote Split by Content</h3>
+                                    <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <PieChartIcon className="w-3.5 h-3.5 text-[#B6FF60]" />
+                                            <h3 className="font-display uppercase tracking-widest text-foreground text-sm">Vote Split</h3>
+                                        </div>
                                         {eventSummary.contentMetrics && eventSummary.contentMetrics.length > 0 ? (
-                                            <div className="h-[220px]">
+                                            <div className="h-[200px]">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <BarChart layout="vertical" data={eventSummary.contentMetrics.slice(0, 5)} margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
                                                         <XAxis type="number" hide />
-                                                        <YAxis dataKey="title" type="category" width={80} tick={TICK_STYLE} axisLine={false} tickLine={false} 
+                                                        <YAxis dataKey="title" type="category" width={80} tick={TICK_STYLE} axisLine={false} tickLine={false}
                                                             tickFormatter={(val) => val.length > 10 ? val.substring(0, 8) + '...' : val} />
-                                                        <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(255,255,255,0.05)" }} />
-                                                        <Bar dataKey="votePercentage" name="% of Votes" fill={CHART_COLORS.cyan} radius={[0, 4, 4, 0]} maxBarSize={20} />
+                                                        <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(182,255,96,0.05)" }} />
+                                                        <Bar dataKey="votePercentage" name="% of Votes" fill={CHART_COLORS.lime} radius={[0, 4, 4, 0]} maxBarSize={18} />
                                                     </BarChart>
                                                 </ResponsiveContainer>
                                             </div>
                                         ) : (
-                                            <div className="h-[220px] flex items-center justify-center text-xs text-white/30 font-bold uppercase tracking-wider">No content data</div>
+                                            <div className="h-[200px] flex items-center justify-center text-xs text-foreground/20 font-black uppercase tracking-wider">No content data</div>
                                         )}
                                     </div>
 
                                     {/* Demographics Double Bar Chart */}
-                                    <div className="bg-card border border-white/[0.06] rounded-[22px] overflow-hidden p-5">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <h3 className="font-display uppercase tracking-widest text-white text-sm">Voter Demographics</h3>
+                                    <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <Users className="w-3.5 h-3.5 text-[#9D9DFF]" />
+                                                <h3 className="font-display uppercase tracking-widest text-foreground text-sm">Demographics</h3>
+                                            </div>
                                             <div className="flex gap-3">
-                                                <div className="flex gap-1.5 items-center"><span className="w-2 h-2 rounded bg-cyan-400" /><span className="text-[9px] font-bold text-white/50 uppercase">Male</span></div>
-                                                <div className="flex gap-1.5 items-center"><span className="w-2 h-2 rounded bg-blue-500" /><span className="text-[9px] font-bold text-white/50 uppercase">Female</span></div>
+                                                <div className="flex gap-1.5 items-center"><span className="w-1.5 h-1.5 rounded-full" style={{ background: CHART_COLORS.blue }} /><span className="text-[9px] font-black text-foreground/40 uppercase tracking-wider">Male</span></div>
+                                                <div className="flex gap-1.5 items-center"><span className="w-1.5 h-1.5 rounded-full" style={{ background: CHART_COLORS.pink }} /><span className="text-[9px] font-black text-foreground/40 uppercase tracking-wider">Female</span></div>
                                             </div>
                                         </div>
                                         {eventSummary.votesByAgeGroup ? (() => {
@@ -890,35 +899,37 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                                                 return { age: labels[k], male: Math.round(raw * malePct), female: Math.round(raw * femalePct) };
                                             });
                                             return (
-                                                <div className="h-[220px]">
+                                                <div className="h-[200px]">
                                                     <ResponsiveContainer width="100%" height="100%">
                                                         <BarChart data={demoData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                                                             <CartesianGrid {...GRID_STYLE} vertical={false} />
                                                             <XAxis dataKey="age" tick={TICK_STYLE} axisLine={false} tickLine={false} />
                                                             <YAxis tick={TICK_STYLE} axisLine={false} tickLine={false} />
-                                                            <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(255,255,255,0.05)" }} />
-                                                            <Bar dataKey="male" name="Male" fill={CHART_COLORS.cyan} radius={[3, 3, 0, 0]} maxBarSize={16} />
-                                                            <Bar dataKey="female" name="Female" fill={CHART_COLORS.blue} radius={[3, 3, 0, 0]} maxBarSize={16} />
+                                                            <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+                                                            <Bar dataKey="male" name="Male" fill={CHART_COLORS.blue} radius={[3, 3, 0, 0]} maxBarSize={14} />
+                                                            <Bar dataKey="female" name="Female" fill={CHART_COLORS.pink} radius={[3, 3, 0, 0]} maxBarSize={14} />
                                                         </BarChart>
                                                     </ResponsiveContainer>
                                                 </div>
                                             )
                                         })() : (
-                                            <div className="h-[220px] flex items-center justify-center text-xs text-white/30 font-bold uppercase tracking-wider">No demographic data</div>
+                                            <div className="h-[200px] flex items-center justify-center text-xs text-foreground/20 font-black uppercase tracking-wider">No demographic data</div>
                                         )}
                                     </div>
-                                    
-                                    {/* Number of views & votes graph */}
-                                    <div className="bg-card border border-white/[0.06] rounded-[22px] overflow-hidden p-5 md:col-span-2">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <h3 className="font-display uppercase tracking-widest text-white text-sm">Views & Votes Timeline</h3>
+
+                                    {/* Views & Votes Timeline */}
+                                    <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5 md:col-span-2">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <Timer className="w-3.5 h-3.5 text-[#FF7A1A]" />
+                                                <h3 className="font-display uppercase tracking-widest text-foreground text-sm">Views & Votes Timeline</h3>
+                                            </div>
                                             <div className="flex gap-3">
-                                                <div className="flex gap-1.5 items-center"><span className="w-2 h-2 rounded bg-amber-400" /><span className="text-[9px] font-bold text-white/50 uppercase">Views</span></div>
-                                                <div className="flex gap-1.5 items-center"><span className="w-2 h-2 rounded bg-emerald-400" /><span className="text-[9px] font-bold text-white/50 uppercase">Votes</span></div>
+                                                <div className="flex gap-1.5 items-center"><span className="w-1.5 h-1.5 rounded-full" style={{ background: CHART_COLORS.orange }} /><span className="text-[9px] font-black text-foreground/40 uppercase tracking-wider">Views</span></div>
+                                                <div className="flex gap-1.5 items-center"><span className="w-1.5 h-1.5 rounded-full" style={{ background: CHART_COLORS.lime }} /><span className="text-[9px] font-black text-foreground/40 uppercase tracking-wider">Votes</span></div>
                                             </div>
                                         </div>
                                         {eventSummary.viewsOverTime && eventSummary.viewsOverTime.length > 0 ? (() => {
-                                            // Merge views and votes by timestamp
                                             const timeMap = new Map();
                                             eventSummary.viewsOverTime.forEach((v:any) => timeMap.set(v.timestamp, { time: new Date(v.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), views: v.count, votes: 0 }));
                                             if (eventSummary.votesOverTime) {
@@ -929,25 +940,25 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                                             }
                                             const timeData = Array.from(timeMap.values());
                                             return (
-                                                <div className="h-[220px]">
+                                                <div className="h-[200px]">
                                                     <ResponsiveContainer width="100%" height="100%">
                                                         <AreaChart data={timeData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                                                             <defs>
-                                                                <linearGradient id="gradOrange" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={CHART_COLORS.amber} stopOpacity={0.3}/><stop offset="95%" stopColor={CHART_COLORS.amber} stopOpacity={0}/></linearGradient>
-                                                                <linearGradient id="gradEmerald" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={CHART_COLORS.emerald} stopOpacity={0.3}/><stop offset="95%" stopColor={CHART_COLORS.emerald} stopOpacity={0}/></linearGradient>
+                                                                <linearGradient id="gradOrange" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={CHART_COLORS.orange} stopOpacity={0.25}/><stop offset="95%" stopColor={CHART_COLORS.orange} stopOpacity={0}/></linearGradient>
+                                                                <linearGradient id="gradLime" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={CHART_COLORS.lime} stopOpacity={0.25}/><stop offset="95%" stopColor={CHART_COLORS.lime} stopOpacity={0}/></linearGradient>
                                                             </defs>
                                                             <CartesianGrid {...GRID_STYLE} vertical={false} />
                                                             <XAxis dataKey="time" tick={{...TICK_STYLE, fontSize: 8}} axisLine={false} tickLine={false} />
                                                             <YAxis tick={TICK_STYLE} axisLine={false} tickLine={false} />
                                                             <Tooltip content={<ChartTooltip />} />
-                                                            <Area type="monotone" dataKey="views" name="Views" stroke={CHART_COLORS.amber} fill="url(#gradOrange)" strokeWidth={2} />
-                                                            <Area type="monotone" dataKey="votes" name="Votes" stroke={CHART_COLORS.emerald} fill="url(#gradEmerald)" strokeWidth={2} />
+                                                            <Area type="monotone" dataKey="views" name="Views" stroke={CHART_COLORS.orange} fill="url(#gradOrange)" strokeWidth={1.5} dot={false} />
+                                                            <Area type="monotone" dataKey="votes" name="Votes" stroke={CHART_COLORS.lime} fill="url(#gradLime)" strokeWidth={1.5} dot={false} />
                                                         </AreaChart>
                                                     </ResponsiveContainer>
                                                 </div>
                                             )
                                         })() : (
-                                            <div className="h-[220px] flex items-center justify-center text-xs text-white/30 font-bold uppercase tracking-wider">No timeline data recorded</div>
+                                            <div className="h-[200px] flex items-center justify-center text-xs text-foreground/20 font-black uppercase tracking-wider">No timeline data recorded</div>
                                         )}
                                     </div>
                                 </div>
