@@ -103,6 +103,46 @@ export const getUserVotesForEvent = async (req: AuthenticatedRequest, res: Respo
 };
 
 /**
+ * Get voter avatars grouped by submissionId / proposalId for completed events
+ * GET /api/events/:eventId/voter-breakdown
+ */
+export const getVoterBreakdown = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
+    try {
+        const { eventId } = req.params;
+
+        const votes = await prisma.vote.findMany({
+            where: { eventId },
+            select: {
+                submissionId: true,
+                proposalId: true,
+                user: {
+                    select: {
+                        id: true,
+                        displayName: true,
+                        username: true,
+                        avatarUrl: true,
+                    },
+                },
+            },
+        });
+
+        // Group by submissionId or proposalId
+        const breakdown: Record<string, { id: string; displayName: string | null; username: string | null; avatarUrl: string | null }[]> = {};
+        for (const v of votes) {
+            const key = v.submissionId ?? v.proposalId;
+            if (!key) continue;
+            if (!breakdown[key]) breakdown[key] = [];
+            breakdown[key].push(v.user);
+        }
+
+        return res.status(200).json({ success: true, breakdown });
+    } catch (error: any) {
+        console.error('Error in getVoterBreakdown:', error);
+        return res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+};
+
+/**
  * Get distinct participants (voters) for an event
  * GET /api/events/:eventId/participants
  */

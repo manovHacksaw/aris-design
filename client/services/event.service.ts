@@ -358,6 +358,14 @@ export async function getEventParticipants(eventId: string): Promise<Array<{
     return response.participants;
 }
 
+export async function getVoterBreakdown(eventId: string): Promise<Record<string, { id: string; displayName: string | null; username: string | null; avatarUrl: string | null }[]>> {
+    const response = await apiRequest<{ success: boolean; breakdown: Record<string, any[]> }>(
+        `/events/${eventId}/voter-breakdown`
+    );
+    if (!response.success) throw new Error('Failed to fetch voter breakdown');
+    return response.breakdown;
+}
+
 export async function getMyVotes(eventId: string): Promise<any[]> {
     const response = await apiRequest<{ success: boolean; votes: any[] }>(
         `/events/${eventId}/my-votes`

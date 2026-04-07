@@ -5,7 +5,7 @@ import {
     Clock, Trophy, Users, ImageIcon, AlertCircle, Crown, Medal,
     ChevronRight, Twitter, Instagram, Globe, LayoutGrid, List,
     Tag, UserCircle2, BarChart2, Target, Shuffle, Scale, Vote, PieChart as PieChartIcon,
-    MousePointerClick, Timer, Activity
+    MousePointerClick, Timer, Activity, Coins
 } from "lucide-react";
 import {
     AreaChart, Area, BarChart, Bar, XAxis, YAxis,
@@ -13,10 +13,10 @@ import {
     LineChart, Line, TooltipProps, PieChart, Pie, Cell
 } from "recharts";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { formatCount } from "@/lib/eventUtils";
-import { getEventById, Event, getEventParticipants } from "@/services/event.service";
+import { formatCount, calculateTotalPool } from "@/lib/eventUtils";
+import { getEventById, Event, getEventParticipants, getVoterBreakdown } from "@/services/event.service";
 import {
     getEventSubmissions,
     Submission,
@@ -62,6 +62,35 @@ function imgUrl(imageUrl?: string | null, cid?: string | null): string | undefin
     if (imageUrl) return imageUrl;
     if (cid) return `${PINATA_GW}/${cid}`;
     return undefined;
+}
+
+function BigCountdown({ targetDate }: { targetDate: string | Date }) {
+    const target = useMemo(() => new Date(targetDate).getTime(), [targetDate]);
+    const [timeLeft, setTimeLeft] = useState(() => Math.max(0, target - Date.now()));
+    useEffect(() => {
+        const tick = () => setTimeLeft(Math.max(0, target - Date.now()));
+        tick();
+        const id = setInterval(tick, 1000);
+        return () => clearInterval(id);
+    }, [target]);
+    const days = Math.floor(timeLeft / 86400000);
+    const hours = Math.floor((timeLeft / 3600000) % 24);
+    const minutes = Math.floor((timeLeft / 60000) % 60);
+    const seconds = Math.floor((timeLeft / 1000) % 60);
+    const units = days > 0
+        ? [{ v: days, l: "D" }, { v: hours, l: "H" }, { v: minutes, l: "M" }]
+        : [{ v: hours, l: "H" }, { v: minutes, l: "M" }, { v: seconds, l: "S" }];
+    if (timeLeft === 0) return <span className="text-4xl font-black text-white/40 uppercase tracking-widest">Ended</span>;
+    return (
+        <div className="flex items-baseline gap-4">
+            {units.map(({ v, l }) => (
+                <div key={l} className="flex items-baseline gap-1">
+                    <span className="text-4xl md:text-5xl font-black text-white tabular-nums leading-none">{String(v).padStart(2, "0")}</span>
+                    <span className="text-sm font-black text-white/40 uppercase">{l}</span>
+                </div>
+            ))}
+        </div>
+    );
 }
 
 function ParticipantAvatars({ event, totalCount }: { event: Event; totalCount: number }) {
@@ -246,149 +275,148 @@ function EventSidebar({
     participants: Participant[];
     totalParticipants: number;
 }) {
-    const targetDate = event.status === "posting" ? event.postingEnd! : event.endTime;
     const socialLinks = (event.brand as any)?.socialLinks as Record<string, string> | undefined;
     const topReward = event.topReward ?? event.leaderboardPool ?? 0;
     const leaderboardPool = event.leaderboardPool ?? 0;
+    const isCompleted = event.status === "completed";
 
     return (
         <div className="space-y-4">
-            {/* ── Event info card ── */}
-            <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5">
-                {/* Brand */}
-                <div className="flex items-center gap-3 mb-4">
-                    {event.brand?.logoCid ? (
-                        <img
-                            src={`${PINATA_GW}/${event.brand.logoCid}`}
-                            className="w-10 h-10 rounded-xl object-cover border border-border/40"
-                        />
-                    ) : event.brand?.logoUrl ? (
-                        <img
-                            src={event.brand.logoUrl}
-                            className="w-10 h-10 rounded-xl object-cover border border-border/40"
-                        />
-                    ) : (
-                        <div className="w-10 h-10 rounded-xl bg-[#A78BFA]/10 flex items-center justify-center">
-                            <span className="text-xs font-black text-[#A78BFA]">{event.brand?.name?.[0] ?? "B"}</span>
-                        </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                        <p className="text-xs font-black text-foreground truncate">{event.brand?.name}</p>
-                        <p className="text-[10px] text-foreground/40 font-medium">Your Campaign</p>
-                    </div>
-                    {event.category && (
-                        <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#A78BFA]/10 border border-[#A78BFA]/20 shrink-0">
-                            <Tag className="w-2.5 h-2.5 text-[#A78BFA]/70" />
-                            <span className="text-[9px] font-black uppercase tracking-widest text-[#A78BFA]/80">
-                                {event.category}
-                            </span>
-                        </div>
-                    )}
-                </div>
-
-                {/* Time remaining */}
-                {event.status !== "completed" && targetDate && (
-                    <div className={cn(
-                        "flex items-center justify-between py-3 px-3 rounded-[12px] border mt-1",
-                        event.status === "posting"
-                            ? "bg-orange-500/8 border-orange-500/20"
-                            : "bg-lime-400/5 border-lime-400/20"
-                    )}>
-                        <div className="flex items-center gap-1.5">
-                            <Clock className={cn("w-3 h-3", event.status === "posting" ? "text-orange-400" : "text-lime-400")} />
-                            <span className={cn("text-[10px] font-black uppercase tracking-widest",
-                                event.status === "posting" ? "text-orange-400/80" : "text-lime-400/80"
-                            )}>
-                                {event.status === "posting" ? "Posting Ends In" : "Voting Ends In"}
-                            </span>
-                        </div>
-                        <Countdown targetDate={targetDate} label="" />
-                    </div>
-                )}
-
-                {/* Participants */}
-                <div className="py-3 border-t border-border/30">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Participating</span>
-                        <div className="flex items-center gap-1.5">
-                            <span className="text-sm font-black text-foreground">
-                                {formatCount(event.eventType === 'vote_only' ? (event._count?.votes ?? 0) : (event._count?.submissions ?? 0))}
-                            </span>
-                            {event.capacity && (
-                                <span className="text-[10px] text-foreground/35 font-medium">
-                                    / {formatCount(event.capacity)}
-                                </span>
-                            )}
-                        </div>
-                    </div>
-                    <ParticipantAvatars event={event} totalCount={totalParticipants} />
-                    {event.capacity && (
-                        <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
-                            <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${Math.min(((event.eventType === 'vote_only' ? (event._count?.votes ?? 0) : (event._count?.submissions ?? 0)) / event.capacity) * 100, 100)}%` }}
-                                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                                className="h-full rounded-full bg-gradient-to-r from-[#F97316] via-[#EA580C] to-[#C2410C]"
-                            />
-                        </div>
-                    )}
-                </div>
-
-
-                <SocialLinks links={socialLinks} />
-            </div>
-
-            {/* ── Rewards card ── */}
-            <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                        <Trophy className="w-4 h-4 text-[#A78BFA]" />
-                        <span className="text-sm font-black text-foreground">Rewards Pool</span>
-                    </div>
-                    <span className="text-[9px] bg-[#A78BFA]/10 text-[#A78BFA] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border border-[#A78BFA]/20">
-                        Guaranteed
-                    </span>
-                </div>
-
-                {topReward > 0 && (
-                    <div className="bg-[#A78BFA]/5 border border-[#A78BFA]/15 rounded-[14px] p-4 mb-3">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Grand-Prize Winner</p>
-                        <p className="text-2xl font-black text-foreground">${topReward.toLocaleString()}</p>
-                        <p className="text-[10px] text-foreground/40 font-medium">USDC</p>
-                    </div>
-                )}
-
-                {leaderboardPool > 0 && (
+            {/* ── Rewards card — matches user page style ── */}
+            {isCompleted || event.eventType === "vote_only" ? (
+                /* Vote-only / completed flat reward card */
+                <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5">
                     <div className="mb-4">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Leaderboard Pool</p>
-                        <p className="text-xl font-black text-foreground">${leaderboardPool.toLocaleString()}</p>
-                        <p className="text-[10px] text-foreground/40 font-medium">USDC</p>
+                        <span className="text-sm font-black text-foreground">Reward Breakdown</span>
                     </div>
-                )}
+                    <div className="space-y-2 mb-4">
+                        <div className="flex items-center justify-between bg-sky-400/5 border border-sky-400/15 rounded-[12px] px-3 py-3">
+                            <div>
+                                <p className="text-[9px] font-black uppercase tracking-widest text-sky-400/70 mb-0.5">Per Vote Cast</p>
+                                <p className="text-[11px] text-foreground/60 leading-tight">Each voter earns this per valid vote</p>
+                            </div>
+                            <div className="text-right shrink-0 ml-2">
+                                <p className="text-base font-black text-sky-400">${(event.baseReward ?? 0.03).toFixed(2)}</p>
+                                <p className="text-[9px] text-foreground/40">USDC</p>
+                            </div>
+                        </div>
+                        {topReward > 0 && (
+                            <div className="flex items-center justify-between bg-[#9D9DFF]/5 border border-[#9D9DFF]/15 rounded-[12px] px-3 py-3">
+                                <div>
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-[#9D9DFF]/70 mb-0.5">Top Reward</p>
+                                    <p className="text-[11px] text-foreground/60 leading-tight">Divided among voters of winning content</p>
+                                </div>
+                                <div className="text-right shrink-0 ml-2">
+                                    <p className="text-base font-black text-[#9D9DFF]">${topReward.toLocaleString()}</p>
+                                    <p className="text-[9px] text-foreground/40">USDC</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    {event.submissionGuidelines && (
+                        <div className="pt-4 border-t border-border/40">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-3">Submission Guidelines</p>
+                            <ol className="space-y-2.5">
+                                {event.submissionGuidelines.split("\n").filter(Boolean).map((rule, i) => (
+                                    <li key={i} className="flex gap-2.5 text-xs text-foreground/60">
+                                        <span className="w-4 h-4 rounded-full bg-[#B6FF60]/10 text-[#B6FF60] font-black text-[9px] flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                                        {rule}
+                                    </li>
+                                ))}
+                            </ol>
+                        </div>
+                    )}
+                </div>
+            ) : (
+                /* post_and_vote non-completed: hero reward card */
+                <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] overflow-hidden">
+                    <div className="relative bg-gradient-to-br from-[#9D9DFF]/15 via-[#9D9DFF]/8 to-transparent border-b border-white/[0.07] p-5">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Trophy className="w-4 h-4 text-[#9D9DFF]" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-[#9D9DFF]">Rewards Pool</span>
+                                </div>
+                                <p className="text-[9px] font-black uppercase tracking-widest text-foreground/35 mb-1">Total Prizes</p>
+                                <div className="flex items-baseline gap-2">
+                                    <p className="text-4xl font-black text-white leading-none">${calculateTotalPool(event).toLocaleString()}</p>
+                                    <span className="text-xs font-black text-foreground/40">USDC</span>
+                                </div>
+                            </div>
+                            <span className="text-[9px] bg-[#9D9DFF]/15 text-[#9D9DFF] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border border-[#9D9DFF]/25">Guaranteed</span>
+                        </div>
+                    </div>
+                    <div className="p-5 space-y-2">
+                        {topReward > 0 && (
+                            <div className="flex items-center justify-between bg-white/[0.04] border border-white/[0.07] rounded-[12px] px-4 py-3">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-7 h-7 rounded-lg bg-yellow-400/10 flex items-center justify-center shrink-0">
+                                        <Trophy className="w-3.5 h-3.5 text-yellow-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-black text-foreground">Grand Prize</p>
+                                        <p className="text-[9px] text-foreground/40 font-medium">#1 on leaderboard</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-sm font-black text-yellow-400">${topReward.toLocaleString()}</p>
+                                    <p className="text-[9px] text-foreground/40">USDC</p>
+                                </div>
+                            </div>
+                        )}
+                        {leaderboardPool > 0 && (
+                            <div className="flex items-center justify-between bg-white/[0.04] border border-white/[0.07] rounded-[12px] px-4 py-3">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-7 h-7 rounded-lg bg-[#9D9DFF]/10 flex items-center justify-center shrink-0">
+                                        <Users className="w-3.5 h-3.5 text-[#9D9DFF]" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-black text-foreground">Leaderboard Pool</p>
+                                        <p className="text-[9px] text-foreground/40 font-medium">Split among top creators</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-sm font-black text-[#9D9DFF]">${leaderboardPool.toLocaleString()}</p>
+                                    <p className="text-[9px] text-foreground/40">USDC</p>
+                                </div>
+                            </div>
+                        )}
+                        {event.baseReward != null && event.baseReward > 0 && (
+                            <div className="flex items-center justify-between bg-[#B6FF60]/[0.06] border border-[#B6FF60]/15 rounded-[12px] px-4 py-3">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-7 h-7 rounded-lg bg-[#B6FF60]/10 flex items-center justify-center shrink-0">
+                                        <Coins className="w-3.5 h-3.5 text-[#B6FF60]" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-black text-[#B6FF60]">Per Vote</p>
+                                        <p className="text-[9px] text-foreground/40 font-medium">Every vote earns participants this</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-sm font-black text-[#B6FF60]">${event.baseReward}</p>
+                                    <p className="text-[9px] text-foreground/40">USDC</p>
+                                </div>
+                            </div>
+                        )}
+                        {event.submissionGuidelines && (
+                            <div className="pt-3 border-t border-border/40 mt-1">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-3">Submission Guidelines</p>
+                                <ol className="space-y-2.5">
+                                    {event.submissionGuidelines.split("\n").filter(Boolean).map((rule, i) => (
+                                        <li key={i} className="flex gap-2.5 text-xs text-foreground/60">
+                                            <span className="w-4 h-4 rounded-full bg-[#B6FF60]/10 text-[#B6FF60] font-black text-[9px] flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                                            {rule}
+                                        </li>
+                                    ))}
+                                </ol>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
-                {event.baseReward != null && event.baseReward > 0 && (
-                    <div className="mb-4">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Per Submission</p>
-                        <p className="text-lg font-black text-foreground">${event.baseReward.toLocaleString()}</p>
-                    </div>
-                )}
-
-                {event.submissionGuidelines && (
-                    <div className="pt-4 border-t border-border/40">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-3">Submission Guidelines</p>
-                        <ol className="space-y-2.5">
-                            {event.submissionGuidelines.split("\n").filter(Boolean).map((rule, i) => (
-                                <li key={i} className="flex gap-2.5 text-xs text-foreground/60">
-                                    <span className="w-4 h-4 rounded-full bg-orange-500/10 text-orange-400 font-black text-[9px] flex items-center justify-center shrink-0 mt-0.5">
-                                        {i + 1}
-                                    </span>
-                                    {rule}
-                                </li>
-                            ))}
-                        </ol>
-                    </div>
-                )}
-            </div>
+            {/* ── Social links ── */}
+            <SocialLinks links={socialLinks} />
 
             {/* ── Participants panel ── */}
             <ParticipantsPanel participants={participants} totalCount={totalParticipants} />
@@ -398,12 +426,47 @@ function EventSidebar({
 
 // ─── Participant Card ──────────────────────────────────────────────────────────
 
-function ParticipantCard({ sub, rank, showVotes, showThumb, isList = false }: {
+type VoterUser = { id: string; displayName: string | null; username: string | null; avatarUrl: string | null };
+
+function VoterTiles({ voters }: { voters: VoterUser[] }) {
+    if (!voters || voters.length === 0) return null;
+    return (
+        <div className="mt-2 rounded-[14px] border border-white/[0.06] bg-white/[0.02] overflow-hidden">
+            <div className="flex items-center gap-1.5 px-3 py-2 border-b border-white/[0.05]">
+                <Users className="w-3 h-3 text-[#9D9DFF]" />
+                <span className="text-[9px] font-black text-foreground/40 uppercase tracking-[0.15em]">{voters.length} Voter{voters.length !== 1 ? "s" : ""}</span>
+            </div>
+            <div className="overflow-y-auto max-h-[140px] divide-y divide-white/[0.04]">
+                {voters.map((v) => {
+                    const name = v.displayName || v.username || "Voter";
+                    const handle = v.username ? `@${v.username}` : "";
+                    return (
+                        <div key={v.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-white/[0.03] transition-colors">
+                            <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 border border-white/10">
+                                {v.avatarUrl
+                                    ? <img src={v.avatarUrl} alt={name} className="w-full h-full object-cover" />
+                                    : <div className="w-full h-full bg-[#9D9DFF]/20 flex items-center justify-center text-[9px] font-black text-[#9D9DFF]">{name[0].toUpperCase()}</div>
+                                }
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-xs font-black text-foreground truncate leading-tight">{name}</p>
+                                {handle && <p className="text-[9px] text-foreground/30 font-medium truncate leading-tight">{handle}</p>}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+function ParticipantCard({ sub, rank, showVotes, showThumb, isList = false, voters }: {
     sub: Submission;
     rank?: number;
     showVotes: boolean;
     showThumb: boolean;
     isList?: boolean;
+    voters?: VoterUser[];
 }) {
     const name = sub.user?.displayName || sub.user?.username || "Creator";
     const handle = sub.user?.username || "user";
@@ -473,16 +536,22 @@ function ParticipantCard({ sub, rank, showVotes, showThumb, isList = false }: {
                     </div>
                 )}
             </div>
+            {!isList && voters && voters.length > 0 && (
+                <div className="px-3 pb-3">
+                    <VoterTiles voters={voters} />
+                </div>
+            )}
         </motion.div>
     );
 }
 
 // ─── Participants Grid ────────────────────────────────────────────────────────
 
-function ParticipantsGrid({ submissions, event, gridView }: {
+function ParticipantsGrid({ submissions, event, gridView, voterBreakdown = {} }: {
     submissions: Submission[];
     event: Event;
     gridView: boolean;
+    voterBreakdown?: Record<string, VoterUser[]>;
 }) {
     const showVotes = event.status === "completed";
     const showThumb = event.status === "completed";
@@ -517,7 +586,7 @@ function ParticipantsGrid({ submissions, event, gridView }: {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         {winners.map((sub) => (
-                            <ParticipantCard key={sub.id} sub={sub} rank={sub.rank ?? undefined} showVotes={showVotes} showThumb={showThumb} />
+                            <ParticipantCard key={sub.id} sub={sub} rank={sub.rank ?? undefined} showVotes={showVotes} showThumb={showThumb} voters={voterBreakdown[sub.id]} />
                         ))}
                     </div>
                 </div>
@@ -538,7 +607,7 @@ function ParticipantsGrid({ submissions, event, gridView }: {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.03 }}
                             >
-                                <ParticipantCard sub={sub} showVotes={showVotes} showThumb={showThumb} isList={!gridView} />
+                                <ParticipantCard sub={sub} showVotes={showVotes} showThumb={showThumb} isList={!gridView} voters={voterBreakdown[sub.id]} />
                             </motion.div>
                         ))}
                     </div>
@@ -564,6 +633,7 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
     const [activeTab, setActiveTab] = useState<"participants" | "results">("participants");
     const [eventSummary, setEventSummary] = useState<any>(null);
     const [extraAnalytics, setExtraAnalytics] = useState<any>(null);
+    const [voterBreakdown, setVoterBreakdown] = useState<Record<string, { id: string; displayName: string | null; username: string | null; avatarUrl: string | null }[]>>({});
 
     useEffect(() => {
         if (!socket || !id) return;
@@ -601,8 +671,12 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                 if (ev.status === "completed") {
                     try {
                         const { getDetailedEventAnalytics } = await import("@/services/event.service");
-                        const detailed = await getDetailedEventAnalytics(id);
+                        const [detailed, breakdown] = await Promise.all([
+                            getDetailedEventAnalytics(id),
+                            getVoterBreakdown(id).catch(() => ({})),
+                        ]);
                         setEventSummary(detailed);
+                        setVoterBreakdown(breakdown);
 
                         const [engRes, clickRes] = await Promise.all([
                             apiRequest<any>(`/analytics/events/${id}/engagement`).catch(() => ({ averageViewTime: 0 })),
@@ -691,24 +765,25 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
             </div>
 
             {loading ? (
-                <div className="flex flex-col lg:flex-row gap-6 animate-pulse">
-                    <div className="flex-1 min-w-0">
-                        <div className="rounded-[24px] bg-white/[0.05] h-[220px] md:h-[260px] mb-5" />
-                        <div className="flex items-center gap-6 border-b border-border/40 pb-3 mb-5">
-                            <div className="h-3 w-20 bg-white/[0.06] rounded-full" />
-                            <div className="h-3 w-14 bg-white/[0.04] rounded-full" />
-                            <div className="h-3 w-10 bg-white/[0.04] rounded-full" />
-                            <div className="ml-auto h-3 w-28 bg-white/[0.04] rounded-full" />
+                <div className="animate-pulse">
+                    <div className="bg-white/[0.05] h-[380px] md:h-[460px] mb-6 -mx-3 w-[calc(100%+1.5rem)] sm:-mx-4 sm:w-[calc(100%+2rem)] md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]" />
+                    <div className="flex flex-col lg:flex-row gap-6">
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-6 border-b border-border/40 pb-3 mb-5">
+                                <div className="h-3 w-20 bg-white/[0.06] rounded-full" />
+                                <div className="h-3 w-14 bg-white/[0.04] rounded-full" />
+                                <div className="ml-auto h-3 w-28 bg-white/[0.04] rounded-full" />
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                {Array.from({ length: 6 }).map((_, i) => (
+                                    <div key={i} className="rounded-[20px] bg-white/[0.05] aspect-[3/4]" />
+                                ))}
+                            </div>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {Array.from({ length: 6 }).map((_, i) => (
-                                <div key={i} className="rounded-[20px] bg-white/[0.05] aspect-[3/4]" />
-                            ))}
+                        <div className="lg:w-[300px] shrink-0 space-y-4">
+                            <div className="rounded-[20px] bg-white/[0.05] h-[180px]" />
+                            <div className="rounded-[20px] bg-white/[0.05] h-[320px]" />
                         </div>
-                    </div>
-                    <div className="lg:w-[300px] shrink-0 space-y-4">
-                        <div className="rounded-[20px] bg-white/[0.05] h-[180px]" />
-                        <div className="rounded-[20px] bg-white/[0.05] h-[320px]" />
                     </div>
                 </div>
             ) : fetchError ? (
@@ -718,45 +793,112 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                     <Link href="/brand/events" className="text-xs font-black text-primary hover:underline">Back to campaigns</Link>
                 </div>
             ) : event ? (
-                <div className="flex flex-col lg:flex-row gap-6">
-                    {/* ── Left column ── */}
-                    <div className="flex-1 min-w-0">
-                        {/* Banner card */}
-                        <div className="relative rounded-[24px] overflow-hidden h-[220px] md:h-[260px] mb-5">
-                            <img src={coverUrl} className="w-full h-full object-cover" alt="Event" />
-                            <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-black/10" />
-                            <div className="absolute inset-0 p-6 flex flex-col justify-between">
-                                {/* Top badges */}
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    {event.status !== "completed" && (
-                                        <div className="bg-black/30 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-full flex items-center gap-1.5">
-                                            <Clock className="w-3 h-3 text-white/60" />
-                                            <span className="text-[10px] font-black text-white">
-                                                {event.status === "posting" ? "Posting" : "Voting"} phase
-                                            </span>
-                                        </div>
+                <>
+                    {/* ── Full-width bleed hero banner ── */}
+                    <div className="relative overflow-hidden min-h-[200px] md:min-h-[400px] mb-6 -mx-3 w-[calc(100%+1.5rem)] sm:-mx-4 sm:w-[calc(100%+2rem)] md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
+                        <img src={coverUrl} className="absolute inset-0 w-full h-full object-cover object-center" alt="Event" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/75 to-black/20" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                        <div className="relative z-10 flex flex-col justify-between h-full min-h-[380px] md:min-h-[460px] p-7 md:p-10">
+                            {/* Top: brand pill + category */}
+                            <div>
+                                <div className="flex items-center gap-3 mb-4 flex-wrap">
+                                    <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/15 rounded-full pl-1 pr-3 py-1">
+                                        {event.brand?.logoCid ? (
+                                            <img src={`${PINATA_GW}/${event.brand.logoCid}`} className="w-6 h-6 rounded-full object-cover border border-white/20" alt={event.brand?.name} />
+                                        ) : event.brand?.logoUrl ? (
+                                            <img src={event.brand.logoUrl} className="w-6 h-6 rounded-full object-cover border border-white/20" alt={event.brand?.name} />
+                                        ) : (
+                                            <div className="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+                                                <span className="text-[9px] font-black text-white/70">{event.brand?.name?.[0]}</span>
+                                            </div>
+                                        )}
+                                        <span className="text-[11px] font-black text-white/90">{event.brand?.name}</span>
+                                    </div>
+                                    {event.category && (
+                                        <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.10] text-white/50">
+                                            {event.category}
+                                        </span>
                                     )}
                                     {event.status === "completed" && (
-                                        <div className="bg-black/40 backdrop-blur-md border border-yellow-500/30 px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-yellow-500/20 border border-yellow-500/30">
                                             <Trophy className="w-3 h-3 text-yellow-400" />
                                             <span className="text-[10px] font-black text-yellow-300">Completed</span>
                                         </div>
                                     )}
+                                    <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-primary/15 border border-primary/25 text-primary">Your Campaign</span>
+                                </div>
+                                <h1 className="font-display text-5xl md:text-6xl lg:text-7xl text-white uppercase leading-[0.88] tracking-tight max-w-[60%]">
+                                    {event.title}
+                                </h1>
+                                {(event as any).tagline && (
+                                    <p className="font-display text-4xl md:text-5xl lg:text-6xl text-[#B6FF60] uppercase leading-[0.88] tracking-tight mt-1">
+                                        {(event as any).tagline}
+                                    </p>
+                                )}
+                                {event.description && (
+                                    <p className="text-sm text-white/60 font-medium leading-relaxed mt-3 max-w-xl line-clamp-2">
+                                        {event.description}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Bottom: stats row */}
+                            <div className="border-t border-white/10 pt-4 flex items-end gap-0 flex-wrap">
+                                {/* Countdown or ended */}
+                                {event.status === "completed" ? (
+                                    <>
+                                        <div className="pr-8">
+                                            <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Event Status</p>
+                                            <p className="text-2xl font-black text-white/50 leading-none">Ended</p>
+                                        </div>
+                                        <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
+                                    </>
+                                ) : (event.status === "posting" && event.postingEnd) || (event.status === "voting" && event.endTime) ? (
+                                    <>
+                                        <div className="pr-8">
+                                            <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-2">
+                                                {event.status === "posting" ? "Posting Ends In" : "Voting Ends In"}
+                                            </p>
+                                            <BigCountdown targetDate={event.status === "posting" ? event.postingEnd! : event.endTime} />
+                                        </div>
+                                        <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
+                                    </>
+                                ) : null}
+
+                                {/* Participants */}
+                                <div className="pr-8">
+                                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Total Participants</p>
+                                    <div className="flex items-center gap-3 mt-1">
+                                        <Users className="w-5 h-5 text-white opacity-40" />
+                                        <div className="flex items-baseline gap-1">
+                                            <p className="text-4xl md:text-5xl font-black text-[#B6FF60] leading-none tabular-nums">{displayParticipantCount.toLocaleString()}</p>
+                                            {event.capacity && (
+                                                <span className="text-2xl md:text-3xl font-black text-white/30 leading-none">/{event.capacity.toLocaleString()}</span>
+                                            )}
+                                        </div>
+                                        <ParticipantAvatars event={event} totalCount={displayParticipantCount} />
+                                    </div>
                                 </div>
 
-                                {/* Bottom: title, description */}
-                                <div>
-                                    <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-white uppercase leading-[0.92] tracking-tight mb-1">
-                                        {event.title}
-                                    </h1>
-                                    {event.description && (
-                                        <p className="text-xs text-white/60 font-medium leading-relaxed line-clamp-2 max-w-[420px]">
-                                            {event.description}
-                                        </p>
-                                    )}
-                                </div>
+                                {calculateTotalPool(event) > 0 && (
+                                    <>
+                                        <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
+                                        <div>
+                                            <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Total Prize Pool</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-4xl md:text-5xl font-black text-yellow-400 leading-none tabular-nums">${calculateTotalPool(event).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
+                    </div>
+
+                <div className="flex flex-col lg:flex-row gap-6">
+                    {/* ── Left column ── */}
+                    <div className="flex-1 min-w-0">
 
                         {/* Tab bar */}
                         {displayMode !== "upcoming" && (
@@ -986,8 +1128,8 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                                             </p>
                                         </div>
                                     </div>
-                                ) : event.eventType === "vote_only" && displayMode !== "completed" ? (
-                                    /* ── Vote-only: show proposal cards (read-only for brand) ── */
+                                ) : event.eventType === "vote_only" ? (
+                                    /* ── Vote-only: proposal cards ── */
                                     <AnimatePresence>
                                         {enrichedSubmissions.length === 0 ? (
                                             <div className="text-center py-20">
@@ -995,24 +1137,30 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                                             </div>
                                         ) : (
                                             <div className={gridView ? "grid grid-cols-2 md:grid-cols-3 gap-4" : "flex flex-col gap-3"}>
-                                                {enrichedSubmissions.map((sub, idx) => (
-                                                    <motion.div key={sub.id} layout initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2, delay: idx * 0.03 }}>
-                                                        <VoteSubmissionCard
-                                                            submission={toVoteSubmission(sub)}
-                                                            isVoted={false}
-                                                            isPending={false}
-                                                            onVote={() => { }}
-                                                            disabled={true}
-                                                            optionIndex={idx}
-                                                            showVoteCount={true}
-                                                        />
-                                                    </motion.div>
-                                                ))}
+                                                {enrichedSubmissions.map((sub, idx) => {
+                                                    const voters = voterBreakdown[sub.id] ?? [];
+                                                    return (
+                                                        <motion.div key={sub.id} layout initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2, delay: idx * 0.03 }} className="flex flex-col gap-0">
+                                                            <VoteSubmissionCard
+                                                                submission={toVoteSubmission(sub)}
+                                                                isVoted={false}
+                                                                isPending={false}
+                                                                onVote={() => { }}
+                                                                disabled={true}
+                                                                optionIndex={idx}
+                                                                showVoteCount={true}
+                                                            />
+                                                            {displayMode === "completed" && voters.length > 0 && (
+                                                                <VoterTiles voters={voters} />
+                                                            )}
+                                                        </motion.div>
+                                                    );
+                                                })}
                                             </div>
                                         )}
                                     </AnimatePresence>
                                 ) : (
-                                    <ParticipantsGrid submissions={enrichedSubmissions} event={event} gridView={gridView} />
+                                    <ParticipantsGrid submissions={enrichedSubmissions} event={event} gridView={gridView} voterBreakdown={voterBreakdown} />
                                 )}
                             </>
                         )}
@@ -1029,6 +1177,7 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                         </div>
                     </div>
                 </div>
+                </>
             ) : null}
         </main>
     );

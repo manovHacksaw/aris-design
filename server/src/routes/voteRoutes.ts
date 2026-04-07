@@ -5,6 +5,7 @@ import {
     getUserVotesForEvent,
     checkIfUserHasVoted,
     getEventParticipants,
+    getVoterBreakdown,
 } from '../controllers/voteController.js';
 import { authenticateJWT } from '../middlewares/authMiddleware.js';
 
@@ -12,6 +13,9 @@ const router = Router({ mergeParams: true });
 
 // GET /api/events/:eventId/participants
 router.get('/participants', getEventParticipants);
+
+// GET /api/events/:eventId/voter-breakdown
+router.get('/voter-breakdown', getVoterBreakdown);
 
 // GET /api/events/:eventId/my-votes
 router.get('/my-votes', authenticateJWT, getUserVotesForEvent);
