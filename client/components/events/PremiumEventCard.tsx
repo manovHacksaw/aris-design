@@ -53,7 +53,7 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
     const brandPath = brand.name ? `/brand/${toBrandSlug(brand.name)}` : "#";
 
     return (
-        <div className={cn("relative block group w-full outline-none", className)}>
+        <div className={cn("relative block group w-full max-w-[300px] sm:max-w-[340px] mx-auto outline-none", className)}>
             {/* Primary Event Link acting as a clickable overlay */}
             <Link
                 href={`/events/${event.id}`}
@@ -101,7 +101,7 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
                                     </span>
                                 )}
                             </div>
-                            <span className="text-[11px] font-bold text-white/90 group-hover/brand:text-white tracking-widest uppercase line-clamp-1 drop-shadow-sm transition-colors">
+                            <span className="text-[11px] font-bold text-white/90 group-hover/brand:text-white tracking-wider capitalize line-clamp-1 drop-shadow-sm transition-colors">
                                 {brand.name || "Unknown"}
                             </span>
                         </Link>
@@ -114,7 +114,7 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
                         <div className="flex flex-col gap-2">
                             {event.category && (
                                 <div className="w-fit px-2 py-1 rounded-md bg-white/5 border border-white/10 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                    <span className="text-[9px] font-bold text-white/60 tracking-[0.15em] uppercase leading-none">
+                                    <span className="text-[9px] font-bold text-white/60 tracking-wider capitalize leading-none">
                                         {event.category}
                                     </span>
                                 </div>
@@ -132,14 +132,14 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
                                 {event.eventType === "vote_only" || event.status === "voting" ? (
                                     <>
                                         <MousePointer2 className="w-[13px] h-[13px] text-white/90" />
-                                        <span className="text-[10px] font-bold text-white/90 tracking-widest uppercase whitespace-nowrap">
+                                        <span className="text-[10px] font-bold text-white/90 tracking-wider capitalize whitespace-nowrap">
                                             Vote
                                         </span>
                                     </>
                                 ) : (
                                     <>
                                         <Sparkles className="w-[13px] h-[13px] text-white/90" />
-                                        <span className="text-[10px] font-bold text-white/90 tracking-widest uppercase whitespace-nowrap">
+                                        <span className="text-[10px] font-bold text-white/90 tracking-wider capitalize whitespace-nowrap">
                                             Create
                                         </span>
                                     </>
@@ -149,7 +149,7 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
                             {/* Participants */}
                             <div className="flex items-center gap-1.5 grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
                                 <Users className="w-[13px] h-[13px] text-white/90" />
-                                <span className="text-[10px] font-bold text-white/90 tracking-widest uppercase whitespace-nowrap">
+                                <span className="text-[10px] font-bold text-white/90 tracking-wider capitalize whitespace-nowrap">
                                     {formatCount(rawPCount)}
                                 </span>
                                 {event.participantAvatars && event.participantAvatars.length > 0 && (
@@ -173,18 +173,12 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
                                 )}
                             </div>
 
-                            {/* Views */}
-                            <div className="flex items-center gap-1.5 grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
-                                <Eye className="w-[13px] h-[13px] text-white/90" />
-                                <span className="text-[10px] font-bold text-white/90 tracking-widest uppercase whitespace-nowrap">
-                                    {formatCount(event.eventAnalytics?.totalViews || 0)}
-                                </span>
-                            </div>
+
 
                             {/* Countdown */}
                             <div className="flex items-center gap-1.5 grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
                                 <Clock className="w-[13px] h-[13px] text-[#FF8C00]" />
-                                <span className="text-[10px] font-bold text-white/90 tracking-widest uppercase whitespace-nowrap">
+                                <span className="text-[10px] font-bold text-white/90 tracking-wider capitalize whitespace-nowrap">
                                     {formatTimeRemaining(event.endTime)}
                                 </span>
                             </div>

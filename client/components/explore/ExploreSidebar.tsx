@@ -84,14 +84,14 @@ function SuggestedSection({
     if (!items.length) return null;
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between px-1">
                 <h3 className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em]">{title}</h3>
                 {onViewAll && (
                     <button
                         onClick={onViewAll}
-                        className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline"
+                        className="text-[10px] font-semibold text-foreground/40 lowercase hover:text-foreground hover:underline transition-colors"
                     >
-                        View All
+                        view all
                     </button>
                 )}
             </div>
@@ -110,6 +110,10 @@ function SuggestedItemCard({ item, type }: { item: SuggestedItem; type: "brand" 
     const { openLoginModal } = useLoginModal();
     const [followed, setFollowed] = useState(item.isFollowed);
     const [loading, setLoading] = useState(false);
+
+    const bgColors = ["bg-blue-500", "bg-emerald-500", "bg-violet-500", "bg-rose-500", "bg-amber-500"];
+    const colorIndex = item.name.length % bgColors.length;
+    const bgClass = type === "brand" ? bgColors[colorIndex] : "bg-foreground/5";
 
     const handleFollow = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -132,50 +136,51 @@ function SuggestedItemCard({ item, type }: { item: SuggestedItem; type: "brand" 
 
     return (
         <div
-            className="flex items-center justify-between group py-1 cursor-pointer"
+            className="flex items-center justify-between group py-2 px-2 -mx-2 rounded-xl hover:bg-white/[0.02] transition-colors cursor-pointer"
             onClick={handleNavigate}
         >
             <div className="flex items-center gap-3 min-w-0">
                 <div className="relative shrink-0">
-                    <div className="w-9 h-9 rounded-xl border border-border bg-foreground/5 overflow-hidden flex items-center justify-center">
+                    <div className={cn("w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center border border-white/5", bgClass)}>
                         {item.avatar ? (
                             <img src={item.avatar} className="w-full h-full object-cover" alt={item.name} />
                         ) : (
-                            <span className="text-xs font-black text-foreground/30">{item.name[0]}</span>
+                            <span className={cn("text-xs font-black", type === "brand" ? "text-white" : "text-foreground/30")}>
+                                {item.name[0]}
+                            </span>
                         )}
                     </div>
-                    {followed && (
-                        <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background" />
-                    )}
                 </div>
                 <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                        <p className="text-[11px] font-black text-foreground truncate group-hover:text-primary transition-colors">{item.name}</p>
-                        {type === "user" && (
-                            <div className="flex items-center justify-center bg-primary/20 text-primary text-[8px] font-black px-1.5 py-0.5 rounded-full border border-primary/20">
-                                LVL {(item as any).level || 1}
-                            </div>
-                        )}
+                    <div className="flex items-center gap-2 w-full">
+                        <p className="text-[12px] font-bold text-foreground truncate group-hover:text-white transition-colors">
+                            {item.name}
+                        </p>
                     </div>
-                    <p className="text-[10px] font-bold text-foreground/25 truncate uppercase tracking-widest">{item.handle}</p>
+                    <p className="text-[10px] font-semibold text-foreground/40 truncate tracking-wide mt-0.5 group-hover:text-foreground/60 transition-colors">
+                        {item.handle}
+                        <span className="text-foreground/20 mx-1">·</span>
+                        <span className="text-foreground/50">
+                            {type === "brand" ? (item.category || "Lifestyle") : `${(item as any).followers || "2.4k"} followers`}
+                        </span>
+                    </p>
                 </div>
             </div>
+            
             <button
                 onClick={handleFollow}
                 disabled={loading}
                 className={cn(
-                    "ml-3 shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border",
-                    followed
-                        ? "bg-foreground/5 border-border text-foreground/30 hover:bg-red-500/10 hover:text-red-400 hover:border-red-400/20"
-                        : "bg-primary/10 border-primary/20 text-primary hover:bg-primary hover:text-white"
+                    "ml-3 shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all group-hover:bg-white/5 hover:!bg-white/10",
+                    followed ? "text-foreground/30 hover:!text-red-400" : "text-foreground/50 hover:!text-white"
                 )}
             >
                 {loading ? (
-                    <div className="w-3 h-3 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                    <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
                 ) : followed ? (
-                    <><UserMinus className="w-3 h-3" /> Following</>
+                    <UserMinus className="w-4 h-4" />
                 ) : (
-                    <><UserPlus className="w-3 h-3" /> Follow</>
+                    <UserPlus className="w-4 h-4" />
                 )}
             </button>
         </div>

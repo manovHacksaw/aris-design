@@ -27,7 +27,7 @@ export default function EventRow({ title, events }: EventRowProps) {
 
     return (
         <div className="space-y-4 group/row relative">
-            <h3 className="text-xl font-black text-foreground uppercase tracking-widest pl-4 sm:pl-0">
+            <h3 className="text-xl font-black text-foreground capitalize tracking-wider pl-4 sm:pl-0">
                 {title}
             </h3>
 
@@ -51,7 +51,7 @@ export default function EventRow({ title, events }: EventRowProps) {
                     onScroll={(e) => setIsMoved(e.currentTarget.scrollLeft > 0)}
                 >
                     {events.map((ev, i) => (
-                        <div key={ev.id || i} className="shrink-0 w-[320px] sm:w-[380px] transition-transform duration-300 hover:z-10 relative object-center group-hover/row:hover:scale-105">
+                        <div key={ev.id || i} className="shrink-0 w-[300px] sm:w-[340px] transition-transform duration-300 hover:z-10 relative object-center group-hover/row:hover:scale-105">
                             <PremiumEventCard event={ev} />
                         </div>
                     ))}

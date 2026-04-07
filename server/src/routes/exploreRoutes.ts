@@ -10,7 +10,15 @@ const router = Router();
  */
 router.get('/events', authenticateOptional, async (req: Request, res: Response) => {
     try {
-        const eventsData = await ExploreService.getExploreEvents((req as any).user?.id);
+        const { search, category, sort, status, type } = req.query;
+        const options = {
+            search: search ? String(search) : undefined,
+            category: category ? String(category) : undefined,
+            sort: sort ? String(sort) : undefined,
+            status: status ? String(status) : undefined,
+            type: type ? String(type) : undefined
+        };
+        const eventsData = await ExploreService.getExploreEvents((req as any).user?.id, options);
         return res.status(200).json(eventsData);
     } catch (error: any) {
         console.error('Failed to get explore events:', error);
@@ -29,6 +37,20 @@ router.get('/brands', async (_req: Request, res: Response) => {
     } catch (error: any) {
         console.error('Failed to get explore brands:', error);
         return res.status(500).json({ error: error.message || 'Failed to get explore brands' });
+    }
+});
+
+/**
+ * GET /api/explore/creators
+ * Get top ranked creators for the explore page.
+ */
+router.get('/creators', async (_req: Request, res: Response) => {
+    try {
+        const creatorsData = await ExploreService.getExploreCreators();
+        return res.status(200).json(creatorsData);
+    } catch (error: any) {
+        console.error('Failed to get explore creators:', error);
+        return res.status(500).json({ error: error.message || 'Failed to get explore creators' });
     }
 });
 

@@ -95,7 +95,7 @@ export default function ExploreHeader({ activeSector, onSectorChange, searchQuer
             }}
             animate={visible ? "visible" : "hidden"}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="sticky top-0 z-[100] w-full bg-background/90 backdrop-blur-2xl border-b border-border pt-5 pb-3 space-y-4"
+            className="sticky top-0 z-[100] w-full bg-background/90 backdrop-blur-2xl pt-5 pb-3 space-y-4"
         >
             {/* Header elements removed at user request */}
         </motion.div>

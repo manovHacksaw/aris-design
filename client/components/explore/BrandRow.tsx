@@ -54,18 +54,18 @@ export default function BrandRow({ brand }: BrandRowProps) {
                         )}
                     </div>
                     <div>
-                        <h3 className="text-lg font-black text-foreground uppercase tracking-widest leading-none">
+                        <h3 className="text-lg font-black text-foreground capitalize tracking-wider leading-none">
                             {brand.name}
                         </h3>
                         {brand.tagline && (
-                            <p className="text-[10px] text-foreground/40 font-semibold uppercase tracking-wider mt-1">
+                            <p className="text-[10px] text-foreground/40 font-semibold capitalize tracking-wider mt-1">
                                 {brand.tagline}
                             </p>
                         )}
                     </div>
                 </div>
 
-                <div className="shrink-0 flex items-center gap-1.5 bg-lime-400/10 text-lime-400 border border-lime-400/20 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
+                <div className="shrink-0 flex items-center gap-1.5 bg-lime-400/10 text-lime-400 border border-lime-400/20 px-3 py-1.5 rounded-full text-[10px] font-black capitalize tracking-wider">
                     <Award className="w-3.5 h-3.5" />
                     <span>Total Rewards: ${brand.liveRewardSize?.toFixed(2) || 0}</span>
                 </div>
@@ -93,7 +93,7 @@ export default function BrandRow({ brand }: BrandRowProps) {
                     {brand.events.map((ev, i) => {
                         const evtWithBrand = { ...ev, brand: { name: brand.name, logoUrl: brand.logoUrl, logoCid: brand.logoCid, categories: brand.categories } };
                         return (
-                            <div key={ev.id || i} className="shrink-0 w-[280px] sm:w-[320px] transition-transform duration-300 hover:z-10 relative object-center group-hover/row:hover:scale-105">
+                            <div key={ev.id || i} className="shrink-0 w-[300px] sm:w-[340px] transition-transform duration-300 hover:z-10 relative object-center group-hover/row:hover:scale-105">
                                 <PremiumEventCard event={evtWithBrand} />
                             </div>
                         );

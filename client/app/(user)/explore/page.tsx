@@ -2,33 +2,32 @@
 
 import SidebarLayout from "@/components/home/SidebarLayout";
 import BottomNav from "@/components/BottomNav";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { ImageOff } from "lucide-react";
+import { ImageOff, Search, X, Youtube, Twitter, Instagram, LayoutGrid, Users } from "lucide-react";
+import Link from "next/link";
 
 import ExploreHeader from "@/components/explore/ExploreHeader";
 import ExploreSidebar from "@/components/explore/ExploreSidebar";
 import EventRow from "@/components/explore/EventRow";
 import BrandRow from "@/components/explore/BrandRow";
 import ContentMosaic from "@/components/explore/ContentMosaic";
-import { Search, X , Award} from "lucide-react";
+import PremiumEventCard from "@/components/events/PremiumEventCard";
 
-import { 
-    getExploreEvents, 
-    getExploreBrands, 
+import {
+    getExploreEvents,
+    getExploreBrands,
     getExploreCreators,
-    ExploreEventsResponse 
+    getExploreContent,
+    ExploreEventsResponse
 } from "@/services/explore.service";
-import { getFeaturedBrands } from "@/services/search.service";
-import { useLoginModal } from "@/context/LoginModalContext";
-import { useUser } from "@/context/UserContext";
 
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
 const DOMAINS = [
     "ALL", "AI", "DESIGN", "MARKETING", "WEB3",
-    "GAMING", "FASHION", "FOOD", "TECH", "OTHER", "CLOSED"
+    "GAMING", "FASHION", "FOOD", "TECH", "OTHER"
 ];
 
 function EmptyState({ label }: { label: string }) {
@@ -40,84 +39,251 @@ function EmptyState({ label }: { label: string }) {
     );
 }
 
+// Custom Hero Banner Component
+function TopEventsHero({ events }: { events: any[] }) {
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    useEffect(() => {
+        if (!events || events.length <= 1) return;
+        const interval = setInterval(() => {
+            setCurrentIndex((prev) => (prev + 1) % Math.min(10, events.length));
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [events]);
+
+    if (!events || events.length === 0) return null;
+
+    const event = events[currentIndex];
+    const displayImage = event.image || event.imageUrl || (event.imageCid ? `${PINATA_GW}/${event.imageCid}` : "");
+
+    return (
+        <div className="relative w-full h-[380px] md:h-[420px] rounded-2xl overflow-hidden mb-10 group bg-[#0a0a0c] border border-white/5">
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={event.id}
+                    initial={{ opacity: 0, scale: 1.05 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.8, ease: "easeInOut" }}
+                    className="absolute inset-0"
+                >
+                    {displayImage ? (
+                        <img src={displayImage} alt={event.title} className="w-full h-full object-cover transition-transform duration-[10s] ease-linear group-hover:scale-110" />
+                    ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-white/5 to-white/10" />
+                    )}
+                </motion.div>
+            </AnimatePresence>
+
+            {/* Gradients */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+            
+            {/* Content Left */}
+            <div className="absolute inset-y-0 left-0 w-full md:w-2/3 p-6 sm:p-10 md:p-12 flex flex-col justify-center z-10">
+                <motion.div
+                    key={`content-${event.id}`}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                >
+                    <div className="flex items-center gap-2 mb-4">
+                        {event.brand?.logoCid ? (
+                            <img src={`${PINATA_GW}/${event.brand.logoCid}`} alt={event.brand.name} className="w-8 h-8 rounded-full border border-white/20"/>
+                        ) : (
+                            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border border-white/20 text-xs font-bold text-white">{event.brand?.name?.[0] || '?'}</div>
+                        )}
+                        <span className="text-white/80 font-bold text-sm tracking-wider capitalize">{event.brand?.name || 'Unknown'}</span>
+                        <span className="text-white/30 font-medium text-xs mx-1">•</span>
+                        <span className="text-white/50 font-medium text-xs capitalize tracking-wider">{event.brand?.categories?.[0] || 'Social'}</span>
+                    </div>
+
+                    <h1 className="text-3xl md:text-4xl lg:text-4xl font-black capitalize text-white tracking-tight leading-[1.1] mb-6 line-clamp-3 drop-shadow-xl">
+                        {event.title}
+                    </h1>
+
+                    <div className="flex flex-col gap-6">
+                        <div className="flex items-center gap-6 text-white/60 text-sm font-medium tracking-wide capitalize">
+                            <div className="flex items-center gap-2">
+                                <Users className="w-4 h-4 text-white" />
+                                <span className="text-white font-bold">{((event._count?.submissions || 0) + (event._count?.votes || 0)).toLocaleString()}</span> 
+                                <span>Participants</span>
+                            </div>
+                            <div className="flex items-center gap-2 border-l border-white/10 pl-6">
+                                <span className="text-white font-bold">
+                                    ${((event.leaderboardPool || 0) + (event.topReward || 0) + (event.baseReward || 0)).toLocaleString()}
+                                </span> 
+                                <span>Total Pool</span>
+                            </div>
+                        </div>
+                        <Link href={`/events/${event.id}`}>
+                            <button className="px-8 py-3.5 bg-white text-black font-black capitalize tracking-wider rounded-full hover:scale-105 hover:bg-white/90 transition-all w-fit shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+                                {event.status === "voting" ? "Vote now" : "Submit your creation"}
+                            </button>
+                        </Link>
+                    </div>
+                </motion.div>
+            </div>
+
+            {/* Pagination Dots */}
+            <div className="absolute bottom-6 left-6 md:left-12 flex gap-2 z-10">
+                {events.slice(0, 10).map((_, i) => (
+                    <button
+                        key={i}
+                        onClick={() => setCurrentIndex(i)}
+                        className={cn(
+                            "h-1 rounded-full transition-all duration-300",
+                            i === currentIndex ? "w-6 bg-white" : "w-2 bg-white/30 hover:bg-white/50"
+                        )}
+                    />
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function ArisSelect({ value, onChange, options, placeholder, minWidth = "150px" }: { value: string, onChange: (v: string) => void, options: string[], placeholder: string, minWidth?: string }) {
+    const [isOpen, setIsOpen] = useState(false);
+    
+    return (
+        <div className="relative shrink-0" style={{ minWidth }}>
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className={cn(
+                    "w-full flex items-center justify-between bg-white/[0.03] border border-white/10 text-white/60 hover:text-white hover:border-white/20 rounded-xl pl-5 pr-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all cursor-pointer backdrop-blur-md",
+                    isOpen && "border-primary/40 bg-white/[0.05] text-white"
+                )}
+            >
+                <span className="truncate mr-2">{value === "ALL" || value === "TRENDING" ? placeholder : value}</span>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform duration-300 text-white/20", isOpen ? "rotate-180 text-white" : "")}><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            
+            <AnimatePresence>
+                {isOpen && (
+                    <>
+                        <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+                        <motion.div
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
+                            className="absolute top-full left-0 mt-2 w-full bg-[#0a0a0c] border border-white/20 rounded-xl overflow-hidden z-[999] backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
+                        >
+                            <div className="max-h-[300px] overflow-y-auto no-scrollbar py-2">
+                                {options.map((opt) => (
+                                    <button
+                                        key={opt}
+                                        onClick={() => {
+                                            onChange(opt);
+                                            setIsOpen(false);
+                                        }}
+                                        className={cn(
+                                            "w-full text-left px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.2em] transition-all border-l-2",
+                                            (value === opt) 
+                                                ? "bg-white/10 border-primary text-white" 
+                                                : "border-transparent text-white/40 hover:bg-white/5 hover:text-white hover:border-white/20"
+                                        )}
+                                    >
+                                        {opt === "ALL" || opt === "TRENDING" ? placeholder : opt}
+                                    </button>
+                                ))}
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
+
 export default function Explore() {
     const [activeTab, setActiveTab] = useState<"events" | "brands" | "content">("events");
-    const [activeSector, setActiveSector] = useState("ALL"); // from Header (usually for searching global stuff)
-    const [activeDomain, setActiveDomain] = useState("ALL"); // secondary pill filter
+    const [activeSector, setActiveSector] = useState("ALL"); 
+    
+    const [activeDomain, setActiveDomain] = useState("ALL");
+    const [activePhase, setActivePhase] = useState("ALL"); // ALL, VOTING, POSTING, CLOSED
+    const [sortOption, setSortOption] = useState("TRENDING");
     const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
 
     const [eventsData, setEventsData] = useState<ExploreEventsResponse | null>(null);
     const [brands, setBrands] = useState<any[]>([]);
     const [creators, setCreators] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [contentData, setContentData] = useState<any[]>([]);
+    const [loadingEvents, setLoadingEvents] = useState(true);
+    const [loadingStatic, setLoadingStatic] = useState(true);
 
+    // Initial load for brands & creators
     useEffect(() => {
-        const loadData = async () => {
+        const loadInitial = async () => {
             try {
-                const [evData, brandsData, creatorsData] = await Promise.all([
-                    getExploreEvents().catch(() => null),
+                const [brandsData, creatorsData, contentRes] = await Promise.all([
                     getExploreBrands().catch(() => []),
-                    getExploreCreators().catch(() => [])
+                    getExploreCreators().catch(() => []),
+                    getExploreContent().catch(() => [])
                 ]);
-                setEventsData(evData);
                 setBrands(brandsData);
                 setCreators(creatorsData);
+                setContentData(contentRes);
             } catch (error) {
-                console.error("Failed to load explore data:", error);
+                console.error("Failed to load static explore data:", error);
             } finally {
-                setLoading(false);
+                setLoadingStatic(false);
             }
         };
-        loadData();
+        loadInitial();
     }, []);
 
-    // Memoized processing for currently selected secondary tab filters
-    const filteredDomains = useMemo(() => {
-        if (!eventsData) return [];
-        let rows = [...eventsData.domains];
+    // Debounce search Query
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(searchQuery), 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
-        // Filter by Sector (Global from Header)
-        if (activeSector !== "ALL") {
-            rows = rows.filter(r => r.domain.toUpperCase() === activeSector);
-        }
+    // Fetch Events based on filters
+    useEffect(() => {
+        let isMounted = true;
+        setLoadingEvents(true);
+        const fetchEvents = async () => {
+            try {
+                const queryOptions = {
+                    search: debouncedSearch || undefined,
+                    category: activeDomain !== "ALL" ? activeDomain : undefined,
+                    sort: sortOption !== "TRENDING" ? sortOption : undefined,
+                    status: activePhase === "CLOSED" ? "CLOSED" : "OPEN",
+                    type: activePhase === "VOTING" ? "VOTE" : activePhase === "POSTING" ? "POST" : undefined
+                };
+                const data = await getExploreEvents(queryOptions);
+                if (isMounted) {
+                    setEventsData(data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch explore events with filters", error);
+            } finally {
+                if (isMounted) setLoadingEvents(false);
+            }
+        };
+        fetchEvents();
+        return () => { isMounted = false; };
+    }, [debouncedSearch, activeDomain, activePhase, sortOption]);
 
-        // Filter by Domain (Pills)
-        if (activeDomain !== "ALL" && activeDomain !== "CLOSED") {
-            rows = rows.filter(r => r.domain.toUpperCase() === activeDomain);
-        }
-
-        // Search text matching
-        if (searchQuery.trim()) {
-            const q = searchQuery.toLowerCase();
-            rows = rows.map(r => ({
-                domain: r.domain,
-                events: r.events.filter(e =>
-                    e.title.toLowerCase().includes(q) ||
-                    (e.brand?.name ?? "").toLowerCase().includes(q)
-                )
-            })).filter(r => r.events.length > 0);
-        }
-
-        return rows;
-    }, [eventsData, activeSector, activeDomain, searchQuery]);
-
-    // Brand filtering
+    // Brand filtering (Frontend)
     const brandsRows = useMemo(() => {
         let rows = [...brands];
         if (activeSector !== "ALL") {
             rows = rows.filter(b => b.categories?.some((c: string) => c.toUpperCase() === activeSector));
         }
-        if (activeDomain !== "ALL" && activeDomain !== "CLOSED") {
+        if (activeDomain !== "ALL") {
             rows = rows.filter(b => b.categories?.some((c: string) => c.toUpperCase() === activeDomain));
         }
-        if (searchQuery.trim()) {
-            const q = searchQuery.toLowerCase();
+        if (debouncedSearch.trim()) {
+            const q = debouncedSearch.toLowerCase();
             rows = rows.filter(b => b.name.toLowerCase().includes(q));
         }
         return rows;
-    }, [brands, activeSector, activeDomain, searchQuery]);
+    }, [brands, activeSector, activeDomain, debouncedSearch]);
 
-    // Creator filtering
+    // Creator filtering (Frontend)
     const creatorsRows = useMemo(() => {
         if (!creators) return [];
         return creators.map((creator: any) => ({
@@ -130,114 +296,104 @@ export default function Explore() {
         }));
     }, [creators]);
 
-    // Content filtering
-    const filteredContent = useMemo(() => {
-        // Placeholder for content logic
-        return [];
-    }, [searchQuery, activeDomain]);
-
-
     return (
         <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
             <SidebarLayout>
                 <div className="flex flex-col pb-24 lg:pb-10">
-                    <ExploreHeader
-                        activeSector={activeSector}
-                        onSectorChange={(s) => { setActiveSector(s); setActiveDomain("ALL"); }}
-                        searchQuery={searchQuery}
-                        onSearchChange={setSearchQuery}
-                    />
 
-                    {/* ── Search Bar ──────────────────────────────────── */}
-                    <div className="w-full mb-10 px-4 md:px-0">
-                        <div className="flex flex-col gap-6">
-                            <div className="w-full max-w-2xl relative group">
-                                <div className="absolute inset-px bg-gradient-to-r from-primary/20 to-blue-600/20 rounded-2xl opacity-0 group-focus-within:opacity-100 transition-all blur-sm pointer-events-none" />
-                                <div className="relative flex items-center bg-white/[0.04] border border-border group-focus-within:border-primary/40 rounded-2xl overflow-hidden transition-all shadow-xl shadow-black/20">
-                                    <Search className="absolute left-4 w-4 h-4 text-foreground/20 group-focus-within:text-primary transition-colors shrink-0 pointer-events-none" />
-                                    <input
-                                        type="text"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        placeholder="Search events, brands, or creators..."
-                                        className="w-full bg-transparent py-4 pl-12 pr-12 text-sm font-medium text-foreground placeholder:text-foreground/20 outline-none"
-                                    />
-                                    {searchQuery && (
-                                        <button
-                                            onClick={() => setSearchQuery("")}
-                                            className="absolute right-4 text-foreground/20 hover:text-foreground/60 transition-colors"
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
-                                    )}
-                                </div>
+
+                    {/* HERO BANNER SECTION (ONLY IN EVENTS TAB) */}
+                    {activeTab === "events" && activeDomain === "ALL" && !debouncedSearch && (
+                        loadingEvents ? (
+                            <div className="w-full mb-10 px-4 md:px-0">
+                                <div className="w-full h-[380px] md:h-[420px] rounded-2xl bg-white/[0.03] border border-white/5 animate-pulse" />
                             </div>
+                        ) : (
+                            eventsData?.trending && eventsData.trending.length > 0 && (
+                                <div className="w-full mb-10 px-4 md:px-0">
+                                    <TopEventsHero events={eventsData.trending.slice(0, 10)} />
+                                </div>
+                            )
+                        )
+                    )}
+
+                    {/* ── Filter Bar ──────────────────────────────────── */}
+                    <div className="w-full mb-10 px-4 md:px-0 relative z-40">
+                        <div className="flex flex-col lg:flex-row items-center gap-4 w-full">
                             
-                            <div className="flex flex-col gap-1">
-                                <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.3em] opacity-80">JOIN EVENTS. EARN DOLLARS.</h2>
-                                <h1 className="text-3xl font-black text-white uppercase tracking-tight">Explore Opportunities</h1>
+                            {/* Search Input */}
+                            <div className="w-full lg:flex-1 relative group bg-white/[0.03] border border-white/10 hover:border-white/20 focus-within:border-primary/40 focus-within:bg-white/[0.05] rounded-xl overflow-hidden transition-all shadow-2xl shadow-black/40 flex items-center backdrop-blur-md">
+                                <Search className="absolute left-4 w-4 h-4 text-foreground/20 group-focus-within:text-primary transition-colors shrink-0 pointer-events-none" />
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Search campaigns and creators..."
+                                    className="w-full bg-transparent py-4 pl-12 pr-12 text-[13px] font-bold text-foreground placeholder:text-foreground/30 placeholder:capitalize placeholder:tracking-wider placeholder:text-[10px] outline-none transition-all"
+                                />
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery("")}
+                                        className="absolute right-4 text-foreground/20 hover:text-white transition-colors"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
+
+
+
+                            {/* Dropdowns & Toggle */}
+                            <div className="w-full lg:w-auto flex flex-wrap items-center gap-3 shrink-0">
+                                <ArisSelect 
+                                    value={activeTab.toUpperCase()} 
+                                    onChange={(val) => {
+                                        const tab = val.toLowerCase() as any;
+                                        setActiveTab(tab);
+                                        setActivePhase("ALL"); // Reset event lifecycle filters when switching tabs
+                                    }} 
+                                    options={["EVENTS", "BRANDS", "CONTENT"]} 
+                                    placeholder="Explore" 
+                                    minWidth="140px"
+                                />
+
+                                <ArisSelect 
+                                    value={activeDomain === "ALL" ? "ALL" : activeDomain} 
+                                    onChange={(val) => setActiveDomain(val === "ALL" ? "ALL" : val)} 
+                                    options={DOMAINS.map(d => d === "ALL" ? "ALL" : d)} 
+                                    placeholder="All" 
+                                    minWidth="120px"
+                                />
+
+                                {activeTab === "events" && (
+                                    <ArisSelect 
+                                        value={activePhase === "ALL" ? "LIVE EVENTS" : activePhase} 
+                                        onChange={(val) => setActivePhase(val === "LIVE EVENTS" ? "ALL" : val)} 
+                                        options={["LIVE EVENTS", "VOTING", "POSTING", "CLOSED"]} 
+                                        placeholder="Phase" 
+                                        minWidth="160px"
+                                    />
+                                )}
+
+
                             </div>
                         </div>
                     </div>
 
                     <main className="w-full flex flex-col lg:flex-row gap-10 lg:gap-12">
-
                         {/* ── Main Feed ───────────────────────────────────── */}
                         <div className="flex-1 min-w-0 space-y-8">
 
-                            {/* Top level Navigation */}
-                            <div className="flex items-center gap-1 bg-white/[0.03] border border-white/[0.05] rounded-xl p-0.5 w-fit">
-                                {(["events", "brands", "content"] as const).map((tab) => (
-                                    <button
-                                        key={tab}
-                                        onClick={() => { setActiveTab(tab); setActiveDomain("ALL"); }}
-                                        className={cn(
-                                            "px-6 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all",
-                                            activeTab === tab
-                                                ? "bg-white text-black shadow-lg"
-                                                : "text-foreground/30 hover:text-foreground/60"
-                                        )}
-                                    >
-                                        {tab}
-                                    </button>
-                                ))}
-                            </div>
 
-                            {/* Secondary Domain Pills */}
-                            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
-                                {DOMAINS.map((d) => (
-                                    <button
-                                        key={d}
-                                        onClick={() => setActiveDomain(d)}
-                                        className={cn(
-                                            "px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap shrink-0 transition-all border",
-                                            activeDomain === d
-                                                ? "bg-primary/20 border-primary/40 text-primary shadow-sm shadow-primary/10"
-                                                : "bg-white/[0.02] border-white/5 text-white/20 hover:text-white/40 hover:border-white/10"
-                                        )}
-                                    >
-                                        {d}
-                                    </button>
-                                ))}
-                                {activeTab === "events" && (
-                                    <button
-                                        onClick={() => setActiveDomain("CLOSED")}
-                                        className={cn(
-                                            "px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap shrink-0 transition-all border",
-                                            activeDomain === "CLOSED"
-                                                ? "bg-white/10 border-white/20 text-white"
-                                                : "bg-white/[0.02] border-white/5 text-white/20 hover:text-white/40"
-                                        )}
-                                    >
-                                        CLOSED
-                                    </button>
-                                )}
-                            </div>
 
-                            {loading ? (
+                            {loadingEvents && activeTab === "events" ? (
                                 <div className="space-y-12 animate-pulse mt-8">
-                                    <div className="h-40 w-full bg-white/[0.04] rounded-2xl" />
-                                    <div className="h-40 w-full bg-white/[0.04] rounded-2xl" />
+                                    <div className="h-60 w-full bg-white/[0.02] rounded-2xl border border-white/5" />
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        <div className="h-80 w-full bg-white/[0.02] rounded-2xl border border-white/5" />
+                                        <div className="h-80 w-full bg-white/[0.02] rounded-2xl border border-white/5" />
+                                        <div className="h-80 w-full bg-white/[0.02] rounded-2xl border border-white/5" />
+                                    </div>
                                 </div>
                             ) : (
                                 <>
@@ -248,33 +404,30 @@ export default function Explore() {
                                             animate={{ opacity: 1, y: 0 }}
                                             className="space-y-12"
                                         >
-                                            {/* Trending Section */}
-                                            {activeDomain === "ALL" && !searchQuery.trim() && eventsData?.trending && (
-                                                <EventRow
-                                                    title="Trending Events"
-                                                    events={eventsData.trending.slice(0, 10)}
-                                                />
+                                            {/* Featured Section (Horizontal Scroll) */}
+                                            {eventsData?.trending && eventsData.trending.length > 0 && !debouncedSearch && activeDomain === "ALL" && (
+                                                <div className="mb-8">
+                                                    <EventRow
+                                                        title="Featured"
+                                                        events={eventsData.trending.slice(0, 5)}
+                                                    />
+                                                </div>
                                             )}
 
-                                            {/* Domain Sections */}
-                                            {activeDomain !== "CLOSED" && filteredDomains.map((domainObj) => (
-                                                <EventRow
-                                                    key={domainObj.domain}
-                                                    title={`${domainObj.domain} Events`}
-                                                    events={domainObj.events}
-                                                />
-                                            ))}
-
-                                            {/* Closed Section - Only show when explicitly filtered */}
-                                            {activeDomain === "CLOSED" && eventsData?.closed && eventsData.closed.length > 0 && (
-                                                <EventRow
-                                                    title="Closed Events"
-                                                    events={eventsData.closed}
-                                                />
-                                            )}
-
-                                            {((activeDomain === "ALL" && !eventsData?.trending?.length && !filteredDomains.length) || (activeDomain !== "ALL" && activeDomain !== "CLOSED" && filteredDomains.length === 0) || (activeDomain === "CLOSED" && !eventsData?.closed?.length)) && (
-                                                <EmptyState label="No events found" />
+                                            {/* All Campaigns Header (Matching layout) */}
+                                            {eventsData?.allRanked && eventsData.allRanked.length > 0 ? (
+                                                <div className="space-y-6">
+                                                    <h3 className="text-xl font-black text-white capitalize tracking-wider pl-4 sm:pl-0 border-white/5">
+                                                        {(debouncedSearch || activeDomain !== "ALL") ? "Search Results" : "All Campaigns"}
+                                                    </h3>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8 px-4 sm:px-0">
+                                                        {eventsData.allRanked.map((ev) => (
+                                                            <PremiumEventCard key={ev.id} event={ev} />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <EmptyState label="No campaigns found" />
                                             )}
                                         </motion.div>
                                     )}
@@ -304,16 +457,21 @@ export default function Explore() {
                                             key="content"
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
+                                            className="w-full"
                                         >
-                                            <ContentMosaic submissions={[]} />
+                                            {contentData.length > 0 ? (
+                                                <ContentMosaic submissions={contentData} />
+                                            ) : (
+                                                <EmptyState label="No content found" />
+                                            )}
                                         </motion.div>
                                     )}
                                 </>
                             )}
                         </div>
 
-                        {/* ── Desktop Sidebar ─────────────────────────────── */}
-                        <div className="hidden lg:block">
+                        {/* ── Desktop Sidebar (Retained per user request) ─── */}
+                        <div className="hidden lg:block w-[320px] shrink-0">
                             <ExploreSidebar
                                 brands={brandsRows.slice(0, 5).map(b => ({
                                     id: b.id,
@@ -322,8 +480,8 @@ export default function Explore() {
                                     avatar: b.logoCid ? `${PINATA_GW}/${b.logoCid}` : "",
                                     isFollowed: false
                                 }))}
-                                creators={creatorsRows}
-                                loading={loading}
+                                creators={creatorsRows.slice(0, 5)}
+                                loading={loadingStatic}
                             />
                         </div>
                     </main>
@@ -336,4 +494,3 @@ export default function Explore() {
         </div>
     );
 }
-

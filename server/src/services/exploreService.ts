@@ -12,7 +12,8 @@ export function calculateEventScore(event: any) {
     // 'posting' means users can submit content, 'voting' means engagement is peaking.
     if (event.status === 'posting') score += 1000;
     else if (event.status === 'voting') score += 800;
-    else return -1; // Status like 'completed' should be excluded from main ranked feeds
+    else if (event.status === 'completed') score += 0; // Natural ranking for closed events
+    else return -1; 
 
     // 2. Prize Pool Weight (Max: 500)
     // Total value of the reward pool
@@ -116,7 +117,7 @@ export const ExploreService = {
      * Get explore events including trending, domain-grouped events, and closed events.
      * Applies hard filters if userId is provided.
      */
-    async getExploreEvents(userId?: string) {
+    async getExploreEvents(userId?: string, options: { category?: string, search?: string, sort?: string, status?: string, type?: string } = {}) {
         try {
             // Fetch current user demographics if logged in
             let currentUser = null;
@@ -126,21 +127,63 @@ export const ExploreService = {
                     select: { gender: true, dateOfBirth: true }
                 });
             }
-            // 1. Fetch all live candidates (posting/voting)
+
+            // 1. Determine base status filter
+            // If user explicitly asks for CLOSED, we fetch completed. Otherwise, we fetch posting/voting.
+            const isClosedRequest = options.status === 'CLOSED';
+            const statusFilter = isClosedRequest ? ['completed'] : ['posting', 'voting'];
+
+            const allLiveWhere: any = {
+                isDeleted: false,
+                status: { in: statusFilter }
+            };
+
+            // 2. Type Filter (Post vs Vote)
+            if (options.type === 'POST') {
+                allLiveWhere.status = 'posting';
+            } else if (options.type === 'VOTE') {
+                allLiveWhere.status = 'voting';
+            }
+
+            if (options.search) {
+                allLiveWhere.OR = [
+                    { title: { contains: options.search, mode: 'insensitive' } },
+                    { brand: { name: { contains: options.search, mode: 'insensitive' } } }
+                ];
+            }
+
             const allLive = await prisma.event.findMany({
-                where: {
-                    isDeleted: false,
-                    status: { in: ['posting', 'voting'] }
-                },
+                where: allLiveWhere,
                 include: {
                     brand: { select: { id: true, name: true, logoCid: true, categories: true, isVerified: true, level: true } },
                     _count: { select: { submissions: true, votes: true } }
                 }
             });
 
+            const CATEGORY_ALIASES: Record<string, string> = {
+                'TECHNOLOGY': 'TECH',
+                'BLOCKCHAIN': 'WEB3',
+                'CRYPTO': 'WEB3',
+                'ARTIFICIAL INTELLIGENCE': 'AI',
+                'MACHINE LEARNING': 'AI',
+                'GRAPHIC DESIGN': 'DESIGN',
+                'UI/UX': 'DESIGN',
+                'FOOD & BEVERAGE': 'FOOD',
+                'FOOD AND BEVERAGE': 'FOOD',
+            };
+
             const filteredLive = allLive.filter(event => {
                 try {
                     enforceEventDemographics(event as any, currentUser as any);
+                    
+                    if (options.category && options.category !== 'ALL' && options.category !== 'CLOSED') {
+                        const eventCategories = event.brand?.categories || ['OTHER'];
+                        const mappedCategories = eventCategories.map((c: string) => CATEGORY_ALIASES[c.toUpperCase()] ?? c.toUpperCase());
+                        if (!mappedCategories.includes(options.category.toUpperCase())) {
+                            return false;
+                        }
+                    }
+
                     return true;
                 } catch (e) {
                     return false;
@@ -151,7 +194,17 @@ export const ExploreService = {
             const scoredEvents = filteredLive.map(event => ({
                 ...event,
                 rankScore: calculateEventScore(event)
-            })).sort((a, b) => b.rankScore - a.rankScore);
+            })).sort((a, b) => {
+                if (options.sort === 'REWARD' || options.sort === 'BUDGET') {
+                    const rewardA = (a.baseReward || 0) + (a.topReward || 0) + (a.leaderboardPool || 0);
+                    const rewardB = (b.baseReward || 0) + (b.topReward || 0) + (b.leaderboardPool || 0);
+                    return rewardB - rewardA || b.rankScore - a.rankScore;
+                }
+                if (options.sort === 'NEWEST') {
+                    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+                }
+                return b.rankScore - a.rankScore;
+            });
 
             // 3. Attach participant avatars (top 5 per event, submitters first then voters)
             const liveEventIds = scoredEvents.map((e: any) => e.id);
@@ -189,10 +242,10 @@ export const ExploreService = {
                 participantAvatars: (avatarsByEvent.get(e.id) ?? []).slice(0, 5),
             }));
 
-            // 4. Trending (Top 15 overall)
+            // 4. Trending (Top 15 based on filters)
             const trending = scoredEventsWithAvatars.slice(0, 15);
 
-            // 5. Closed events (separate fetch, no ranking needed among trending)
+            // 5. Closed events (separate fetch for the footer/sidebar if needed)
             const closed = await prisma.event.findMany({
                 where: {
                     isDeleted: false,
@@ -208,7 +261,7 @@ export const ExploreService = {
                 }
             });
 
-            // 6. Attach avatars to closed events
+            // 6. Attach avatars to closed events (for the separate 'closed' result)
             const closedEventIds = closed.map((e: any) => e.id);
             const [closedSubmitterRows, closedVoterRows] = await Promise.all([
                 prisma.submission.findMany({
@@ -244,18 +297,7 @@ export const ExploreService = {
                 participantAvatars: (closedAvatarsByEvent.get(e.id) ?? []).slice(0, 5),
             }));
 
-            // 6. Domain grouped (using the ranked list)
-            const CATEGORY_ALIASES: Record<string, string> = {
-                'TECHNOLOGY': 'TECH',
-                'BLOCKCHAIN': 'WEB3',
-                'CRYPTO': 'WEB3',
-                'ARTIFICIAL INTELLIGENCE': 'AI',
-                'MACHINE LEARNING': 'AI',
-                'GRAPHIC DESIGN': 'DESIGN',
-                'UI/UX': 'DESIGN',
-                'FOOD & BEVERAGE': 'FOOD',
-                'FOOD AND BEVERAGE': 'FOOD',
-            };
+            // 7. Domain grouped (using the filtered and ranked list)
             const domainMap = new Map<string, any[]>();
             scoredEventsWithAvatars.forEach((event: any) => {
                 const categories: string[] = event.brand?.categories || ['OTHER'];
@@ -269,10 +311,10 @@ export const ExploreService = {
 
             const domains = Array.from(domainMap.entries()).map(([domain, events]) => ({
                 domain,
-                events: events.slice(0, 10) // Limit per domain to keep it fresh
+                events: events.slice(0, 10) 
             }));
 
-            return { trending, domains, closed: closedWithAvatars };
+            return { trending, domains, closed: closedWithAvatars, allRanked: scoredEventsWithAvatars };
         } catch (error) {
             console.error('Failed to get explore events:', error);
             throw error;
@@ -364,7 +406,7 @@ export const ExploreService = {
 
             const content = await prisma.submission.findMany({
                 where: {
-                    status: 'approved',
+                    status: 'active',
                 },
                 include: {
                     user: { select: { username: true, avatarUrl: true } },
