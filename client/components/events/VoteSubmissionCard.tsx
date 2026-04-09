@@ -66,7 +66,7 @@ export default function VoteSubmissionCard({
                 onClick={onOpenImage}
                 className={cn(
                     "relative bg-black overflow-hidden",
-                    listView ? "aspect-[16/9]" : "aspect-[3/4]",
+                    "aspect-3/4",
                     onOpenImage ? "cursor-zoom-in" : undefined
                 )}
             >

@@ -800,12 +800,12 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                         <p className="text-xs text-muted-foreground mt-0.5">Entropy, winning margin, historical alignment</p>
                     </div>
                     <div className="px-2 py-3 h-[260px]">
-                        {!analytics || analytics.eventsSummary.filter(s => s.totalVotes > 0).length === 0 ? (
+                        {filteredSummaries.filter(s => s.totalVotes > 0).length === 0 ? (
                             <div className="h-full flex items-center justify-center text-sm text-muted-foreground">Not available</div>
                         ) : (
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart
-                                    data={analytics.eventsSummary.filter(s => s.totalVotes > 0).slice(-10).map(s => ({
+                                    data={filteredSummaries.filter(s => s.totalVotes > 0).slice(-10).map(s => ({
                                         name: s.title.length > 12 ? s.title.slice(0, 11) + "…" : s.title,
                                         margin: parseFloat(s.winningMargin.toFixed(1)),
                                         entropy: parseFloat((s.normalizedEntropy * 100).toFixed(1)),
@@ -829,19 +829,19 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                 {/* Decision Confidence + key metrics */}
                 <div className="bg-card border border-border/60 rounded-[20px] p-5 space-y-4">
                     <h3 className="font-bold text-base">Decision Confidence & Quality</h3>
-                    {!analytics ? (
+                    {!filteredAgg ? (
                         <p className="text-sm text-muted-foreground">Not available</p>
                     ) : (
                         <>
-                            {/* DCS gauge */}
+                            {/* DCS gauge — derived from filtered summaries */}
                             <div className="flex items-center gap-5">
                                 <DCSGaugeSmall score={dcs} />
                                 <div className="flex-1 space-y-2">
                                     {[
-                                        { label: "Avg Entropy", value: analytics.averageEntropy.toFixed(2), color: "text-amber-400" },
-                                        { label: "Avg Alignment", value: `${(analytics.averageHistoricalAlignment * 100).toFixed(1)}%`, color: "text-violet-400" },
-                                        { label: "Trust Score", value: `${(analytics.avgParticipantTrustScore * 100).toFixed(0)}%`, color: "text-blue-400" },
-                                        { label: "Unique Voters", value: analytics.totalUniqueParticipants.toLocaleString(), color: "text-cyan-400" },
+                                        { label: "Avg Entropy", value: filteredAgg.avgEntropy.toFixed(2), color: "text-amber-400" },
+                                        { label: "Avg Alignment", value: `${(filteredAgg.avgAlignment * 100).toFixed(1)}%`, color: "text-violet-400" },
+                                        { label: "Trust Score", value: analytics ? `${(analytics.avgParticipantTrustScore * 100).toFixed(0)}%` : "—", color: "text-blue-400" },
+                                        { label: "Unique Voters", value: filteredAgg.uniqueParticipants.toLocaleString(), color: "text-cyan-400" },
                                     ].map(m => (
                                         <div key={m.label} className="flex items-center justify-between">
                                             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{m.label}</span>
@@ -1014,14 +1014,14 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                     <p className="text-xs text-muted-foreground mt-0.5">Cumulative unique participants over events (proxy for audience growth)</p>
                 </div>
                 <div className="px-2 py-3 h-[220px]">
-                    {!analytics || analytics.eventsSummary.length === 0 ? (
+                    {filteredSummaries.length === 0 ? (
                         <div className="h-full flex items-center justify-center text-sm text-muted-foreground">Not available</div>
                     ) : (
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart
                                 data={(() => {
                                     let cumulative = 0;
-                                    return analytics.eventsSummary.map(s => {
+                                    return filteredSummaries.map(s => {
                                         cumulative += s.uniqueParticipants;
                                         return {
                                             name: s.title.length > 12 ? s.title.slice(0, 11) + "…" : s.title,

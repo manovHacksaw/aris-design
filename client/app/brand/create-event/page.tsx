@@ -154,8 +154,11 @@ export default function CreateEventPage() {
     const [proposalAiLoading, setProposalAiLoading] = useState(false);
     const [availableCredit, setAvailableCredit] = useState(0);
     const [aiGeneratorProposalIdx, setAiGeneratorProposalIdx] = useState<number | null>(null);
+    const [aiGeneratorSampleIdx, setAiGeneratorSampleIdx] = useState<number | null>(null);
     const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+    const [dragOverSampleIdx, setDragOverSampleIdx] = useState<number | null>(null);
     const proposalFileRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const sampleFileRefs = useRef<(HTMLInputElement | null)[]>([]);
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
     const bannerInputRef = useRef<HTMLInputElement | null>(null);
     const [bannerGeneratorOpen, setBannerGeneratorOpen] = useState(false);
@@ -1052,62 +1055,149 @@ export default function CreateEventPage() {
                         {/* Sample images — post events only */}
                         {isPost && (
                             <div>
-                                <label className="flex items-center text-sm font-semibold text-foreground mb-1.5">
+                                <label className="flex items-center text-sm font-semibold text-foreground mb-3">
                                     Sample Images
                                     <InfoTooltip text="Upload reference images to show creators what kind of content you're looking for. At least 1 required." />
                                     <span className="ml-1.5 text-xs font-normal text-red-400">*required</span>
                                 </label>
 
-                                {/* Grid of uploaded samples */}
-                                {samplePreviews.length > 0 && (
-                                    <div className="grid grid-cols-3 gap-2 mb-3">
-                                        {samplePreviews.map((src, i) => (
-                                            <div key={i} className="relative group rounded-xl overflow-hidden border border-border" style={{ aspectRatio: "1/1" }}>
-                                                <img src={src} alt={`Sample ${i + 1}`} className="w-full h-full object-cover" />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        URL.revokeObjectURL(src);
-                                                        const newPreviews = samplePreviews.filter((_, idx) => idx !== i);
-                                                        const newFiles = form.sampleImages.filter((_, idx) => idx !== i);
-                                                        setSamplePreviews(newPreviews);
-                                                        set({ sampleImages: newFiles });
+                                {/* Card grid — filled cards + 1 empty slot, max 4 */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    {Array.from({ length: Math.min(samplePreviews.length + 1, 4) }).map((_, i) => {
+                                        const src = samplePreviews[i];
+                                        return (
+                                            <div key={i} className="flex flex-col gap-2">
+                                                <div
+                                                    className={cn(
+                                                        "relative group rounded-2xl border-2 transition-all overflow-hidden",
+                                                        src ? "aspect-square" : "min-h-[180px]",
+                                                        dragOverSampleIdx === i
+                                                            ? "border-primary bg-primary/10 scale-[1.02]"
+                                                            : src
+                                                                ? "border-border"
+                                                                : "border-dashed border-border bg-secondary/20 hover:border-primary/50 hover:bg-primary/5"
+                                                    )}
+                                                    onDragOver={(e) => { e.preventDefault(); setDragOverSampleIdx(i); }}
+                                                    onDragLeave={() => setDragOverSampleIdx(null)}
+                                                    onDrop={(e) => {
+                                                        e.preventDefault();
+                                                        setDragOverSampleIdx(null);
+                                                        const f = e.dataTransfer.files?.[0];
+                                                        if (!f || !f.type.startsWith("image/")) return;
+                                                        if (f.size > 5 * 1024 * 1024) { toast.error("Sample image must be under 5 MB"); return; }
+                                                        const updated = [...samplePreviews];
+                                                        const updatedFiles = [...form.sampleImages];
+                                                        if (src) URL.revokeObjectURL(src);
+                                                        updated[i] = URL.createObjectURL(f);
+                                                        updatedFiles[i] = f;
+                                                        setSamplePreviews(updated);
+                                                        set({ sampleImages: updatedFiles });
                                                     }}
-                                                    className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/70 border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/80"
+                                                    onClick={() => { if (!src) sampleFileRefs.current[i]?.click(); }}
                                                 >
-                                                    <X className="w-3 h-3 text-white" />
-                                                </button>
+                                                    {/* Number badge */}
+                                                    <span className="absolute top-2 left-2 z-10 w-6 h-6 rounded-full bg-black/60 backdrop-blur-sm text-white text-xs font-black flex items-center justify-center">
+                                                        {i + 1}
+                                                    </span>
+
+                                                    {src ? (
+                                                        <>
+                                                            <img src={src} alt={`Sample ${i + 1}`} className="w-full h-full object-cover cursor-zoom-in" onClick={() => setLightboxSrc(src)} />
+                                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        URL.revokeObjectURL(src);
+                                                                        const updatedPreviews = [...samplePreviews];
+                                                                        const updatedFiles = [...form.sampleImages];
+                                                                        updatedPreviews.splice(i, 1);
+                                                                        updatedFiles.splice(i, 1);
+                                                                        setSamplePreviews(updatedPreviews);
+                                                                        set({ sampleImages: updatedFiles });
+                                                                    }}
+                                                                    className="px-2.5 py-1.5 bg-red-500 text-white rounded-lg text-xs font-semibold"
+                                                                >
+                                                                    Remove
+                                                                </button>
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <div className="flex flex-col items-center justify-center w-full h-full gap-3 px-3">
+                                                            <div className="flex flex-col items-center gap-1 text-center pointer-events-none">
+                                                                <ImageIcon className="w-6 h-6 text-muted-foreground/50" />
+                                                                <span className="text-[10px] text-muted-foreground/60 leading-tight">
+                                                                    Drag & drop<br />or click to upload
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => { e.stopPropagation(); setAiGeneratorSampleIdx(i); }}
+                                                                    className="flex items-center gap-1.5 px-3 py-2 bg-primary/15 hover:bg-primary/25 border border-primary/30 text-primary rounded-lg text-xs font-semibold transition-all"
+                                                                >
+                                                                    <Sparkles className="w-3.5 h-3.5" />
+                                                                    Generate
+                                                                </button>
+                                                                <span className="text-xs text-muted-foreground/40">or</span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => { e.stopPropagation(); sampleFileRefs.current[i]?.click(); }}
+                                                                    className="flex items-center gap-1.5 px-3 py-2 bg-secondary border border-border rounded-lg text-xs font-semibold cursor-pointer hover:bg-secondary/70 transition-all"
+                                                                >
+                                                                    <Upload className="w-3.5 h-3.5" />
+                                                                    Upload
+                                                                </button>
+                                                            </div>
+                                                            <input
+                                                                type="file"
+                                                                accept="image/jpeg,image/png,image/webp"
+                                                                className="hidden"
+                                                                ref={el => { sampleFileRefs.current[i] = el; }}
+                                                                onChange={(e) => {
+                                                                    const f = e.target.files?.[0];
+                                                                    if (!f) return;
+                                                                    if (f.size > 5 * 1024 * 1024) { toast.error("Sample image must be under 5 MB"); return; }
+                                                                    const updated = [...samplePreviews];
+                                                                    const updatedFiles = [...form.sampleImages];
+                                                                    updated[i] = URL.createObjectURL(f);
+                                                                    updatedFiles[i] = f;
+                                                                    setSamplePreviews(updated);
+                                                                    set({ sampleImages: updatedFiles });
+                                                                    e.target.value = "";
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                )}
+                                        );
+                                    })}
+                                </div>
+                                <p className="text-xs text-muted-foreground/50 mt-2">JPEG, PNG · Max 5 MB each · 1–4 images required</p>
 
-                                {/* Upload button */}
-                                {samplePreviews.length < 4 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => sampleInputRef.current?.click()}
-                                        className="flex items-center gap-2 px-5 py-3 bg-secondary hover:bg-secondary/70 border border-dashed border-border rounded-2xl text-sm font-bold text-muted-foreground hover:text-foreground transition-all hover:scale-[1.02]"
-                                    >
-                                        <Upload className="w-4 h-4" /> Add Sample Image
-                                    </button>
+                                {/* AI generator modal for sample images */}
+                                {aiGeneratorSampleIdx !== null && (
+                                    <BrandImageGeneratorModal
+                                        isOpen={true}
+                                        onClose={() => setAiGeneratorSampleIdx(null)}
+                                        onAddToOption={(file, preview) => {
+                                            const updated = [...samplePreviews];
+                                            const updatedFiles = [...form.sampleImages];
+                                            if (updated[aiGeneratorSampleIdx]) URL.revokeObjectURL(updated[aiGeneratorSampleIdx]);
+                                            updated[aiGeneratorSampleIdx] = preview;
+                                            updatedFiles[aiGeneratorSampleIdx] = file;
+                                            setSamplePreviews(updated);
+                                            set({ sampleImages: updatedFiles });
+                                            setAiGeneratorSampleIdx(null);
+                                        }}
+                                        brandId={user?.ownedBrands?.[0]?.id ?? ""}
+                                        brandName={user?.ownedBrands?.[0]?.name}
+                                        eventTitle={form.title}
+                                        eventDescription={form.description}
+                                        optionLabel={`Sample ${aiGeneratorSampleIdx + 1}`}
+                                    />
                                 )}
-                                <p className="text-xs text-muted-foreground/50 mt-1.5">JPEG, PNG · Max 5 MB each · 1–4 images required</p>
-
-                                <input
-                                    ref={sampleInputRef}
-                                    type="file"
-                                    accept="image/jpeg,image/png,image/webp"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (!file) return;
-                                        if (file.size > 5 * 1024 * 1024) { toast.error("Sample image must be under 5 MB"); return; }
-                                        setSamplePreviews((p) => [...p, URL.createObjectURL(file)]);
-                                        set({ sampleImages: [...form.sampleImages, file] });
-                                        e.target.value = "";
-                                    }}
-                                />
                             </div>
                         )}
                     </div>
@@ -1386,6 +1476,7 @@ export default function CreateEventPage() {
                                             const f = e.dataTransfer.files?.[0];
                                             if (f && f.type.startsWith("image/")) updateProposalMedia(idx, f);
                                         }}
+                                        onClick={() => { if (!p.mediaPreview) proposalFileRefs.current[idx]?.click(); }}
                                     >
                                         {/* Number badge */}
                                         <span className="absolute top-2 left-2 z-10 w-6 h-6 rounded-full bg-black/60 backdrop-blur-sm text-white text-xs font-black flex items-center justify-center">
@@ -1423,27 +1514,31 @@ export default function CreateEventPage() {
                                             </>
                                         ) : (
                                             /* Empty state — upload/generate/drag */
-                                            <label className="flex flex-col items-center justify-center w-full h-full gap-3 cursor-pointer px-3">
+                                            <div className="flex flex-col items-center justify-center w-full h-full gap-3 px-3">
                                                 <div className="flex flex-col items-center gap-1 text-center pointer-events-none">
                                                     <ImageIcon className="w-6 h-6 text-muted-foreground/50" />
                                                     <span className="text-[10px] text-muted-foreground/60 leading-tight">
                                                         Drag & drop<br />or click to upload
                                                     </span>
                                                 </div>
-                                                <div className="flex items-center gap-2 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+                                                <div className="flex items-center gap-2">
                                                     <button
                                                         type="button"
-                                                        onClick={() => setAiGeneratorProposalIdx(idx)}
+                                                        onClick={(e) => { e.stopPropagation(); setAiGeneratorProposalIdx(idx); }}
                                                         className="flex items-center gap-1.5 px-3 py-2 bg-primary/15 hover:bg-primary/25 border border-primary/30 text-primary rounded-lg text-xs font-semibold transition-all"
                                                     >
                                                         <Sparkles className="w-3.5 h-3.5" />
                                                         Generate
                                                     </button>
                                                     <span className="text-xs text-muted-foreground/40">or</span>
-                                                    <div className="flex items-center gap-1.5 px-3 py-2 bg-secondary border border-border rounded-lg text-xs font-semibold cursor-pointer hover:bg-secondary/70 transition-all">
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => { e.stopPropagation(); proposalFileRefs.current[idx]?.click(); }}
+                                                        className="flex items-center gap-1.5 px-3 py-2 bg-secondary border border-border rounded-lg text-xs font-semibold cursor-pointer hover:bg-secondary/70 transition-all"
+                                                    >
                                                         <Upload className="w-3.5 h-3.5" />
                                                         Upload
-                                                    </div>
+                                                    </button>
                                                 </div>
                                                 <input
                                                     type="file"
@@ -1456,7 +1551,7 @@ export default function CreateEventPage() {
                                                         e.target.value = "";
                                                     }}
                                                 />
-                                            </label>
+                                            </div>
                                         )}
                                     </div>
 

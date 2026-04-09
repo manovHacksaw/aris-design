@@ -24,7 +24,12 @@ import {
 } from "lucide-react";
 import { useUser } from "@/context/UserContext";
 import { useAuth } from "@/context/AuthContext";
-import { upsertBrandProfile } from "@/services/brand.service";
+import { upsertBrandProfile, getCurrentBrand } from "@/services/brand.service";
+import type { Brand } from "@/services/brand.service";
+import { getBrandEvents } from "@/services/event.service";
+import type { Event as BrandEvent } from "@/services/event.service";
+import { apiRequest } from "@/services/api";
+import { levelToRank } from "@/types/user";
 import { uploadToPinata, validateImageFile } from "@/lib/pinata-upload";
 import { cn } from "@/lib/utils";
 import { BrandImageGeneratorModal } from "@/components/create/BrandImageGeneratorModal";
@@ -66,6 +71,25 @@ export default function BrandSettingsPage() {
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [aiModalOpen, setAiModalOpen] = useState(false);
+
+  const [brandData, setBrandData] = useState<Brand | null>(null);
+  const [tokensMinted, setTokensMinted] = useState<number | null>(null);
+  const [brandEvents, setBrandEvents] = useState<BrandEvent[]>([]);
+  const [showcaseTab, setShowcaseTab] = useState<"events" | "creations">("events");
+  const [eventTypeTab, setEventTypeTab] = useState<"vote" | "post">("vote");
+
+  useEffect(() => {
+    if (!user) return;
+    Promise.allSettled([
+      getCurrentBrand(),
+      apiRequest<{ success: boolean; usdcDistributed: number }>("/brands/milestones", { method: "GET" }),
+      getBrandEvents(),
+    ]).then(([brandRes, milestonesRes, eventsRes]) => {
+      if (brandRes.status === "fulfilled") setBrandData(brandRes.value);
+      if (milestonesRes.status === "fulfilled") setTokensMinted(milestonesRes.value.usdcDistributed);
+      if (eventsRes.status === "fulfilled") setBrandEvents(eventsRes.value);
+    });
+  }, [user]);
 
   useEffect(() => {
     if (!user || seeded.current) return;
@@ -216,7 +240,6 @@ export default function BrandSettingsPage() {
     ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })
     : null;
 
-  const socialLinksCount = Object.values(socialLinks).filter(Boolean).length;
 
   if (userLoading && !user) {
     return (
@@ -324,6 +347,12 @@ export default function BrandSettingsPage() {
                       <span className="text-[10px] font-black text-white/30 uppercase tracking-wide">Joined {joinDate}</span>
                     </div>
                   )}
+                  {user?.ownedBrands?.[0]?.id && (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.04] border border-white/[0.06] rounded-full">
+                      <Tag className="w-3 h-3 text-white/30" />
+                      <span className="text-[10px] font-black text-white/30 uppercase tracking-wide font-mono">ID: {user.ownedBrands[0].id}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -340,17 +369,33 @@ export default function BrandSettingsPage() {
             </div>
           </div>
 
-          {/* ── Edit Settings Panel ── */}
+          {/* ── Edit Profile Modal ── */}
           <AnimatePresence>
             {isEditing && (
-              <motion.div
-                key="edit-panel"
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
-                className="bg-white/[0.02] border border-primary/20 rounded-[24px] p-6 md:p-8 space-y-6"
-              >
+              <>
+                {/* Backdrop */}
+                <motion.div
+                  key="edit-backdrop"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40"
+                  onClick={() => setIsEditing(false)}
+                />
+                {/* Modal */}
+                <motion.div
+                  key="edit-panel"
+                  initial={{ opacity: 0, scale: 0.96, y: 16 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.96, y: 16 }}
+                  transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                  className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+                >
+                  <div
+                    className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0d0d0f] border border-white/[0.08] rounded-[28px] p-6 md:p-8 space-y-6 pointer-events-auto shadow-2xl"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-display text-2xl text-white uppercase tracking-tight">Edit Brand Profile</h3>
@@ -508,38 +553,40 @@ export default function BrandSettingsPage() {
                     {saved ? "Saved!" : "Save Changes"}
                   </button>
                 </div>
-              </motion.div>
+                  </div>
+                </motion.div>
+              </>
             )}
           </AnimatePresence>
 
           {/* ── Stats Row ── */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-primary">Status</p>
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-primary">Milestone</p>
               <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">
-                {user?.isOnboarded ? "Live" : "Setup"}
+                {brandData ? levelToRank(brandData.level) : "—"}
               </p>
-              <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Brand Account</p>
-            </div>
-
-            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-lime-400">Categories</p>
-              <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">{categories.length}</p>
-              <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Selected</p>
-            </div>
-
-            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-blue-400">Socials</p>
-              <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">{socialLinksCount}</p>
-              <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Connected</p>
-            </div>
-
-            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-yellow-400">Account</p>
-              <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">Brand</p>
               <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">
-                {user?.isOnboarded ? "Verified" : "Pending"}
+                Level {brandData?.level ?? "—"}
               </p>
+            </div>
+
+            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-lime-400">Events</p>
+              <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">{brandData?.eventsCreated ?? "—"}</p>
+              <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Created</p>
+            </div>
+
+            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-blue-400">Followers</p>
+              <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">{brandData?.followerCount ?? "—"}</p>
+              <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Subscribers</p>
+            </div>
+
+            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-yellow-400">Participants</p>
+              <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">{brandData?.uniqueParticipants ?? "—"}</p>
+              <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Across Events</p>
             </div>
           </div>
 
@@ -554,6 +601,7 @@ export default function BrandSettingsPage() {
               <p className="text-sm font-black text-white/20 uppercase tracking-wide">No description yet.</p>
             )}
 
+            {/* Socials */}
             {Object.values(socialLinks).some(Boolean) && (
               <div className="flex flex-wrap gap-2 pt-3 border-t border-white/[0.04]">
                 {SOCIAL_KEYS.map(({ key, label, icon: Icon }) =>
@@ -571,34 +619,187 @@ export default function BrandSettingsPage() {
                 )}
               </div>
             )}
-          </div>
 
-          {/* ── Categories Display ── */}
-          {categories.length > 0 && (
-            <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 md:p-8 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-center shrink-0">
-                  <Tag className="w-4 h-4 text-primary" />
+            {/* Categories + Tokens Minted — same layout as user panel stat counters */}
+            <div className="pt-4 border-t border-white/4">
+              {/* Categories pills */}
+              {categories.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-5">
+                  {categories.map((cat) => (
+                    <span
+                      key={cat}
+                      className="px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-primary/10 border border-primary/20 text-primary"
+                    >
+                      {cat}
+                    </span>
+                  ))}
                 </div>
+              )}
+
+              {/* Stat counters row */}
+              <div className="flex items-center gap-8">
                 <div>
-                  <h3 className="font-display text-2xl text-white uppercase tracking-tight">Brand Categories</h3>
-                  <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-0.5">
-                    Industries we operate in
+                  <p className="font-display text-3xl text-white uppercase tracking-tight leading-none">
+                    {categories.length}
                   </p>
+                  <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.15em] mt-1">Categories</p>
+                </div>
+                <div className="w-px h-8 bg-white/6" />
+                <div>
+                  <p className="font-display text-3xl text-white uppercase tracking-tight leading-none">
+                    {tokensMinted !== null ? `$${tokensMinted.toLocaleString(undefined, { maximumFractionDigits: 1 })}` : "—"}
+                  </p>
+                  <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.15em] mt-1">Tokens Minted</p>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {categories.map((cat) => (
-                  <span
-                    key={cat}
-                    className="px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-primary/10 border border-primary/20 text-primary"
+            </div>
+          </div>
+        {/* ── Showcase ── */}
+          <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 md:p-8 space-y-5">
+            {/* Header */}
+            <div className="flex items-end justify-between">
+              <h2 className="font-display text-2xl text-white uppercase tracking-tight">Showcase</h2>
+              {/* Top-level tabs */}
+              <div className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.06] rounded-xl p-1">
+                {(["events", "creations"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setShowcaseTab(tab)}
+                    className={cn(
+                      "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                      showcaseTab === tab
+                        ? "bg-white text-black"
+                        : "text-white/40 hover:text-white/70"
+                    )}
                   >
-                    {cat}
-                  </span>
+                    {tab === "events" ? "Events" : "Creations"}
+                  </button>
                 ))}
               </div>
             </div>
-          )}
+
+            {showcaseTab === "events" && (
+              <>
+                {/* Vote / Post sub-tabs */}
+                <div className="flex items-center gap-4 border-b border-white/[0.06] pb-0">
+                  {(["vote", "post"] as const).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setEventTypeTab(t)}
+                      className={cn(
+                        "pb-3 text-[11px] font-black uppercase tracking-widest transition-colors border-b-2 -mb-px",
+                        eventTypeTab === t
+                          ? "text-primary border-primary"
+                          : "text-white/30 border-transparent hover:text-white/60"
+                      )}
+                    >
+                      {t === "vote" ? "Vote Only" : "Post & Vote"}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Event list */}
+                {(() => {
+                  const filtered = brandEvents.filter((ev) =>
+                    eventTypeTab === "vote" ? ev.eventType === "vote_only" : ev.eventType === "post_and_vote"
+                  );
+                  if (filtered.length === 0) {
+                    return (
+                      <p className="text-sm font-black text-white/20 uppercase tracking-wide py-4">
+                        No {eventTypeTab === "vote" ? "vote" : "post"} events yet.
+                      </p>
+                    );
+                  }
+                  return (
+                    <div className="space-y-2">
+                      {filtered.map((ev) => {
+                        const statusColors: Record<string, string> = {
+                          posting: "text-lime-400",
+                          voting: "text-lavender",
+                          scheduled: "text-blue-400",
+                          draft: "text-yellow-400",
+                          completed: "text-white/30",
+                          cancelled: "text-pink-400",
+                        };
+                        const statusLabels: Record<string, string> = {
+                          posting: "Active", voting: "Voting", scheduled: "Scheduled",
+                          draft: "Draft", completed: "Completed", cancelled: "Cancelled",
+                        };
+                        const thumb = ev.imageUrl || (ev.imageCid ? `https://gateway.pinata.cloud/ipfs/${ev.imageCid}` : null);
+                        const date = new Date(ev.startTime).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                        return (
+                          <div key={ev.id} className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:bg-white/[0.04] hover:border-white/[0.1] transition-all">
+                            {/* Thumb */}
+                            <div className="w-12 h-12 rounded-xl bg-white/[0.06] border border-white/[0.08] overflow-hidden shrink-0 flex items-center justify-center">
+                              {thumb
+                                ? <img src={thumb} alt={ev.title} className="w-full h-full object-cover" />
+                                : <span className="text-[10px] font-black text-white/20">{ev.title[0]}</span>
+                              }
+                            </div>
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30 mb-0.5">
+                                {brandName} <span className="mx-1">·</span>
+                                <span className={statusColors[ev.status] ?? "text-white/30"}>{statusLabels[ev.status] ?? ev.status}</span>
+                              </p>
+                              <p className="text-sm font-black text-white truncate">{ev.title}</p>
+                            </div>
+                            {/* Date */}
+                            <p className="text-[10px] font-black text-white/30 uppercase tracking-wide shrink-0">{date}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </>
+            )}
+
+            {showcaseTab === "creations" && (
+              <>
+                {(() => {
+                  // Use only what the list endpoint reliably returns:
+                  // 1. sampleUrls — images brand uploaded as vote options / post samples
+                  // 2. imageUrl / imageCid — event cover image
+                  const images: { src: string; label: string }[] = [];
+                  brandEvents.forEach((ev) => {
+                    // Sample images uploaded by brand (vote options / post samples)
+                    if (ev.sampleUrls?.length) {
+                      ev.sampleUrls.forEach((s) => {
+                        const src = s.urls?.medium || s.urls?.thumbnail || s.urls?.full;
+                        if (src) images.push({ src, label: ev.title });
+                      });
+                    }
+                    // Fallback: event cover
+                    const cover = ev.imageUrl || (ev.imageCid ? `https://gateway.pinata.cloud/ipfs/${ev.imageCid}` : null);
+                    if (cover && !ev.sampleUrls?.length) {
+                      images.push({ src: cover, label: ev.title });
+                    }
+                  });
+
+                  if (images.length === 0) {
+                    return (
+                      <p className="text-sm font-black text-white/20 uppercase tracking-wide py-4">
+                        No uploaded images yet.
+                      </p>
+                    );
+                  }
+                  return (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                      {images.map((img, i) => (
+                        <div key={i} className="aspect-square rounded-xl overflow-hidden bg-white/[0.04] border border-white/[0.06] group relative">
+                          <img src={img.src} alt={img.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+                            <p className="text-[9px] font-black text-white uppercase tracking-wide line-clamp-2">{img.label}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </>
+            )}
+          </div>
         </div>
 
         {/* ── Right Column ── */}

@@ -484,7 +484,7 @@ function ParticipantCard({ sub, rank, showVotes, showThumb, isList = false, vote
             animate={{ opacity: 1, y: 0 }}
             className={cn(
                 "relative rounded-[20px] border overflow-hidden transition-all hover:shadow-lg",
-                isList ? "flex items-center gap-4 py-2 px-3" : "flex flex-col",
+                isList ? "flex items-center gap-2 py-1 px-2" : "flex flex-col",
                 isWinner
                     ? "bg-yellow-500/5 border-yellow-500/20"
                     : "bg-white/[0.03] border-white/[0.07] hover:bg-white/[0.05]"
@@ -506,7 +506,7 @@ function ParticipantCard({ sub, rank, showVotes, showThumb, isList = false, vote
             {showThumb && (
                 <div className={cn(
                     "bg-white/4 overflow-hidden shrink-0",
-                    isList ? "w-16 h-12 rounded-lg" : "aspect-4/3 w-full"
+                    isList ? "w-10 h-7 rounded-md" : "aspect-4/3 w-full"
                 )}>
                     {thumb ? (
                         <img src={thumb} alt={name} className="w-full h-full object-cover" />
@@ -519,19 +519,19 @@ function ParticipantCard({ sub, rank, showVotes, showThumb, isList = false, vote
             )}
 
             {/* Profile info */}
-            <div className="p-3 flex items-center gap-2.5">
+            <div className={cn("flex items-center gap-2.5", isList ? "p-1.5 flex-1 min-w-0" : "p-3")}>
                 <img
                     src={avatar}
                     alt={name}
-                    className="w-9 h-9 rounded-full object-cover border border-border/30 shrink-0"
+                    className={cn("rounded-full object-cover border border-border/30 shrink-0", isList ? "w-5 h-5" : "w-9 h-9")}
                 />
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm font-black text-foreground truncate">{name}</p>
-                    <p className="text-[10px] text-foreground/40 font-medium truncate">@{handle}</p>
+                    <p className={cn("font-black text-foreground truncate", isList ? "text-[11px]" : "text-sm")}>{name}</p>
+                    <p className={cn("text-foreground/40 font-medium truncate", isList ? "text-[9px]" : "text-[10px]")}>@{handle}</p>
                 </div>
                 {showVotes && (
                     <div className="text-right shrink-0">
-                        <p className="text-sm font-black text-foreground">{votes}</p>
+                        <p className={cn("font-black text-foreground", isList ? "text-[11px]" : "text-sm")}>{votes}</p>
                         <p className="text-[9px] text-foreground/30 uppercase tracking-widest font-bold">votes</p>
                     </div>
                 )}
@@ -599,13 +599,14 @@ function ParticipantsGrid({ submissions, event, gridView, voterBreakdown = {} }:
                             All Participants ({others.length})
                         </p>
                     )}
-                    <div className={gridView ? "grid grid-cols-2 md:grid-cols-3 gap-4" : "flex flex-col gap-2.5 max-w-2xl"}>
+                    <div className={gridView ? "grid grid-cols-2 md:grid-cols-3 gap-4" : "flex flex-col items-center gap-2"}>
                         {(event.status === "completed" ? others : sorted).map((sub, idx) => (
                             <motion.div
                                 key={sub.id}
                                 initial={{ opacity: 0, y: 8 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.03 }}
+                                className={!gridView ? "w-1/2" : undefined}
                             >
                                 <ParticipantCard sub={sub} showVotes={showVotes} showThumb={showThumb} isList={!gridView} voters={voterBreakdown[sub.id]} />
                             </motion.div>
@@ -1136,11 +1137,11 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                                                 <p className="text-sm text-foreground/30 font-bold">No voting options yet</p>
                                             </div>
                                         ) : (
-                                            <div className={gridView ? "grid grid-cols-2 md:grid-cols-3 gap-4" : "flex flex-col gap-3"}>
+                                            <div className={gridView ? "grid grid-cols-2 md:grid-cols-3 gap-4" : "flex flex-col items-center gap-3"}>
                                                 {enrichedSubmissions.map((sub, idx) => {
                                                     const voters = voterBreakdown[sub.id] ?? [];
                                                     return (
-                                                        <motion.div key={sub.id} layout initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2, delay: idx * 0.03 }} className="flex flex-col gap-0">
+                                                        <motion.div key={sub.id} layout initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2, delay: idx * 0.03 }} className={cn("flex flex-col gap-0", !gridView && "w-1/2")}>
                                                             <VoteSubmissionCard
                                                                 submission={toVoteSubmission(sub)}
                                                                 isVoted={false}
@@ -1149,6 +1150,7 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                                                                 disabled={true}
                                                                 optionIndex={idx}
                                                                 showVoteCount={true}
+                                                                listView={!gridView}
                                                             />
                                                             {displayMode === "completed" && voters.length > 0 && (
                                                                 <VoterTiles voters={voters} />
