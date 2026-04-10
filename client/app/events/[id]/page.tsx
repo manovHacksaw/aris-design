@@ -238,7 +238,7 @@ const SOCIAL_SLOTS = [
     { key: "website", label: "Website", icon: <Globe className="w-3.5 h-3.5" /> },
 ];
 
-function SocialLinks({ links, eventId }: { links?: Record<string, string>; eventId?: string }) {
+function SocialLinks({ links, eventId, variant = 'full' }: { links?: Record<string, string>; eventId?: string; variant?: 'full' | 'compact' }) {
     const trackLink = (platform: string) => {
         if (!eventId) return;
         fetch(`/api/analytics/events/${eventId}/click`, {
@@ -247,6 +247,30 @@ function SocialLinks({ links, eventId }: { links?: Record<string, string>; event
             body: JSON.stringify({ target: platform === 'website' ? 'website' : 'social', platform }),
         }).catch(() => { });
     };
+
+    if (variant === 'compact') {
+        return (
+            <div className="flex items-center gap-1.5 ml-2">
+                {SOCIAL_SLOTS.map(({ key, label, icon }) => {
+                    const url = links?.[key];
+                    if (!url) return null;
+                    return (
+                        <a
+                            key={key}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={label}
+                            onClick={() => trackLink(key)}
+                            className="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/15 hover:border-white/25 transition-all"
+                        >
+                            {icon}
+                        </a>
+                    );
+                })}
+            </div>
+        );
+    }
 
     return (
         <div className="pt-3 border-t border-white/[0.06] mt-3">
@@ -627,6 +651,7 @@ function EventSidebar({
                     )}
                 </div>
             )}
+            <SocialLinks links={socialLinks} eventId={event.id} />
         </div>
     );
 }
@@ -1352,6 +1377,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                 )}
                                                 <span className="text-[11px] font-black text-white/90">{event.brand?.name}</span>
                                             </div>
+                                            <SocialLinks links={(event.brand as any)?.socialLinks} eventId={event.id} variant="compact" />
                                             {event.category && (
                                                 <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.10] text-white/50">
                                                     {event.category}
@@ -1875,6 +1901,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                 )}
                                                 <span className="text-[11px] font-black text-white/90">{event.brand?.name}</span>
                                             </div>
+                                            <SocialLinks links={(event.brand as any)?.socialLinks} eventId={event.id} variant="compact" />
                                             {event.category && (
                                                 <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.10] text-white/50">
                                                     {event.category}

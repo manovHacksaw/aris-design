@@ -471,6 +471,8 @@ export class EventService {
             name: true,
             logoCid: true,
             ownerId: true,
+            socialLinks: true,
+            websiteUrl: true,
           },
         },
         eventAnalytics: true,

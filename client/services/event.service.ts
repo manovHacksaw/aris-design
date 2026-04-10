@@ -56,6 +56,8 @@ export interface Event {
         name: string;
         logoCid?: string;
         logoUrl?: string;
+        socialLinks?: Record<string, string>;
+        websiteUrl?: string;
     };
     eventAnalytics?: {
         totalViews: number;
