@@ -1380,7 +1380,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                 )}
                                                 <span className="text-[11px] font-black text-white/90">{event.brand?.name}</span>
                                             </div>
-                                            <SocialLinks links={(event.brand as any)?.socialLinks} eventId={event.id} variant="compact" />
+                                            <SocialLinks links={{ ...(event.brand as any)?.socialLinks, website: event.brand?.websiteUrl }} eventId={event.id} variant="compact" />
                                             {event.category && (
                                                 <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.10] text-white/50">
                                                     {event.category}
@@ -1904,7 +1904,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                 )}
                                                 <span className="text-[11px] font-black text-white/90">{event.brand?.name}</span>
                                             </div>
-                                            <SocialLinks links={(event.brand as any)?.socialLinks} eventId={event.id} variant="compact" />
+                                            <SocialLinks links={{ ...(event.brand as any)?.socialLinks, website: event.brand?.websiteUrl }} eventId={event.id} variant="compact" />
                                             {event.category && (
                                                 <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.10] text-white/50">
                                                     {event.category}
