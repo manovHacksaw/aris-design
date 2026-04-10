@@ -40,6 +40,23 @@ Right sidebar (`RightDashboard`) width reduced from `350px / 400px` → `280px /
 **File:** `client/app/(user)/wallet/page.tsx`  
 The POL / Native Balance section has been removed from the wallet balance card. Only the USDC balance is shown.
 
-## xi) Participant Avatars on Home Page Cards
-**Files:** `server/src/services/homeService.ts`  
-The home feed backend query now fetches the top 5 participant avatars per event (via approved submissions) and attaches them as `participantAvatars` to each event. `PremiumEventCard` already renders these avatars in the footer stats row — no frontend changes needed.
+## xi) Persistent Explore Banner & Marquee
+**File:** `client/app/(user)/explore/page.tsx`  
+The hero banner and active marquee are now persistent across all tabs (Events, Brands, Content) in the Explore page, ensuring a consistent design experience during navigation.
+
+## xii) Reduced Card Height & Refined Aspect Ratio
+**File:** `client/components/events/PremiumEventCard.tsx`  
+Updated the event card aspect ratio from `3:4` to `16:13` to create a more compact, landscape-oriented aesthetic. Skeleton loaders have been synchronized to match the new dimensions.
+
+## xiii) Fixed Home Feed 500 Error
+**File:** `server/src/services/homeService.ts`  
+Resolved a critical backend error where a non-existent `logoUrl` field was being queried in the Brand model. Switched to `logoCid` to stabilize the home event feed.
+
+## xiv) Brand Social Links Integration
+**Files:** `server/src/services/eventService.ts`, `client/services/event.service.ts`, `client/app/events/[id]/page.tsx`  
+Implemented brand social links (Twitter, Instagram, Website) within the event details page. Icons appear compactly next to the brand name in the hero banner and in a dedicated section in the sidebar.
+
+## xv) Multi-Repository Synchronization
+**Remotes:** `staging`, `origin`  
+All recent changes have been synchronized and successfully pushed to both the `staging` demo branch and the main `master` design repository.
+

@@ -344,7 +344,10 @@ function EventSidebar({
     onCaptionChange?: (v: string) => void;
 }) {
     const targetDate = event.status === "posting" ? event.postingEnd! : event.endTime;
-    const socialLinks = (event.brand as any)?.socialLinks as Record<string, string> | undefined;
+    const socialLinks = {
+        ...(event.brand?.socialLinks as any || {}),
+        website: event.brand?.websiteUrl
+    };
     const topReward = event.topReward ?? event.leaderboardPool ?? 0;
     const leaderboardPool = event.leaderboardPool ?? 0;
 
