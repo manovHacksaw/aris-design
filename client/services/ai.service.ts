@@ -54,13 +54,28 @@ export async function generateTagline(title: string, description?: string): Prom
     }
 }
 
+export interface AiEventSuggestion {
+    title: string;
+    description: string;
+    estimated_duration: string;
+    hypothesis: string;
+    estimated_votes: string;
+    voting_options?: Array<{ title: string; content: string }>;
+}
+
 export async function generateAiEventDetails(params: {
-    prompt: string;
+    motive: string;
     brandName?: string;
     brandBio?: string;
-}): Promise<{ success: boolean; title?: string; description?: string; error?: string }> {
+    eventType?: 'vote' | 'post';
+    decisionDomain?: string;
+    targetMarket?: string;
+    budget?: string;
+    count?: number;
+    voteOptions?: number;
+}): Promise<{ success: boolean; suggestions?: AiEventSuggestion[]; error?: string }> {
     try {
-        return await apiRequest<{ success: boolean; title: string; description: string }>(
+        return await apiRequest<{ success: boolean; suggestions: AiEventSuggestion[] }>(
             '/ai/generate-event-details',
             {
                 method: 'POST',
@@ -71,6 +86,56 @@ export async function generateAiEventDetails(params: {
         return {
             success: false,
             error: error?.message || 'Failed to generate event details',
+        };
+    }
+}
+
+
+export async function generateAiBannerPrompts(params: {
+    title: string;
+    description?: string;
+    theme?: string;
+    decisionDomain?: string;
+    targetMarket?: string;
+    brandIdentity?: string;
+    count?: number;
+}): Promise<{ success: boolean; prompts?: string[]; error?: string }> {
+    try {
+        return await apiRequest<{ success: boolean; prompts: string[] }>(
+            '/ai/generate-banner-prompts',
+            {
+                method: 'POST',
+                body: JSON.stringify(params),
+            }
+        );
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error?.message || 'Failed to generate banner prompts',
+        };
+    }
+}
+
+export async function generateAiVotingOptionPrompts(params: {
+    eventTitle: string;
+    eventDescription?: string;
+    decisionDomain?: string;
+    targetMarket?: string;
+    brandIdentity?: string;
+    contentTitle?: string;
+}): Promise<{ success: boolean; prompts?: string[]; error?: string }> {
+    try {
+        return await apiRequest<{ success: boolean; prompts: string[] }>(
+            '/ai/generate-voting-option-prompts',
+            {
+                method: 'POST',
+                body: JSON.stringify(params),
+            }
+        );
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error?.message || 'Failed to generate voting option prompts',
         };
     }
 }

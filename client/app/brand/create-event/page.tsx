@@ -23,6 +23,8 @@ import type { Event } from "@/services/event.service";
 import { uploadToPinata } from "@/lib/pinata-upload";
 import EventDraftPanel from "@/components/brand/createEvent/EventDraftPanel";
 import AiEventPanel from "@/components/brand/createEvent/AiEventPanel";
+import AiBannerPanel from "@/components/brand/createEvent/AiBannerPanel";
+import AiVotingOptionPanel from "@/components/brand/createEvent/AiVotingOptionPanel";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const BASE_RATE = 0.030;   // $0.030/participant — base voter reward
@@ -448,7 +450,7 @@ export default function CreateEventPage() {
                 if (!form.title.trim()) return "Event name is required.";
                 if (form.description.trim().length < 20) return "Description must be at least 20 characters.";
                 if (!form.domain || form.domain === "Other") return "Please enter your domain.";
-                if (!form.coverImage) return "Event banner is required.";
+                if (!form.coverImage && !bannerPreview) return "Event banner is required.";
                 if (isPost && form.sampleImages.length < 1) return "At least 1 sample image is required for post events.";
                 if (!form.startImmediately && !form.startDate) return "Please set a start date.";
                 if (isPost) {
@@ -1034,23 +1036,29 @@ export default function CreateEventPage() {
                             />
                         </div>
 
-                        {/* Banner AI generator modal */}
-                        <BrandImageGeneratorModal
-                            isOpen={bannerGeneratorOpen}
-                            onClose={() => setBannerGeneratorOpen(false)}
-                            onAddToOption={(file, preview) => {
-                                if (bannerPreview) URL.revokeObjectURL(bannerPreview);
-                                setBannerPreview(preview);
-                                set({ coverImage: file });
-                                setBannerGeneratorOpen(false);
-                            }}
-                            brandId={user?.ownedBrands?.[0]?.id ?? ""}
-                            brandName={user?.ownedBrands?.[0]?.name}
-                            eventTitle={form.title}
-                            eventDescription={form.description}
-                            optionLabel="Event Banner (16:9)"
-                            isBanner
-                        />
+                        {/* Banner AI generator modal — new N-prompt flow */}
+                        {bannerGeneratorOpen && (
+                            <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                                <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl bg-card border border-border shadow-2xl">
+                                    <AiBannerPanel
+                                        title={form.title}
+                                        description={form.description}
+                                        decisionDomain={form.domain}
+                                        ageGroup={form.ageGroup}
+                                        preferredGender={form.preferredGender}
+                                        brandName={user?.ownedBrands?.[0]?.name}
+                                        brandBio={user?.ownedBrands?.[0]?.description}
+                                        onApplyImage={(file, preview) => {
+                                            if (bannerPreview?.startsWith("blob:")) URL.revokeObjectURL(bannerPreview);
+                                            setBannerPreview(preview);
+                                            set({ coverImage: file });
+                                            setBannerGeneratorOpen(false);
+                                        }}
+                                        onClose={() => setBannerGeneratorOpen(false)}
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         {/* Sample images — post events only */}
                         {isPost && (
@@ -1178,25 +1186,26 @@ export default function CreateEventPage() {
 
                                 {/* AI generator modal for sample images */}
                                 {aiGeneratorSampleIdx !== null && (
-                                    <BrandImageGeneratorModal
-                                        isOpen={true}
-                                        onClose={() => setAiGeneratorSampleIdx(null)}
-                                        onAddToOption={(file, preview) => {
-                                            const updated = [...samplePreviews];
-                                            const updatedFiles = [...form.sampleImages];
-                                            if (updated[aiGeneratorSampleIdx]) URL.revokeObjectURL(updated[aiGeneratorSampleIdx]);
-                                            updated[aiGeneratorSampleIdx] = preview;
-                                            updatedFiles[aiGeneratorSampleIdx] = file;
-                                            setSamplePreviews(updated);
-                                            set({ sampleImages: updatedFiles });
-                                            setAiGeneratorSampleIdx(null);
-                                        }}
-                                        brandId={user?.ownedBrands?.[0]?.id ?? ""}
-                                        brandName={user?.ownedBrands?.[0]?.name}
-                                        eventTitle={form.title}
-                                        eventDescription={form.description}
-                                        optionLabel={`Sample ${aiGeneratorSampleIdx + 1}`}
-                                    />
+                                    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                                        <AiVotingOptionPanel
+                                            eventTitle={form.title}
+                                            eventDescription={form.description}
+                                            decisionDomain={form.domain}
+                                            brandName={user?.ownedBrands?.[0]?.name}
+                                            brandBio={user?.ownedBrands?.[0]?.description}
+                                            onApply={(file, preview) => {
+                                                const updated = [...samplePreviews];
+                                                const updatedFiles = [...form.sampleImages];
+                                                if (updated[aiGeneratorSampleIdx]) URL.revokeObjectURL(updated[aiGeneratorSampleIdx]);
+                                                updated[aiGeneratorSampleIdx] = preview;
+                                                updatedFiles[aiGeneratorSampleIdx] = file;
+                                                setSamplePreviews(updated);
+                                                set({ sampleImages: updatedFiles });
+                                                setAiGeneratorSampleIdx(null);
+                                            }}
+                                            onClose={() => setAiGeneratorSampleIdx(null)}
+                                        />
+                                    </div>
                                 )}
                             </div>
                         )}
@@ -1573,23 +1582,25 @@ export default function CreateEventPage() {
                             </button>
                         )}
 
-                        {/* AI Image Generator modal */}
+                        {/* AI Voting Option Image Generator */}
                         {aiGeneratorProposalIdx !== null && (
-                            <BrandImageGeneratorModal
-                                isOpen={true}
-                                onClose={() => setAiGeneratorProposalIdx(null)}
-                                onAddToOption={(file, preview) => {
-                                    set({ proposals: form.proposals.map((p, i) =>
-                                        i === aiGeneratorProposalIdx ? { ...p, media: file, mediaPreview: preview } : p
-                                    )});
-                                    setAiGeneratorProposalIdx(null);
-                                }}
-                                brandId={user?.ownedBrands?.[0]?.id ?? ""}
-                                brandName={user?.ownedBrands?.[0]?.name}
-                                eventTitle={form.title}
-                                eventDescription={form.description}
-                                optionLabel={`Option ${aiGeneratorProposalIdx + 1}`}
-                            />
+                            <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                                <AiVotingOptionPanel
+                                    eventTitle={form.title}
+                                    eventDescription={form.description}
+                                    decisionDomain={form.domain}
+                                    contentTitle={form.proposals[aiGeneratorProposalIdx]?.title || `Option ${aiGeneratorProposalIdx + 1}`}
+                                    brandName={user?.ownedBrands?.[0]?.name}
+                                    brandBio={user?.ownedBrands?.[0]?.description}
+                                    onApply={(file, preview) => {
+                                        set({ proposals: form.proposals.map((p, i) =>
+                                            i === aiGeneratorProposalIdx ? { ...p, media: file, mediaPreview: preview } : p
+                                        )});
+                                        setAiGeneratorProposalIdx(null);
+                                    }}
+                                    onClose={() => setAiGeneratorProposalIdx(null)}
+                                />
+                            </div>
                         )}
                     </div>
                 );
@@ -2223,15 +2234,25 @@ export default function CreateEventPage() {
                     <AiEventPanel
                         brandName={user?.ownedBrands?.[0]?.name}
                         brandBio={user?.ownedBrands?.[0]?.description}
+                        formTitle={form.title}
+                        formDescription={form.description}
+                        formDomain={form.domain}
+                        formAgeGroup={form.ageGroup}
+                        formPreferredGender={form.preferredGender}
                         onApplyEvent={(data) => {
-                            if (data.title) set({ title: data.title });
-                            if (data.description) set({ description: data.description });
-                            if (data.domain) set({ domain: data.domain });
-                            if (data.type) set({ type: data.type });
-                            if (data.proposals) set({ proposals: data.proposals });
+                            const patch: Partial<typeof form> = {};
+                            if (data.title)           patch.title           = data.title;
+                            if (data.description)     patch.description     = data.description;
+                            if (data.domain)          patch.domain          = data.domain;
+                            if (data.type)            patch.type            = data.type;
+                            if (data.tagline)         patch.tagline         = data.tagline;
+                            if (data.proposals)       patch.proposals       = data.proposals;
+                            if (data.startImmediately !== undefined) patch.startImmediately = data.startImmediately;
+                            if (data.endDate)         patch.endDate         = data.endDate;
+                            if (data.postingEndDate)  patch.postingEndDate  = data.postingEndDate;
+                            set(patch);
                             setCurrentDraftId(null);
                             setViewMode("form");
-                            toast.success("AI event applied — review and launch");
                         }}
                         onApplyProposals={(proposals) => {
                             set({ proposals });
@@ -2239,8 +2260,11 @@ export default function CreateEventPage() {
                             setViewMode("form");
                             toast.success("Proposals applied");
                         }}
-                        onApplyImage={(imageUrl) => {
-                            setBannerPreview(imageUrl);
+                        onApplyImage={(file, preview) => {
+                            if (bannerPreview?.startsWith("blob:")) URL.revokeObjectURL(bannerPreview);
+                            setBannerPreview(preview);
+                            set({ coverImage: file });
+                            setViewMode("form");
                             toast.success("Image set as banner");
                         }}
                     />

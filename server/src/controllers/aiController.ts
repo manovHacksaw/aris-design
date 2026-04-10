@@ -1,6 +1,55 @@
 import { Request, Response } from 'express';
 import { AiService } from '../services/aiService';
 
+export const generateBannerPrompts = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const { title, description, theme, decisionDomain, targetMarket, brandIdentity, count } = req.body;
+
+        if (!title) {
+            return res.status(400).json({ success: false, error: 'Title is required' });
+        }
+
+        const prompts = await AiService.generateBannerPrompts({
+            title,
+            description: description || '',
+            theme: theme || '',
+            decisionDomain: decisionDomain || '',
+            targetMarket: targetMarket || '',
+            brandIdentity: brandIdentity || '',
+            count: Math.min(Math.max(parseInt(count) || 3, 1), 6),
+        });
+
+        return res.json({ success: true, prompts });
+    } catch (error: any) {
+        console.error('Error in AI generateBannerPrompts:', error);
+        return res.status(500).json({ success: false, error: 'Banner prompt generation failed', message: error.message });
+    }
+};
+
+export const generateVotingOptionPrompts = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const { eventTitle, eventDescription, decisionDomain, targetMarket, brandIdentity, contentTitle } = req.body;
+
+        if (!eventTitle) {
+            return res.status(400).json({ success: false, error: 'eventTitle is required' });
+        }
+
+        const prompts = await AiService.generateVotingOptionPrompts({
+            eventTitle,
+            eventDescription: eventDescription || '',
+            decisionDomain: decisionDomain || '',
+            targetMarket: targetMarket || '',
+            brandIdentity: brandIdentity || '',
+            contentTitle: contentTitle || '',
+        });
+
+        return res.json({ success: true, prompts });
+    } catch (error: any) {
+        console.error('Error in AI generateVotingOptionPrompts:', error);
+        return res.status(500).json({ success: false, error: 'Voting option prompt generation failed', message: error.message });
+    }
+};
+
 export const generateImage = async (req: Request, res: Response): Promise<Response> => {
     try {
         const { prompt, refineOnly } = req.body;
@@ -111,21 +160,30 @@ export const generateTagline = async (req: Request, res: Response): Promise<Resp
 
 export const generateEventDetails = async (req: Request, res: Response): Promise<Response> => {
     try {
-        const { prompt, brandName, brandBio } = req.body;
+        const { motive, brandName, brandBio, eventType, decisionDomain, targetMarket, budget, count, voteOptions } = req.body;
 
-        if (!prompt) {
+        if (!motive) {
             return res.status(400).json({
                 success: false,
-                error: 'Prompt is required'
+                error: 'Motive is required'
             });
         }
 
-        const details = await AiService.generateEventDetails(prompt, brandName || '', brandBio || '');
+        const suggestions = await AiService.generateEventDetails({
+            motive,
+            brandName: brandName || '',
+            brandBio: brandBio || '',
+            eventType: eventType || 'vote',
+            decisionDomain: decisionDomain || '',
+            targetMarket: targetMarket || '',
+            budget: budget || '',
+            count: Math.min(Math.max(parseInt(count) || 1, 1), 6),
+            voteOptions: Math.min(Math.max(parseInt(voteOptions) || 4, 2), 10),
+        });
 
         return res.json({
             success: true,
-            title: details.title,
-            description: details.description,
+            suggestions,
         });
     } catch (error: any) {
         console.error('Error in AI generateEventDetails:', error);
