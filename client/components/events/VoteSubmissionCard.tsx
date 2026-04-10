@@ -129,17 +129,8 @@ export default function VoteSubmissionCard({
                     <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/85 to-transparent pointer-events-none" />
                 )}
 
-                {/* Bottom bar: caption left, buttons right */}
-                <div className="absolute bottom-0 inset-x-0 px-3.5 pb-3.5 flex items-end justify-between gap-2 z-10">
-                    {/* Caption */}
-                    <div className="flex-1 min-w-0">
-                        {submission.textContent && (
-                            <p className="text-[13px] font-bold text-white leading-snug line-clamp-2 drop-shadow">
-                                {submission.textContent}
-                            </p>
-                        )}
-                    </div>
-
+                {/* Bottom bar: buttons right */}
+                <div className="absolute bottom-0 inset-x-0 px-3.5 pb-3.5 flex items-end justify-end gap-2 z-10">
                     {/* Buttons */}
                     <div className="flex items-center gap-2 shrink-0">
                         {/* Share */}

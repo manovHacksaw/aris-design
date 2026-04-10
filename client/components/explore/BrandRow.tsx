@@ -93,7 +93,7 @@ export default function BrandRow({ brand }: BrandRowProps) {
                     {brand.events.map((ev, i) => {
                         const evtWithBrand = { ...ev, brand: { name: brand.name, logoUrl: brand.logoUrl, logoCid: brand.logoCid, categories: brand.categories } };
                         return (
-                            <div key={ev.id || i} className="shrink-0 w-[300px] sm:w-[340px] transition-transform duration-300 hover:z-10 relative object-center group-hover/row:hover:scale-105">
+                            <div key={ev.id || i} className="shrink-0 w-[240px] sm:w-[300px] transition-transform duration-300 hover:z-10 relative object-center group-hover/row:hover:scale-105">
                                 <PremiumEventCard event={evtWithBrand} />
                             </div>
                         );

@@ -53,7 +53,7 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
     const brandPath = brand.name ? `/brand/${toBrandSlug(brand.name)}` : "#";
 
     return (
-        <div className={cn("relative block group w-full max-w-[300px] sm:max-w-[340px] mx-auto outline-none", className)}>
+        <div className={cn("relative block group w-full outline-none", className)}>
             {/* Primary Event Link acting as a clickable overlay */}
             <Link
                 href={`/events/${event.id}`}
@@ -61,7 +61,7 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
                 aria-label={`View ${event.title}`}
             />
 
-            <div className="relative z-10 pointer-events-none w-full aspect-[4/5] rounded-2xl overflow-hidden bg-[#111] border border-white/5 transition-all duration-500 ease-out group-hover:border-white/20 group-hover:-translate-y-2 group-hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.8)] active:scale-[0.98] cursor-pointer">
+            <div className="relative z-10 pointer-events-none w-full aspect-[16/13] rounded-2xl overflow-hidden bg-[#111] border border-white/5 transition-all duration-500 ease-out group-hover:border-white/20 group-hover:-translate-y-1 group-hover:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.8)] active:scale-[0.98] cursor-pointer">
 
                 {/* Background Image Area */}
                 <div className="absolute inset-0 w-full h-full">
@@ -120,7 +120,7 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
                                 </div>
                             )}
 
-                            <h3 className="text-2xl sm:text-[26px] font-bold text-white leading-tight line-clamp-2">
+                            <h3 className="text-xl sm:text-2xl font-bold text-white leading-tight line-clamp-2">
                                 {event.title}
                             </h3>
                         </div>
@@ -202,7 +202,7 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
 
 export function PremiumEventCardSkeleton({ className }: { className?: string }) {
     return (
-        <div className={cn("relative w-full aspect-[4/5] rounded-2xl overflow-hidden bg-[#111] animate-pulse border border-white/5", className)}>
+        <div className={cn("relative w-full aspect-[16/13] rounded-2xl overflow-hidden bg-[#111] animate-pulse border border-white/5", className)}>
             <div className="absolute inset-0 bg-white/5" />
             <div className="absolute bottom-0 left-0 w-full p-5 space-y-4">
                 <div className="h-4 bg-white/10 rounded w-1/4" />

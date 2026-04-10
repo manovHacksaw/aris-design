@@ -315,18 +315,6 @@ export default function WalletPage() {
                         </div>
                       </div>
 
-                      {/* POL Balance — secondary */}
-                      <div>
-                        <p className="text-[9px] font-black text-white/30 mb-1 tracking-[0.2em] uppercase">Native Balance</p>
-                        <div className="flex items-baseline gap-2">
-                          <span className="font-display text-2xl text-white/40 tracking-tight leading-none">
-                            {isFetchingMatic ? (
-                              <span className="text-white/20 animate-pulse">...</span>
-                            ) : polBalance}
-                          </span>
-                          <span className="text-sm text-white/20 font-black">POL</span>
-                        </div>
-                      </div>
                     </div>
 
                     <div className="flex flex-col items-end gap-2">

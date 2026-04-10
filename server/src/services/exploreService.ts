@@ -12,7 +12,7 @@ export function calculateEventScore(event: any) {
     // 'posting' means users can submit content, 'voting' means engagement is peaking.
     if (event.status === 'posting') score += 1000;
     else if (event.status === 'voting') score += 800;
-    else if (event.status === 'completed') score += 0; // Natural ranking for closed events
+    else if (event.status === 'completed' || event.status === 'COMPLETED') score += 200; // Small base score for historical visibility
     else return -1; 
 
     // 2. Prize Pool Weight (Max: 500)
@@ -74,9 +74,11 @@ export function calculateBrandScore(brand: any) {
     if (brand.isVerified) score += 300;
     score += (brand.level || 0) * 40;
 
-    // 3. Historical Impact (Base: 300)
-    // Based on total USDC rewards distributed to users.
+    // 3. Historical Impact (Base: 500)
+    // Based on total USDC rewards distributed and overall participation.
     score += Math.min(300, Math.log10((brand.totalUsdcGiven || 0) + 1) * 60);
+    score += Math.min(200, (brand.uniqueParticipants || 0) * 0.5); // Social proof weight
+    score += (brand.eventsCreated || 0) * 5; // Activity weight
 
     return score;
 }
@@ -330,7 +332,7 @@ export const ExploreService = {
                 where: { isActive: true },
                 include: {
                     events: {
-                        where: { isDeleted: false, status: { in: ['posting', 'voting'] } },
+                        where: { isDeleted: false, status: { in: ['posting', 'voting', 'completed'] } },
                         include: {
                             _count: { select: { submissions: true, votes: true } }
                         }

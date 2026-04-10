@@ -49,12 +49,12 @@ export default function EventRow({
                         ? Array.from({ length: 4 }).map((_, i) => (
                             <div
                                 key={i}
-                                className="flex-shrink-0 w-[300px] sm:w-[340px] aspect-[4/5] rounded-2xl bg-foreground/[0.05] animate-pulse border border-border"
+                                className="flex-shrink-0 w-[240px] sm:w-[300px] aspect-[3/4] rounded-2xl bg-foreground/[0.05] animate-pulse border border-border"
                                 style={{ animationDelay: `${i * 80}ms` }}
                             />
                         ))
                         : events.map((event) => (
-                            <div key={event.id} className="flex-shrink-0 w-[300px] sm:w-[340px]">
+                            <div key={event.id} className="flex-shrink-0 w-[240px] sm:w-[300px]">
                                 <PremiumEventCard event={event} />
                             </div>
                         ))}

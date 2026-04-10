@@ -89,15 +89,35 @@ export class HomeService {
         const events = await prisma.event.findMany({
             where: { status: { in: ['posting', 'voting'] }, isDeleted: false },
             include: {
-                brand: { select: { name: true, level: true, isVerified: true } },
+                brand: { select: { name: true, level: true, isVerified: true, logoCid: true } },
                 _count: { select: { submissions: true, votes: true } },
-                submissions: { where: { userId: { in: Array.from(followedUserIds) } }, select: { userId: true } }
+                submissions: {
+                    where: { userId: { in: Array.from(followedUserIds) } },
+                    select: { userId: true }
+                }
             }
         });
+
+        // Attach participantAvatars (top 5 submitters/voters) for each event
+        const eventIds = events.map(e => e.id);
+        const topSubmissions = await prisma.submission.findMany({
+            where: { eventId: { in: eventIds }, status: 'approved' },
+            select: { eventId: true, userId: true, user: { select: { id: true, avatarUrl: true } } },
+            orderBy: { createdAt: 'desc' },
+        });
+        const avatarsByEvent = new Map<string, Array<{ id: string; avatarUrl: string | null }>>();
+        for (const sub of topSubmissions) {
+            if (!avatarsByEvent.has(sub.eventId)) avatarsByEvent.set(sub.eventId, []);
+            const arr = avatarsByEvent.get(sub.eventId)!;
+            if (arr.length < 5 && !arr.find(a => a.id === sub.userId)) {
+                arr.push({ id: sub.userId, avatarUrl: sub.user?.avatarUrl ?? null });
+            }
+        }
 
         const rankedEvents = events
             .map(event => ({
                 ...event,
+                participantAvatars: avatarsByEvent.get(event.id) ?? [],
                 homeScore: calculateHomeScore(user, event, followedBrandIds, followedUserIds, { topCategory })
             }))
             .filter(e => e.homeScore >= 0)

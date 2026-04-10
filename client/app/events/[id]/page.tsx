@@ -112,7 +112,7 @@ function imgUrl(imageUrl?: string | null, cid?: string | null): string | undefin
     return undefined;
 }
 
-function ParticipantAvatars({ avatars = [], totalCount }: { avatars?: { id: string; avatarUrl: string | null }[]; totalCount: number }) {
+function ParticipantAvatars({ avatars = [], totalCount, onShowAll }: { avatars?: { id: string; avatarUrl: string | null }[]; totalCount: number; onShowAll?: () => void }) {
     const MAX = 4;
     const shown = avatars.slice(0, MAX);
     const overflow = totalCount > shown.length ? totalCount - shown.length : 0;
@@ -120,12 +120,17 @@ function ParticipantAvatars({ avatars = [], totalCount }: { avatars?: { id: stri
     if (totalCount === 0) return null;
 
     return (
-        <div className="flex items-center ml-2">
-            <div className="flex -space-x-3">
+        <button
+            type="button"
+            onClick={onShowAll}
+            className="flex items-center ml-2 group/avatars cursor-pointer"
+            title="View all participants"
+        >
+            <div className="flex -space-x-3 group-hover/avatars:space-x-[-10px] transition-all">
                 {shown.map((p: any, i: number) => (
                     <div
                         key={p.id}
-                        className="relative w-9 h-9 rounded-full border-2 border-zinc-950 bg-zinc-900 ring-1 ring-white/10 overflow-hidden shrink-0 transition-transform hover:scale-110 hover:z-50"
+                        className="relative w-9 h-9 rounded-full border-2 border-zinc-950 bg-zinc-900 ring-1 ring-white/10 overflow-hidden shrink-0 transition-transform group-hover/avatars:scale-105"
                         style={{ zIndex: 10 + (MAX - i) }}
                     >
                         {p.avatarUrl ? (
@@ -138,14 +143,12 @@ function ParticipantAvatars({ avatars = [], totalCount }: { avatars?: { id: stri
                     </div>
                 ))}
                 {overflow > 0 && (
-                    <div 
-                        className="relative w-9 h-9 rounded-full border-2 border-zinc-950 bg-zinc-900 ring-1 ring-white/10 flex items-center justify-center shrink-0 z-0"
-                    >
-                         <span className="text-[10px] font-black text-white/60 tracking-tighter">+{overflow}</span>
+                    <div className="relative w-9 h-9 rounded-full border-2 border-zinc-950 bg-zinc-900 ring-1 ring-white/10 flex items-center justify-center shrink-0 z-0 group-hover/avatars:bg-zinc-800 transition-colors">
+                        <span className="text-[10px] font-black text-white/60 tracking-tighter">+{overflow}</span>
                     </div>
                 )}
             </div>
-        </div>
+        </button>
     );
 }
 
@@ -651,6 +654,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     const [hasSubmitted, setHasSubmitted] = useState(false);
     const [mySubmission, setMySubmission] = useState<Submission | null>(null);
     const [participantCount, setParticipantCount] = useState<number>(0);
+    const [showParticipantsModal, setShowParticipantsModal] = useState(false);
     // Tracks whether we've already applied an optimistic +1 for the current user's vote,
     // so the echoed socket broadcast doesn't double-count it.
     const optimisticParticipantPending = useRef(false);
@@ -945,8 +949,86 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
     const pendingSub = pendingVoteId ? enrichedSubmissions.find((s) => s.id === pendingVoteId) : null;
 
+    const participantAvatars: Array<{ id: string; avatarUrl: string | null; username: string; displayName: string | null }> = (event as any)?.participantAvatars ?? [];
+
     return (
         <SidebarLayout>
+            {/* ── Participants Modal ── */}
+            <AnimatePresence>
+                {showParticipantsModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+                        onClick={() => setShowParticipantsModal(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.92, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.92, opacity: 0, y: 20 }}
+                            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                            className="bg-[#0e0e10] border border-white/10 rounded-2xl w-full max-w-sm shadow-2xl"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-white/5">
+                                <div>
+                                    <h3 className="text-sm font-black text-white uppercase tracking-widest">Participants</h3>
+                                    <p className="text-[11px] text-white/40 font-medium mt-0.5">{participantCount.toLocaleString()} total</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowParticipantsModal(false)}
+                                    className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
+                                >
+                                    <X className="w-3.5 h-3.5 text-white/60" />
+                                </button>
+                            </div>
+                            <div className="p-4 max-h-[360px] overflow-y-auto no-scrollbar space-y-2">
+                                {participantAvatars.length > 0 ? (
+                                    participantAvatars.map((p) => (
+                                        <Link 
+                                            href={`/profile/${p.username}`}
+                                            key={p.id} 
+                                            className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/[0.03] transition-colors group/p"
+                                            onClick={() => setShowParticipantsModal(false)}
+                                        >
+                                            <div className="w-9 h-9 rounded-full bg-zinc-800 border border-white/10 overflow-hidden shrink-0 group-hover/p:border-primary/50 transition-colors">
+                                                {p.avatarUrl ? (
+                                                    <img src={p.avatarUrl} alt="participant" className="w-full h-full object-cover px-0" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <Users className="w-4 h-4 text-white/20" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-[12px] font-bold text-white/80 truncate group-hover/p:text-primary transition-colors">
+                                                    {p.displayName || p.username}
+                                                </p>
+                                                <p className="text-[10px] text-white/30 truncate">@{p.username}</p>
+                                            </div>
+                                            <ChevronRight className="w-3.5 h-3.5 text-white/10 group-hover/p:text-primary/50 transition-colors" />
+                                        </Link>
+                                    ))
+                                ) : (
+                                    <div className="py-8 text-center">
+                                        <Users className="w-8 h-8 text-white/10 mx-auto mb-2" />
+                                        <p className="text-[11px] text-white/30 font-medium">No participant details available</p>
+                                    </div>
+                                )}
+                                {participantCount > participantAvatars.length && (
+                                    <div className="pt-2 text-center">
+                                        <p className="text-[10px] font-bold text-white/20 uppercase tracking-wider">
+                                            +{(participantCount - participantAvatars.length).toLocaleString()} more participants
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* ── Floating Confirm Vote Bar ── */}
             <AnimatePresence>
                 {pendingVoteId && !votedSubmissionId && !isVotingEnded && (
@@ -1104,6 +1186,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                 <span className="text-xs font-black text-white/30 uppercase tracking-widest">Vote already cast</span>
                                             </div>
                                         )}
+                                        {event.status === "completed" && (
+                                            <div className="w-full py-3.5 rounded-[14px] bg-white/5 border border-white/10 text-center">
+                                                <span className="text-xs font-black text-white/30 uppercase tracking-widest">Event Ended</span>
+                                            </div>
+                                        )}
                                         <button
                                             type="button"
                                             onClick={() => handleShareSubmission(previewSub.id)}
@@ -1123,7 +1210,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
             <main className="w-full pb-24 pt-2">
                 {/* ── Breadcrumb ── */}
                 <div className="flex items-center gap-1.5 mb-4 px-0">
-                    <Link href="/home" className="text-xs text-foreground/40 hover:text-foreground transition-colors">Home</Link>
+                    <Link href="/explore" className="text-xs text-foreground/40 hover:text-foreground transition-colors flex items-center gap-1"><ChevronLeft className="w-3 h-3" />Back</Link>
                     <ChevronRight className="w-3 h-3 text-foreground/20" />
                     <span className="text-xs text-foreground/60 font-medium truncate max-w-[260px]">
                         {loading ? "Loading…" : event?.title ?? "Event"}
@@ -1165,7 +1252,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                     <div className="flex flex-col items-center justify-center py-32 gap-3 text-center">
                         <AlertCircle className="w-8 h-8 text-red-400" />
                         <p className="text-sm font-bold text-foreground/60">{fetchError}</p>
-                        <Link href="/home" className="text-xs font-black text-primary hover:underline">Back to home</Link>
+                        <Link href="/explore" className="text-xs font-black text-primary hover:underline">Back to explore</Link>
                     </div>
                 ) : event ? (
                     isCancelled ? (
@@ -1237,7 +1324,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                         <span className="text-[10px] font-black text-red-400 uppercase">Cancelled</span>
                                     </div>
                                 </div>
-                                <Link href="/home" className="block w-full py-3 rounded-[14px] bg-white/[0.04] border border-white/[0.08] text-center text-xs font-black uppercase tracking-widest text-foreground/50 hover:bg-white/[0.08] hover:text-foreground transition-all">
+                                <Link href="/explore" className="block w-full py-3 rounded-[14px] bg-white/[0.04] border border-white/[0.08] text-center text-xs font-black uppercase tracking-widest text-foreground/50 hover:bg-white/[0.08] hover:text-foreground transition-all">
                                     Browse other events
                                 </Link>
                             </div>
@@ -1248,11 +1335,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         ══════════════════════════════════════════════ */
                         <>
                             {/* ── Full-width hero banner (same style as vote layout) ── */}
-                            <div className="relative overflow-hidden min-h-[300px] md:min-h-[400px] mb-6 -mx-3 w-[calc(100%+1.5rem)] sm:-mx-4 sm:w-[calc(100%+2rem)] md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
+                            <div className="relative overflow-hidden min-h-[360px] md:min-h-[480px] mb-8 -mx-3 w-[calc(100%+1.5rem)] sm:-mx-4 sm:w-[calc(100%+2rem)] md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
                                 <img src={coverUrl} className="absolute inset-0 w-full h-full object-cover object-center" alt="Event" />
                                 <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/75 to-black/20" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                                <div className="relative z-10 flex flex-col justify-between h-full min-h-[380px] md:min-h-[460px] p-7 md:p-10">
+                                <div className="relative z-10 flex flex-col justify-between h-full min-h-[440px] md:min-h-[540px] p-8 md:p-12">
                                     <div>
                                         <div className="flex items-center gap-3 mb-4 flex-wrap">
                                             <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/15 rounded-full pl-1 pr-3 py-1">
@@ -1271,7 +1358,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                 </span>
                                             )}
                                         </div>
-                                        <h1 className="font-display text-5xl md:text-6xl lg:text-7xl text-white uppercase leading-[0.88] tracking-tight max-w-[60%]">
+                                        <h1 className="font-display text-6xl md:text-7xl lg:text-8xl text-white uppercase leading-[0.88] tracking-tighter max-w-[70%]">
                                             {event.title}
                                         </h1>
                                         {event.tagline && (
@@ -1866,7 +1953,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                                 <span className="text-2xl md:text-3xl font-black text-white/30 leading-none">/{event.capacity.toLocaleString()}</span>
                                                             )}
                                                         </div>
-                                                        <ParticipantAvatars avatars={(event as any).participantAvatars} totalCount={participantCount} />
+                                                        <ParticipantAvatars avatars={(event as any).participantAvatars} totalCount={participantCount} onShowAll={() => setShowParticipantsModal(true)} />
                                                     </div>
                                                 )}
                                             </div>
@@ -1919,7 +2006,14 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                             </div>
                                         </div>
                                     ) : displayMode === "completed" ? (
-                                        <CompletedView event={event} submissions={enrichedSubmissions} currentUserId={user?.id} gridView={gridView} votedSubmissionId={votedSubmissionId} />
+                                        <CompletedView 
+                                            event={event} 
+                                            submissions={enrichedSubmissions} 
+                                            currentUserId={user?.id} 
+                                            gridView={gridView} 
+                                            votedSubmissionId={votedSubmissionId} 
+                                            onPreviewSubmission={setPreviewSubmissionId}
+                                        />
                                     ) : (
                                         <AnimatePresence>
                                             <div className={gridView ? "grid grid-cols-2 md:grid-cols-3 gap-4" : "flex flex-col gap-4"}>
@@ -2020,12 +2114,13 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
 // ─── Completed View ──────────────────────────────────────────────────────────
 
-function CompletedView({ event, submissions, currentUserId, gridView, votedSubmissionId }: {
+function CompletedView({ event, submissions, currentUserId, gridView, votedSubmissionId, onPreviewSubmission }: {
     event: Event;
     submissions: Submission[];
     currentUserId?: string | null;
     gridView: boolean;
     votedSubmissionId?: string | null;
+    onPreviewSubmission: (id: string) => void;
 }) {
     const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
@@ -2149,9 +2244,9 @@ function CompletedView({ event, submissions, currentUserId, gridView, votedSubmi
                         {(myPost.imageUrl || myPost.imageCid) && (
                             <div
                                 className="w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-white/10 cursor-zoom-in"
-                                onClick={() => { const idx = getLightboxIdx(myPost); if (idx >= 0) setLightboxIdx(idx); }}
+                                onClick={() => onPreviewSubmission(myPost.id)}
                             >
-                                <img src={myPost.imageUrl || `${PINATA_GW}/${myPost.imageCid}`} className="w-full h-full object-cover" alt="My post" />
+                                <img src={myPost.imageUrl || `${PINATA_GW}/${myPost.imageCid}`} className="w-full h-full object-cover px-0" alt="My post" />
                             </div>
                         )}
                         <div className="flex-1 min-w-0">
@@ -2198,12 +2293,11 @@ function CompletedView({ event, submissions, currentUserId, gridView, votedSubmi
                                         #{i + 1}
                                     </div>
                                     <PostSubmissionCard
-                                        submission={{ ...toPostSubmission(sub, currentUserId), rank: i + 1 }}
+                                        submission={toPostSubmission(sub, currentUserId)}
                                         showVoteCount={true}
                                         isVotedByUser={votedSubmissionId === sub.id}
-                                        onImageClick={getLightboxIdx(sub) >= 0 ? () => setLightboxIdx(getLightboxIdx(sub)) : undefined}
+                                        onImageClick={() => onPreviewSubmission(sub.id)}
                                         showCreator={showCreator}
-                                        isWinner={i === 0}
                                     />
                                 </div>
                             ))}

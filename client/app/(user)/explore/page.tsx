@@ -9,7 +9,6 @@ import { ImageOff, Search, X, Youtube, Twitter, Instagram, LayoutGrid, Users } f
 import Link from "next/link";
 
 import ExploreHeader from "@/components/explore/ExploreHeader";
-import ExploreSidebar from "@/components/explore/ExploreSidebar";
 import EventRow from "@/components/explore/EventRow";
 import BrandRow from "@/components/explore/BrandRow";
 import ContentMosaic from "@/components/explore/ContentMosaic";
@@ -57,7 +56,7 @@ function TopEventsHero({ events }: { events: any[] }) {
     const displayImage = event.image || event.imageUrl || (event.imageCid ? `${PINATA_GW}/${event.imageCid}` : "");
 
     return (
-        <div className="relative w-full h-[380px] md:h-[420px] rounded-2xl overflow-hidden mb-10 group bg-[#0a0a0c] border border-white/5">
+        <div className="relative w-full h-[280px] md:h-[340px] rounded-2xl overflow-hidden mb-0 group bg-[#0a0a0c] border border-white/5">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={event.id}
@@ -68,7 +67,7 @@ function TopEventsHero({ events }: { events: any[] }) {
                     className="absolute inset-0"
                 >
                     {displayImage ? (
-                        <img src={displayImage} alt={event.title} className="w-full h-full object-cover transition-transform duration-[10s] ease-linear group-hover:scale-110" />
+                        <img src={displayImage} alt={event.title} className="w-full h-full object-cover transition-transform duration-[10s] ease-linear group-hover:scale-110 px-0" />
                     ) : (
                         <div className="w-full h-full bg-gradient-to-br from-white/5 to-white/10" />
                     )}
@@ -80,7 +79,7 @@ function TopEventsHero({ events }: { events: any[] }) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
             
             {/* Content Left */}
-            <div className="absolute inset-y-0 left-0 w-full md:w-2/3 p-6 sm:p-10 md:p-12 flex flex-col justify-center z-10">
+            <div className="absolute inset-y-0 left-0 w-full md:w-2/3 p-8 sm:p-12 md:p-14 flex flex-col justify-center z-10">
                 <motion.div
                     key={`content-${event.id}`}
                     initial={{ opacity: 0, y: 20 }}
@@ -89,7 +88,7 @@ function TopEventsHero({ events }: { events: any[] }) {
                 >
                     <div className="flex items-center gap-2 mb-4">
                         {event.brand?.logoCid ? (
-                            <img src={`${PINATA_GW}/${event.brand.logoCid}`} alt={event.brand.name} className="w-8 h-8 rounded-full border border-white/20"/>
+                            <img src={`${PINATA_GW}/${event.brand.logoCid}`} alt={event.brand.name} className="w-8 h-8 rounded-full border border-white/20 px-0"/>
                         ) : (
                             <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border border-white/20 text-xs font-bold text-white">{event.brand?.name?.[0] || '?'}</div>
                         )}
@@ -98,7 +97,7 @@ function TopEventsHero({ events }: { events: any[] }) {
                         <span className="text-white/50 font-medium text-xs capitalize tracking-wider">{event.brand?.categories?.[0] || 'Social'}</span>
                     </div>
 
-                    <h1 className="text-3xl md:text-4xl lg:text-4xl font-black capitalize text-white tracking-tight leading-[1.1] mb-6 line-clamp-3 drop-shadow-xl">
+                    <h1 className="text-4xl md:text-5xl lg:text-5xl font-black capitalize text-white tracking-tight leading-[1.1] mb-6 line-clamp-3 drop-shadow-xl">
                         {event.title}
                     </h1>
 
@@ -212,6 +211,7 @@ export default function Explore() {
     const [contentData, setContentData] = useState<any[]>([]);
     const [loadingEvents, setLoadingEvents] = useState(true);
     const [loadingStatic, setLoadingStatic] = useState(true);
+    const [brandEventStatus, setBrandEventStatus] = useState<"LIVE" | "CLOSED">("LIVE");
 
     // Initial load for brands & creators
     useEffect(() => {
@@ -280,8 +280,17 @@ export default function Explore() {
             const q = debouncedSearch.toLowerCase();
             rows = rows.filter(b => b.name.toLowerCase().includes(q));
         }
-        return rows;
-    }, [brands, activeSector, activeDomain, debouncedSearch]);
+        // Filter brand events by live/closed status
+        return rows.map(b => ({
+            ...b,
+            events: (b.events || []).filter((ev: any) => {
+                const status = (ev.status || "").toLowerCase();
+                const isFinal = status === "closed" || status === "completed";
+                if (brandEventStatus === "CLOSED") return isFinal;
+                return !isFinal;
+            })
+        })).filter(b => b.events.length > 0);
+    }, [brands, activeSector, activeDomain, debouncedSearch, brandEventStatus]);
 
     // Creator filtering (Frontend)
     const creatorsRows = useMemo(() => {
@@ -302,23 +311,42 @@ export default function Explore() {
                 <div className="flex flex-col pb-24 lg:pb-10">
 
 
-                    {/* HERO BANNER SECTION (ONLY IN EVENTS TAB) */}
-                    {activeTab === "events" && activeDomain === "ALL" && !debouncedSearch && (
-                        loadingEvents ? (
-                            <div className="w-full mb-10 px-4 md:px-0">
-                                <div className="w-full h-[380px] md:h-[420px] rounded-2xl bg-white/[0.03] border border-white/5 animate-pulse" />
+                    {/* MARQUEE + HERO BANNER SECTION (PERSISTENT) */}
+                    <>
+                        {/* Marquee */}
+                        <div className="w-full mb-4 overflow-hidden">
+                            <div className="flex gap-0 animate-marquee whitespace-nowrap">
+                                {Array.from({ length: 6 }).map((_, i) => (
+                                    <span key={i} className="inline-flex items-center gap-6 px-6 text-[11px] font-black uppercase tracking-[0.3em] text-foreground/30">
+                                        <span>Join Events</span>
+                                        <span className="text-primary">✦</span>
+                                        <span>Earn Dollars</span>
+                                        <span className="text-primary">✦</span>
+                                        <span>Submit & Vote</span>
+                                        <span className="text-primary">✦</span>
+                                        <span>Win Rewards</span>
+                                        <span className="text-primary">✦</span>
+                                        </span>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Banner */}
+                        {loadingEvents ? (
+                            <div className="w-full mb-6 px-4 md:px-0">
+                                <div className="w-full h-[280px] md:h-[340px] rounded-2xl bg-white/[0.03] border border-white/5 animate-pulse" />
                             </div>
                         ) : (
                             eventsData?.trending && eventsData.trending.length > 0 && (
-                                <div className="w-full mb-10 px-4 md:px-0">
+                                <div className="w-full mb-6 px-4 md:px-0">
                                     <TopEventsHero events={eventsData.trending.slice(0, 10)} />
                                 </div>
                             )
-                        )
-                    )}
+                        )}
+                    </>
 
                     {/* ── Filter Bar ──────────────────────────────────── */}
-                    <div className="w-full mb-10 px-4 md:px-0 relative z-40">
+                    <div className="w-full mb-6 px-4 md:px-0 relative z-40">
                         <div className="flex flex-col lg:flex-row items-center gap-4 w-full">
                             
                             {/* Search Input */}
@@ -366,13 +394,40 @@ export default function Explore() {
                                 />
 
                                 {activeTab === "events" && (
-                                    <ArisSelect 
-                                        value={activePhase === "ALL" ? "LIVE EVENTS" : activePhase} 
-                                        onChange={(val) => setActivePhase(val === "LIVE EVENTS" ? "ALL" : val)} 
-                                        options={["LIVE EVENTS", "VOTING", "POSTING", "CLOSED"]} 
-                                        placeholder="Phase" 
+                                    <ArisSelect
+                                        value={activePhase === "ALL" ? "LIVE EVENTS" : activePhase}
+                                        onChange={(val) => setActivePhase(val === "LIVE EVENTS" ? "ALL" : val)}
+                                        options={["LIVE EVENTS", "VOTING", "POSTING", "CLOSED"]}
+                                        placeholder="Phase"
                                         minWidth="160px"
                                     />
+                                )}
+
+                                 {activeTab === "brands" && (
+                                    <ArisSelect
+                                        value={brandEventStatus}
+                                        onChange={(val) => setBrandEventStatus(val as "LIVE" | "CLOSED")}
+                                        options={["LIVE", "CLOSED"]}
+                                        placeholder="Live"
+                                        minWidth="120px"
+                                    />
+                                )}
+
+                                {(activeDomain !== "ALL" || activePhase !== "ALL" || searchQuery !== "" || brandEventStatus !== "LIVE") && (
+                                    <button
+                                        onClick={() => {
+                                            setActiveDomain("ALL");
+                                            setActivePhase("ALL");
+                                            setSearchQuery("");
+                                            setBrandEventStatus("LIVE");
+                                            setSortOption("TRENDING");
+                                        }}
+                                        className="flex items-center gap-2 px-4 py-4 rounded-xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all text-[10px] font-black uppercase tracking-widest whitespace-nowrap"
+                                        title="Clear all filters"
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                        <span>Reset</span>
+                                    </button>
                                 )}
 
 
@@ -420,7 +475,7 @@ export default function Explore() {
                                                     <h3 className="text-xl font-black text-white capitalize tracking-wider pl-4 sm:pl-0 border-white/5">
                                                         {(debouncedSearch || activeDomain !== "ALL") ? "Search Results" : "All Campaigns"}
                                                     </h3>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8 px-4 sm:px-0">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-0">
                                                         {eventsData.allRanked.map((ev) => (
                                                             <PremiumEventCard key={ev.id} event={ev} />
                                                         ))}
@@ -470,20 +525,6 @@ export default function Explore() {
                             )}
                         </div>
 
-                        {/* ── Desktop Sidebar (Retained per user request) ─── */}
-                        <div className="hidden lg:block w-[320px] shrink-0">
-                            <ExploreSidebar
-                                brands={brandsRows.slice(0, 5).map(b => ({
-                                    id: b.id,
-                                    name: b.name,
-                                    handle: `@${b.name.toLowerCase().replace(/\s+/g, "")}`,
-                                    avatar: b.logoCid ? `${PINATA_GW}/${b.logoCid}` : "",
-                                    isFollowed: false
-                                }))}
-                                creators={creatorsRows.slice(0, 5)}
-                                loading={loadingStatic}
-                            />
-                        </div>
                     </main>
                 </div>
 

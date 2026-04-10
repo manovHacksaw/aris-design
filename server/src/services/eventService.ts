@@ -610,16 +610,16 @@ export class EventService {
     const [uniqueVoters, uniquePosters] = await Promise.all([
       prisma.vote.findMany({
         where: { eventId: id },
-        select: { userId: true, user: { select: { id: true, avatarUrl: true } } },
+        select: { userId: true, user: { select: { id: true, avatarUrl: true, username: true, displayName: true } } },
         distinct: ['userId'],
-        take: 10,
+        take: 50,
       }),
       event.eventType === 'post_and_vote'
         ? prisma.submission.findMany({
           where: { eventId: id, status: 'active' },
-          select: { userId: true, user: { select: { id: true, avatarUrl: true } } },
+          select: { userId: true, user: { select: { id: true, avatarUrl: true, username: true, displayName: true } } },
           distinct: ['userId'],
-          take: 10,
+          take: 50,
         })
         : Promise.resolve([])
     ]);
@@ -632,11 +632,21 @@ export class EventService {
 
     // Build avatar list: submitters first, then voters who haven't submitted
     const submitterIds = new Set((uniquePosters as any[]).map(p => p.userId));
-    const avatarList: { id: string; avatarUrl: string | null }[] = [
-      ...(uniquePosters as any[]).map(p => ({ id: p.userId, avatarUrl: p.user?.avatarUrl ?? null })),
-      ...uniqueVoters.filter(v => !submitterIds.has(v.userId)).map(v => ({ id: v.userId, avatarUrl: (v as any).user?.avatarUrl ?? null })),
+    const avatarList: { id: string; avatarUrl: string | null; username: string; displayName: string | null }[] = [
+      ...(uniquePosters as any[]).map(p => ({ 
+        id: p.userId, 
+        avatarUrl: p.user?.avatarUrl ?? null,
+        username: p.user?.username ?? 'user',
+        displayName: p.user?.displayName ?? null
+      })),
+      ...uniqueVoters.filter(v => !submitterIds.has(v.userId)).map(v => ({ 
+        id: v.userId, 
+        avatarUrl: (v as any).user?.avatarUrl ?? null,
+        username: (v as any).user?.username ?? 'user',
+        displayName: (v as any).user?.displayName ?? null
+      })),
     ];
-    const participantAvatars = avatarList.slice(0, 10);
+    const participantAvatars = avatarList.slice(0, 50);
 
     // Strip vote counts for non-completed events — users and brand owners
     // cannot see individual or total vote counts until the event ends.
