@@ -99,37 +99,236 @@ export class AiService {
     }
 
     /**
-     * Generate an event title and description from a brand prompt
+     * Generate N distinct, testable event suggestions from a brand motive.
+     * Uses a strict decision-systems prompt to ensure each event is hypothesis-driven.
      */
-    static async generateEventDetails(
-        prompt: string,
-        brandName: string,
-        brandBio: string
-    ): Promise<{ title: string; description: string }> {
+    static async generateEventDetails(params: {
+        motive: string;
+        brandName: string;
+        brandBio: string;
+        eventType: 'vote' | 'post';
+        decisionDomain: string;
+        targetMarket: string;
+        budget: string;
+        count: number;
+        voteOptions: number;
+    }): Promise<Array<{
+        title: string;
+        description: string;
+        estimated_duration: string;
+        hypothesis: string;
+        estimated_votes: string;
+        voting_options?: Array<{ title: string; content: string }>;
+    }>> {
+        const { motive, brandName, brandBio, eventType, decisionDomain, targetMarket, budget, count, voteOptions } = params;
+
+        const eventTypeDesc = eventType === 'post'
+            ? 'Post Campaign — creators submit original content and the audience votes for the best submission'
+            : `Vote Campaign — the audience votes between ${voteOptions} fixed options defined by the brand`;
+
+        const votingOptionsSchema = eventType === 'vote'
+            ? `"voting_options": [array of exactly ${voteOptions} objects, each: {"title": "short option label", "content": "one-sentence rationale"}]`
+            : '';
+
+        const votingOptionsExample = eventType === 'vote'
+            ? `,"voting_options":[{"title":"...","content":"..."}]`
+            : '';
+
+        const systemPrompt = `SYSTEM:
+You are a decision systems designer. Convert brand intent into testable events.
+
+OBJECTIVE (STRICT ORDER):
+1. Define a clear decision
+2. Ensure hypothesis is testable
+3. Align with target audience
+4. Fit within budget
+
+CONTEXT:
+Brand Name: ${brandName || 'Unknown Brand'}
+Brand Bio: ${brandBio || 'No bio provided'}
+Motive: ${motive}
+Event Type: ${eventTypeDesc}
+Decision Domain: ${decisionDomain || 'General'}
+Target Market: ${targetMarket || 'General audience'}
+Budget: ${budget || 'Not specified'}
+
+TASK:
+Generate exactly ${count} DISTINCT event idea(s). Each must represent a different way to test the motive — different angle, framing, or decision being tested. Do NOT repeat the same decision with different wording.
+
+CONSTRAINTS:
+- Each event must lead to a clear winner
+- Avoid vague or opinion-only questions
+- Align with audience psychology
+- Each hypothesis must be falsifiable (starts with "We believe..." and ends with a measurable outcome)
+
+OUTPUT FORMAT:
+Return ONLY a valid JSON array with exactly ${count} object(s). No markdown, no explanation, no trailing text.
+
+Each object:
+{
+  "title": "concise event title (max 60 chars)",
+  "description": "2-3 sentences explaining the decision being tested and why it matters (max 250 chars)",
+  "estimated_duration": "e.g. 3 days, 1 week, 48 hours",
+  "hypothesis": "We believe [audience] will prefer [X] over [Y] because [reason], resulting in [measurable outcome]",
+  "estimated_votes": "realistic vote count range based on budget and target market, e.g. 500–1,200"${eventType === 'vote' ? `,\n  ${votingOptionsSchema}` : ''}
+}
+
+NEGATIVE — do NOT produce:
+- Generic campaigns ("Vote for your favorite!")
+- Branding fluff ("Celebrate our brand journey")
+- Unclear outcomes (no winner determinable)
+- Duplicate event concepts
+
+Format: [{"title":"...","description":"...","estimated_duration":"...","hypothesis":"...","estimated_votes":"..."${votingOptionsExample}}]`;
+
         try {
             const model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-            const aiPrompt = `You are a creative event strategist for a brand. Given the following context, generate a compelling event title and description.
-
-Brand Name: ${brandName || "Unknown Brand"}
-Brand Bio: ${brandBio || "No bio provided"}
-Event Idea: ${prompt}
-
-Return ONLY a JSON object with two fields:
-- "title": A catchy, concise event title (max 60 characters)
-- "description": An engaging event description (2-3 sentences, max 250 characters)
-
-Format: {"title": "...", "description": "..."}`;
-
-            const result = await model.generateContent(aiPrompt);
+            const result = await model.generateContent(systemPrompt);
             const response = await result.response;
             const text = response.text().trim();
 
-            const jsonMatch = text.match(/\{.*\}/s);
+            const jsonMatch = text.match(/\[.*\]/s);
             const jsonStr = jsonMatch ? jsonMatch[0] : text;
             return JSON.parse(jsonStr);
         } catch (error) {
             console.error('Error generating event details:', error);
             throw new Error('Failed to generate event details');
+        }
+    }
+
+    /**
+     * Generate N high-quality 16:9 banner image prompts for an event.
+     */
+    static async generateBannerPrompts(params: {
+        title: string;
+        description: string;
+        theme?: string;
+        decisionDomain?: string;
+        targetMarket?: string;
+        brandIdentity?: string;
+        count: number;
+    }): Promise<string[]> {
+        const { title, description, theme, decisionDomain, targetMarket, brandIdentity, count } = params;
+
+        const systemPrompt = `SYSTEM:
+You are an expert visual prompt engineer for high-end brand banners.
+
+OBJECTIVE (STRICT ORDER):
+1. Visual clarity
+2. Brand identity accuracy
+3. Audience appeal
+4. Aesthetic quality
+
+INPUT:
+- Title: ${title}
+- Description: ${description}
+- Theme: ${theme || 'Modern, clean'}
+- Decision Domain: ${decisionDomain || 'General'}
+- Target Market: ${targetMarket || 'General audience'}
+- Brand Identity: ${brandIdentity || 'Professional, contemporary'}
+
+TASK:
+Generate exactly ${count} high-quality image prompt(s) for 16:9 banners. Output prompts only.
+
+STRICT RULES:
+- NO text, typography, captions rendered in image
+- Leave top-right area clean for logo overlay
+- Follow brand colors and tone exactly
+- Strong focal subject
+- Clean composition
+
+NEGATIVE (embed in every prompt):
+no text, no letters, no watermark, no clutter, no distortion, no low quality, no blurry
+
+OUTPUT FORMAT:
+Return ONLY a valid JSON array of exactly ${count} string(s). No markdown, no explanation.
+Example: ["prompt 1", "prompt 2"]`;
+
+        try {
+            const model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+            const result = await model.generateContent(systemPrompt);
+            const text = result.response.text().trim();
+
+            const jsonMatch = text.match(/\[.*\]/s);
+            const jsonStr = jsonMatch ? jsonMatch[0] : text;
+            const parsed = JSON.parse(jsonStr);
+
+            if (!Array.isArray(parsed) || parsed.some(p => typeof p !== 'string')) {
+                throw new Error('Invalid banner prompt format returned');
+            }
+            return parsed;
+        } catch (error) {
+            console.error('Error generating banner prompts:', error);
+            throw new Error('Failed to generate banner prompts');
+        }
+    }
+
+    /**
+     * Generate exactly 3 distinct visual prompt directions for a voting option image.
+     */
+    static async generateVotingOptionPrompts(params: {
+        eventTitle: string;
+        eventDescription?: string;
+        decisionDomain?: string;
+        targetMarket?: string;
+        brandIdentity?: string;
+        contentTitle?: string;
+    }): Promise<string[]> {
+        const { eventTitle, eventDescription, decisionDomain, targetMarket, brandIdentity, contentTitle } = params;
+
+        const systemPrompt = `You are a senior visual strategist creating high-performing content variations for audience testing.
+
+OBJECTIVE (STRICT ORDER):
+1. Ensure each variation is clearly distinct
+2. Maintain relevance to content title and event context
+3. Align with target audience preferences
+4. Preserve brand identity
+
+INPUT:
+- Event Title: ${eventTitle}
+- Event Description: ${eventDescription || 'Not provided'}
+- Decision Domain: ${decisionDomain || 'General'}
+- Target Market: ${targetMarket || 'General audience'}
+- Brand Identity: ${brandIdentity || 'Professional, contemporary'}
+- Content Title: ${contentTitle || eventTitle}
+
+TASK:
+Generate exactly 3 distinct visual prompt directions for this content.
+
+CONSTRAINTS:
+- All 3 prompts must represent different visual approaches (e.g. close-up vs wide shot vs abstract)
+- Each must stay true to the SAME content idea ("${contentTitle || eventTitle}")
+- Avoid overlapping or minor variations — think: angle, mood, setting, style
+- Keep strong, simple compositions
+- Ensure appeal to target audience taste
+
+OUTPUT FORMAT:
+Return ONLY a valid JSON array of exactly 3 strings. No markdown, no explanation.
+Example: ["prompt 1", "prompt 2", "prompt 3"]
+
+STRICT IMAGE RULES (embed in every prompt):
+- NO text, captions, typography, watermark
+- NO logos rendered inside image
+- Clean composition with one clear focal point
+- Follow brand colors and tone
+- no clutter, no distortion, no low quality, no multiple focal points`;
+
+        try {
+            const model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+            const result = await model.generateContent(systemPrompt);
+            const text = result.response.text().trim();
+
+            const jsonMatch = text.match(/\[.*\]/s);
+            const jsonStr = jsonMatch ? jsonMatch[0] : text;
+            const parsed = JSON.parse(jsonStr);
+
+            if (!Array.isArray(parsed) || parsed.length !== 3 || parsed.some(p => typeof p !== 'string')) {
+                throw new Error('Invalid voting option prompt format returned');
+            }
+            return parsed;
+        } catch (error) {
+            console.error('Error generating voting option prompts:', error);
+            throw new Error('Failed to generate voting option prompts');
         }
     }
 

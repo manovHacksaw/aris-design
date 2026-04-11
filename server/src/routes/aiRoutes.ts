@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { generateImage, refinePrompt, generateProposals, generateTagline, generateEventDetails } from '../controllers/aiController';
+import { generateImage, refinePrompt, generateProposals, generateTagline, generateEventDetails, generateBannerPrompts, generateVotingOptionPrompts } from '../controllers/aiController';
 import { authenticateJWT } from '../middlewares/authMiddleware';
 
 const router = Router();
@@ -10,5 +10,7 @@ router.post('/refine-prompt', authenticateJWT, refinePrompt);
 router.post('/generate-proposals', authenticateJWT, generateProposals);
 router.post('/generate-tagline', authenticateJWT, generateTagline);
 router.post('/generate-event-details', authenticateJWT, generateEventDetails);
+router.post('/generate-banner-prompts', authenticateJWT, generateBannerPrompts);
+router.post('/generate-voting-option-prompts', authenticateJWT, generateVotingOptionPrompts);
 
 export default router;
