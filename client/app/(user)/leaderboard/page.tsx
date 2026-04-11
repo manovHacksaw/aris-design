@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 
 type TabType = "users" | "brands" | "events";
 type TimelineKey = "D" | "W" | "M" | "A";
+type UserMode = "voters" | "creators";
 
 const TABS: { id: TabType; label: string }[] = [
     { id: "users", label: "Users" },
@@ -26,10 +27,16 @@ const TIMELINES: { key: TimelineKey; label: string }[] = [
     { key: "A", label: "1yr" },
 ];
 
+const USER_MODES: { id: UserMode; label: string }[] = [
+    { id: "voters", label: "Voters" },
+    { id: "creators", label: "Creators" },
+];
+
 function LeaderboardContent() {
     const searchParams = useSearchParams();
     const initialTab = (searchParams.get("tab") as TabType) || "users";
     const [activeTab, setActiveTab] = useState<TabType>(initialTab);
+    const [userMode, setUserMode] = useState<UserMode>("voters");
     const [brandDomain, setBrandDomain] = useState("ALL");
     const [eventDomain, setEventDomain] = useState("ALL");
     const [timeline, setTimeline] = useState<TimelineKey>("A");
@@ -74,8 +81,25 @@ function LeaderboardContent() {
                             ))}
                         </div>
 
-                        {/* Domain filters — hidden for Users tab */}
-                        {activeTab !== "users" && (
+                        {/* Domain filters */}
+                        {activeTab === "users" ? (
+                            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar min-w-0 flex-1">
+                                {USER_MODES.map((mode) => (
+                                    <button
+                                        key={mode.id}
+                                        onClick={() => setUserMode(mode.id)}
+                                        className={cn(
+                                            "px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all shrink-0 border",
+                                            userMode === mode.id
+                                                ? "border-white/20 bg-white/[0.07] text-white/85"
+                                                : "border-transparent text-white/22 hover:text-white/50"
+                                        )}
+                                    >
+                                        {mode.label}
+                                    </button>
+                                ))}
+                            </div>
+                        ) : (
                             <div className="flex items-center gap-1 overflow-x-auto no-scrollbar min-w-0 flex-1">
                                 {activeDomains.map((d) => (
                                     <button
@@ -93,7 +117,6 @@ function LeaderboardContent() {
                                 ))}
                             </div>
                         )}
-                        {activeTab === "users" && <div className="flex-1" />}
 
                         {/* Timeline */}
                         <div className="flex items-center gap-0.5 bg-white/[0.03] border border-white/[0.06] rounded-lg p-0.5 shrink-0">
@@ -119,6 +142,7 @@ function LeaderboardContent() {
                         activeTab={activeTab}
                         domain={activeTab === "users" ? "ALL" : activeDomain}
                         timeline={timeline}
+                        userMode={userMode}
                     />
 
                 </main>

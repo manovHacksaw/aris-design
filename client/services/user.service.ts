@@ -132,3 +132,9 @@ export async function getUserSubmissions(userId: string): Promise<any[]> {
   const res = await apiRequest<{ success: boolean; submissions: any[] }>(`/users/${userId}/submissions`);
   return res.submissions;
 }
+
+/** GET /api/users/:userId/voted-content */
+export async function getUserVotedContent(userId: string): Promise<any[]> {
+  const res = await apiRequest<{ success: boolean; content: any[] }>(`/users/${userId}/voted-content`);
+  return res.content;
+}

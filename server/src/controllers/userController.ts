@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { UserService } from '../services/userService';
+import { VoteService } from '../services/voteService';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';
 
 /**
@@ -578,6 +579,22 @@ export const validateReferral = async (req: AuthenticatedRequest, res: Response)
     res.json(result);
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Validation failed' });
+  }
+};
+
+/**
+ * Get content voted for by a user — used on public profile
+ * GET /api/users/:userId/voted-content
+ */
+export const getUserVotedContent = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const requestingUserId = req.user?.id;
+    const content = await VoteService.getVotedContentByUser(userId, requestingUserId);
+    res.json({ success: true, content });
+  } catch (error: any) {
+    console.error('Error in getUserVotedContent:', error);
+    res.status(500).json({ success: false, error: error.message || 'Failed to fetch voted content' });
   }
 };
 

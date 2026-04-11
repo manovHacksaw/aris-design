@@ -51,7 +51,7 @@ export default function EventRow({ title, events }: EventRowProps) {
                     onScroll={(e) => setIsMoved(e.currentTarget.scrollLeft > 0)}
                 >
                     {events.map((ev, i) => (
-                        <div key={ev.id || i} className="shrink-0 w-[240px] sm:w-[300px] transition-transform duration-300 hover:z-10 relative object-center group-hover/row:hover:scale-105">
+                        <div key={ev.id || i} className="shrink-0 w-[320px] sm:w-[420px] transition-transform duration-300 hover:z-10 relative object-center group-hover/row:hover:scale-105">
                             <PremiumEventCard event={ev} />
                         </div>
                     ))}

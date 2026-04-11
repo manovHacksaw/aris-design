@@ -233,7 +233,12 @@ export class EventService {
     if (event.samples && Array.isArray(event.samples) && event.samples.length > 0) {
       transformed.sampleUrls = event.samples.map((cid: string) => ({
         cid,
-        urls: {
+        urls: cid.startsWith('http') ? {
+          thumbnail: cid,
+          medium: cid,
+          large: cid,
+          full: cid,
+        } : {
           thumbnail: getIPFSUrl(cid, 'thumbnail'),
           medium: getIPFSUrl(cid, 'medium'),
           large: getIPFSUrl(cid, 'large'),

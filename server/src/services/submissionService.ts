@@ -438,13 +438,18 @@ export class SubmissionService {
     return submission ? this.addImageUrls(submission) : null;
   }
 
-  static async getSubmissionsByUser(userId: string): Promise<any[]> {
+  static async getSubmissionsByUser(userId: string, requestingUserId?: string): Promise<any[]> {
+    const isOwner = requestingUserId === userId;
+
     const submissions = await prisma.submission.findMany({
       where: {
         userId,
         status: 'active',
         event: {
-          isDeleted: false
+          isDeleted: false,
+          ...(!isOwner && {
+            status: { in: [EventStatus.VOTING, EventStatus.COMPLETED] }
+          }),
         }
       },
       include: {

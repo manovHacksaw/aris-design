@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Award } from "lucide-react";
+import Link from "next/link";
+import { toBrandSlug } from "@/lib/eventUtils";
 import type { Event } from "@/services/event.service";
 import PremiumEventCard from "@/components/events/PremiumEventCard";
 
@@ -45,8 +47,11 @@ export default function BrandRow({ brand }: BrandRowProps) {
     return (
         <div className="space-y-4 group/row relative pt-4 border-t border-border/50 first:border-0 first:pt-0">
             <div className="flex items-center justify-between pl-4 sm:pl-0 pr-4 sm:pr-0">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-foreground/5 border border-border flex items-center justify-center overflow-hidden">
+                <Link 
+                    href={`/brand/${toBrandSlug(brand.name)}`}
+                    className="flex items-center gap-3 group/brand-link"
+                >
+                    <div className="w-10 h-10 rounded-xl bg-foreground/5 border border-border flex items-center justify-center overflow-hidden transition-all group-hover/brand-link:border-primary/40 group-hover/brand-link:bg-foreground/[0.08]">
                         {logo ? (
                             <img src={logo} alt={brand.name} className="w-full h-full object-cover" />
                         ) : (
@@ -54,7 +59,7 @@ export default function BrandRow({ brand }: BrandRowProps) {
                         )}
                     </div>
                     <div>
-                        <h3 className="text-lg font-black text-foreground capitalize tracking-wider leading-none">
+                        <h3 className="text-lg font-black text-foreground capitalize tracking-wider leading-none transition-colors group-hover/brand-link:text-primary">
                             {brand.name}
                         </h3>
                         {brand.tagline && (
@@ -63,7 +68,7 @@ export default function BrandRow({ brand }: BrandRowProps) {
                             </p>
                         )}
                     </div>
-                </div>
+                </Link>
 
                 <div className="shrink-0 flex items-center gap-1.5 bg-lime-400/10 text-lime-400 border border-lime-400/20 px-3 py-1.5 rounded-full text-[10px] font-black capitalize tracking-wider">
                     <Award className="w-3.5 h-3.5" />
@@ -93,7 +98,7 @@ export default function BrandRow({ brand }: BrandRowProps) {
                     {brand.events.map((ev, i) => {
                         const evtWithBrand = { ...ev, brand: { name: brand.name, logoUrl: brand.logoUrl, logoCid: brand.logoCid, categories: brand.categories } };
                         return (
-                            <div key={ev.id || i} className="shrink-0 w-[240px] sm:w-[300px] transition-transform duration-300 hover:z-10 relative object-center group-hover/row:hover:scale-105">
+                            <div key={ev.id || i} className="shrink-0 w-[320px] sm:w-[420px] transition-transform duration-300 hover:z-10 relative object-center group-hover/row:hover:scale-105">
                                 <PremiumEventCard event={evtWithBrand} />
                             </div>
                         );

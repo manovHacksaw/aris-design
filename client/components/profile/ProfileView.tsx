@@ -12,10 +12,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/context/UserContext";
-import { followUser, unfollowUser, getUserSubmissions } from "@/services/user.service";
-import { getEventsVotedByUser } from "@/services/event.service";
+import { followUser, unfollowUser, getUserSubmissions, getUserVotedContent } from "@/services/user.service";
 import type { User, UserStats } from "@/types/user";
-import type { Event } from "@/services/event.service";
 
 // ─── Tiers ───────────────────────────────────────────────────────
 const TIERS = [
@@ -86,9 +84,9 @@ export default function ProfileView({
 
   const [copied, setCopied] = useState(false);
   const [contentFilter, setContentFilter] = useState<ContentFilter>("all");
-  const [activeTab, setActiveTab] = useState<"events" | "creations">("events");
+  const [activeTab, setActiveTab] = useState<"posted" | "voted">("posted");
   const [submissions, setSubmissions] = useState<any[]>([]);
-  const [votedEvents, setVotedEvents] = useState<Event[]>([]);
+  const [votedContent, setVotedContent] = useState<any[]>([]);
   const [subsLoading, setSubsLoading] = useState(true);
   const [showAllAchievements, setShowAllAchievements] = useState(false);
   const [showSocialModal, setShowSocialModal] = useState<{
@@ -103,16 +101,16 @@ export default function ProfileView({
     setSubsLoading(true);
     Promise.all([
       getUserSubmissions(user.id),
-      getEventsVotedByUser(user.id)
+      getUserVotedContent(user.id),
     ])
       .then(([subs, voted]) => {
         setSubmissions(subs);
-        setVotedEvents(voted);
+        setVotedContent(voted);
       })
       .catch((err) => {
         console.error("Error fetching profile content:", err);
         setSubmissions([]);
-        setVotedEvents([]);
+        setVotedContent([]);
       })
       .finally(() => setSubsLoading(false));
   }, [user?.id]);
@@ -189,39 +187,33 @@ export default function ProfileView({
   const engagementLabel = engagementScore >= 80 ? "Legendary" : engagementScore >= 50 ? "High" : engagementScore >= 20 ? "Rising" : "Building";
   const engagementColor = engagementScore >= 80 ? "text-lime-400" : engagementScore >= 50 ? "text-yellow-400" : engagementScore >= 20 ? "text-blue-400" : "text-white/30";
 
-  const participatedEvents = (votedEvents || []).map(event => ({
-    event,
-    type: "vote",
-    date: event.endTime,
-    earnings: (event as any).earnings || 0
-  })).concat(
-    (submissions || []).map(sub => ({
-      event: sub.event,
-      type: "post",
-      date: sub.createdAt,
-      earnings: sub.earnings || 0
-    }))
-  ).reduce((acc: any[], current) => {
-    const existing = acc.find(item => item.event?.id === current.event?.id);
-    if (existing) {
-      if (existing.type !== current.type) existing.type = "both";
-      existing.earnings += current.earnings;
-    } else {
-      acc.push({ ...current });
-    }
-    return acc;
-  }, []).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const LIVE_STATUSES = ["posting", "voting", "scheduled"];
 
-  const filteredParticipated = participatedEvents.filter(item => {
-    if (contentFilter === "live") return ["posting", "voting", "scheduled"].includes(item.event?.status);
-    if (contentFilter === "completed") return item.event?.status === "completed";
+  const filteredSubmissions = submissions.filter(s => {
+    if (contentFilter === "live") return LIVE_STATUSES.includes(s.event?.status);
+    if (contentFilter === "completed") return s.event?.status === "completed";
     return true;
   });
 
-  const filteredSubmissions = submissions.filter(s => {
-    if (contentFilter === "live") return ["posting", "voting", "scheduled"].includes(s.event?.status);
-    if (contentFilter === "completed") return s.event?.status === "completed";
+  // Live events always float to the top; within each group sort newest first
+  const sortedSubmissions = [...filteredSubmissions].sort((a, b) => {
+    const aLive = LIVE_STATUSES.includes(a.event?.status ?? "");
+    const bLive = LIVE_STATUSES.includes(b.event?.status ?? "");
+    if (aLive && !bLive) return -1;
+    if (!aLive && bLive) return 1;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  const filteredVotedContent = votedContent.filter(item => {
+    if (contentFilter === "live") return item.isLive;
+    if (contentFilter === "completed") return item.isCompleted;
     return true;
+  });
+
+  const sortedVotedContent = [...filteredVotedContent].sort((a, b) => {
+    if (a.isLive && !b.isLive) return -1;
+    if (!a.isLive && b.isLive) return 1;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
   const socialList = showSocialModal.type === "followers" ? followers : following;
@@ -386,33 +378,28 @@ export default function ProfileView({
               </div>
 
               {/* ── Showcase Section ── */}
-              <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                  <div className="space-y-1">
-                    <h2 className="font-display text-4xl text-white uppercase tracking-tight">Showcase</h2>
-                    {/* Tab Switcher */}
-                    <div className="flex items-center gap-6">
-                      <button
-                        onClick={() => setActiveTab("events")}
-                        className={cn(
-                          "pb-1 text-xs font-black uppercase tracking-widest transition-all relative",
-                          activeTab === "events" ? "text-primary" : "text-white/30 hover:text-white/50"
-                        )}
-                      >
-                        Activity
-                        {activeTab === "events" && <motion.div layoutId="tab-underline" className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary" />}
-                      </button>
-                      <button
-                        onClick={() => setActiveTab("creations")}
-                        className={cn(
-                          "pb-1 text-xs font-black uppercase tracking-widest transition-all relative",
-                          activeTab === "creations" ? "text-primary" : "text-white/30 hover:text-white/50"
-                        )}
-                      >
-                        Creations
-                        {activeTab === "creations" && <motion.div layoutId="tab-underline" className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary" />}
-                      </button>
-                    </div>
+              <div className="space-y-5">
+                {/* Header + Tabs */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-1 p-1 bg-white/[0.04] border border-white/[0.06] rounded-2xl h-fit">
+                    <button
+                      onClick={() => setActiveTab("posted")}
+                      className={cn(
+                        "px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                        activeTab === "posted" ? "bg-white text-black" : "text-white/30 hover:text-white/60"
+                      )}
+                    >
+                      Posts
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("voted")}
+                      className={cn(
+                        "px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                        activeTab === "voted" ? "bg-white text-black" : "text-white/30 hover:text-white/60"
+                      )}
+                    >
+                      Votes
+                    </button>
                   </div>
 
                   <div className="flex items-center gap-1 p-1 bg-white/[0.04] border border-white/[0.06] rounded-2xl h-fit">
@@ -421,8 +408,8 @@ export default function ProfileView({
                         key={f}
                         onClick={() => setContentFilter(f)}
                         className={cn(
-                          "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                          contentFilter === f ? "bg-white text-black" : "text-white/30 hover:text-white/60"
+                          "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                          contentFilter === f ? "bg-white/10 text-white" : "text-white/30 hover:text-white/60"
                         )}
                       >
                         {f}
@@ -432,166 +419,162 @@ export default function ProfileView({
                 </div>
 
                 {subsLoading ? (
-                  <div className="space-y-3">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="h-[80px] rounded-[24px] bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="aspect-[3/4] rounded-[20px] bg-white/[0.03] border border-white/[0.04] animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
                     ))}
                   </div>
-                ) : activeTab === "events" ? (
-                  /* ── Activity Tab: Participated Events List ── */
-                  <div className="space-y-3">
-                    {filteredParticipated.length === 0 ? (
-                      <div className="py-16 text-center bg-white/[0.02] rounded-[24px] border border-dashed border-white/[0.07]">
-                        <div className="w-12 h-12 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
-                          <MousePointerClick className="w-5 h-5 text-white/20" />
-                        </div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">No activity yet</p>
+                ) : activeTab === "posted" ? (
+                  sortedSubmissions.length === 0 ? (
+                    <div className="py-16 text-center bg-white/[0.02] rounded-[24px] border border-dashed border-white/[0.07]">
+                      <div className="w-12 h-12 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
+                        <ImageIcon className="w-5 h-5 text-white/20" />
                       </div>
-                    ) : (
-                      filteredParticipated.map((item, i) => (
-                        <motion.div
-                          key={item.event.id}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: i * 0.05 }}
-                          className="group relative bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.12] rounded-[24px] p-4 flex items-center gap-4 transition-all"
-                        >
-                          {/* Left: Event Banner / Logo */}
-                          <div className="w-12 h-12 rounded-2xl overflow-hidden bg-white/[0.05] border border-white/[0.08] shrink-0">
-                            {item.event.imageUrl || item.event.imageCid ? (
-                              <img
-                                src={item.event.imageUrl || `https://gateway.pinata.cloud/ipfs/${item.event.imageCid}`}
-                                alt={item.event.title}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : item.event.brand?.logoUrl || item.event.brand?.logoCid ? (
-                              <img
-                                src={item.event.brand.logoUrl || `https://gateway.pinata.cloud/ipfs/${item.event.brand.logoCid}`}
-                                alt={item.event.brand.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-white/5">
-                                <Building2 className="w-6 h-6 text-white/20" />
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Center: Info */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="text-[9px] font-black text-white/30 uppercase tracking-widest truncate">
-                                {item.event.brand?.name || "Unknown Brand"}
-                              </span>
-                              <span className="w-1 h-1 rounded-full bg-white/10" />
-                              <span className={cn(
-                                "text-[9px] font-black uppercase tracking-widest",
-                                item.event.status === "completed" ? "text-white/20" : "text-lime-400"
-                              )}>
-                                {item.event.status}
-                              </span>
-                            </div>
-                            <h4 className="text-base font-black text-white truncate group-hover:text-primary transition-colors">
-                              {item.event.title}
-                            </h4>
-                          </div>
-
-                          {/* Right: Type & Earnings */}
-                          <div className="flex items-center gap-4 shrink-0">
-                            <div className="text-right flex flex-col items-end">
-                              <div className="flex gap-1">
-                                {item.type === "both" || item.type === "post" ? (
-                                  <span className="px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-[8px] font-black text-blue-400 uppercase tracking-widest">
-                                    Creator
-                                  </span>
-                                ) : null}
-                                {item.type === "both" || item.type === "vote" ? (
-                                  <span className="px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-[8px] font-black text-purple-400 uppercase tracking-widest">
-                                    Voter
-                                  </span>
-                                ) : null}
-                              </div>
-                              <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mt-1">
-                                {new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                              </p>
-                            </div>
-
-                            {item.earnings > 0 && (
-                              <div className="min-w-[70px] text-right">
-                                <p className="text-sm font-black text-lime-400 font-mono tracking-tighter">
-                                  +${item.earnings.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                </p>
-                                <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">USDC Earned</p>
-                              </div>
-                            )}
-                          </div>
-
-                          <Link href={`/events/${item.event.id}`} className="absolute inset-0 z-10" />
-                        </motion.div>
-                      ))
-                    )}
-                  </div>
-                ) : (
-                  /* ── Creations Tab: Visual Grid ── */
-                  <div className="space-y-4">
-                    {filteredSubmissions.length === 0 ? (
-                      <div className="py-16 text-center bg-white/[0.02] rounded-[24px] border border-dashed border-white/[0.07]">
-                        <div className="w-12 h-12 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
-                          <ImageIcon className="w-5 h-5 text-white/20" />
-                        </div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">No creations yet</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                        {filteredSubmissions.map((s, i) => (
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">No posts yet</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {sortedSubmissions.map((s, i) => {
+                        const isLive = LIVE_STATUSES.includes(s.event?.status ?? "");
+                        const rank = s.finalRank;
+                        const votes = s._count?.votes || s.voteCount || 0;
+                        const rankColors =
+                          rank === 1 ? "bg-yellow-400 text-black" :
+                          rank === 2 ? "bg-zinc-300 text-black" :
+                          rank === 3 ? "bg-orange-400 text-black" :
+                          "bg-black/60 text-white/80";
+                        return (
                           <motion.div
                             key={s.id}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: i * 0.05 }}
-                            className="group relative aspect-[4/5] bg-white/[0.02] border border-white/[0.06] hover:border-white/20 rounded-[28px] overflow-hidden transition-all"
+                            transition={{ delay: i * 0.04 }}
+                            className="group relative aspect-[3/4] bg-white/[0.02] border border-white/[0.06] hover:border-white/20 rounded-[20px] overflow-hidden transition-all cursor-pointer"
                           >
                             <img
                               src={s.imageUrl || `https://gateway.pinata.cloud/ipfs/${s.imageCid}`}
-                              alt={s.event?.title}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                              alt=""
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                               onError={(e) => {
-                                // Fallback for broken IPFS links
                                 const target = e.target as HTMLImageElement;
                                 if (s.imageCid && !target.src.includes('infura-ipfs.io')) {
                                   target.src = `https://skywalker.infura-ipfs.io/ipfs/${s.imageCid}`;
                                 }
                               }}
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                            <div className="absolute bottom-0 left-0 right-0 p-5 space-y-2">
-                              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">
-                                {s.event?.brand?.name || "Brand"}
-                              </p>
-                              <h5 className="text-lg font-black text-white uppercase tracking-tight line-clamp-2">
-                                {s.event?.title}
-                              </h5>
-                              <div className="flex items-center justify-between pt-2 border-t border-white/10">
-                                <div className="flex items-center gap-1.5">
-                                  <ThumbsUp className="w-3.5 h-3.5 text-white/40" />
-                                  <span className="text-xs font-black text-white/60">{(s._count?.votes || 0).toLocaleString()}</span>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+
+                            {/* Rank badge — top left, prominent */}
+                            {rank != null && (
+                              <div className={cn("absolute top-2.5 left-2.5 w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-black shadow-lg", rankColors)}>
+                                #{rank}
+                              </div>
+                            )}
+
+                            {/* Live badge — top right */}
+                            {isLive && (
+                              <div className="absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur-sm border border-lime-400/40 rounded-full">
+                                <div className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-pulse" />
+                                <span className="text-[9px] font-black text-lime-400 uppercase tracking-widest">Live</span>
+                              </div>
+                            )}
+
+                            {/* Bottom: votes + event name */}
+                            <div className="absolute bottom-0 left-0 right-0 p-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1">
+                                  <ThumbsUp className="w-3 h-3 text-white/50" />
+                                  <span className="text-[11px] font-black text-white/70">{votes.toLocaleString()}</span>
                                 </div>
-                                {s.finalRank != null && (
-                                  <div className={cn(
-                                    "px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-widest",
-                                    s.finalRank === 1 ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/20" : "bg-white/10 text-white/40"
-                                  )}>
-                                    #{s.finalRank} Rank
-                                  </div>
+                                {isLive && rank == null && (
+                                  <span className="text-[9px] font-black text-lime-400 uppercase tracking-wider">In Progress</span>
                                 )}
                               </div>
+                              <p className="text-[9px] font-bold text-white/30 uppercase tracking-wide mt-1 truncate">{s.event?.title}</p>
                             </div>
+
                             <Link href={`/events/${s.eventId}`} className="absolute inset-0 z-10" />
                           </motion.div>
-                        ))}
+                        );
+                      })}
+                    </div>
+                  )
+                ) : (
+                  sortedVotedContent.length === 0 ? (
+                    <div className="py-16 text-center bg-white/[0.02] rounded-[24px] border border-dashed border-white/[0.07]">
+                      <div className="w-12 h-12 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
+                        <ThumbsUp className="w-5 h-5 text-white/20" />
                       </div>
-                    )}
-                  </div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">No votes yet</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {sortedVotedContent.map((item, i) => {
+                        const rank = item.rank;
+                        const rankColors =
+                          rank === 1 ? "bg-yellow-400 text-black" :
+                          rank === 2 ? "bg-zinc-300 text-black" :
+                          rank === 3 ? "bg-orange-400 text-black" :
+                          "bg-black/60 text-white/80";
+                        return (
+                          <motion.div
+                            key={item.id}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: i * 0.04 }}
+                            className="group relative aspect-[3/4] bg-white/[0.02] border border-white/[0.06] hover:border-white/20 rounded-[20px] overflow-hidden transition-all cursor-pointer"
+                          >
+                            {item.displayImageUrl ? (
+                              <img
+                                src={item.displayImageUrl}
+                                alt=""
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-white/[0.03]">
+                                <ThumbsUp className="w-8 h-8 text-white/10" />
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+
+                            {/* Rank badge — top left */}
+                            {rank != null && (
+                              <div className={cn("absolute top-2.5 left-2.5 w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-black shadow-lg", rankColors)}>
+                                #{rank}
+                              </div>
+                            )}
+
+                            {/* Live badge — top right */}
+                            {item.isLive && (
+                              <div className="absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur-sm border border-lime-400/40 rounded-full">
+                                <div className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-pulse" />
+                                <span className="text-[9px] font-black text-lime-400 uppercase tracking-widest">Live</span>
+                              </div>
+                            )}
+
+
+                            {/* Bottom: votes + event name */}
+                            <div className="absolute bottom-0 left-0 right-0 p-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1">
+                                  <ThumbsUp className="w-3 h-3 text-white/50" />
+                                  <span className="text-[11px] font-black text-white/70">{item.voteCount.toLocaleString()}</span>
+                                </div>
+                                {item.isLive && rank == null && (
+                                  <span className="text-[9px] font-black text-lime-400 uppercase tracking-wider">Live</span>
+                                )}
+                              </div>
+                              <p className="text-[9px] font-bold text-white/30 uppercase tracking-wide mt-1 truncate">
+                                {item.isTextProposal && item.proposalTitle ? item.proposalTitle : item.event?.title}
+                              </p>
+                            </div>
+
+                            <Link href={`/events/${item.event?.id}`} className="absolute inset-0 z-10" />
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  )
                 )}
               </div>
             </div>

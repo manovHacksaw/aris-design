@@ -45,6 +45,7 @@ export interface LaunchFormData {
   genderRestriction?: string;
   intendedCategories?: string[];
   coverImage: File | string | null;
+  sampleImages?: File[];
   participantInstructions?: string;
   submissionGuidelines?: string;
   moderationRules?: string;
@@ -168,6 +169,15 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
         imageUrl = uploadResult.imageUrl;
       } else if (typeof form.coverImage === "string") {
         imageUrl = form.coverImage;
+      }
+
+      // Upload sample images (post events only)
+      let sampleUrls: string[] = [];
+      if (form.type === "post" && form.sampleImages && form.sampleImages.length > 0) {
+        const sampleResults = await Promise.all(
+          form.sampleImages.map((file) => uploadToPinata(file))
+        );
+        sampleUrls = sampleResults.map((r) => r.imageUrl).filter(Boolean) as string[];
       }
 
       const uploadedProposals: Array<{ type: "TEXT"; title: string; imageUrl?: string; order: number }> = [];
@@ -304,7 +314,7 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
         ageRestriction: form.ageRestriction,
         genderRestriction: form.genderRestriction,
         intendedCategories: form.intendedCategories,
-        samples: form.type === "post" ? [] : undefined,
+        samples: form.type === "post" ? sampleUrls : undefined,
         proposals: form.type === "vote"
           ? (uploadedProposals.length >= 2
             ? uploadedProposals

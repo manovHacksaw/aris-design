@@ -56,15 +56,15 @@ export default function PostSubmissionCard({
     if (listView) {
         return (
             <motion.div
-                whileHover={{ backgroundColor: "rgba(38,38,38,0.4)" }}
+                whileHover={{ backgroundColor: "rgba(255,255,255,0.04)" }}
                 className={cn(
-                    "flex items-center gap-3 px-3 py-3 rounded-xl transition-colors border-b border-neutral-800/50 last:border-0",
+                    "flex items-center gap-6 px-5 py-4 rounded-[24px] transition-all bg-white/[0.02] border border-white/[0.05] hover:border-white/10",
                     isVotedByUser && "bg-lime-400/5 border-l-2 border-l-lime-400"
                 )}
             >
                 {/* Rank */}
                 {submission.rank != null && (
-                    <div className="w-8 shrink-0 flex items-center justify-center">
+                    <div className="w-10 shrink-0 flex items-center justify-center">
                         <RankBadge rank={submission.rank} />
                     </div>
                 )}
@@ -72,41 +72,45 @@ export default function PostSubmissionCard({
                 {/* Thumbnail */}
                 {submission.media ? (
                     <div
-                        className={cn("w-[72px] h-[72px] rounded-lg overflow-hidden shrink-0 bg-secondary", onImageClick && "cursor-zoom-in")}
+                        className={cn("w-20 h-20 rounded-2xl overflow-hidden shrink-0 bg-secondary border border-white/5", onImageClick && "cursor-zoom-in")}
                         onClick={onImageClick}
                     >
                         <img src={submission.media} alt="Post" className="w-full h-full object-cover" />
                     </div>
                 ) : (
-                    <div className="w-[72px] h-[72px] rounded-lg shrink-0 bg-secondary" />
+                    <div className="w-20 h-20 rounded-2xl shrink-0 bg-secondary border border-white/5" />
                 )}
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                     {showCreator && (
-                        <div className="flex items-center gap-1.5 mb-1">
-                            <img className="w-4 h-4 rounded-full border border-border/60" src={submission.creator.avatar || undefined} alt={submission.creator.name} />
-                            <span className="text-[11px] text-neutral-500 font-medium">@{submission.creator.handle}</span>
+                        <div className="flex items-center gap-2 mb-1.5">
+                            <img className="w-5 h-5 rounded-full border border-border/60" src={submission.creator.avatar || undefined} alt={submission.creator.name} />
+                            <span className="text-xs font-black text-foreground/70 uppercase tracking-tight">@{submission.creator.handle}</span>
                         </div>
                     )}
                     {submission.textContent && (
-                        <p className="text-sm font-medium text-foreground/80 line-clamp-1">{submission.textContent}</p>
+                        <p className="text-lg font-black text-foreground uppercase tracking-tight line-clamp-1">{submission.textContent}</p>
                     )}
                     {(isVotedByUser || submission.isOwn) && (
-                        <p className="text-[10px] text-neutral-500 font-medium mt-0.5">
-                            {isVotedByUser && !submission.isOwn && "· You voted"}
-                            {submission.isOwn && "· Your submission"}
-                        </p>
+                        <div className="flex items-center gap-2 mt-1.5 font-bold">
+                             {isVotedByUser && !submission.isOwn && (
+                                <span className="text-[10px] text-lime-400 uppercase tracking-widest bg-lime-400/10 px-2 py-0.5 rounded-full border border-lime-400/20">Voted</span>
+                             )}
+                             {submission.isOwn && (
+                                <span className="text-[10px] text-primary uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">Your Entry</span>
+                             )}
+                        </div>
                     )}
                 </div>
 
                 {/* Votes */}
                 {showVoteCount && (
-                    <div className="shrink-0 text-right">
-                        <p className={cn("text-lg font-semibold leading-none", rankStyle ? rankStyle.text : "text-foreground")}>
+                    <div className="shrink-0 text-right mr-2">
+                        <p className={cn("text-2xl font-black leading-none", rankStyle ? rankStyle.text : "text-foreground")}>
                             {submission.voteCount}
                         </p>
-                        <p className="text-[10px] text-neutral-500 font-medium mt-0.5">votes</p>
+                        <p className="text-[10px] text-neutral-500 font-black uppercase tracking-widest mt-1">votes</p>
                     </div>
                 )}
 
@@ -114,9 +118,9 @@ export default function PostSubmissionCard({
                 <button
                     type="button"
                     onClick={handleShare}
-                    className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center text-foreground/40 hover:bg-white/10 hover:text-foreground/70 transition-all shrink-0 ml-1"
+                    className="w-10 h-10 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center text-foreground/40 hover:bg-white/15 hover:text-foreground/70 transition-all shrink-0 ml-1"
                 >
-                    <Share2 className="w-3.5 h-3.5" />
+                    <Share2 className="w-4 h-4" />
                 </button>
             </motion.div>
         );

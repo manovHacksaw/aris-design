@@ -10,6 +10,7 @@ import { EventStatus } from '../types/event.js';
 import { XpService } from './xpService.js';
 import { EventService } from './eventService.js';
 import { enforceEventDemographics } from '../utils/eventUtils.js';
+import { getIPFSUrl } from './ipfsService.js';
 
 export class VoteService {
     /**
@@ -466,6 +467,118 @@ export class VoteService {
                 },
             },
         }) as any;
+    }
+
+    /**
+     * Get all content a user has voted for — used on public profile.
+     * Visibility rule:
+     *   - Owner: sees votes from all event statuses
+     *   - Anyone else: only sees votes from completed events
+     */
+    static async getVotedContentByUser(userId: string, requestingUserId?: string): Promise<any[]> {
+        const isOwner = requestingUserId === userId;
+        console.log(`[VoteService] getVotedContentByUser: userId=${userId}, requestingUserId=${requestingUserId}, isOwner=${isOwner}`);
+
+        const votes = await prisma.vote.findMany({
+            where: {
+                userId,
+                event: {
+                    isDeleted: false,
+                    ...(!isOwner && { status: EventStatus.COMPLETED }),
+                },
+            },
+            include: {
+                submission: {
+                    select: {
+                        id: true,
+                        imageUrl: true,
+                        imageCid: true,
+                        finalRank: true,
+                        voteCount: true,
+                        caption: true,
+                    },
+                },
+                proposal: {
+                    select: {
+                        id: true,
+                        type: true,
+                        title: true,
+                        content: true,
+                        imageCid: true,
+                        imageUrl: true,
+                        finalRank: true,
+                        voteCount: true,
+                    },
+                },
+                event: {
+                    select: {
+                        id: true,
+                        title: true,
+                        status: true,
+                        imageUrl: true,
+                        imageCid: true,
+                        endTime: true,
+                        brand: {
+                            select: {
+                                id: true,
+                                name: true,
+                                logoCid: true,
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+
+        return votes.map((vote: any) => {
+            const isCompleted = vote.event?.status === EventStatus.COMPLETED;
+            const isLive = ['posting', 'voting'].includes(vote.event?.status ?? '');
+
+            // Display image priority:
+            // 1. Submission image (post_and_vote events)
+            // 2. Proposal image (vote_only IMAGE proposals)
+            // 3. Event banner (vote_only TEXT proposals — no submission image exists)
+            let displayImageUrl: string | null = null;
+            let isTextProposal = false;
+            let proposalTitle: string | null = null;
+
+            if (vote.submission) {
+                displayImageUrl = vote.submission.imageUrl
+                    || (vote.submission.imageCid ? getIPFSUrl(vote.submission.imageCid, 'medium') : null);
+            } else if (vote.proposal) {
+                proposalTitle = vote.proposal.title ?? null;
+                if (vote.proposal.type === 'IMAGE') {
+                    displayImageUrl = vote.proposal.imageUrl
+                        || (vote.proposal.imageCid ? getIPFSUrl(vote.proposal.imageCid, 'medium') : null);
+                } else {
+                    // TEXT proposal — no image content, leave displayImageUrl null
+                    isTextProposal = true;
+                }
+            }
+
+            const rank = vote.submission?.finalRank ?? vote.proposal?.finalRank ?? null;
+            const voteCount = vote.submission?.voteCount ?? vote.proposal?.voteCount ?? 0;
+
+            return {
+                id: vote.id,
+                createdAt: vote.createdAt,
+                isLive,
+                isCompleted,
+                displayImageUrl,
+                isTextProposal,
+                proposalTitle,
+                rank: rank,
+                voteCount: voteCount,
+                event: {
+                    id: vote.event?.id,
+                    title: vote.event?.title,
+                    status: vote.event?.status,
+                    endTime: vote.event?.endTime,
+                    brand: vote.event?.brand,
+                },
+            };
+        });
     }
 
     /**

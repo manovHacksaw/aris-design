@@ -30,8 +30,6 @@ export default function Home() {
 
             {/* Left: Main Content Area (~70%) */}
             <main className="flex-1 min-w-0 space-y-12 pt-6 lg:pt-10">
-              {/* 1. Header Section (Heading, Search, Categories) */}
-              <HomeHeader />
 
               {/* 2. Trending Section */}
               <TrendingEvents />

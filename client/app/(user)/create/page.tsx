@@ -30,6 +30,7 @@ export default function Create() {
     const { openLoginModal } = useLoginModal();
     const [generatorOpen, setGeneratorOpen] = useState(false);
     const [heroPrompt, setHeroPrompt] = useState("");
+    const [preferAttach, setPreferAttach] = useState(false);
     const [activeCategory, setActiveCategory] = useState("ALL");
     const [openEvents, setOpenEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
@@ -70,6 +71,12 @@ export default function Create() {
                                 if (!user?.id) { openLoginModal(); return; }
                                 if (!p.trim()) return;
                                 setHeroPrompt(p);
+                                setPreferAttach(false);
+                                setGeneratorOpen(true);
+                            }}
+                            onAttach={() => {
+                                if (!user?.id) { openLoginModal(); return; }
+                                setPreferAttach(true);
                                 setGeneratorOpen(true);
                             }}
                             onRequireAuth={!user?.id ? openLoginModal : undefined}
@@ -178,9 +185,14 @@ export default function Create() {
 
             <AIGeneratorWindow
                 isOpen={generatorOpen}
-                onClose={() => { setGeneratorOpen(false); setHeroPrompt(""); }}
+                onClose={() => { 
+                    setGeneratorOpen(false); 
+                    setHeroPrompt(""); 
+                    setPreferAttach(false);
+                }}
                 userId={user?.id ?? ""}
                 initialPrompt={heroPrompt}
+                initialShowAttachMenu={preferAttach}
             />
         </div>
     );

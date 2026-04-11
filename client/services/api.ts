@@ -40,7 +40,7 @@ export async function apiRequest<T>(
     try {
       token = await Promise.race([
         getAuthToken(),
-        new Promise<null>((resolve) => setTimeout(() => resolve(null), 200)),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
       ]);
     } catch {
       token = null;

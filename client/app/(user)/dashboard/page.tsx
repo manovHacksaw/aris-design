@@ -959,11 +959,13 @@ export default function DashboardPage() {
                 const d = new Date(e.date);
                 return d >= weekStart && d <= weekEnd;
             }).length;
-            const posts = postEvents.filter(e => {
+            const weekPosts = postEvents.filter(e => {
                 const d = new Date(e.date);
                 return d >= weekStart && d <= weekEnd;
-            }).length;
-            return { label, votes, posts };
+            });
+            const posts = weekPosts.length;
+            const votesReceived = weekPosts.reduce((sum, e) => sum + ((e as any).votesReceived || 0), 0);
+            return { label, votes, posts, votesReceived };
         });
     })();
 
@@ -1165,22 +1167,24 @@ export default function DashboardPage() {
 
                     {/* ── Tabs + View toggle ─────────────────── */}
                     <div className="flex items-center justify-between gap-3 border-t border-white/[0.05] pt-6 flex-wrap">
-                        <div className="flex items-center gap-1.5">
-                            {tabs.map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={cn(
-                                        "px-6 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
-                                        activeTab === tab.id
-                                            ? "bg-white text-black border-white"
-                                            : "bg-white/[0.04] text-foreground/40 border-white/[0.06] hover:bg-white/[0.08] hover:text-foreground/80"
-                                    )}
-                                >
-                                    {tab.label}
-                                </button>
-                            ))}
-                        </div>
+                        {viewMode === "activity" && (
+                            <div className="flex items-center gap-1.5">
+                                {tabs.map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={cn(
+                                            "px-6 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
+                                            activeTab === tab.id
+                                                ? "bg-white text-black border-white"
+                                                : "bg-white/[0.04] text-foreground/40 border-white/[0.06] hover:bg-white/[0.08] hover:text-foreground/80"
+                                        )}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                         {/* View toggle: Activity / Graphs */}
                         <div className="flex items-center gap-0.5 bg-white/[0.04] border border-white/[0.06] rounded-xl p-0.5">
                             {(["activity", "graphs"] as const).map((v) => (
@@ -1801,8 +1805,9 @@ export default function DashboardPage() {
                                         <p className="text-[9px] font-bold text-foreground/25 mt-0.5">By week</p>
                                     </div>
                                     <div className="flex flex-col gap-1 items-end">
-                                        <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#60A5FA]" /><span className="text-[8px] font-bold text-foreground/40">Votes</span></div>
+                                        <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#60A5FA]" /><span className="text-[8px] font-bold text-foreground/40">Votes Cast</span></div>
                                         <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#A3E635]" /><span className="text-[8px] font-bold text-foreground/40">Posts</span></div>
+                                        <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#C084FC]" /><span className="text-[8px] font-bold text-foreground/40">Votes Recv'd</span></div>
                                     </div>
                                 </div>
                                 <ResponsiveContainer width="100%" height={140}>
@@ -1814,20 +1819,25 @@ export default function DashboardPage() {
                                             cursor={false}
                                             contentStyle={{ background: "hsl(var(--card))", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 11, fontWeight: 700, padding: "8px 12px" }}
                                             labelStyle={{ color: "rgba(255,255,255,0.4)", fontSize: 9, marginBottom: 4 }}
+                                            formatter={(val: any, name: any) => [val, name === "votes" ? "Votes Cast" : name === "posts" ? "Posts" : "Votes Received"]}
                                         />
                                         <Bar dataKey="votes" fill="#60A5FA" radius={[3, 3, 0, 0]} maxBarSize={16} />
                                         <Bar dataKey="posts" fill="#A3E635" radius={[3, 3, 0, 0]} maxBarSize={16} />
+                                        <Bar dataKey="votesReceived" fill="#C084FC" radius={[3, 3, 0, 0]} maxBarSize={16} />
                                     </BarChart>
                                 </ResponsiveContainer>
                                 {(() => {
                                     const totalVotes = activityData.reduce((s, d) => s + d.votes, 0);
                                     const totalPosts = activityData.reduce((s, d) => s + d.posts, 0);
-                                    return totalVotes + totalPosts > 0 ? (
-                                        <p className="text-[9px] font-bold text-foreground/25 mt-2">
-                                            {totalVotes} votes · {totalPosts} posts this period
-                                        </p>
+                                    const totalVotesReceived = activityData.reduce((s, d) => s + d.votesReceived, 0);
+                                    const parts: string[] = [];
+                                    if (totalVotes > 0) parts.push(`${totalVotes} votes cast`);
+                                    if (totalPosts > 0) parts.push(`${totalPosts} posts`);
+                                    if (totalVotesReceived > 0) parts.push(`${totalVotesReceived} votes received`);
+                                    return parts.length > 0 ? (
+                                        <p className="text-[9px] font-bold text-foreground/25 mt-2">{parts.join(" · ")} this period</p>
                                     ) : (
-                                        <p className="text-[9px] font-bold text-foreground/20 mt-2">Start voting to see activity</p>
+                                        <p className="text-[9px] font-bold text-foreground/20 mt-2">No activity this period</p>
                                     );
                                 })()}
                             </div>

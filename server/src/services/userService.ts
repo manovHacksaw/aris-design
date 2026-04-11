@@ -310,121 +310,161 @@ export class UserService {
     }
 
     /**
-     * Get user statistics
+     * Get user statistics with high accuracy
      */
     static async getUserStats(userId: string) {
         try {
-            console.log(`[getUserStats] Fetching stats for user: ${userId}`);
+            console.log(`[UserService.getUserStats] Fetching stats for user: ${userId}`);
 
-            // Verify user exists first
+            // 1. Fetch user to verify existence and get denormalized counters
             const user = await prisma.user.findUnique({
                 where: { id: userId },
-                select: { id: true },
+                select: { 
+                    id: true, 
+                    email: true,
+                    xp: true,
+                    totalSubmissions: true,
+                    totalVotes: true,
+                    totalEarnings: true
+                },
             });
 
             if (!user) {
-                console.error(`[getUserStats] User not found: ${userId}`);
+                console.error(`[UserService.getUserStats] User not found: ${userId}`);
                 throw new Error('User not found');
             }
 
-            // Update login streak in background (don't block stats response)
-            LoginStreakService.recordDailyLogin(userId).catch((streakError) => {
-                console.error('[getUserStats] Failed to update login streak:', streakError);
+            // Update login streak in background
+            LoginStreakService.recordDailyLogin(userId).catch((err) => {
+                console.error('[UserService.getUserStats] Streak update failed:', err);
             });
 
-            // Run all queries in parallel for faster response
+            // 2. Aggregate all metrics in parallel
+            // We use direct counts where possible to ensure accuracy even if counters are out of sync
+            
+            // Debug: check first 3 submissions to see if they exist for this user
+            const sampleSubmissions = await prisma.submission.findMany({
+                where: { userId },
+                take: 3,
+                select: { id: true, eventId: true }
+            });
+            console.log(`[UserService.getUserStats] Sample submissions for ${userId}:`, JSON.stringify(sampleSubmissions));
+
+            const sampleVotes = await prisma.vote.findMany({
+                where: { userId },
+                take: 3,
+                select: { id: true, eventId: true }
+            });
+            console.log(`[UserService.getUserStats] Sample votes for ${userId}:`, JSON.stringify(sampleVotes));
+
             const [
                 followersCount,
                 followingCount,
                 brandSubscriptionsCount,
                 submissionsCount,
-                votesCount,
-                submissionsVotes,
-                eventsParticipated,
-                rewardClaims,
-                otherEarnings,
+                votesCastCount,
+                votesReceivedCount,
+                votedEvents,
+                submittedEvents,
+                rewardClaimsSum,
+                otherEarningsSum,
                 referralsCount,
                 loginStreakData,
             ] = await Promise.all([
-                // 1. Followers (Subscribers)
-                prisma.userFollowers.count({
-                    where: { followingId: userId },
-                }),
-                // 2. Following
-                prisma.userFollowers.count({
-                    where: { followerId: userId },
-                }),
-                // 3. Brand Subscriptions
-                prisma.brandSubscription.count({
-                    where: { userId },
-                }),
-                // 4. Posts (Submissions)
-                prisma.submission.count({
-                    where: { userId },
-                }),
-                // 5. Votes Cast
-                prisma.vote.count({
-                    where: { userId },
-                }),
-                // 5b. Votes Received (total votes on user's content)
+                // Followers 
+                prisma.userFollowers.count({ where: { followingId: userId } }),
+                // Following (users)
+                prisma.userFollowers.count({ where: { followerId: userId } }),
+                // Following (brands)
+                prisma.brandSubscription.count({ where: { userId } }),
+                
+                // Posts (Submissions)
+                prisma.submission.count({ where: { userId } }),
+                
+                // Votes Cast 
+                prisma.vote.count({ where: { userId } }),
+                
+                // Votes Received (total votes on user's submissions)
+                // We use sum of voteCount from submissions as a secondary source of truth
                 prisma.submission.aggregate({
                     where: { userId },
-                    _sum: { voteCount: true },
+                    _sum: { voteCount: true }
                 }),
-                // 6. Events Participated (count distinct eventIds without loading rows)
+                
+                // Events Participated - Voted
                 prisma.vote.groupBy({
                     by: ['eventId'],
                     where: { userId },
-                    _count: { eventId: true },
                 }),
-                // 7. Reward Claims
+                
+                // Events Participated - Submitted
+                prisma.submission.groupBy({
+                    by: ['eventId'],
+                    where: { userId },
+                }),
+                
+                // Reward Earnings (inclusive of multiple statuses)
                 prisma.rewardClaim.aggregate({
                     where: {
                         userId,
-                        status: 'CLAIMED',
+                        status: { in: ['CLAIMED', 'CREDITED', 'PAID'] as any },
                     },
                     _sum: { finalAmount: true },
                 }),
-                // 8. Other Earnings
+                
+                // Other Earnings (AIRDROP, REFERRAL_BONUS, etc)
                 prisma.tokenActivityLog.aggregate({
                     where: {
                         userId,
-                        actionType: { in: ['EARNING', 'AIRDROP'] },
+                        actionType: { in: ['EARNING', 'AIRDROP', 'REFERRAL_BONUS'] },
                     },
                     _sum: { amount: true },
                 }),
-                // 9. Referrals made by this user
-                prisma.referral.count({
-                    where: { referrerId: userId },
-                }),
-                // 10. Login streak
+                
+                // Referrals
+                prisma.referral.count({ where: { referrerId: userId } }),
+                
+                // Login streak
                 prisma.userLoginStreak.findUnique({
                     where: { userId },
                     select: { currentStreak: true },
                 }).catch(() => null),
             ]);
 
-            const totalEarnings = (rewardClaims._sum.finalAmount || 0) + (otherEarnings._sum.amount || 0);
-            const votesReceived = (submissionsVotes._sum.voteCount || 0);
+            // Combine event sets to get unique events participated in
+            const uniqueEventIds = new Set([
+                ...votedEvents.map(e => e.eventId),
+                ...submittedEvents.map(e => e.eventId)
+            ]);
+
+            const votesReceivedAggregate = (votesReceivedSum._sum.voteCount || 0);
+            const totalEarnings = (rewardClaimsSum._sum.finalAmount || 0) + (otherEarningsSum._sum.amount || 0);
+            
+            // Log if there's a significant mismatch with denormalized fields (for debugging)
+            if (submissionsCount !== user.totalSubmissions || votesCastCount !== user.totalVotes) {
+                console.warn(`[UserService.getUserStats] Counter mismatch for ${userId}: ` + 
+                    `Submissions Query: ${submissionsCount} vs Cache: ${user.totalSubmissions}, ` +
+                    `Votes Query: ${votesCastCount} vs Cache: ${user.totalVotes}`);
+            }
 
             const stats = {
                 subscribers: followersCount,
                 subscriptions: followingCount + brandSubscriptionsCount,
                 posts: submissionsCount,
-                votes: votesCount, // Legacy compat
-                votesCast: votesCount,
-                votesReceived: votesReceived,
-                events: eventsParticipated.length,
+                votes: votesCastCount,
+                votesCast: votesCastCount,
+                votesReceived: votesReceivedAggregate,
+                events: uniqueEventIds.size,
                 earnings: totalEarnings,
                 referrals: referralsCount,
                 loginStreak: loginStreakData?.currentStreak ?? 0,
             };
 
-            console.log(`[getUserStats] Stats for ${userId}:`, JSON.stringify(stats));
+            console.log(`[UserService.getUserStats] Resulting Stats:`, JSON.stringify(stats, null, 2));
 
             return stats;
         } catch (error) {
-            console.error('[getUserStats] Critical error:', error);
+            console.error('[UserService.getUserStats] Critical error:', error);
             throw error;
         }
     }

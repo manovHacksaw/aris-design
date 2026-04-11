@@ -8,7 +8,7 @@ import {
     Twitter, Instagram, Globe, ExternalLink, LayoutGrid, List, ThumbsUp, Coins,
     ShieldCheck, Tag, Sparkles, Wand2, RefreshCw, X, ZoomIn, Eye
 } from "lucide-react";
-import { calculateTotalPool } from "@/lib/eventUtils";
+import { calculateTotalPool, toBrandSlug } from "@/lib/eventUtils";
 import Link from "next/link";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
@@ -29,6 +29,7 @@ import { uploadToPinata, validateImageFile } from "@/lib/pinata-upload";
 import { generateAiImage, refineAiPrompt } from "@/services/ai.service";
 import { generateImage, base64ToFile, base64ToObjectUrl } from "@/services/image-generation.service";
 import { PinturaImageEditor } from "@/components/create/PinturaImageEditor";
+import { AIGeneratorWindow } from "@/components/create/AIGeneratorWindow";
 import { useUser } from "@/context/UserContext";
 import { useWallet } from "@/context/WalletContext";
 import { useLoginModal } from "@/context/LoginModalContext";
@@ -342,6 +343,7 @@ function EventSidebar({
     onFileChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onSubmit?: () => void;
     onCaptionChange?: (v: string) => void;
+    onOpenGallery?: () => void;
 }) {
     const targetDate = event.status === "posting" ? event.postingEnd! : event.endTime;
     const socialLinks = {
@@ -595,28 +597,38 @@ function EventSidebar({
                         </div>
                     </div>
                     <div className="p-4 space-y-3">
-                        <div
-                            onClick={() => fileRef.current?.click()}
-                            className={cn(
-                                "relative border-2 border-dashed rounded-[16px] flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden",
-                                preview ? "border-orange-500/30 h-[180px]" : "border-border/40 hover:border-orange-500/40 h-[120px]"
-                            )}
-                        >
-                            {preview ? (
-                                <>
-                                    <img src={preview} className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                                        <span className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-black text-white">Change</span>
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="flex flex-col items-center gap-2 p-4 text-center">
-                                    <Upload className="w-5 h-5 text-foreground/30" />
-                                    <p className="text-xs font-black text-foreground/50">Drop image or click</p>
-                                    <p className="text-[9px] text-foreground/20 uppercase tracking-widest font-bold">JPEG · PNG · max 5 MB</p>
+                        {/* Preview area */}
+                        {preview ? (
+                            <div
+                                onClick={() => onOpenGallery?.()}
+                                className="relative border-2 border-orange-500/30 rounded-[16px] h-[180px] overflow-hidden cursor-pointer"
+                            >
+                                <img src={preview} className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                    <span className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-black text-white">Change</span>
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        ) : (
+                            /* Two-option upload picker */
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => onOpenGallery?.()}
+                                    className="flex flex-col items-center gap-2 p-4 rounded-[16px] border-2 border-dashed border-border/40 hover:border-orange-500/40 hover:bg-orange-500/5 transition-all cursor-pointer text-center"
+                                >
+                                    <ImageIcon className="w-5 h-5 text-foreground/40" />
+                                    <p className="text-[10px] font-black text-foreground/50 uppercase tracking-wide leading-tight">Gallery &amp; Previous<br />Creations</p>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => fileRef?.current?.click()}
+                                    className="flex flex-col items-center gap-2 p-4 rounded-[16px] border-2 border-dashed border-border/40 hover:border-orange-500/40 hover:bg-orange-500/5 transition-all cursor-pointer text-center"
+                                >
+                                    <Upload className="w-5 h-5 text-foreground/40" />
+                                    <p className="text-[10px] font-black text-foreground/50 uppercase tracking-wide leading-tight">File<br />Explorer</p>
+                                </button>
+                            </div>
+                        )}
                         <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" className="hidden" onChange={onFileChange} />
                         <textarea
                             value={caption}
@@ -704,7 +716,10 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     const [aiImageUrl, setAiImageUrl] = useState<string | null>(null);
     const [aiImageFile, setAiImageFile] = useState<File | null>(null);
     const [submitModalOpen, setSubmitModalOpen] = useState(false);
+    const [sampleLightboxUrl, setSampleLightboxUrl] = useState<string | null>(null);
     const [isDraggingFile, setIsDraggingFile] = useState(false);
+    const [generatorOpen, setGeneratorOpen] = useState(false);
+    const [modalPreferAttach, setModalPreferAttach] = useState(false);
 
     useEffect(() => {
         document.body.style.overflow = submitModalOpen ? "hidden" : "";
@@ -805,6 +820,20 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         }
         load();
     }, [id, user?.id]);
+
+    const handleSelectFromModal = useCallback(({ imageUrl, file: selectedFile, prompt: selectedPrompt }: { imageUrl: string; file?: File; prompt?: string }) => {
+        if (imageUrl) {
+            setAiImageUrl(imageUrl);
+            setAiImageFile(selectedFile || null);
+            setPreview(imageUrl);
+            setFile(selectedFile || null);
+        }
+        if (selectedPrompt) {
+            setAiPrompt(selectedPrompt);
+        }
+        setGeneratorOpen(false);
+        setModalPreferAttach(false);
+    }, []);
 
     // Step 1: select a submission (sets pending state only)
     const handleVote = useCallback((submissionId: string) => {
@@ -1321,27 +1350,33 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                     <div>
                                         <p className="text-sm font-black text-foreground/80 mb-1">This event was cancelled</p>
                                         <p className="text-sm text-foreground/50 leading-relaxed">{cancelReason}</p>
-                                        <p className="text-xs text-foreground/30 mt-3 font-medium">Hosted by {event.brand?.name}</p>
+                                         <p className="text-xs text-foreground/30 mt-3 font-medium">
+                                            Hosted by <Link href={`/brand/${toBrandSlug(event.brand?.name || "")}`} className="hover:text-primary transition-colors">{event.brand?.name}</Link>
+                                        </p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Right — minimal info */}
                             <div className="lg:w-[280px] shrink-0 space-y-4">
-                                <div className="bg-white/[0.03] border border-white/[0.07] rounded-[20px] p-5 space-y-3">
+                                 <Link 
+                                    href={`/brand/${toBrandSlug(event.brand?.name || "")}`}
+                                    className="bg-white/[0.03] border border-white/[0.07] rounded-[20px] p-5 space-y-3 block hover:border-white/20 transition-all group/host"
+                                >
                                     <div className="flex items-center gap-3">
                                         {event.brand?.logoCid ? (
-                                            <img src={`https://gateway.pinata.cloud/ipfs/${event.brand.logoCid}`} className="w-9 h-9 rounded-xl object-cover" alt={event.brand.name} />
+                                            <img src={`https://gateway.pinata.cloud/ipfs/${event.brand.logoCid}`} className="w-9 h-9 rounded-xl object-cover group-hover/host:scale-105 transition-transform" alt={event.brand.name} />
                                         ) : (
-                                            <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
+                                            <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center group-hover/host:scale-105 transition-transform">
                                                 <span className="text-sm font-black text-primary">{event.brand?.name?.[0]}</span>
                                             </div>
                                         )}
                                         <div>
-                                            <p className="text-sm font-black text-foreground">{event.brand?.name}</p>
+                                            <p className="text-sm font-black text-foreground group-hover/host:text-primary transition-colors">{event.brand?.name}</p>
                                             <p className="text-[10px] text-foreground/40">Event Host</p>
                                         </div>
                                     </div>
+                                </Link>
                                     <div className="h-px bg-white/[0.06]" />
                                     <div className="flex items-center justify-between">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Category</p>
@@ -1351,7 +1386,6 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                         <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Status</p>
                                         <span className="text-[10px] font-black text-red-400 uppercase">Cancelled</span>
                                     </div>
-                                </div>
                                 <Link href="/explore" className="block w-full py-3 rounded-[14px] bg-white/[0.04] border border-white/[0.08] text-center text-xs font-black uppercase tracking-widest text-foreground/50 hover:bg-white/[0.08] hover:text-foreground transition-all">
                                     Browse other events
                                 </Link>
@@ -1363,23 +1397,26 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         ══════════════════════════════════════════════ */
                         <>
                             {/* ── Full-width hero banner (same style as vote layout) ── */}
-                            <div className="relative overflow-hidden min-h-[360px] md:min-h-[480px] mb-8 -mx-3 w-[calc(100%+1.5rem)] sm:-mx-4 sm:w-[calc(100%+2rem)] md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
+                            <div className="relative overflow-hidden min-h-[220px] md:min-h-[300px] mb-6 -mx-3 w-[calc(100%+1.5rem)] sm:-mx-4 sm:w-[calc(100%+2rem)] md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
                                 <img src={coverUrl} className="absolute inset-0 w-full h-full object-cover object-center" alt="Event" />
                                 <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/75 to-black/20" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                                <div className="relative z-10 flex flex-col justify-between h-full min-h-[440px] md:min-h-[540px] p-8 md:p-12">
+                                <div className="relative z-10 flex flex-col justify-between h-full min-h-[260px] md:min-h-[340px] p-6 md:p-8">
                                     <div>
                                         <div className="flex items-center gap-3 mb-4 flex-wrap">
-                                            <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/15 rounded-full pl-1 pr-3 py-1">
+                                            <Link 
+                                                href={`/brand/${toBrandSlug(event.brand?.name || "")}`}
+                                                className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/15 hover:border-white/30 hover:bg-black/60 rounded-full pl-1 pr-3 py-1 transition-all group/brandpill"
+                                            >
                                                 {event.brand?.logoCid ? (
-                                                    <img src={`${PINATA_GW}/${event.brand.logoCid}`} className="w-6 h-6 rounded-full object-cover border border-white/20" alt={event.brand?.name} />
+                                                    <img src={`${PINATA_GW}/${event.brand.logoCid}`} className="w-6 h-6 rounded-full object-cover border border-white/20 group-hover/brandpill:scale-110 transition-transform" alt={event.brand?.name} />
                                                 ) : (
-                                                    <div className="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+                                                    <div className="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center shrink-0 group-hover/brandpill:scale-110 transition-transform">
                                                         <span className="text-[9px] font-black text-white/70">{event.brand?.name?.[0]}</span>
                                                     </div>
                                                 )}
-                                                <span className="text-[11px] font-black text-white/90">{event.brand?.name}</span>
-                                            </div>
+                                                <span className="text-[11px] font-black text-white/90 group-hover/brandpill:text-white transition-colors">{event.brand?.name}</span>
+                                            </Link>
                                             <SocialLinks links={{ ...(event.brand as any)?.socialLinks, website: event.brand?.websiteUrl }} eventId={event.id} variant="compact" />
                                             {event.category && (
                                                 <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.10] text-white/50">
@@ -1430,6 +1467,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                     </div>
                                 </div>
                             </div>
+
 
                             <div className="flex flex-col lg:flex-row gap-6">
 
@@ -1487,7 +1525,12 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                             <div className="px-6 py-8 sm:px-8 space-y-6">
                                                 {/* Heading */}
                                                 <div>
-                                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">{event.brand?.name}</p>
+                                                    <Link 
+                                                        href={`/brand/${toBrandSlug(event.brand?.name || "")}`}
+                                                        className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2 block hover:text-primary transition-colors"
+                                                    >
+                                                        {event.brand?.name}
+                                                    </Link>
                                                     <h2 className="font-display text-4xl md:text-5xl text-white leading-[0.9] uppercase tracking-tight">
                                                         Compete for the{" "}
                                                         <span className="bg-gradient-to-r from-lime-300 via-lime-400 to-green-400 bg-clip-text text-transparent">top spot</span>
@@ -1519,9 +1562,12 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                         ) : (
                                                             <button
                                                                 type="button"
-                                                                onClick={() => { if (!isAuthenticated) { openLoginModal(); return; } fileRef.current?.click(); }}
+                                                                onClick={() => {
+                                                                    setModalPreferAttach(true);
+                                                                    setGeneratorOpen(true);
+                                                                }}
                                                                 className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all shrink-0"
-                                                                title="Upload your own image"
+                                                                title="Upload or pick from gallery"
                                                             >
                                                                 <Upload className="w-4 h-4" />
                                                             </button>
@@ -1555,15 +1601,23 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                             <p className="text-[10px] font-black uppercase tracking-widest text-white/30 flex items-center gap-1.5">
                                                                 <ImageIcon className="w-3 h-3" /> Sample references — match this style
                                                             </p>
-                                                            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                                                            <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
                                                                 {event.sampleUrls.map((s, i) => (
-                                                                    <div key={i} className="shrink-0 w-24 h-24 rounded-xl overflow-hidden border border-white/[0.08]">
+                                                                    <button
+                                                                        key={i}
+                                                                        type="button"
+                                                                        onClick={() => setSampleLightboxUrl(s.urls?.large || s.urls?.full || s.urls?.medium || s.urls?.thumbnail)}
+                                                                        className="shrink-0 w-[160px] h-[160px] rounded-[16px] overflow-hidden border border-white/[0.08] hover:border-purple-400/40 transition-all group relative"
+                                                                    >
                                                                         <img
                                                                             src={s.urls?.medium || s.urls?.thumbnail}
                                                                             alt={`Sample ${i + 1}`}
-                                                                            className="w-full h-full object-cover"
+                                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                                         />
-                                                                    </div>
+                                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                                                                            <ZoomIn className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                                        </div>
+                                                                    </button>
                                                                 ))}
                                                             </div>
                                                         </div>
@@ -1641,7 +1695,12 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                     <div className="flex-1 flex flex-col p-6 gap-4">
                                                         <div className="flex items-start justify-between">
                                                             <div>
-                                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">{event.brand?.name}</p>
+                                                                <Link 
+                                                                    href={`/brand/${toBrandSlug(event.brand?.name || "")}`}
+                                                                    className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1 block hover:text-primary transition-colors"
+                                                                >
+                                                                    {event.brand?.name}
+                                                                </Link>
                                                                 <h3 className="font-display text-2xl text-white uppercase leading-tight">Submit Entry</h3>
                                                             </div>
                                                             <button
@@ -1876,7 +1935,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         ══════════════════════════════════════════════ */
                         <>
                             {/* ── Full-width hero banner ── */}
-                            <div className="relative overflow-hidden min-h-[200px] md:min-h-[400px] mb-6 -mx-3 w-[calc(100%+1.5rem)] sm:-mx-4 sm:w-[calc(100%+2rem)] md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
+                            <div className="relative overflow-hidden min-h-[180px] md:min-h-[280px] mb-6 -mx-3 w-[calc(100%+1.5rem)] sm:-mx-4 sm:w-[calc(100%+2rem)] md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
                                 {/* Background image */}
                                 <img src={coverUrl} className="absolute inset-0 w-full h-full object-cover object-center" alt="Event" />
 
@@ -1885,25 +1944,28 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
                                 {/* Content */}
-                                <div className="relative z-10 flex flex-col justify-between h-full min-h-[380px] md:min-h-[460px] p-7 md:p-10">
+                                <div className="relative z-10 flex flex-col justify-between h-full min-h-[220px] md:min-h-[320px] p-6 md:p-8">
                                     {/* Top: brand pill + title */}
                                     <div>
                                         {/* Brand + category pill */}
                                         <div className="flex items-center gap-3 mb-4 flex-wrap">
-                                            <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/15 rounded-full pl-1 pr-3 py-1">
+                                            <Link 
+                                                href={`/brand/${toBrandSlug(event.brand?.name || "")}`}
+                                                className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/15 hover:border-white/30 hover:bg-black/60 rounded-full pl-1 pr-3 py-1 transition-all group/brandpill"
+                                            >
                                                 {event.brand?.logoCid ? (
                                                     <img
                                                         src={`${PINATA_GW}/${event.brand.logoCid}`}
-                                                        className="w-6 h-6 rounded-full object-cover border border-white/20"
+                                                        className="w-6 h-6 rounded-full object-cover border border-white/20 group-hover/brandpill:scale-110 transition-transform"
                                                         alt={event.brand?.name}
                                                     />
                                                 ) : (
-                                                    <div className="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+                                                    <div className="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center shrink-0 group-hover/brandpill:scale-110 transition-transform">
                                                         <span className="text-[9px] font-black text-white/70">{event.brand?.name?.[0]}</span>
                                                     </div>
                                                 )}
-                                                <span className="text-[11px] font-black text-white/90">{event.brand?.name}</span>
-                                            </div>
+                                                <span className="text-[11px] font-black text-white/90 group-hover/brandpill:text-white transition-colors">{event.brand?.name}</span>
+                                            </Link>
                                             <SocialLinks links={{ ...(event.brand as any)?.socialLinks, website: event.brand?.websiteUrl }} eventId={event.id} variant="compact" />
                                             {event.category && (
                                                 <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.10] text-white/50">
@@ -2054,7 +2116,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                         initial={{ opacity: 0, scale: 0.92 }}
                                                         animate={{ opacity: 1, scale: 1 }}
                                                         transition={{ duration: 0.2, delay: idx * 0.03 }}
-                                                        className={!gridView ? "w-full max-w-[760px] mx-auto" : undefined}
+                                                        className={!gridView ? "w-full" : undefined}
                                                     >
                                                         <VoteSubmissionCard
                                                             submission={toVoteSubmission(sub, user?.id)}
@@ -2099,6 +2161,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                             onSubmit={handleSubmit}
                                             onCaptionChange={setCaption}
                                             isBrand={isBrand}
+                                            onOpenGallery={() => { setModalPreferAttach(true); setGeneratorOpen(true); }}
                                         />
                                     </div>
                                 </div>
@@ -2138,6 +2201,21 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Sample lightbox */}
+            {sampleLightboxUrl && (
+                <div className="fixed inset-0 z-[300] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSampleLightboxUrl(null)}>
+                    <button onClick={() => setSampleLightboxUrl(null)} className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"><X className="w-5 h-5 text-white" /></button>
+                    <img src={sampleLightboxUrl} alt="Sample" className="max-w-full max-h-[90vh] rounded-[20px] object-contain" onClick={e => e.stopPropagation()} />
+                </div>
+            )}
+            <AIGeneratorWindow
+                isOpen={generatorOpen}
+                onClose={() => { setGeneratorOpen(false); setModalPreferAttach(false); }}
+                userId={user?.id ?? ""}
+                initialShowAttachMenu={modalPreferAttach}
+                onSelect={handleSelectFromModal}
+            />
         </SidebarLayout>
     );
 }

@@ -94,6 +94,12 @@ export function calculateTotalPool(event: any): number {
     const capacity = event.capacity || 0;
     const topReward = event.topReward || 0;
     const leaderboardPool = event.leaderboardPool || 0;
-
     return (baseReward * capacity) + topReward + leaderboardPool;
+}
+
+/**
+ * Generates a URL-friendly slug from a brand name
+ */
+export function toBrandSlug(name: string): string {
+    return name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 }

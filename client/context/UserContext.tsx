@@ -159,9 +159,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [isConnected, authenticated, isInitialized, ready, address, syncedAddress, pathname]);
 
   // Initialize the singleton Privy token getter needed across global API calls
-  useEffect(() => {
-    setPrivyTokenGetter(getAccessToken);
-  }, [getAccessToken]);
+  setPrivyTokenGetter(getAccessToken);
 
   // On mount, if there's an existing token, try to load user silently
   useEffect(() => {

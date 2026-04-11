@@ -26,11 +26,12 @@ const HINTS = ["4K Bokeh", "Cyberpunk", "Cinematic", "Minimalist"];
 
 interface CreateHeroProps {
     onGenerate?: (prompt: string) => void;
+    onAttach?: () => void;
     onRequireAuth?: () => void;
     events?: any[];
 }
 
-export default function CreateHero({ onGenerate, onRequireAuth, events = [] }: CreateHeroProps) {
+export default function CreateHero({ onGenerate, onAttach, onRequireAuth, events = [] }: CreateHeroProps) {
     const [prompt, setPrompt] = useState("");
 
     const handleHint = (hint: string) => {
@@ -97,7 +98,10 @@ export default function CreateHero({ onGenerate, onRequireAuth, events = [] }: C
                                 <div className="flex items-center gap-2 pr-1 shrink-0">
                                     <button
                                         type="button"
-                                        onClick={() => onRequireAuth?.()}
+                                        onClick={() => {
+                                            if (onRequireAuth) { onRequireAuth(); return; }
+                                            onAttach?.();
+                                        }}
                                         className="p-3 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all group/btn"
                                     >
                                         <Paperclip className="w-4 h-4 group-hover/btn:rotate-12 transition-transform" />

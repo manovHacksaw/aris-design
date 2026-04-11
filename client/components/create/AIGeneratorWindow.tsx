@@ -19,6 +19,9 @@ import {
   Users,
   Pencil,
   Bookmark,
+  Paperclip,
+  FilePlus,
+  Library,
 } from "lucide-react";
 import { getEvents, type Event } from "@/services/event.service";
 import { createSubmission } from "@/services/submission.service";
@@ -29,12 +32,12 @@ import {
   base64ToFile,
   base64ToObjectUrl,
 } from "@/services/image-generation.service";
-import { saveDraftToBackend } from "@/services/draft.service";
+import { saveDraftToBackend, fetchDrafts, type UserDraft } from "@/services/draft.service";
 import { PinturaImageEditor } from "@/components/create/PinturaImageEditor";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
-type Step = "select_type" | "prompt" | "generating" | "preview" | "selecting_event" | "posting";
+type Step = "select_type" | "prompt" | "generating" | "preview" | "selecting_event" | "posting" | "gallery";
 
 interface GeneratedImage {
   data: string;
@@ -50,6 +53,8 @@ interface AIGeneratorWindowProps {
   initialPrompt?: string;
   initialStyle?: string;
   initialRatio?: string;
+  initialShowAttachMenu?: boolean;
+  onSelect?: (data: { imageUrl: string; file?: File; prompt?: string }) => void;
 }
 
 // ─── Event Type Card ────────────────────────────────────────────────────────
@@ -115,9 +120,13 @@ function formatTimeLeft(endTime: string): string {
   return `${mins}m left`;
 }
 
+function combinedUrlIsRemote(url: string): boolean {
+  return url.startsWith("http") || url.startsWith("https");
+}
+
 // ─── Main Component ─────────────────────────────────────────────────────────
 
-export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "", initialStyle = "", initialRatio = "" }: AIGeneratorWindowProps) {
+export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "", initialStyle = "", initialRatio = "", initialShowAttachMenu = false, onSelect }: AIGeneratorWindowProps) {
   const [mounted, setMounted] = useState(false);
   const [step, setStep] = useState<Step>("select_type");
   const [selectedType, setSelectedType] = useState<PostTypeId | null>(null);
@@ -147,6 +156,12 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
   const [pinturaOpen, setPinturaOpen] = useState(false);
   const [editedImageFile, setEditedImageFile] = useState<File | null>(null);
 
+  // Gallery/Upload state
+  const [userDrafts, setUserDrafts] = useState<UserDraft[]>([]);
+  const [isLoadingDrafts, setIsLoadingDrafts] = useState(false);
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const isGeneratingRef = useRef(false);
   const limitCheckedRef = useRef(false);
 
@@ -155,7 +170,7 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
     return () => setMounted(false);
   }, []);
 
-  // Check limit on open + jump to prompt step if initialPrompt was provided
+  // Check limit on open + jump to prompt step if initialPrompt or initialShowAttachMenu was provided
   useEffect(() => {
     if (isOpen) {
       if (userId && !limitCheckedRef.current) {
@@ -164,12 +179,18 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
           setRemainingGenerations(info.remainingGenerations);
         });
       }
+      
       if (initialPrompt) {
         setPrompt(initialPrompt);
         setStep("prompt");
       }
+      
+      if (initialShowAttachMenu) {
+        setStep("prompt");
+        setShowAttachMenu(true);
+      }
     }
-  }, [isOpen, userId, initialPrompt]);
+  }, [isOpen, userId, initialPrompt, initialShowAttachMenu]);
 
   // Reset on close
   useEffect(() => {
@@ -193,6 +214,7 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
       setEditedImageFile(null);
       setIsSaving(false);
       setSaveSuccess(false);
+      setShowAttachMenu(false); // Explicitly reset attach menu
       limitCheckedRef.current = false;
       isGeneratingRef.current = false;
     }
@@ -274,7 +296,23 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
 
     try {
       // Use the Pintura-edited file if available, otherwise convert from base64
-      const file = editedImageFile ?? base64ToFile(generatedImage.data, generatedImage.mimeType, "ai-generated.png");
+      let file: File | null = editedImageFile;
+      
+      if (!file) {
+        if (generatedImage.data) {
+          file = base64ToFile(generatedImage.data, generatedImage.mimeType, "ai-generated.png");
+        } else if (generatedImage.objectUrl && combinedUrlIsRemote(generatedImage.objectUrl)) {
+          // It's already a remote URL (from gallery), we don't need to upload to pinata again, 
+          // but our createSubmission likely takes a URL.
+          await createSubmission({ eventId: selectedEvent.id, imageUrl: generatedImage.objectUrl });
+          setPostSuccess(true);
+          setTimeout(() => onClose(), 2000);
+          return;
+        }
+      }
+
+      if (!file) throw new Error("No image file to upload");
+      
       const { imageUrl } = await uploadToPinata(file);
       await createSubmission({ eventId: selectedEvent.id, imageUrl });
       setPostSuccess(true);
@@ -326,6 +364,63 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
     setPinturaOpen(false);
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Convert to base64 for preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      const data = base64.split(",")[1];
+      const objectUrl = URL.createObjectURL(file);
+      setGeneratedImage({ 
+        data: data, 
+        mimeType: file.type, 
+        objectUrl: objectUrl 
+      });
+      setCurrentPrompt("Uploaded image");
+      setStep("preview");
+      setShowAttachMenu(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const loadDrafts = async () => {
+    setIsLoadingDrafts(true);
+    try {
+      const drafts = await fetchDrafts();
+      setUserDrafts(drafts);
+    } catch (err) {
+      console.error("Failed to fetch drafts", err);
+    } finally {
+      setIsLoadingDrafts(false);
+    }
+  };
+
+  const handleDraftSelect = (draft: UserDraft) => {
+    if (!draft.imageUrl) return;
+
+    if (onSelect) {
+      onSelect({ 
+        imageUrl: draft.imageUrl, 
+        prompt: draft.prompt || "" 
+      });
+      onClose();
+      return;
+    }
+    
+    // We can't easily get base64 from a URL without a proxy or CORS, 
+    // but we can pass the URL as objectUrl and handle it in handlePost
+    setGeneratedImage({
+      data: "", // Not used if imageUrl is available
+      mimeType: "image/png", // fallback
+      objectUrl: draft.imageUrl // Using existing URL
+    });
+    setCurrentPrompt(draft.prompt || "From gallery");
+    setStep("preview");
+  };
+
   if (!mounted) return null;
 
   const content = (
@@ -355,6 +450,14 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
               boxShadow: "0 32px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)",
             }}
           >
+            {/* Hidden File Input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handleFileUpload}
+            />
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
               <div className="flex items-center gap-3">
@@ -499,6 +602,51 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                       </div>
                     )}
 
+                    {/* Attach Menu */}
+                    <div className="relative">
+                      <div className="flex items-center gap-2">
+                         <button
+                            onClick={() => setShowAttachMenu(!showAttachMenu)}
+                            className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all"
+                          >
+                            <Paperclip className={`w-5 h-5 ${showAttachMenu ? 'text-primary' : 'text-white/40'}`} />
+                          </button>
+                          <div className="flex-1">
+                             <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">Or use an image</p>
+                          </div>
+                      </div>
+
+                      <AnimatePresence>
+                        {showAttachMenu && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            className="absolute bottom-full left-0 mb-3 w-48 p-2 rounded-2xl bg-[#1a1a1e] border border-white/10 shadow-2xl z-50"
+                          >
+                            <button
+                              onClick={() => fileInputRef.current?.click()}
+                              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors group"
+                            >
+                              <FilePlus className="w-4 h-4 text-white/40 group-hover:text-primary" />
+                              <span className="text-xs font-bold text-white/70">Upload File</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                setStep("gallery");
+                                loadDrafts();
+                                setShowAttachMenu(false);
+                              }}
+                              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors group"
+                            >
+                              <Library className="w-4 h-4 text-white/40 group-hover:text-primary" />
+                              <span className="text-xs font-bold text-white/70">From Gallery</span>
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
                     {generationError && (
                       <div className="flex items-start gap-2.5 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
                         <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
@@ -626,13 +774,22 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                         </button>
                         <button
                           onClick={() => {
+                            if (onSelect) {
+                              onSelect({ 
+                                imageUrl: generatedImage.objectUrl, 
+                                file: generatedImage.file,
+                                prompt: currentPrompt
+                              });
+                              onClose();
+                              return;
+                            }
                             setStep("selecting_event");
                             loadEvents();
                           }}
                           disabled={isSaving}
                           className="flex-1 py-3 rounded-2xl bg-primary text-black text-xs font-black uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95 shadow-lg shadow-primary/20 disabled:opacity-60"
                         >
-                          Post
+                          {onSelect ? "Use Image" : "Post"}
                         </button>
                       </div>
                     </div>
@@ -789,6 +946,61 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                           </p>
                         </div>
                       </>
+                    )}
+                  </motion.div>
+                )}
+                {step === "gallery" && (
+                  <motion.div
+                    key="gallery"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="p-6 space-y-5"
+                  >
+                    <div>
+                      <button
+                        onClick={() => setStep("prompt")}
+                        className="text-[10px] font-bold text-white/30 uppercase tracking-widest hover:text-white/60 transition-colors mb-4 flex items-center gap-1"
+                      >
+                        ← Back
+                      </button>
+                      <h2 className="text-xl font-black text-white tracking-tight">
+                        Your Gallery
+                      </h2>
+                      <p className="text-white/40 text-xs font-medium mt-1">
+                        Select a previously saved generation
+                      </p>
+                    </div>
+
+                    {isLoadingDrafts ? (
+                      <div className="grid grid-cols-2 gap-3">
+                        {[...Array(4)].map((_, i) => (
+                          <div key={i} className="aspect-square rounded-2xl bg-white/5 animate-pulse" />
+                        ))}
+                      </div>
+                    ) : userDrafts.length === 0 ? (
+                      <div className="text-center py-12">
+                        <Library className="w-10 h-10 text-white/10 mx-auto mb-3" />
+                        <p className="text-sm font-bold text-white/30">Gallery is empty</p>
+                        <p className="text-xs text-white/20 mt-1">Generate and save images to see them here</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-3 pb-8">
+                        {userDrafts.map((draft) => (
+                          <button
+                            key={draft.id}
+                            onClick={() => handleDraftSelect(draft)}
+                            className="relative group aspect-square rounded-2xl overflow-hidden bg-white/5 border border-white/5 hover:border-primary/50 transition-all"
+                          >
+                            {draft.imageUrl && (
+                              <img src={draft.imageUrl} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                            )}
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Check className="w-6 h-6 text-primary" />
+                            </div>
+                          </button>
+                        ))}
+                      </div>
                     )}
                   </motion.div>
                 )}

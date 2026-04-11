@@ -179,8 +179,9 @@ export const checkIfUserHasSubmitted = async (req: AuthenticatedRequest, res: Re
 export const getSubmissionsByUser = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
         const { userId } = req.params;
+        const requestingUserId = req.user?.id;
 
-        const submissions = await SubmissionService.getSubmissionsByUser(userId);
+        const submissions = await SubmissionService.getSubmissionsByUser(userId, requestingUserId);
 
         res.status(200).json({
             success: true,

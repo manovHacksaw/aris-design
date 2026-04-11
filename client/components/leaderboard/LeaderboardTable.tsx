@@ -5,19 +5,41 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Calendar, Trophy, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useUser } from "@/context/UserContext";
-import { getUserLeaderboard, getBrandLeaderboard, getEventLeaderboard } from "@/services/leaderboard.service";
+import {
+    getUserLeaderboard,
+    getBrandLeaderboard,
+    getEventLeaderboard,
+    type UserLeaderboardEntry,
+    type BrandLeaderboardEntry,
+    type EventLeaderboardEntry,
+} from "@/services/leaderboard.service";
 
 type TabType = "users" | "brands" | "events";
+type UserMode = "voters" | "creators";
 
 interface LeaderboardTableProps {
     activeTab: TabType;
     domain?: string;
     timeline?: string;
+    userMode?: UserMode;
 }
 
 const PAGE_SIZE = 15;
 const FETCH_LIMIT = 500; // fetch all, paginate client-side (backend ignores limit param)
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
+type LeaderboardItem = UserLeaderboardEntry | BrandLeaderboardEntry | EventLeaderboardEntry;
+
+function isUserEntry(item: LeaderboardItem): item is UserLeaderboardEntry {
+    return "xp" in item && "votesCast" in item;
+}
+
+function isBrandEntry(item: LeaderboardItem): item is BrandLeaderboardEntry {
+    return "name" in item && !("title" in item);
+}
+
+function isEventEntry(item: LeaderboardItem): item is EventLeaderboardEntry {
+    return "title" in item;
+}
 
 function RankBadge({ rank }: { rank: number }) {
     if (rank === 1) return <span className="text-[11px] font-black text-amber-400 tabular-nums w-6 text-center">01</span>;
@@ -91,12 +113,12 @@ function Pagination({
     );
 }
 
-export default function LeaderboardTable({ activeTab, domain = "ALL", timeline = "A" }: LeaderboardTableProps) {
+export default function LeaderboardTable({ activeTab, domain = "ALL", timeline = "A", userMode = "voters" }: LeaderboardTableProps) {
     const { user: currentUser } = useUser();
 
     // All three tabs use the same pattern: fetch full list once, paginate client-side.
     // (Backend does not honor the limit param reliably.)
-    const [allData, setAllData] = useState<any[]>([]);
+    const [allData, setAllData] = useState<LeaderboardItem[]>([]);
     const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(false);
 
@@ -105,7 +127,7 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
         setLoading(true);
         const fetch = async () => {
             try {
-                let rows: any[] = [];
+                let rows: LeaderboardItem[] = [];
                 if (activeTab === "users") {
                     const res = await getUserLeaderboard(1, FETCH_LIMIT, timeline);
                     rows = res.data || [];
@@ -126,48 +148,86 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
         fetch();
     }, [activeTab, timeline]);
 
-    // Reset page when domain filter changes
-    useEffect(() => { setPage(1); }, [domain]);
+    // Reset page when the visible slice criteria changes
+    useEffect(() => { setPage(1); }, [activeTab, domain, userMode]);
 
     if (loading) return <SkeletonRows />;
 
     const filtered =
         domain === "ALL"
             ? allData
-            : allData.filter((item: any) => {
+            : allData.filter((item) => {
                 if (Array.isArray(item.categories)) return item.categories.some((c: string) => c.toUpperCase() === domain);
-                return item.category?.toUpperCase() === domain || item.domain?.toUpperCase() === domain;
+                if ("category" in item && typeof item.category === "string") return item.category.toUpperCase() === domain;
+                if ("domain" in item && typeof item.domain === "string") return item.domain.toUpperCase() === domain;
+                return false;
             });
 
-    if (!filtered.length) {
+    const userRows =
+        activeTab === "users"
+            ? [...filtered]
+                .filter(isUserEntry)
+                .filter((item) => {
+                    if (userMode === "creators") return (item.votesReceived || 0) > 0;
+                    return (item.votesCast || 0) > 0;
+                })
+                .sort((a, b) => {
+                    if (userMode === "creators") {
+                        if ((b.votesReceived || 0) !== (a.votesReceived || 0)) return (b.votesReceived || 0) - (a.votesReceived || 0);
+                        if ((b.xp || 0) !== (a.xp || 0)) return (b.xp || 0) - (a.xp || 0);
+                        return (b.votesCast || 0) - (a.votesCast || 0);
+                    }
+
+                    if ((b.votesCast || 0) !== (a.votesCast || 0)) return (b.votesCast || 0) - (a.votesCast || 0);
+                    if ((b.xp || 0) !== (a.xp || 0)) return (b.xp || 0) - (a.xp || 0);
+                    return (b.votesReceived || 0) - (a.votesReceived || 0);
+                })
+            : [];
+
+    const brandRows = activeTab === "brands" ? filtered.filter(isBrandEntry) : [];
+    const eventRows = activeTab === "events" ? filtered.filter(isEventEntry) : [];
+
+    const visibleRows = activeTab === "users" ? userRows : activeTab === "brands" ? brandRows : eventRows;
+
+    if (!visibleRows.length) {
         return (
             <div className="py-24 text-center">
                 <Trophy className="w-8 h-8 text-foreground/10 mx-auto mb-3" />
-                <p className="text-xs text-foreground/25 font-black uppercase tracking-widest">No data available</p>
+                <p className="text-xs text-foreground/25 font-black uppercase tracking-widest">
+                    {activeTab === "users"
+                        ? userMode === "creators"
+                            ? "No creators available"
+                            : "No voters available"
+                        : "No data available"}
+                </p>
             </div>
         );
     }
 
-    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-    const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    const totalPages = Math.max(1, Math.ceil(visibleRows.length / PAGE_SIZE));
 
     /* ── USERS ── */
     if (activeTab === "users") {
         const currentUserEntry = currentUser
-            ? filtered.find((item: any) => item.id === currentUser.id || item.username === currentUser.username)
+            ? userRows.find((item) => item.id === currentUser.id || item.username === currentUser.username)
             : null;
         const currentUserRank = currentUserEntry
-            ? currentUserEntry.rank || filtered.indexOf(currentUserEntry) + 1
+            ? userRows.indexOf(currentUserEntry) + 1
             : null;
         const showPinnedSelf = currentUserEntry && currentUserRank != null && currentUserRank > 3;
 
-        const UserRow = ({ item, globalIndex, pinned }: { item: any; globalIndex: number; pinned?: boolean }) => {
+        const UserRow = ({ item, globalIndex, pinned }: { item: UserLeaderboardEntry; globalIndex: number; pinned?: boolean }) => {
             const isCurrent = item.id === currentUser?.id || item.username === currentUser?.username;
+            const roles = [
+                (item.votesCast || 0) > 0 ? { label: "Voter", className: "border-sky-500/20 bg-sky-500/10 text-sky-300" } : null,
+                (item.votesReceived || 0) > 0 ? { label: "Creator", className: "border-violet-500/20 bg-violet-500/10 text-violet-300" } : null,
+            ].filter(Boolean) as { label: string; className: string }[];
+
             return (
                 <Link
                     href={`/profile/${item.username}`}
                     className={cn(
-                        "grid grid-cols-[24px_1fr_72px_72px_56px] sm:grid-cols-[24px_1fr_88px_88px_72px] gap-2 sm:gap-4 items-center px-2 py-3 rounded-lg transition-colors",
+                        "grid grid-cols-[24px_minmax(0,1fr)_64px_64px] sm:grid-cols-[24px_minmax(0,1fr)_88px_88px_72px] gap-2 sm:gap-4 items-center px-2 py-3 rounded-lg transition-colors",
                         pinned
                             ? "bg-primary/[0.07] border border-primary/[0.15]"
                             : isCurrent
@@ -175,7 +235,7 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                                 : "hover:bg-foreground/[0.025]"
                     )}
                 >
-                    <RankBadge rank={item.rank || globalIndex + 1} />
+                    <RankBadge rank={globalIndex + 1} />
                     <div className="flex items-center gap-2.5 min-w-0">
                         {item.avatarUrl ? (
                             <img src={item.avatarUrl} className="w-[26px] h-[26px] rounded-full object-cover flex-shrink-0" alt={item.displayName} />
@@ -186,7 +246,20 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                             <p className={cn("text-[13px] font-semibold truncate leading-tight", isCurrent ? "text-primary" : "text-foreground/85")}>
                                 {item.displayName || item.username}
                             </p>
-                            <p className="text-[10px] text-foreground/40 truncate leading-tight">@{item.username}</p>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                <p className="text-[10px] text-foreground/40 truncate leading-tight">@{item.username}</p>
+                                {roles.map((role) => (
+                                    <span
+                                        key={role.label}
+                                        className={cn(
+                                            "px-1.5 py-0.5 rounded-full border text-[8px] font-black uppercase tracking-[0.16em]",
+                                            role.className
+                                        )}
+                                    >
+                                        {role.label}
+                                    </span>
+                                ))}
+                            </div>
                         </div>
                         {isCurrent && (
                             <span className="text-[8px] font-black text-primary uppercase tracking-widest bg-primary/10 px-1.5 py-0.5 rounded flex-shrink-0 ml-1">
@@ -194,27 +267,27 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                             </span>
                         )}
                     </div>
-                    <span className="text-[12px] font-black text-primary text-right tabular-nums">{(item.xp || 0).toLocaleString()}</span>
-                    <span className="text-[12px] text-foreground/40 text-right tabular-nums">{(item.votesCast || 0).toLocaleString()}</span>
-                    <span className="text-[12px] font-bold text-foreground/40 text-right">Lv.{item.level || 1}</span>
+                    <span className="text-[12px] font-black text-violet-300 text-right tabular-nums">{(item.votesReceived || 0).toLocaleString()}</span>
+                    <span className="text-[12px] font-black text-sky-300 text-right tabular-nums">{(item.votesCast || 0).toLocaleString()}</span>
+                    <span className="hidden sm:block text-[12px] font-black text-primary text-right tabular-nums">{(item.xp || 0).toLocaleString()}</span>
                 </Link>
             );
         };
 
         return (
             <div>
-                <div className="grid grid-cols-[24px_1fr_72px_72px_56px] sm:grid-cols-[24px_1fr_88px_88px_72px] gap-2 sm:gap-4 px-2 pb-2.5 border-b border-border">
+                <div className="grid grid-cols-[24px_minmax(0,1fr)_64px_64px] sm:grid-cols-[24px_minmax(0,1fr)_88px_88px_72px] gap-2 sm:gap-4 px-2 pb-2.5 border-b border-border">
                     <ColHead>#</ColHead>
                     <ColHead>User</ColHead>
-                    <ColHead className="text-right">XP</ColHead>
-                    <ColHead className="text-right">Votes</ColHead>
-                    <ColHead className="text-right">Level</ColHead>
+                    <ColHead className="text-right">Received</ColHead>
+                    <ColHead className="text-right">Cast</ColHead>
+                    <ColHead className="text-right hidden sm:block">XP</ColHead>
                 </div>
 
                 {showPinnedSelf && (
                     <>
                         <div className="py-1.5">
-                            <UserRow item={currentUserEntry} globalIndex={filtered.indexOf(currentUserEntry)} pinned />
+                            <UserRow item={currentUserEntry} globalIndex={userRows.indexOf(currentUserEntry)} pinned />
                         </div>
                         <div className="flex items-center gap-3 py-1 px-2">
                             <div className="flex-1 border-t border-border" />
@@ -225,7 +298,7 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                 )}
 
                 <div className="divide-y divide-border">
-                    {pageItems.map((item: any, i: number) => (
+                    {userRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((item, i) => (
                         <UserRow key={item.id || i} item={item} globalIndex={(page - 1) * PAGE_SIZE + i} />
                     ))}
                 </div>
@@ -246,7 +319,7 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                     <ColHead className="text-right">Participants</ColHead>
                 </div>
                 <div className="divide-y divide-border">
-                    {pageItems.map((item: any, i: number) => {
+                    {brandRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((item, i) => {
                         const logoSrc = item.avatar
                             ? item.avatar.startsWith("http") ? item.avatar : `${PINATA_GW}/${item.avatar}`
                             : null;
@@ -303,7 +376,7 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                 <ColHead className="text-right">Status</ColHead>
             </div>
             <div className="divide-y divide-border">
-                {pageItems.map((item: any, i: number) => {
+                {eventRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((item, i) => {
                     const sc = statusCfg(item.status);
                     const thumb = item.imageUrl || (item.imageCid ? `${PINATA_GW}/${item.imageCid}` : null) || item.coverImage || item.avatar || null;
                     const globalIndex = (page - 1) * PAGE_SIZE + i;
