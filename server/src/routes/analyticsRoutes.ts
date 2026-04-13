@@ -311,6 +311,32 @@ router.get('/brand/follower-growth', authenticateJWT, async (req: Request, res: 
 });
 
 /**
+ * POST /api/analytics/events/:id/insights
+ * Full AI insights pipeline for a completed event (brand owner only)
+ * Runs: Feature Extraction → Quant Analysis → Feature-Performance Mapping → Insights → Actions
+ */
+router.post('/events/:id/insights', authenticateJWT, async (req: Request, res: Response) => {
+    try {
+        const eventId = req.params.id;
+        const userId = req.user?.id;
+
+        const event = await prisma.event.findUnique({
+            where: { id: eventId },
+            select: { status: true, brand: { select: { ownerId: true } } },
+        });
+        if (!event) return res.status(404).json({ error: 'Event not found' });
+        if (event.brand.ownerId !== userId) return res.status(403).json({ error: 'Unauthorized' });
+        if (event.status !== 'completed') return res.status(400).json({ error: 'Event must be completed to generate insights' });
+
+        const insights = await AiService.generateEventInsights(eventId);
+        return res.status(200).json(insights);
+    } catch (error: any) {
+        console.error('Error generating event insights:', error);
+        return res.status(500).json({ error: error.message || 'Failed to generate event insights' });
+    }
+});
+
+/**
  * POST /api/analytics/brand/generate-summary
  * Generate AI summary for a brand based on all its events
  */

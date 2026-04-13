@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import axios from 'axios';
 import FormData from 'form-data';
 import { prisma } from '../lib/prisma.js';
-import { getDetailedEventAnalytics, AnalyticsService } from './analyticsService.js';
+import { getDetailedEventAnalytics, getEventClicksBreakdown, AnalyticsService } from './analyticsService.js';
 
 dotenv.config();
 
@@ -445,6 +445,263 @@ STRICT IMAGE RULES (embed in every prompt):
         } catch (error) {
             console.error(`[AiService] Failed to generate event summary for ${eventId}:`, error);
             return null;
+        }
+    }
+
+    /**
+     * Run the full 5-stage AI insights pipeline for a completed event.
+     * Stages: Feature Extraction → Quant Analysis → Feature-Performance Mapping → Insights → Actions
+     * Only callable by the brand owner of the event.
+     */
+    static async generateEventInsights(eventId: string): Promise<any | null> {
+        try {
+            const model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+            // ── Fetch event + content options ────────────────────────────────
+            const event = await prisma.event.findUnique({
+                where: { id: eventId },
+                include: {
+                    brand: { select: { name: true } },
+                    proposals: {
+                        select: { id: true, title: true, content: true, imageUrl: true, order: true },
+                        orderBy: { order: 'asc' },
+                    },
+                },
+            });
+            if (!event) throw new Error('Event not found');
+
+            type ContentOption = { id: string; label: string; title: string; imageUrl: string | null; text: string | null };
+            let contentOptions: ContentOption[] = [];
+
+            if (event.eventType === 'post_and_vote') {
+                const submissions = await prisma.submission.findMany({
+                    where: { eventId, status: { not: 'rejected' } },
+                    select: { id: true, imageUrl: true, caption: true },
+                    orderBy: { voteCount: 'desc' },
+                });
+                contentOptions = submissions.map((s, i) => ({
+                    id: s.id,
+                    label: String.fromCharCode(65 + i),
+                    title: s.caption || `Submission ${i + 1}`,
+                    imageUrl: s.imageUrl,
+                    text: s.caption,
+                }));
+            } else {
+                contentOptions = event.proposals.map((p, i) => ({
+                    id: p.id,
+                    label: String.fromCharCode(65 + i),
+                    title: p.title,
+                    imageUrl: p.imageUrl,
+                    text: p.content,
+                }));
+            }
+
+            // ── Fetch analytics + clicks in parallel ─────────────────────────
+            const [analytics, clicks] = await Promise.all([
+                getDetailedEventAnalytics(eventId),
+                getEventClicksBreakdown(eventId),
+            ]);
+
+            const dcs = (1 - analytics.normalizedEntropy) * 0.6 + analytics.avgParticipantTrustScore * 0.4;
+
+            const labelById = Object.fromEntries(contentOptions.map(c => [c.id, c.label]));
+            const contentWithVotes = analytics.contentMetrics.map(cm => ({
+                label: labelById[cm.id] || cm.id,
+                title: cm.title,
+                voteCount: cm.voteCount,
+                votePercentage: parseFloat(cm.votePercentage.toFixed(1)),
+                rank: cm.rank,
+                demographicBreakdown: cm.demographicBreakdown,
+            }));
+
+            // ── STAGE 1: Feature Extraction ──────────────────────────────────
+            const contentDescriptions = contentOptions.map(c =>
+                `Option ${c.label}: Title="${c.title}"` +
+                (c.text ? `, Copy="${c.text}"` : '') +
+                (c.imageUrl ? `, ImageURL="${c.imageUrl}"` : '')
+            ).join('\n');
+
+            const featurePrompt = `You are a content feature extraction system.
+
+INPUT CONTENT OPTIONS:
+${contentDescriptions}
+
+TASK:
+Break each content option into structured features:
+1. Visual features (infer from title/copy if no image): colorTone (bright/dark/pastel/neutral), layoutDensity (minimal/balanced/cluttered), focalPoint (product/text/person/abstract)
+2. Copy features: tone (playful/premium/urgent/emotional/neutral), length (short/medium/long), ctaPresence (yes/no)
+3. Semantic tags: 3-5 tags like luxury, bold, minimal, functional, GenZ, corporate, aspirational
+
+OUTPUT STRICT JSON (no markdown, no explanation):
+{
+  ${contentOptions.map(c => `"${c.label}": { "features": { "visual": { "colorTone": "...", "layoutDensity": "...", "focalPoint": "..." }, "copy": { "tone": "...", "length": "...", "ctaPresence": "..." }, "semanticTags": ["..."] } }`).join(',\n  ')}
+}`;
+
+            const featureResult = await model.generateContent(featurePrompt);
+            const featureText = featureResult.response.text().trim();
+            const featureJsonMatch = featureText.match(/\{[\s\S]*\}/);
+            const featureExtraction = featureJsonMatch ? JSON.parse(featureJsonMatch[0]) : {};
+
+            // ── STAGE 2: Quant Analysis ──────────────────────────────────────
+            const quantPrompt = `You are a data analyst.
+
+INPUT METRICS for event "${event.title}" by ${event.brand.name}:
+- Total Votes: ${analytics.totalVotes}
+- Content Performance:
+${contentWithVotes.map(c => `  Option ${c.label} "${c.title}": ${c.voteCount} votes (${c.votePercentage}%) | Rank: ${c.rank ?? 'N/A'}`).join('\n')}
+- Demographics:
+  Gender: Male(${analytics.votesByGender.male}) Female(${analytics.votesByGender.female}) NonBinary(${analytics.votesByGender.nonBinary}) Other(${analytics.votesByGender.other}) Unknown(${analytics.votesByGender.unknown})
+  Age: <24(${analytics.votesByAgeGroup['24_under']}) 25-34(${analytics.votesByAgeGroup['25_34']}) 35-44(${analytics.votesByAgeGroup['35_44']}) 45+(${analytics.votesByAgeGroup['45_54'] + analytics.votesByAgeGroup['55_64'] + analytics.votesByAgeGroup['65_plus']})
+- Clicks: Vote(${clicks.vote}) Social(${clicks.social}) Website(${clicks.website}) Event(${clicks.event}) Other(${clicks.other})
+- Normalized Entropy: ${analytics.normalizedEntropy.toFixed(3)} (0=unanimous, 1=split)
+- Winning Margin: ${analytics.winningMargin.toFixed(1)}%
+- Avg Voter Trust Score: ${analytics.avgParticipantTrustScore.toFixed(3)}
+- Decision Confidence Score (DCS): ${dcs.toFixed(3)}
+
+TASK:
+1. Identify winner, margin strength (decisive/moderate/close), clarity level
+2. Analyze behavior: vote vs click patterns, demographic splits
+3. Evaluate signal quality: strong/weak/noisy decision
+
+OUTPUT STRICT JSON:
+{
+  "winner": "...",
+  "marginStrength": "...",
+  "clarityLevel": "...",
+  "behaviorAnalysis": "...",
+  "signalQuality": "..."
+}`;
+
+            const quantResult = await model.generateContent(quantPrompt);
+            const quantText = quantResult.response.text().trim();
+            const quantJsonMatch = quantText.match(/\{[\s\S]*\}/);
+            const quantAnalysis = quantJsonMatch ? JSON.parse(quantJsonMatch[0]) : { raw: quantText };
+
+            // ── STAGE 3: Feature → Performance Mapping ───────────────────────
+            const perOptionDemo = contentWithVotes.map(c => {
+                const byGender = c.demographicBreakdown?.byGender || {};
+                const byAge = c.demographicBreakdown?.byAgeGroup || {};
+                const topGender = Object.entries(byGender).sort(([, a], [, b]) => (b as number) - (a as number))[0];
+                const topAge = Object.entries(byAge).sort(([, a], [, b]) => (b as number) - (a as number))[0];
+                return `Option ${c.label}: topGender=${topGender?.[0] || 'N/A'}, topAge=${topAge?.[0] || 'N/A'}`;
+            }).join('\n');
+
+            const mappingPrompt = `You are a consumer preference analyst.
+
+INPUT:
+Feature breakdown:
+${JSON.stringify(featureExtraction, null, 2)}
+
+Vote distribution:
+${contentWithVotes.map(c => `Option ${c.label} "${c.title}": ${c.votePercentage}%`).join('\n')}
+
+Per-option top demographics:
+${perOptionDemo}
+
+TASK:
+1. Map features → performance: which specific features correlate with higher votes, which underperformed
+2. Identify dominant preference patterns and rejected patterns
+3. Segment analysis: which features resonate with which demographic group
+
+OUTPUT STRICT JSON:
+{
+  "winning_features": ["..."],
+  "losing_features": ["..."],
+  "segment_preferences": { "description": "..." }
+}`;
+
+            const mappingResult = await model.generateContent(mappingPrompt);
+            const mappingText = mappingResult.response.text().trim();
+            const mappingJsonMatch = mappingText.match(/\{[\s\S]*\}/);
+            const featureMapping = mappingJsonMatch ? JSON.parse(mappingJsonMatch[0]) : { raw: mappingText };
+
+            // ── STAGE 4: Insight Generation ──────────────────────────────────
+            const insightPrompt = `You are a brand strategist.
+
+INPUT:
+Analytical summary: ${JSON.stringify(quantAnalysis)}
+Feature-performance mapping: ${JSON.stringify(featureMapping)}
+
+TASK:
+Generate 5-7 sharp, high-signal insights:
+1. Why did the winner win?
+2. Why did others lose?
+3. What does this reveal about audience taste?
+4. Are there hidden tensions or demographic polarization?
+Focus on psychology, aesthetics, positioning. No generic observations.
+
+OUTPUT STRICT JSON array of strings (no markdown):
+["insight 1", "insight 2", ...]`;
+
+            const insightResult = await model.generateContent(insightPrompt);
+            const insightText = insightResult.response.text().trim();
+            const insightJsonMatch = insightText.match(/\[[\s\S]*\]/);
+            const insights = insightJsonMatch ? JSON.parse(insightJsonMatch[0]) : [insightText];
+
+            // ── STAGE 5: Actions ─────────────────────────────────────────────
+            const dcsLabel = dcs > 0.7 ? 'high confidence' : dcs > 0.4 ? 'moderate confidence' : 'low confidence';
+            const actionsPrompt = `You are a growth strategist.
+
+INPUT:
+Insights: ${JSON.stringify(insights)}
+Feature-performance mapping: ${JSON.stringify(featureMapping)}
+DCS: ${dcs.toFixed(3)} (${dcsLabel} decision)
+
+TASK:
+1. Immediate decision: what should the brand do NOW based on this result
+2. Strategic application: how to apply findings to product/marketing
+3. Next experiments: 2-3 specific variations or dimensions to test next
+4. Monetization impact: how this improves conversion or engagement
+
+OUTPUT STRICT JSON:
+{
+  "decision": "...",
+  "strategy": "...",
+  "next_experiments": ["...", "..."],
+  "business_impact": "..."
+}`;
+
+            const actionsResult = await model.generateContent(actionsPrompt);
+            const actionsText = actionsResult.response.text().trim();
+            const actionsJsonMatch = actionsText.match(/\{[\s\S]*\}/);
+            const actions = actionsJsonMatch ? JSON.parse(actionsJsonMatch[0]) : { raw: actionsText };
+
+            console.log(`✨ [AiService] Generated full insights pipeline for event ${eventId}`);
+
+            return {
+                event: {
+                    id: event.id,
+                    title: event.title,
+                    description: event.description,
+                    brandName: event.brand.name,
+                    category: event.category,
+                    eventType: event.eventType,
+                },
+                content: contentOptions,
+                metrics: {
+                    totalVotes: analytics.totalVotes,
+                    totalViews: analytics.totalViews,
+                    uniqueParticipants: analytics.uniqueParticipants,
+                    winningMargin: analytics.winningMargin,
+                    normalizedEntropy: analytics.normalizedEntropy,
+                    dcs,
+                    avgParticipantTrustScore: analytics.avgParticipantTrustScore,
+                    contentMetrics: contentWithVotes,
+                    votesByGender: analytics.votesByGender,
+                    votesByAgeGroup: analytics.votesByAgeGroup,
+                    clicks,
+                },
+                stages: {
+                    featureExtraction,
+                    quantAnalysis,
+                    featurePerformanceMapping: featureMapping,
+                    insights,
+                    actions,
+                },
+            };
+        } catch (error) {
+            console.error(`[AiService] Failed to generate event insights for ${eventId}:`, error);
+            throw error;
         }
     }
 
