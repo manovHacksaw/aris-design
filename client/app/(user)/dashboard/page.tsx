@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import SidebarLayout from "@/components/home/SidebarLayout";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-    Zap, Users, Building2, Trophy, ThumbsUp, ImageIcon,
+    Zap, Users, Trophy, ThumbsUp, ImageIcon,
     Calendar, Crown, X, Star, Flame, Lock, CheckCircle2,
     MousePointerClick, DollarSign, ArrowUpRight, TrendingUp, Shield,
     GitBranch, Target, Swords, UserCheck,
@@ -1084,9 +1084,9 @@ export default function DashboardPage() {
                 deltaPositive: (stats?.votesReceived ?? 0) > 0,
             },
             {
-                label: "Brands", value: "—", icon: Building2, color: "text-blue-400", bg: "bg-blue-400/10",
-                delta: "No brands followed",
-                deltaPositive: false,
+                label: "Top 3 Finishes", value: (stats?.topRankedEvents ?? 0).toString(), icon: Crown, color: "text-yellow-400", bg: "bg-yellow-400/10",
+                delta: (stats?.topRankedEvents ?? 0) > 0 ? `${stats?.topRankedEvents} podium finish${(stats?.topRankedEvents ?? 0) !== 1 ? "es" : ""}` : "No podium finishes yet",
+                deltaPositive: (stats?.topRankedEvents ?? 0) > 0,
             },
         ],
     ];

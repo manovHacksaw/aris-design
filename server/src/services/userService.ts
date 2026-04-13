@@ -363,55 +363,54 @@ export class UserService {
                 brandSubscriptionsCount,
                 submissionsCount,
                 votesCastCount,
-                votesReceivedCount,
+                votesReceivedSum,
                 votedEvents,
                 submittedEvents,
                 rewardClaimsSum,
                 otherEarningsSum,
                 referralsCount,
                 loginStreakData,
+                topRankedEvents,
             ] = await Promise.all([
-                // Followers 
+                // Followers
                 prisma.userFollowers.count({ where: { followingId: userId } }),
                 // Following (users)
                 prisma.userFollowers.count({ where: { followerId: userId } }),
                 // Following (brands)
                 prisma.brandSubscription.count({ where: { userId } }),
-                
+
                 // Posts (Submissions)
                 prisma.submission.count({ where: { userId } }),
-                
-                // Votes Cast 
+
+                // Votes Cast
                 prisma.vote.count({ where: { userId } }),
-                
+
                 // Votes Received (total votes on user's submissions)
-                // We use sum of voteCount from submissions as a secondary source of truth
-                prisma.submission.aggregate({
-                    where: { userId },
-                    _sum: { voteCount: true }
+                prisma.vote.count({
+                    where: { submission: { userId } }
                 }),
-                
+
                 // Events Participated - Voted
                 prisma.vote.groupBy({
                     by: ['eventId'],
                     where: { userId },
                 }),
-                
+
                 // Events Participated - Submitted
                 prisma.submission.groupBy({
                     by: ['eventId'],
                     where: { userId },
                 }),
-                
-                // Reward Earnings (inclusive of multiple statuses)
+
+                // Reward Earnings — includes PENDING so users see what they've earned even pre-claim
                 prisma.rewardClaim.aggregate({
                     where: {
                         userId,
-                        status: { in: ['CLAIMED', 'CREDITED', 'PAID'] as any },
+                        status: { in: ['PENDING', 'CLAIMED', 'CREDITED'] as any },
                     },
                     _sum: { finalAmount: true },
                 }),
-                
+
                 // Other Earnings (AIRDROP, REFERRAL_BONUS, etc)
                 prisma.tokenActivityLog.aggregate({
                     where: {
@@ -420,15 +419,20 @@ export class UserService {
                     },
                     _sum: { amount: true },
                 }),
-                
+
                 // Referrals
                 prisma.referral.count({ where: { referrerId: userId } }),
-                
+
                 // Login streak
                 prisma.userLoginStreak.findUnique({
                     where: { userId },
                     select: { currentStreak: true },
                 }).catch(() => null),
+
+                // Top 3 finishes (submissions where finalRank is 1, 2, or 3)
+                prisma.submission.count({
+                    where: { userId, finalRank: { gte: 1, lte: 3 } },
+                }),
             ]);
 
             // Combine event sets to get unique events participated in
@@ -437,7 +441,7 @@ export class UserService {
                 ...submittedEvents.map(e => e.eventId)
             ]);
 
-            const votesReceivedAggregate = (votesReceivedSum._sum.voteCount || 0);
+            const votesReceivedAggregate = votesReceivedSum;
             const totalEarnings = (rewardClaimsSum._sum.finalAmount || 0) + (otherEarningsSum._sum.amount || 0);
             
             // Log if there's a significant mismatch with denormalized fields (for debugging)
@@ -458,6 +462,7 @@ export class UserService {
                 earnings: totalEarnings,
                 referrals: referralsCount,
                 loginStreak: loginStreakData?.currentStreak ?? 0,
+                topRankedEvents,
             };
 
             console.log(`[UserService.getUserStats] Resulting Stats:`, JSON.stringify(stats, null, 2));
