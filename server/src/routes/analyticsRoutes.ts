@@ -285,20 +285,6 @@ router.get('/brands/:id/views', authenticateOptional, async (req: Request, res: 
     }
 });
 
-/**
- * GET /api/analytics/events/:id/engagement
- * Get average engagement time for an event
- */
-router.get('/events/:id/engagement', authenticateJWT, async (req: Request, res: Response) => {
-    try {
-        const eventId = req.params.id;
-        const engagement = await AnalyticsService.getAverageEngagementTime(eventId);
-        return res.status(200).json(engagement);
-    } catch (error: any) {
-        console.error('Error fetching average engagement time:', error);
-        return res.status(500).json({ error: error.message || 'Failed to fetch average engagement time' });
-    }
-});
 
 /**
  * GET /api/analytics/brand/follower-growth

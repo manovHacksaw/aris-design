@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Coins, Trophy, Zap, ImagePlus, ArrowRight } from "lucide-react";
+import Link from "next/link";
 import { useLoginModal } from "@/context/LoginModalContext";
 import { useWallet } from "@/context/WalletContext";
 
@@ -150,7 +151,14 @@ export default function LoginModal() {
                   )}
                 </button>
 
-                <p className="text-center text-[10px] text-foreground/25 mt-4">
+                <p className="text-center text-[10px] text-foreground/40 mt-4">
+                  Or register as brand and create events?{" "}
+                  <Link href="/register-brand" className="text-primary hover:underline" onClick={closeLoginModal}>
+                    Get started
+                  </Link>
+                </p>
+
+                <p className="text-center text-[10px] text-foreground/25 mt-2">
                   By signing in you agree to our Terms of Service and Privacy Policy.
                 </p>
               </div>

@@ -922,33 +922,6 @@ export const getBrandViews = async (brandId: string) => {
     }
 };
 
-/**
- * Get average engagement time for an event
- */
-export const getAverageEngagementTime = async (eventId: string) => {
-    try {
-        const submissions = await prisma.submission.findMany({
-            where: { eventId },
-            select: { id: true },
-        });
-        const submissionIds = submissions.map(s => s.id);
-
-        if (submissionIds.length === 0) return { averageViewTime: 0 };
-
-        const stats = await prisma.submissionStats.findMany({
-            where: { submissionId: { in: submissionIds } },
-            select: { viewTime: true },
-        });
-
-        if (stats.length === 0) return { averageViewTime: 0 };
-
-        const totalViewTime = stats.reduce((sum, s) => sum + s.viewTime, 0);
-        return { averageViewTime: totalViewTime / stats.length };
-    } catch (error) {
-        console.error('Failed to get average engagement time:', error);
-        throw error;
-    }
-};
 
 /**
  * Get follower growth over time
@@ -1023,6 +996,5 @@ export const AnalyticsService = {
     getBrandClicksBreakdown,
     trackBrandView,
     getBrandViews,
-    getAverageEngagementTime,
     getFollowerGrowth,
 };

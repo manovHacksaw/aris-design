@@ -679,11 +679,8 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                         setEventSummary(detailed);
                         setVoterBreakdown(breakdown);
 
-                        const [engRes, clickRes] = await Promise.all([
-                            apiRequest<any>(`/analytics/events/${id}/engagement`).catch(() => ({ averageViewTime: 0 })),
-                            apiRequest<any>(`/analytics/events/${id}/clicks-breakdown`).catch(() => ({ vote: 0, event: 0, website: 0, social: 0, other: 0 }))
-                        ]);
-                        setExtraAnalytics({ engagement: engRes, clicks: clickRes });
+                        const clickRes = await apiRequest<any>(`/analytics/events/${id}/clicks-breakdown`).catch(() => ({ vote: 0, event: 0, website: 0, social: 0, other: 0 }));
+                        setExtraAnalytics({ clicks: clickRes });
                     } catch (err) {
                         console.error(err);
                     }
