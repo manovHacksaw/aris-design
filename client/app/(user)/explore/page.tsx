@@ -99,7 +99,7 @@ function TopEventsHero({ events }: { events: Event[] }) {
     const displayImage = event.image || event.imageUrl || (event.imageCid ? `${PINATA_GW}/${event.imageCid}` : "");
 
     return (
-        <div className="relative w-full h-[500px] md:h-[650px] rounded-2xl overflow-hidden mb-0 group bg-[#0a0a0c] border border-white/5 shadow-2xl">
+        <div className="relative w-full h-[450px] md:h-[480px] rounded-2xl overflow-hidden mb-0 group bg-[#0a0a0c] border border-white/5 shadow-2xl">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={event.id}
@@ -122,13 +122,13 @@ function TopEventsHero({ events }: { events: Event[] }) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
             {/* Content Left */}
-            <div className="absolute inset-y-0 left-0 w-full md:w-2/3 p-8 sm:p-12 md:p-14 flex flex-col justify-center z-10">
+            <div className="absolute inset-y-0 left-0 w-full md:w-2/3 p-8 sm:p-10 md:p-12 flex flex-col justify-center z-10">
                 <motion.div
                     key={`content-${event.id}`}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.2 }}
-                    className="space-y-10"
+                    className="space-y-6"
                 >
                     <div>
                         <Link
@@ -146,11 +146,11 @@ function TopEventsHero({ events }: { events: Event[] }) {
                             </div>
                         </Link>
 
-                        <h1 className="text-4xl md:text-5xl lg:text-7xl font-black capitalize text-white tracking-tighter leading-[1] mb-8 line-clamp-3 drop-shadow-2xl">
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-black capitalize text-white tracking-tighter leading-[1] mb-6 line-clamp-2 drop-shadow-2xl">
                             {event.title}
                         </h1>
 
-                        <div className="flex items-center gap-8 text-white/50 text-[11px] font-black uppercase tracking-[0.15em] mb-10">
+                        <div className="flex items-center gap-8 text-white/50 text-[11px] font-black uppercase tracking-[0.15em] mb-6">
                             <div className="flex items-center gap-2.5">
                                 <Users className="w-4 h-4 text-white/80" />
                                 <span className="text-white">{((event._count?.submissions || 0) + (event._count?.votes || 0)).toLocaleString()}</span>
