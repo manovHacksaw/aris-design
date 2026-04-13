@@ -48,6 +48,9 @@ router.post('/claim', authenticateJWT, RewardsController.claimReward);
 // Confirm all claims after on-chain transaction
 router.post('/confirm-all-claims', authenticateJWT, RewardsController.confirmAllClaims);
 
+// Claim pending rewards (user-triggered, for users who have since set up a Smart Account)
+router.post('/claim-pending', authenticateJWT, RewardsController.claimPendingRewards);
+
 // Sync database claims with on-chain state (when already claimed on-chain)
 router.post('/sync-claims', authenticateJWT, RewardsController.syncClaims);
 

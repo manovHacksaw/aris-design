@@ -514,23 +514,25 @@ model EventRewardsPool {
 }
 
 model RewardClaim {
-  id          String           @id @default(uuid())
-  poolId      String
-  userId      String
-  claimType   ClaimType
-  baseAmount  Float
-  multiplier  Float
-  finalAmount Float
+  id              String           @id @default(uuid())
+  poolId          String
+  userId          String
+  claimType       ClaimType
+  baseAmount      Float
+  multiplier      Float
+  finalAmount     Float
   status          ClaimStatus      @default(PENDING)
+  walletStatus    WalletStatus     @default(NO_WALLET)
   transactionHash String?
-  claimedAt   DateTime?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  pool        EventRewardsPool @relation(fields: [poolId], references: [id], onDelete: Cascade)
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  claimedAt       DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  pool            EventRewardsPool @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([poolId, userId, claimType])
   @@index([userId, status])
+  @@index([userId, walletStatus])
   @@map("reward_claims")
 }
 
@@ -596,6 +598,12 @@ enum ClaimStatus {
   EXHAUSTED
   EXPIRED
   CREDITED
+}
+
+enum WalletStatus {
+  SMART_ACCOUNT
+  EOA_PENDING
+  NO_WALLET
 }
 
 model EventInteraction {

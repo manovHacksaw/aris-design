@@ -111,3 +111,18 @@ export async function confirmAllClaims(transactionHash: string): Promise<void> {
     body: JSON.stringify({ transactionHash }),
   });
 }
+
+export interface ClaimPendingResult {
+  claimsCredited: number;
+  totalAmount: number;
+  transactionHash?: string;
+  errors: string[];
+}
+
+/** POST /api/rewards/claim-pending — on-chain claim for users who now have a Smart Account */
+export async function claimPendingRewards(): Promise<ClaimPendingResult> {
+  const res = await apiRequest<{ success: boolean; data: ClaimPendingResult }>("/rewards/claim-pending", {
+    method: "POST",
+  });
+  return res.data;
+}

@@ -526,6 +526,33 @@ export class RewardsController {
     });
   }
 
+  /**
+   * POST /api/rewards/claim-pending
+   * User-triggered: distribute PENDING rewards now that the user has a Smart Account
+   */
+  static async claimPendingRewards(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Unauthorized' });
+        return;
+      }
+
+      const result = await RewardsService.claimPendingRewards(userId);
+
+      if (!result.success && result.claimsCredited === 0) {
+        res.status(400).json({ success: false, error: result.errors[0] ?? 'Failed to claim pending rewards', errors: result.errors });
+        return;
+      }
+
+      res.json({ success: true, data: result });
+    } catch (error: any) {
+      console.error('Error claiming pending rewards:', error);
+      res.status(500).json({ success: false, error: error.message || 'Failed to claim pending rewards' });
+    }
+  }
+
   // ==================== BRAND REFUND ENDPOINTS ====================
 
   /**

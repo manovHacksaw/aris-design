@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import path from "path";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["pino", "pino-pretty", "thread-stream"],
@@ -22,7 +21,6 @@ const nextConfig: NextConfig = {
     ]
   },
   turbopack: {
-    root: path.resolve(__dirname),
     resolveAlias: {
       tailwindcss: require.resolve("tailwindcss/index.css"),
     },

@@ -16,6 +16,7 @@ import { formatUnits } from "@/lib/blockchain/client";
 import {
   getClaimableRewards,
   getRewardHistory,
+  claimPendingRewards,
   ClaimableRewardsResponse,
   ClaimHistoryEntry,
   CLAIM_TYPE_LABEL,
@@ -68,6 +69,11 @@ export default function WalletPage() {
   const [displayUsdc, setDisplayUsdc] = useState<string>("0.00");
   const countUpRef = useRef<number | null>(null);
   const [claimHistory, setClaimHistory] = useState<ClaimHistoryEntry[]>([]);
+
+  // Pending rewards (EOA users who now have a Smart Account)
+  const [claimingPending, setClaimingPending] = useState(false);
+  const [pendingClaimError, setPendingClaimError] = useState<string | null>(null);
+  const [pendingClaimSuccess, setPendingClaimSuccess] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const recentNonClaimableRewards = claimHistory.slice(0, 3);
 
@@ -124,6 +130,35 @@ export default function WalletPage() {
       setHistoryLoading(false);
     }
   }, [userAuthenticated, userId]);
+
+  // Derived: does the current user have a Smart Account?
+  const hasSmartAccount = !!(address && eoaAddress && address.toLowerCase() !== eoaAddress.toLowerCase());
+
+  // Pending claims exist when PENDING-status rewards are in the response
+  const pendingEvents = rewards?.events.filter(ev => ev.claims.some(c => c.status === 'PENDING')) ?? [];
+  const hasPendingRewards = pendingEvents.length > 0;
+  const totalPendingUsdc = pendingEvents.reduce((sum, ev) => sum + ev.claims.filter(c => c.status === 'PENDING').reduce((s, c) => s + c.finalAmount, 0), 0);
+
+  const handleClaimPending = async () => {
+    setPendingClaimError(null);
+    setPendingClaimSuccess(false);
+    setClaimingPending(true);
+    try {
+      const result = await claimPendingRewards();
+      if (result.claimsCredited > 0) {
+        setPendingClaimSuccess(true);
+        await fetchRewards();
+        await fetchHistory();
+        refreshBalance?.();
+      } else {
+        setPendingClaimError(result.errors[0] ?? 'No rewards were claimed.');
+      }
+    } catch (err: any) {
+      setPendingClaimError(err.message ?? 'Failed to claim pending rewards.');
+    } finally {
+      setClaimingPending(false);
+    }
+  };
 
   /** Animate USDC display value from `from` to `to` over ~1200ms */
   function animateCountUp(from: number, to: number) {
@@ -410,6 +445,66 @@ export default function WalletPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Pending Rewards — EOA users who now have a Smart Account */}
+              {!rewardsLoading && hasPendingRewards && (
+                <div className="space-y-4">
+                  <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <Clock className="w-3.5 h-3.5" />
+                    Pending Rewards
+                  </h3>
+                  <div className="bg-yellow-500/[0.06] border border-yellow-500/20 rounded-[24px] p-5 space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center shrink-0">
+                        <Gift className="w-5 h-5 text-yellow-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-black text-white text-sm">
+                          ${totalPendingUsdc.toFixed(2)} USDC waiting
+                        </p>
+                        <p className="text-[10px] font-black text-white/30 mt-0.5 uppercase tracking-wide">
+                          {hasSmartAccount
+                            ? "Your Smart Account is ready — click below to claim"
+                            : "Initialize your Smart Account to unlock these rewards"}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-2 py-1 bg-yellow-500/10 rounded-full border border-yellow-500/20 shrink-0">
+                        <span className="text-sm font-black text-yellow-400">${totalPendingUsdc.toFixed(2)}</span>
+                      </div>
+                    </div>
+
+                    {pendingClaimSuccess ? (
+                      <div className="flex items-center gap-2 text-primary text-[11px] font-black">
+                        <CheckCircle2 className="w-4 h-4" />
+                        Rewards claimed successfully!
+                      </div>
+                    ) : hasSmartAccount ? (
+                      <>
+                        {pendingClaimError && (
+                          <p className="text-[10px] font-black text-red-400">{pendingClaimError}</p>
+                        )}
+                        <motion.button
+                          whileTap={{ scale: 0.97 }}
+                          onClick={handleClaimPending}
+                          disabled={claimingPending}
+                          className="w-full py-3 bg-yellow-400 text-black rounded-xl font-black text-[11px] uppercase tracking-[0.2em] hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                          {claimingPending ? (
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Gift className="w-4 h-4" />
+                          )}
+                          {claimingPending ? "Claiming…" : `Claim $${totalPendingUsdc.toFixed(2)} USDC`}
+                        </motion.button>
+                      </>
+                    ) : (
+                      <p className="text-[10px] font-black text-white/20 uppercase tracking-wide">
+                        Use the wallet above to activate your Smart Account, then return here.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Claimable Rewards */}
               {(rewardsLoading || (rewards && rewards.totalClaimableUsdc > 0) || allClaimed || recentNonClaimableRewards.length > 0) && (

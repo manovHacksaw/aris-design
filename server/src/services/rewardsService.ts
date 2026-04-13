@@ -1,5 +1,5 @@
 import { prisma } from '../lib/prisma.js';
-import { ClaimType, ClaimStatus, RewardsPoolStatus, EventType as PrismaEventType } from '@prisma/client';
+import { ClaimType, ClaimStatus, WalletStatus, RewardsPoolStatus, EventType as PrismaEventType } from '@prisma/client';
 import {
   REWARDS_CONSTANTS,
   EventType,
@@ -224,15 +224,23 @@ export class RewardsService {
       const claimsToCreate: any[] = [];
       const { USDC_DECIMALS, BASE_REWARD_VOTE_ONLY, BASE_REWARD_POST_VOTE, FIRST_PLACE_BPS, SECOND_PLACE_BPS, THIRD_PLACE_BPS, BPS_DENOMINATOR } = REWARDS_CONSTANTS;
 
-      // Process voter base rewards (Strictly USER role only and 20 participants cap)
+      /** Classify a wallet address pair into a WalletStatus */
+      const resolveWalletStatus = (walletAddress: string | null, eoaAddress: string | null): WalletStatus => {
+        const hasValidFormat = walletAddress && /^0x[a-fA-F0-9]{40}$/.test(walletAddress);
+        if (hasValidFormat && walletAddress !== eoaAddress) return WalletStatus.SMART_ACCOUNT;
+        if (hasValidFormat && walletAddress === eoaAddress) return WalletStatus.EOA_PENDING;
+        return WalletStatus.NO_WALLET;
+      };
+
+      // Process voter base rewards (Strictly USER role only, capped at pool.maxParticipants)
+      const voterCap = pool.maxParticipants;
       const uniqueVoters = new Map<string, { userId: string; xp: number; walletAddress: string | null; eoaAddress: string | null }>();
 
-      // Filter only users with USER role and cap at 20 unique participants
       for (const vote of event.votes) {
         if (vote.user.role !== 'USER') continue;
 
         if (!uniqueVoters.has(vote.userId)) {
-          if (uniqueVoters.size >= 20) break; // Respect 20 participant cap
+          if (uniqueVoters.size >= voterCap) break;
 
           uniqueVoters.set(vote.userId, {
             userId: vote.userId,
@@ -245,7 +253,7 @@ export class RewardsService {
 
       // Create base voter reward claims
       for (const [userId, voter] of uniqueVoters) {
-        const multiplier = 1.0; // Strictly rely on on-chain data, no backend multiplier
+        const multiplier = 1.0;
         const baseAmount = BASE_REWARD_VOTE_ONLY / Math.pow(10, USDC_DECIMALS);
         const finalAmount = baseAmount * multiplier;
 
@@ -254,6 +262,7 @@ export class RewardsService {
           userId,
           walletAddress: voter.walletAddress,
           eoaAddress: voter.eoaAddress,
+          walletStatus: resolveWalletStatus(voter.walletAddress, voter.eoaAddress),
           claimType: ClaimType.BASE_VOTER,
           baseAmount,
           multiplier,
@@ -265,22 +274,19 @@ export class RewardsService {
       // Calculate top voter rewards
       if (event.eventType === 'post_and_vote') {
         const topSubmissions = event.submissions.slice(0, 3);
-        const topVoters = new Map<string, { count: number; xp: number; walletAddress: string | null }>();
+        const topVoters = new Map<string, { count: number; xp: number; walletAddress: string | null; eoaAddress: string | null }>();
 
         for (const submission of topSubmissions) {
           const votes = await prisma.vote.findMany({
-            where: {
-              eventId,
-              submissionId: submission.id,
-            },
+            where: { eventId, submissionId: submission.id },
             include: {
-              user: { select: { id: true, xp: true, walletAddress: true } },
+              user: { select: { id: true, xp: true, walletAddress: true, eoaAddress: true } },
             },
           });
 
           for (const vote of votes) {
-            const current = topVoters.get(vote.userId) || { count: 0, xp: vote.user.xp, walletAddress: vote.user.walletAddress };
-            topVoters.set(vote.userId, { count: current.count + 1, xp: vote.user.xp, walletAddress: vote.user.walletAddress });
+            const current = topVoters.get(vote.userId) || { count: 0, xp: vote.user.xp, walletAddress: vote.user.walletAddress, eoaAddress: vote.user.eoaAddress };
+            topVoters.set(vote.userId, { count: current.count + 1, xp: vote.user.xp, walletAddress: vote.user.walletAddress, eoaAddress: vote.user.eoaAddress });
           }
         }
 
@@ -301,6 +307,8 @@ export class RewardsService {
             poolId: pool.id,
             userId,
             walletAddress: data.walletAddress,
+            eoaAddress: data.eoaAddress,
+            walletStatus: resolveWalletStatus(data.walletAddress, data.eoaAddress),
             claimType: ClaimType.TOP_VOTER,
             baseAmount,
             multiplier,
@@ -320,6 +328,8 @@ export class RewardsService {
             poolId: pool.id,
             userId: submission.userId,
             walletAddress: submission.user.walletAddress,
+            eoaAddress: submission.user.eoaAddress,
+            walletStatus: resolveWalletStatus(submission.user.walletAddress, submission.user.eoaAddress),
             claimType: ClaimType.CREATOR,
             baseAmount,
             multiplier,
@@ -343,6 +353,8 @@ export class RewardsService {
             poolId: pool.id,
             userId: creator.userId,
             walletAddress: creator.user.walletAddress,
+            eoaAddress: creator.user.eoaAddress,
+            walletStatus: resolveWalletStatus(creator.user.walletAddress, creator.user.eoaAddress),
             claimType: ClaimType.LEADERBOARD,
             baseAmount,
             multiplier,
@@ -351,8 +363,7 @@ export class RewardsService {
           });
         }
       } else {
-        // vote_only event
-        // Fallback to voteCount DESC if finalRank is not yet synchronized
+        // vote_only event — fallback to voteCount DESC if finalRank not yet synced
         const topProposals = await prisma.proposal.findMany({
           where: { eventId },
           orderBy: [
@@ -363,23 +374,17 @@ export class RewardsService {
           take: 3,
         });
 
-        // For vote_only, use 100% for the winner if single winner requested
-        // Adjusting BPS temporarily to match user's $4 -> $2 each requirement
         const topVoterPercentages = [BPS_DENOMINATOR, 0, 0];
 
         for (let i = 0; i < topProposals.length; i++) {
           const proposal = topProposals[i];
           const votes = await prisma.vote.findMany({
-            where: {
-              eventId,
-              proposalId: proposal.id,
-            },
+            where: { eventId, proposalId: proposal.id },
             include: {
-              user: { select: { id: true, xp: true, walletAddress: true, role: true } },
+              user: { select: { id: true, xp: true, walletAddress: true, eoaAddress: true, role: true } },
             },
           });
 
-          // Filter voters for USER role
           const validVotedUsers = votes.filter(v => v.user.role === 'USER');
 
           const percentage = topVoterPercentages[i];
@@ -395,6 +400,8 @@ export class RewardsService {
               poolId: pool.id,
               userId: vote.userId,
               walletAddress: vote.user.walletAddress,
+              eoaAddress: vote.user.eoaAddress,
+              walletStatus: resolveWalletStatus(vote.user.walletAddress, vote.user.eoaAddress),
               claimType: ClaimType.TOP_VOTER,
               baseAmount,
               multiplier,
@@ -416,15 +423,11 @@ export class RewardsService {
 
       console.log(`🔍 RewardsService: Processing ${claimsToCreate.length} potential claims for event ${eventId}`);
 
-      for (const claim of claimsToCreate) {
-        // Validate wallet address format (must be 0x + 40 hex chars)
-        const hasValidFormat = claim.walletAddress && /^0x[a-fA-F0-9]{40}$/.test(claim.walletAddress);
-        // Guard: if walletAddress equals eoaAddress the smart wallet wasn't loaded yet when
-        // the user last authenticated. Crediting an EOA instead of a smart account causes
-        // NoRewardsToClaim when the smart account later calls claimRewards(). Skip it.
-        const isSmartAccount = hasValidFormat && claim.walletAddress !== claim.eoaAddress;
+      // Separate claims: smart accounts go on-chain + CREDITED, everyone else gets PENDING in DB only
+      const pendingClaims: any[] = []; // EOA_PENDING or NO_WALLET
 
-        if (isSmartAccount) {
+      for (const claim of claimsToCreate) {
+        if (claim.walletStatus === WalletStatus.SMART_ACCOUNT) {
           usersBatch.push(claim.walletAddress!);
           const amountWei = BigInt(Math.round(claim.finalAmount * 1_000_000));
           amountsBatch.push(amountWei);
@@ -432,31 +435,29 @@ export class RewardsService {
 
           notificationQueue.push({
             userId: claim.userId,
-            title: "Event Rewards Credited! 🎉",
-            message: `You earned ${claim.finalAmount.toFixed(2)} USDC from event "${event.title}". It has been credited to your Smart Account.`,
+            title: "Event Rewards Credited!",
+            message: `You earned ${claim.finalAmount.toFixed(2)} USDC from "${event.title}". It has been credited to your Smart Account.`,
             type: "REWARD"
           });
         } else {
-          // Log specific failure for visibility in logs
-          const failureReason = !claim.walletAddress
-            ? "NO_WALLET_CONNECTED"
-            : !hasValidFormat
-              ? "INVALID_WALLET_FORMAT"
-              : "WALLET_IS_EOA_NOT_SMART_ACCOUNT";
-          console.error(`❌ RewardsService: Rejecting reward for user ${claim.userId} due to ${failureReason}: wallet="${claim.walletAddress}" eoa="${claim.eoaAddress}"`);
+          pendingClaims.push(claim);
+          console.log(`⏳ RewardsService: Queuing PENDING reward for user ${claim.userId} (walletStatus=${claim.walletStatus})`);
 
+          const isEoa = claim.walletStatus === WalletStatus.EOA_PENDING;
           notificationQueue.push({
             userId: claim.userId,
-            title: "Reward Distribution Failed ⚠️",
-            message: `You earned ${claim.finalAmount.toFixed(2)} USDC from event "${event.title}", but your wallet address is missing or invalid. Please update your profile to claim future rewards.`,
+            title: "Reward Pending — Wallet Setup Required",
+            message: isEoa
+              ? `You earned ${claim.finalAmount.toFixed(2)} USDC from "${event.title}". Your reward is pending because your wallet is not yet a Smart Account. Open your wallet to activate and claim.`
+              : `You earned ${claim.finalAmount.toFixed(2)} USDC from "${event.title}". Connect a wallet to claim your reward.`,
             type: "SYSTEM"
           });
         }
       }
 
-      console.log(`📊 RewardsService: ${validClaims.length} valid claims identified out of ${claimsToCreate.length}`);
+      console.log(`📊 RewardsService: ${validClaims.length} smart-account claims, ${pendingClaims.length} pending claims (out of ${claimsToCreate.length} total)`);
 
-      // 1. On-Chain Distribution
+      // 1. On-Chain Distribution (smart account recipients only)
       if (usersBatch.length > 0) {
         let skipOnChain = false;
         try {
@@ -502,7 +503,7 @@ export class RewardsService {
           }
           const finalUsers = Array.from(aggregatedRewards.keys());
           const finalAmounts = Array.from(aggregatedRewards.values());
-          console.log(`📊 RewardsService: Aggregated ${usersBatch.length} claims into ${finalUsers.length} unique recipients`);
+          console.log(`📊 RewardsService: Aggregated ${usersBatch.length} claims into ${finalUsers.length} unique on-chain recipients`);
 
           try {
             const txHash = await BlockchainService.distributeRewardsBatch(
@@ -515,11 +516,19 @@ export class RewardsService {
             result.transactionHash = txHash;
           } catch (error: any) {
             console.error('❌ RewardsService: Blockchain distribution failed:', error);
-            // Handle EventNotActive - event already completed on-chain
-            const isEventNotActive = error.message?.includes('0x0f0c1bc8') || error.message?.includes('EventNotActive');
+            const msg = error.message ?? '';
+            // Known recoverable on-chain states — proceed with DB writes
+            const isEventNotActive  = msg.includes('0x0f0c1bc8') || msg.includes('EventNotActive');
+            const isPoolNotFound    = msg.includes('0x5add5543'); // contract: no on-chain pool for this event
             if (isEventNotActive) {
               console.log(`ℹ️ RewardsService: Event already completed on-chain. Proceeding with DB sync.`);
               result.transactionHash = '0x_ALREADY_COMPLETED';
+            } else if (isPoolNotFound) {
+              console.log(`ℹ️ RewardsService: No on-chain pool found (0x5add5543). Saving all claims as PENDING — DB-only mode.`);
+              // Move validClaims → pendingClaims so they're saved as PENDING (walletStatus unchanged)
+              pendingClaims.push(...validClaims);
+              validClaims.length = 0;
+              result.transactionHash = undefined;
             } else {
               throw error;
             }
@@ -529,40 +538,39 @@ export class RewardsService {
 
       // 2. Database Updates (Synchronous Transaction)
       result.totalRewards = claimsToCreate.reduce((sum, claim) => sum + claim.finalAmount, 0);
-      console.log(`💾 RewardsService: Saving ${validClaims.length} claims to database (Total: ${result.totalRewards} USDC)`);
+      console.log(`💾 RewardsService: Saving ${validClaims.length} CREDITED + ${pendingClaims.length} PENDING claims (Total: ${result.totalRewards} USDC)`);
 
       await prisma.$transaction(
         async (tx) => {
-          console.log(`🔄 RewardsService: Starting DB transaction for ${validClaims.length} claims`);
+          // Save smart-account claims as CREDITED
           for (const claim of validClaims) {
             try {
-              console.log(`📄 RewardsService: Upserting ${claim.claimType} claim for user ${claim.userId}`);
-              // Destructure to remove walletAddress which is not in the DB model
-              const { walletAddress, ...dbClaim } = claim;
+              const { walletAddress, eoaAddress, ...dbClaim } = claim;
               const saved = await tx.rewardClaim.upsert({
-                where: {
-                  poolId_userId_claimType: {
-                    poolId: dbClaim.poolId,
-                    userId: dbClaim.userId,
-                    claimType: dbClaim.claimType,
-                  },
-                },
-                create: {
-                  ...dbClaim,
-                  status: ClaimStatus.CREDITED,
-                  claimedAt: new Date(),
-                  transactionHash: result.transactionHash
-                } as any,
-                update: {
-                  status: ClaimStatus.CREDITED,
-                  claimedAt: new Date(),
-                  transactionHash: result.transactionHash
-                } as any,
+                where: { poolId_userId_claimType: { poolId: dbClaim.poolId, userId: dbClaim.userId, claimType: dbClaim.claimType } },
+                create: { ...dbClaim, status: ClaimStatus.CREDITED, walletStatus: WalletStatus.SMART_ACCOUNT, claimedAt: new Date(), transactionHash: result.transactionHash } as any,
+                update: { status: ClaimStatus.CREDITED, walletStatus: WalletStatus.SMART_ACCOUNT, claimedAt: new Date(), transactionHash: result.transactionHash } as any,
               });
-              console.log(`✅ RewardsService: Claim saved with ID ${saved.id}`);
+              console.log(`✅ RewardsService: CREDITED claim saved: ${saved.id}`);
               result.claimsCreated++;
             } catch (error: any) {
-              console.error(`❌ RewardsService: Failed to save claim for ${claim.userId}:`, error.message);
+              console.error(`❌ RewardsService: Failed to save CREDITED claim for ${claim.userId}:`, error.message);
+            }
+          }
+
+          // Save EOA/no-wallet claims as PENDING
+          for (const claim of pendingClaims) {
+            try {
+              const { walletAddress, eoaAddress, ...dbClaim } = claim;
+              const saved = await tx.rewardClaim.upsert({
+                where: { poolId_userId_claimType: { poolId: dbClaim.poolId, userId: dbClaim.userId, claimType: dbClaim.claimType } },
+                create: { ...dbClaim, status: ClaimStatus.PENDING } as any,
+                update: { status: ClaimStatus.PENDING, walletStatus: dbClaim.walletStatus } as any,
+              });
+              console.log(`✅ RewardsService: PENDING claim saved: ${saved.id}`);
+              result.claimsCreated++;
+            } catch (error: any) {
+              console.error(`❌ RewardsService: Failed to save PENDING claim for ${claim.userId}:`, error.message);
             }
           }
 
@@ -576,7 +584,8 @@ export class RewardsService {
             },
           });
 
-          for (const claim of validClaims) {
+          // Increment totalEarnings for all recipients (both CREDITED and PENDING count toward lifetime earnings)
+          for (const claim of claimsToCreate) {
             try {
               await tx.user.update({
                 where: { id: claim.userId },
@@ -586,14 +595,14 @@ export class RewardsService {
                 }
               });
             } catch (error: any) {
-              console.error(`❌ RewardsService: Failed to increment user ${claim.userId} earnings:`, error);
+              console.error(`❌ RewardsService: Failed to increment earnings for ${claim.userId}:`, error);
             }
           }
         },
         { timeout: 60000, maxWait: 10000 }
       );
 
-      console.log(`✅ RewardsService: Database sync complete. ${result.claimsCreated} claims created/updated.`);
+      console.log(`✅ RewardsService: Database sync complete. ${result.claimsCreated} claims saved.`);
 
       // 3. Notifications (Post-DB success)
       for (const notif of notificationQueue) {
@@ -620,6 +629,98 @@ export class RewardsService {
   }
 
   // ==================== CLAIMS ====================
+
+  /**
+   * Claim pending rewards for a user who has since initialized a Smart Account.
+   * Finds all PENDING claims for the user, pushes them on-chain, and marks them CREDITED.
+   */
+  static async claimPendingRewards(userId: string): Promise<{ success: boolean; claimsCredited: number; totalAmount: number; transactionHash?: string; errors: string[] }> {
+    const result = { success: false, claimsCredited: 0, totalAmount: 0, transactionHash: undefined as string | undefined, errors: [] as string[] };
+
+    // Fetch current user wallet state
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, walletAddress: true, eoaAddress: true },
+    });
+
+    if (!user) {
+      result.errors.push('User not found');
+      return result;
+    }
+
+    // Verify user now has a smart account
+    const hasValidFormat = user.walletAddress && /^0x[a-fA-F0-9]{40}$/.test(user.walletAddress);
+    const isSmartAccount = hasValidFormat && user.walletAddress !== user.eoaAddress;
+
+    if (!isSmartAccount) {
+      result.errors.push('No Smart Account detected. Initialize your wallet first.');
+      return result;
+    }
+
+    // Find all PENDING claims for this user
+    const pendingClaims = await prisma.rewardClaim.findMany({
+      where: {
+        userId,
+        status: ClaimStatus.PENDING,
+      },
+      include: {
+        pool: { select: { eventId: true } },
+      },
+    });
+
+    if (pendingClaims.length === 0) {
+      result.errors.push('No pending rewards to claim.');
+      return result;
+    }
+
+    // Aggregate amounts per event for on-chain distribution
+    const perEventMap = new Map<string, { poolId: string; claimIds: string[]; totalWei: bigint; totalUsdc: number }>();
+    for (const claim of pendingClaims) {
+      const eventId = claim.pool.eventId;
+      const existing = perEventMap.get(eventId) || { poolId: claim.poolId, claimIds: [], totalWei: 0n, totalUsdc: 0 };
+      existing.claimIds.push(claim.id);
+      existing.totalWei += BigInt(Math.round(claim.finalAmount * 1_000_000));
+      existing.totalUsdc += claim.finalAmount;
+      perEventMap.set(eventId, existing);
+    }
+
+    const BlockchainService = (await import('../lib/blockchain.js')).BlockchainService;
+    const NotificationService = (await import('./notificationService.js')).NotificationService;
+
+    for (const [eventId, data] of perEventMap) {
+      try {
+        console.log(`🔗 RewardsService.claimPendingRewards: Distributing ${data.totalUsdc.toFixed(2)} USDC for event ${eventId} to ${user.walletAddress}`);
+        const txHash = await BlockchainService.distributeRewardsBatch(eventId, [user.walletAddress!], [data.totalWei], 1);
+
+        // Update all claims for this event to CREDITED
+        await prisma.$transaction(async (tx) => {
+          await tx.rewardClaim.updateMany({
+            where: { id: { in: data.claimIds } },
+            data: { status: ClaimStatus.CREDITED, walletStatus: WalletStatus.SMART_ACCOUNT, transactionHash: txHash, claimedAt: new Date() },
+          });
+        });
+
+        result.claimsCredited += data.claimIds.length;
+        result.totalAmount += data.totalUsdc;
+        result.transactionHash = txHash;
+
+        const event = await prisma.event.findUnique({ where: { id: eventId }, select: { title: true } });
+        await NotificationService.createNotification({
+          userId,
+          title: 'Pending Rewards Claimed!',
+          message: `Your ${data.totalUsdc.toFixed(2)} USDC reward from "${event?.title ?? 'event'}" has been credited to your Smart Account.`,
+          type: 'REWARD',
+          metadata: { eventId },
+        });
+      } catch (error: any) {
+        console.error(`❌ RewardsService.claimPendingRewards: Failed for event ${eventId}:`, error.message);
+        result.errors.push(`Event ${eventId}: ${error.message}`);
+      }
+    }
+
+    result.success = result.claimsCredited > 0;
+    return result;
+  }
 
   /**
    * Get user's claims for an event
