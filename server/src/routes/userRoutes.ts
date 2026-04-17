@@ -3,23 +3,30 @@ import { getUsers, getUserById, getUserByUsername, upsertUser, getCurrentUser, u
 import { getSubmissionsByUser } from '../controllers/submissionController';
 import { sendOTP, verifyOTP } from '../controllers/emailController';
 import { authenticateJWT, authenticateOptional, requireEmailVerification } from '../middlewares/authMiddleware';
+import { arcjetMiddleware } from '../middlewares/arcjetMiddleware';
+import aj from '../lib/arcjet';
+import { fixedWindow } from '@arcjet/node';
 
 const router = Router();
 
-// Protected routes - require JWT authentication (must be defined before /:id)
-router.get('/me', authenticateJWT, getCurrentUser); // Get current authenticated user
-router.get('/me/stats', authenticateJWT, getUserStats); // Get current user statistics
-router.post('/', authenticateJWT, requireEmailVerification, upsertUser); // Create or update user (protected)
-router.put('/', authenticateJWT, requireEmailVerification, upsertUser); // Alternative PUT method for upsert (protected)
-router.patch('/profile', authenticateJWT, requireEmailVerification, updateProfile); // Update user profile
-router.patch('/wallet', authenticateJWT, updateWalletAddress); // Update wallet address (no email verification required)
-router.post('/onboarding-analytics', authenticateJWT, saveOnboardingAnalytics); // Save onboarding analytics (analytics-only)
-router.get('/validate-referral', authenticateJWT, validateReferral); // Validate a referral code (read-only)
-router.post('/apply-referral', authenticateJWT, applyReferral); // Apply a referral code
-router.post('/email/send-otp', authenticateJWT, sendOTP); // Send email OTP
-router.post('/email/verify-otp', authenticateJWT, verifyOTP); // Verify email OTP
+// 3 OTP sends per 5 minutes per user
+const otpRateLimit = arcjetMiddleware(
+  aj.withRule(fixedWindow({ mode: 'LIVE', window: '5m', max: 3, characteristics: ['userId'] })),
+  (req) => ({ userId: req.user?.id ?? req.ip ?? 'anon' }),
+);
 
-// User Follow System
+router.get('/me', authenticateJWT, getCurrentUser);
+router.get('/me/stats', authenticateJWT, getUserStats);
+router.post('/', authenticateJWT, requireEmailVerification, upsertUser);
+router.put('/', authenticateJWT, requireEmailVerification, upsertUser);
+router.patch('/profile', authenticateJWT, requireEmailVerification, updateProfile);
+router.patch('/wallet', authenticateJWT, updateWalletAddress);
+router.post('/onboarding-analytics', authenticateJWT, saveOnboardingAnalytics);
+router.get('/validate-referral', authenticateJWT, validateReferral);
+router.post('/apply-referral', authenticateJWT, applyReferral);
+router.post('/email/send-otp', authenticateJWT, otpRateLimit, sendOTP);
+router.post('/email/verify-otp', authenticateJWT, verifyOTP);
+
 router.post('/follow/:followingId', authenticateJWT, requireEmailVerification, followUser);
 router.delete('/follow/:followingId', authenticateJWT, requireEmailVerification, unfollowUser);
 
@@ -28,16 +35,14 @@ router.get('/me/following', authenticateJWT, getFollowing);
 
 router.get('/:userId/followers', getFollowers);
 router.get('/:userId/following', getFollowing);
-router.get('/:userId/stats', getUserStatsById); // Public user stats
+router.get('/:userId/stats', getUserStatsById);
 
-// Public routes (/:id must be last to avoid matching /me)
-router.get('/search', searchUsers); // Search users by username/displayName
-router.get('/username/:username', getUserByUsername); // Get user by username
-router.get('/check-username', checkUsernameAvailability); // Check username availability
-router.get('/:userId/submissions', authenticateOptional, getSubmissionsByUser); // Get user submissions
-router.get('/:userId/voted-content', authenticateOptional, getUserVotedContent); // Get content user voted for
+router.get('/search', searchUsers);
+router.get('/username/:username', getUserByUsername);
+router.get('/check-username', checkUsernameAvailability);
+router.get('/:userId/submissions', authenticateOptional, getSubmissionsByUser);
+router.get('/:userId/voted-content', authenticateOptional, getUserVotedContent);
 router.get('/', getUsers);
 router.get('/:id', getUserById);
 
 export default router;
-

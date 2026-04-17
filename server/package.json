@@ -23,6 +23,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@arcjet/node": "^1.4.0",
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^5.10.2",
     "@privy-io/server-auth": "^1.32.5",
