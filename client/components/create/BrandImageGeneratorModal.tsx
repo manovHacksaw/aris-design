@@ -228,11 +228,11 @@ export function BrandImageGeneratorModal({
                   <Wand2 className="w-3.5 h-3.5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-[11px] font-black text-white uppercase tracking-widest">
+                  <p className="text-[11px] font-black text-foreground uppercase tracking-widest">
                     AI Image Generator
                   </p>
                   {optionLabel && (
-                    <p className="text-[9px] font-bold text-white/30 uppercase tracking-wider">
+                    <p className="text-[9px] font-bold text-foreground/30 uppercase tracking-wider">
                       For {optionLabel}
                     </p>
                   )}
@@ -240,7 +240,7 @@ export function BrandImageGeneratorModal({
               </div>
               <div className="flex items-center gap-3">
                 {remainingGenerations !== null && (
-                  <span className="text-[9px] font-bold text-white/30 uppercase tracking-wider">
+                  <span className="text-[9px] font-bold text-foreground/30 uppercase tracking-wider">
                     {remainingGenerations}/{MAX_DAILY} left
                   </span>
                 )}
@@ -248,7 +248,7 @@ export function BrandImageGeneratorModal({
                   onClick={() => !isGenerating && onClose()}
                   className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
                 >
-                  <X className="w-3.5 h-3.5 text-white/50" />
+                  <X className="w-3.5 h-3.5 text-foreground/50" />
                 </button>
               </div>
             </div>
@@ -264,7 +264,7 @@ export function BrandImageGeneratorModal({
                       Using event context
                     </p>
                     {eventTitle && (
-                      <p className="text-[10px] font-bold text-white/60 truncate">{eventTitle}</p>
+                      <p className="text-[10px] font-bold text-foreground/60 truncate">{eventTitle}</p>
                     )}
                   </div>
                 </div>
@@ -291,8 +291,8 @@ export function BrandImageGeneratorModal({
                       />
                     </div>
                     <div className="text-center">
-                      <p className="text-sm font-black text-white tracking-tight">Generating…</p>
-                      <p className="text-[10px] text-white/30 font-medium mt-1">
+                      <p className="text-sm font-black text-foreground tracking-tight">Generating…</p>
+                      <p className="text-[10px] text-foreground/30 font-medium mt-1">
                         This takes a few seconds
                       </p>
                     </div>
@@ -314,7 +314,7 @@ export function BrandImageGeneratorModal({
                       />
                       <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-md bg-black/60 backdrop-blur-md">
                         <Sparkles className="w-2.5 h-2.5 text-primary" />
-                        <span className="text-[8px] font-black text-white uppercase tracking-wider">
+                        <span className="text-[8px] font-black text-foreground uppercase tracking-wider">
                           AI
                         </span>
                       </div>
@@ -324,7 +324,7 @@ export function BrandImageGeneratorModal({
                     <div className="flex gap-2">
                       <button
                         onClick={handleDiscard}
-                        className="flex-1 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black text-white/40 uppercase tracking-widest hover:bg-white/8 hover:text-white/60 transition-all active:scale-95"
+                        className="flex-1 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black text-foreground/40 uppercase tracking-widest hover:bg-white/8 hover:text-foreground/60 transition-all active:scale-95"
                       >
                         Discard
                       </button>
@@ -341,7 +341,7 @@ export function BrandImageGeneratorModal({
                     <button
                       onClick={() => prompt ? handleGenerate(prompt) : null}
                       disabled={!prompt.trim() || remainingGenerations === 0}
-                      className="w-full flex items-center justify-center gap-1.5 py-2 text-[10px] font-bold text-white/25 uppercase tracking-widest hover:text-white/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="w-full flex items-center justify-center gap-1.5 py-2 text-[10px] font-bold text-white/25 uppercase tracking-widest hover:text-foreground/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       <RefreshCw className="w-3 h-3" />
                       Regenerate with same prompt
@@ -367,7 +367,7 @@ export function BrandImageGeneratorModal({
                       <button
                         key={hint}
                         onClick={() => setPrompt(hint)}
-                        className="w-full text-left px-3.5 py-2.5 rounded-xl bg-white/4 border border-white/6 text-xs font-medium text-white/35 hover:text-white/60 hover:bg-white/7 transition-all"
+                        className="w-full text-left px-3.5 py-2.5 rounded-xl bg-white/4 border border-white/6 text-xs font-medium text-white/35 hover:text-foreground/60 hover:bg-white/7 transition-all"
                       >
                         "{hint}"
                       </button>
@@ -403,7 +403,7 @@ export function BrandImageGeneratorModal({
                   }}
                   placeholder={isFirstGen ? "Describe the image…" : "Describe another image…"}
                   disabled={isGenerating}
-                  className="flex-1 bg-transparent text-xs sm:text-sm font-medium text-white placeholder:text-white/20 focus:outline-none disabled:opacity-50"
+                  className="flex-1 bg-transparent text-xs sm:text-sm font-medium text-white placeholder:text-foreground/20 focus:outline-none disabled:opacity-50"
                 />
                 <button
                   onClick={handleSend}
@@ -411,9 +411,9 @@ export function BrandImageGeneratorModal({
                   className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center hover:bg-primary/90 active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
                 >
                   {isGenerating ? (
-                    <Loader2 className="w-3 h-3 text-white animate-spin" />
+                    <Loader2 className="w-3 h-3 text-foreground animate-spin" />
                   ) : (
-                    <Send className="w-3 h-3 text-white" />
+                    <Send className="w-3 h-3 text-foreground" />
                   )}
                 </button>
               </div>

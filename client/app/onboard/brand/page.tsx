@@ -371,7 +371,7 @@ function BrandSignup() {
                 { key: "linkedin" as const, prefix: "linkedin.com/company/", placeholder: "LinkedIn company slug" },
               ].map(({ key, prefix, placeholder }) => (
                 <div key={key} className="flex rounded-[14px] overflow-hidden border border-border/50 focus-within:border-primary/50 transition-colors">
-                  <div className="flex items-center px-3 py-3 bg-white/[0.03] border-r border-border/30 text-[11px] text-foreground/30 font-medium whitespace-nowrap shrink-0">
+                  <div className="flex items-center px-3 py-3 bg-surface border-r border-border/30 text-[11px] text-foreground/30 font-medium whitespace-nowrap shrink-0">
                     <AtSign className="w-3.5 h-3.5 mr-1.5" />
                     {prefix}
                   </div>
@@ -533,7 +533,7 @@ function BrandSignup() {
             <button
               onClick={handleComplete}
               disabled={isSaving || form.categories.length === 0}
-              className="flex-1 py-4 rounded-[16px] bg-primary text-white font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex-1 py-4 rounded-[16px] bg-primary text-foreground font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isSaving ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

@@ -50,10 +50,10 @@ export default function OnboardingShell({ step, total, meta, children }: Onboard
 
             {/* Title + subtitle */}
             <div className="space-y-3">
-              <h2 className="text-4xl font-black text-white tracking-tighter leading-tight whitespace-pre-line">
+              <h2 className="text-4xl font-black text-foreground tracking-tighter leading-tight whitespace-pre-line">
                 {title}
               </h2>
-              <p className="text-white/50 text-sm font-medium leading-relaxed">{subtitle}</p>
+              <p className="text-foreground/50 text-sm font-medium leading-relaxed">{subtitle}</p>
             </div>
 
             {/* Hints */}
@@ -86,7 +86,7 @@ export default function OnboardingShell({ step, total, meta, children }: Onboard
             </div>
 
             {/* Step counter */}
-            <p className="text-white/20 text-xs font-bold uppercase tracking-widest">
+            <p className="text-foreground/20 text-xs font-bold uppercase tracking-widest">
               Step {step} of {total}
             </p>
           </motion.div>

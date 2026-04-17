@@ -53,7 +53,7 @@ export default function StepProfile({ profile, onProfileChange }: StepProfilePro
                                 <Camera className="w-5 h-5 text-foreground/30" />
                             )}
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Camera className="w-4 h-4 text-white" />
+                                <Camera className="w-4 h-4 text-foreground" />
                             </div>
                         </div>
                         <div>

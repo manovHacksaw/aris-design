@@ -62,18 +62,18 @@ export default function PlatformTour() {
             <p className="text-[10px] font-black text-primary/80 uppercase tracking-[0.2em]">
               Platform Tour
             </p>
-            <h3 className="font-display text-2xl text-white uppercase tracking-tight mt-1">{current.title}</h3>
+            <h3 className="font-display text-2xl text-foreground uppercase tracking-tight mt-1">{current.title}</h3>
           </div>
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-full bg-surface hover:bg-white/[0.12] flex items-center justify-center transition-colors"
           >
-            <X className="w-4 h-4 text-white/60" />
+            <X className="w-4 h-4 text-foreground/60" />
           </button>
         </div>
 
-        <p className="text-sm text-white/60 leading-relaxed">{current.text}</p>
+        <p className="text-sm text-foreground/60 leading-relaxed">{current.text}</p>
 
         <div className="flex items-center gap-2">
           {TOUR_STEPS.map((_, i) => (
@@ -89,7 +89,7 @@ export default function PlatformTour() {
             type="button"
             onClick={() => setStepIndex((s) => Math.max(0, s - 1))}
             disabled={stepIndex === 0}
-            className="px-4 py-2 rounded-xl border border-white/[0.12] text-xs font-black uppercase tracking-wider text-white/60 disabled:opacity-30"
+            className="px-4 py-2 rounded-xl border border-white/[0.12] text-xs font-black uppercase tracking-wider text-foreground/60 disabled:opacity-30"
           >
             <span className="inline-flex items-center gap-1"><ArrowLeft className="w-3.5 h-3.5" /> Back</span>
           </button>

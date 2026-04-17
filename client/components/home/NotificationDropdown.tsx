@@ -83,7 +83,7 @@ export default function NotificationDropdown({ isOpen, onClose }: NotificationDr
                         <div className="flex items-center gap-2">
                             <h3 className="font-bold text-foreground">Notifications</h3>
                             {unreadCount > 0 && (
-                                <span className="bg-primary text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                                <span className="bg-primary text-foreground text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
                                     {unreadCount}
                                 </span>
                             )}

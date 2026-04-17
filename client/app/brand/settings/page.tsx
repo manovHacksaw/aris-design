@@ -243,15 +243,15 @@ export default function BrandSettingsPage() {
 
   if (userLoading && !user) {
     return (
-      <div className="w-full pt-6 lg:pt-10 pb-24 space-y-6 animate-pulse text-white">
+      <div className="w-full pt-6 lg:pt-10 pb-24 space-y-6 animate-pulse text-foreground">
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1 space-y-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] h-48" />
+              <div key={i} className="bg-surface border border-surface-border rounded-[24px] h-48" />
             ))}
           </div>
           <div className="lg:w-[300px] space-y-6">
-            <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] h-64" />
+            <div className="bg-surface border border-surface-border rounded-[24px] h-64" />
           </div>
         </div>
       </div>
@@ -259,7 +259,7 @@ export default function BrandSettingsPage() {
   }
 
   return (
-    <div className="w-full pt-6 lg:pt-10 pb-24 md:pb-12 space-y-6 text-white">
+    <div className="w-full pt-6 lg:pt-10 pb-24 md:pb-12 space-y-6 text-foreground">
       {/* Toast */}
       {toast && (
         <div
@@ -287,7 +287,7 @@ export default function BrandSettingsPage() {
         <div className="flex-1 min-w-0 space-y-6">
 
           {/* ── Identity Card ── */}
-          <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 md:p-8">
+          <div className="bg-surface border border-surface-border rounded-[24px] p-6 md:p-8">
             <input
               ref={fileInputRef}
               type="file"
@@ -300,20 +300,20 @@ export default function BrandSettingsPage() {
               {/* Logo */}
               <div className="relative shrink-0">
                 <div
-                  className="relative group cursor-pointer w-20 h-20 md:w-24 md:h-24 rounded-3xl overflow-hidden border-2 border-white/[0.1] bg-white/[0.05]"
+                  className="relative group cursor-pointer w-20 h-20 md:w-24 md:h-24 rounded-3xl overflow-hidden border-2 border-surface-border-strong bg-surface"
                   onClick={() => !isUploadingLogo && fileInputRef.current?.click()}
                 >
                   {logoPreview ? (
                     <img src={logoPreview} alt="Brand logo" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                      <span className="font-display text-4xl text-white/30 uppercase">{logoInitial}</span>
+                      <span className="font-display text-4xl text-foreground/30 uppercase">{logoInitial}</span>
                     </div>
                   )}
                   <div className="absolute inset-0 bg-black/50 rounded-3xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     {isUploadingLogo
-                      ? <Loader2 className="w-6 h-6 text-white animate-spin" />
-                      : <Camera className="w-6 h-6 text-white" />
+                      ? <Loader2 className="w-6 h-6 text-foreground animate-spin" />
+                      : <Camera className="w-6 h-6 text-foreground" />
                     }
                   </div>
                 </div>
@@ -332,25 +332,25 @@ export default function BrandSettingsPage() {
                   {user?.walletAddress && (
                     <button
                       onClick={copyWallet}
-                      className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.2] rounded-full transition-colors group"
+                      className="flex items-center gap-1.5 px-2.5 py-1 bg-surface border border-surface-border hover:border-white/[0.2] rounded-full transition-colors group"
                     >
                       <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                      <span className="text-[10px] font-black text-white/40 font-mono group-hover:text-white/70 transition-colors">
+                      <span className="text-[10px] font-black text-foreground/40 font-mono group-hover:text-foreground/70 transition-colors">
                         {walletCopied ? "Copied!" : truncateAddress(user.walletAddress)}
                       </span>
-                      <Copy className="w-2.5 h-2.5 text-white/20 group-hover:text-white/50 transition-colors" />
+                      <Copy className="w-2.5 h-2.5 text-foreground/20 group-hover:text-foreground/50 transition-colors" />
                     </button>
                   )}
                   {joinDate && (
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.04] border border-white/[0.06] rounded-full">
-                      <Calendar className="w-3 h-3 text-white/30" />
-                      <span className="text-[10px] font-black text-white/30 uppercase tracking-wide">Joined {joinDate}</span>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-surface border border-surface-border rounded-full">
+                      <Calendar className="w-3 h-3 text-foreground/30" />
+                      <span className="text-[10px] font-black text-foreground/30 uppercase tracking-wide">Joined {joinDate}</span>
                     </div>
                   )}
                   {user?.ownedBrands?.[0]?.id && (
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.04] border border-white/[0.06] rounded-full">
-                      <Tag className="w-3 h-3 text-white/30" />
-                      <span className="text-[10px] font-black text-white/30 uppercase tracking-wide font-mono">ID: {user.ownedBrands[0].id}</span>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-surface border border-surface-border rounded-full">
+                      <Tag className="w-3 h-3 text-foreground/30" />
+                      <span className="text-[10px] font-black text-foreground/30 uppercase tracking-wide font-mono">ID: {user.ownedBrands[0].id}</span>
                     </div>
                   )}
                 </div>
@@ -360,7 +360,7 @@ export default function BrandSettingsPage() {
               <div className="flex items-center gap-3 ml-auto">
                 <button
                   onClick={() => setIsEditing((v) => !v)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/[0.04] border border-white/[0.1] hover:bg-white/[0.08] hover:border-white/[0.2] rounded-xl text-[11px] font-black text-white/60 hover:text-white uppercase tracking-widest transition-all"
+                  className="flex items-center gap-2 px-4 py-2 bg-surface border border-surface-border-strong hover:bg-surface-hover hover:border-white/[0.2] rounded-xl text-[11px] font-black text-foreground/60 hover:text-foreground uppercase tracking-widest transition-all"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                   Edit Profile
@@ -393,19 +393,19 @@ export default function BrandSettingsPage() {
                   className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
                 >
                   <div
-                    className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0d0d0f] border border-white/[0.08] rounded-[28px] p-6 md:p-8 space-y-6 pointer-events-auto shadow-2xl"
+                    className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0d0d0f] border border-surface-border rounded-[28px] p-6 md:p-8 space-y-6 pointer-events-auto shadow-2xl"
                     onClick={(e) => e.stopPropagation()}
                   >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-display text-2xl text-white uppercase tracking-tight">Edit Brand Profile</h3>
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-0.5">Update your brand settings</p>
+                    <h3 className="font-display text-2xl text-foreground uppercase tracking-tight">Edit Brand Profile</h3>
+                    <p className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em] mt-0.5">Update your brand settings</p>
                   </div>
                   <button
                     onClick={() => setIsEditing(false)}
-                    className="w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center transition-colors"
+                    className="w-8 h-8 rounded-full bg-surface hover:bg-surface-hover flex items-center justify-center transition-colors"
                   >
-                    <X className="w-4 h-4 text-white/50" />
+                    <X className="w-4 h-4 text-foreground/50" />
                   </button>
                 </div>
 
@@ -414,7 +414,7 @@ export default function BrandSettingsPage() {
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploadingLogo}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] border border-white/[0.1] hover:bg-white/[0.08] hover:border-white/[0.2] rounded-xl text-[10px] font-black text-white/60 hover:text-white uppercase tracking-widest transition-all disabled:opacity-40"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-surface border border-surface-border-strong hover:bg-surface-hover hover:border-white/[0.2] rounded-xl text-[10px] font-black text-foreground/60 hover:text-foreground uppercase tracking-widest transition-all disabled:opacity-40"
                   >
                     {isUploadingLogo ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />}
                     {isUploadingLogo ? "Uploading…" : "Change Logo"}
@@ -423,7 +423,7 @@ export default function BrandSettingsPage() {
                     <button
                       onClick={handleRemoveLogo}
                       disabled={isUploadingLogo}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-[10px] font-black text-white/40 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 uppercase tracking-widest transition-all disabled:opacity-40"
+                      className="flex items-center gap-1 px-3 py-1.5 bg-surface border border-surface-border rounded-xl text-[10px] font-black text-foreground/40 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 uppercase tracking-widest transition-all disabled:opacity-40"
                     >
                       <X className="w-3 h-3" /> Remove
                     </button>
@@ -437,35 +437,35 @@ export default function BrandSettingsPage() {
                   </button>
                 </div>
 
-                <div className="h-[1px] bg-white/[0.04]" />
+                <div className="h-[1px] bg-surface" />
 
                 {/* Brand Name, Tagline, Description */}
                 <div className="grid md:grid-cols-2 gap-5">
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">Brand Name</label>
+                    <label className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em] ml-1">Brand Name</label>
                     <input
                       type="text"
                       value={brandName}
                       onChange={(e) => setBrandName(e.target.value)}
                       placeholder="Your brand name"
-                      className="w-full bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] focus:border-white/[0.2] rounded-2xl px-5 py-4 text-sm font-bold text-white placeholder:text-white/20 focus:outline-none transition-colors"
+                      className="w-full bg-surface border border-surface-border hover:border-surface-border-strong focus:border-foreground/[0.2] rounded-2xl px-5 py-4 text-sm font-bold text-foreground placeholder:text-foreground/20 focus:outline-none transition-colors"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">Tagline</label>
+                    <label className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em] ml-1">Tagline</label>
                     <input
                       type="text"
                       value={tagline}
                       onChange={(e) => setTagline(e.target.value)}
                       placeholder="e.g. Just Do It"
                       maxLength={80}
-                      className="w-full bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] focus:border-white/[0.2] rounded-2xl px-5 py-4 text-sm font-bold text-white placeholder:text-white/20 focus:outline-none transition-colors"
+                      className="w-full bg-surface border border-surface-border hover:border-surface-border-strong focus:border-foreground/[0.2] rounded-2xl px-5 py-4 text-sm font-bold text-foreground placeholder:text-foreground/20 focus:outline-none transition-colors"
                     />
                   </div>
                   <div className="md:col-span-2 space-y-2">
                     <div className="flex items-center justify-between ml-1 mr-1">
-                      <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Description</label>
-                      <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">{description.length}/200</span>
+                      <label className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em]">Description</label>
+                      <span className="text-[9px] font-black text-foreground/20 uppercase tracking-widest">{description.length}/200</span>
                     </div>
                     <textarea
                       value={description}
@@ -473,18 +473,18 @@ export default function BrandSettingsPage() {
                       placeholder="Tell creators what your brand is about..."
                       maxLength={200}
                       rows={4}
-                      className="w-full bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] focus:border-white/[0.2] rounded-2xl px-5 py-4 text-sm font-bold text-white placeholder:text-white/20 focus:outline-none transition-colors resize-none"
+                      className="w-full bg-surface border border-surface-border hover:border-surface-border-strong focus:border-foreground/[0.2] rounded-2xl px-5 py-4 text-sm font-bold text-foreground placeholder:text-foreground/20 focus:outline-none transition-colors resize-none"
                     />
                   </div>
                 </div>
 
-                <div className="h-[1px] bg-white/[0.04]" />
+                <div className="h-[1px] bg-surface" />
 
                 {/* Categories */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Tag className="w-4 h-4 text-primary" />
-                    <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Brand Categories</label>
+                    <label className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em]">Brand Categories</label>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {CATEGORIES.map((cat) => {
@@ -497,7 +497,7 @@ export default function BrandSettingsPage() {
                             "px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer",
                             selected
                               ? "bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20"
-                              : "bg-white/[0.03] border border-white/[0.06] text-white/40 hover:bg-white/[0.07] hover:border-white/[0.12] hover:text-white"
+                              : "bg-surface border border-surface-border text-foreground/40 hover:bg-surface-hover hover:border-white/[0.12] hover:text-foreground"
                           )}
                         >
                           {cat}
@@ -506,30 +506,30 @@ export default function BrandSettingsPage() {
                     })}
                   </div>
                   {categories.length > 0 && (
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">
+                    <p className="text-[9px] font-black text-foreground/30 uppercase tracking-widest">
                       {categories.length} categor{categories.length !== 1 ? "ies" : "y"} selected
                     </p>
                   )}
                 </div>
 
-                <div className="h-[1px] bg-white/[0.04]" />
+                <div className="h-[1px] bg-surface" />
 
                 {/* Social Links */}
                 <div className="space-y-4">
-                  <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Online Presence</label>
+                  <label className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em]">Online Presence</label>
                   <div className="grid gap-4">
                     {SOCIAL_KEYS.map(({ key, label, placeholder }) => (
                       <div key={key} className="space-y-2">
-                        <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">{label}</label>
+                        <label className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em] ml-1">{label}</label>
                         <div className="relative">
                           <input
                             type="url"
                             value={socialLinks[key] ?? ""}
                             onChange={(e) => setSocialLinks((prev) => ({ ...prev, [key]: e.target.value }))}
                             placeholder={placeholder}
-                            className="w-full bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] focus:border-white/[0.2] rounded-2xl px-5 py-3.5 text-sm font-bold text-white placeholder:text-white/20 focus:outline-none transition-colors"
+                            className="w-full bg-surface border border-surface-border hover:border-surface-border-strong focus:border-foreground/[0.2] rounded-2xl px-5 py-3.5 text-sm font-bold text-foreground placeholder:text-foreground/20 focus:outline-none transition-colors"
                           />
-                          <Globe className="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/20" />
+                          <Globe className="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/20" />
                         </div>
                       </div>
                     ))}
@@ -540,7 +540,7 @@ export default function BrandSettingsPage() {
                 <div className="flex items-center justify-end gap-3 pt-2">
                   <button
                     onClick={() => setIsEditing(false)}
-                    className="px-5 py-2.5 rounded-xl text-[11px] font-black text-white/40 hover:text-white/70 uppercase tracking-widest transition-all"
+                    className="px-5 py-2.5 rounded-xl text-[11px] font-black text-foreground/40 hover:text-foreground/70 uppercase tracking-widest transition-all"
                   >
                     Cancel
                   </button>
@@ -561,49 +561,49 @@ export default function BrandSettingsPage() {
 
           {/* ── Stats Row ── */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
+            <div className="bg-surface border border-surface-border hover:bg-surface hover:border-surface-border-strong rounded-[20px] px-5 py-4 transition-all">
               <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-primary">Milestone</p>
-              <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">
+              <p className="font-display text-4xl text-foreground uppercase tracking-tight leading-none">
                 {brandData ? levelToRank(brandData.level) : "—"}
               </p>
-              <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">
+              <p className="text-[10px] font-black text-foreground/30 mt-1 uppercase tracking-wide">
                 Level {brandData?.level ?? "—"}
               </p>
             </div>
 
-            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
+            <div className="bg-surface border border-surface-border hover:bg-surface hover:border-surface-border-strong rounded-[20px] px-5 py-4 transition-all">
               <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-lime-400">Events</p>
-              <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">{brandData?.eventsCreated ?? "—"}</p>
-              <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Created</p>
+              <p className="font-display text-4xl text-foreground uppercase tracking-tight leading-none">{brandData?.eventsCreated ?? "—"}</p>
+              <p className="text-[10px] font-black text-foreground/30 mt-1 uppercase tracking-wide">Created</p>
             </div>
 
-            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
+            <div className="bg-surface border border-surface-border hover:bg-surface hover:border-surface-border-strong rounded-[20px] px-5 py-4 transition-all">
               <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-blue-400">Followers</p>
-              <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">{brandData?.followerCount ?? "—"}</p>
-              <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Subscribers</p>
+              <p className="font-display text-4xl text-foreground uppercase tracking-tight leading-none">{brandData?.followerCount ?? "—"}</p>
+              <p className="text-[10px] font-black text-foreground/30 mt-1 uppercase tracking-wide">Subscribers</p>
             </div>
 
-            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
+            <div className="bg-surface border border-surface-border hover:bg-surface hover:border-surface-border-strong rounded-[20px] px-5 py-4 transition-all">
               <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-yellow-400">Participants</p>
-              <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">{brandData?.uniqueParticipants ?? "—"}</p>
-              <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Across Events</p>
+              <p className="font-display text-4xl text-foreground uppercase tracking-tight leading-none">{brandData?.uniqueParticipants ?? "—"}</p>
+              <p className="text-[10px] font-black text-foreground/30 mt-1 uppercase tracking-wide">Across Events</p>
             </div>
           </div>
 
           {/* ── About ── */}
-          <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 md:p-8 space-y-5">
-            <h2 className="font-display text-2xl text-white uppercase tracking-tight">
+          <div className="bg-surface border border-surface-border rounded-[24px] p-6 md:p-8 space-y-5">
+            <h2 className="font-display text-2xl text-foreground uppercase tracking-tight">
               About {(brandName || "Brand").split(" ")[0]}
             </h2>
             {description ? (
-              <p className="text-sm font-medium text-white/50 leading-relaxed">{description}</p>
+              <p className="text-sm font-medium text-foreground/50 leading-relaxed">{description}</p>
             ) : (
-              <p className="text-sm font-black text-white/20 uppercase tracking-wide">No description yet.</p>
+              <p className="text-sm font-black text-foreground/20 uppercase tracking-wide">No description yet.</p>
             )}
 
             {/* Socials */}
             {Object.values(socialLinks).some(Boolean) && (
-              <div className="flex flex-wrap gap-2 pt-3 border-t border-white/[0.04]">
+              <div className="flex flex-wrap gap-2 pt-3 border-t border-surface-border">
                 {SOCIAL_KEYS.map(({ key, label, icon: Icon }) =>
                   socialLinks[key] ? (
                     <a
@@ -611,7 +611,7 @@ export default function BrandSettingsPage() {
                       href={socialLinks[key]}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.03] border border-white/[0.06] rounded-xl text-[10px] font-black text-white/40 hover:text-white hover:border-white/[0.15] uppercase tracking-widest transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-surface border border-surface-border rounded-xl text-[10px] font-black text-foreground/40 hover:text-foreground hover:border-surface-border-strong uppercase tracking-widest transition-all"
                     >
                       <Icon className="w-3 h-3" /> {label}
                     </a>
@@ -639,28 +639,28 @@ export default function BrandSettingsPage() {
               {/* Stat counters row */}
               <div className="flex items-center gap-8">
                 <div>
-                  <p className="font-display text-3xl text-white uppercase tracking-tight leading-none">
+                  <p className="font-display text-3xl text-foreground uppercase tracking-tight leading-none">
                     {categories.length}
                   </p>
-                  <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.15em] mt-1">Categories</p>
+                  <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.15em] mt-1">Categories</p>
                 </div>
                 <div className="w-px h-8 bg-white/6" />
                 <div>
-                  <p className="font-display text-3xl text-white uppercase tracking-tight leading-none">
+                  <p className="font-display text-3xl text-foreground uppercase tracking-tight leading-none">
                     {tokensMinted !== null ? `$${tokensMinted.toLocaleString(undefined, { maximumFractionDigits: 1 })}` : "—"}
                   </p>
-                  <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.15em] mt-1">Tokens Minted</p>
+                  <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.15em] mt-1">Tokens Minted</p>
                 </div>
               </div>
             </div>
           </div>
         {/* ── Showcase ── */}
-          <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 md:p-8 space-y-5">
+          <div className="bg-surface border border-surface-border rounded-[24px] p-6 md:p-8 space-y-5">
             {/* Header */}
             <div className="flex items-end justify-between">
-              <h2 className="font-display text-2xl text-white uppercase tracking-tight">Showcase</h2>
+              <h2 className="font-display text-2xl text-foreground uppercase tracking-tight">Showcase</h2>
               {/* Top-level tabs */}
-              <div className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.06] rounded-xl p-1">
+              <div className="flex items-center gap-1 bg-surface border border-surface-border rounded-xl p-1">
                 {(["events", "creations"] as const).map((tab) => (
                   <button
                     key={tab}
@@ -669,7 +669,7 @@ export default function BrandSettingsPage() {
                       "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
                       showcaseTab === tab
                         ? "bg-white text-black"
-                        : "text-white/40 hover:text-white/70"
+                        : "text-foreground/40 hover:text-foreground/70"
                     )}
                   >
                     {tab === "events" ? "Events" : "Creations"}
@@ -681,7 +681,7 @@ export default function BrandSettingsPage() {
             {showcaseTab === "events" && (
               <>
                 {/* Vote / Post sub-tabs */}
-                <div className="flex items-center gap-4 border-b border-white/[0.06] pb-0">
+                <div className="flex items-center gap-4 border-b border-surface-border pb-0">
                   {(["vote", "post"] as const).map((t) => (
                     <button
                       key={t}
@@ -690,7 +690,7 @@ export default function BrandSettingsPage() {
                         "pb-3 text-[11px] font-black uppercase tracking-widest transition-colors border-b-2 -mb-px",
                         eventTypeTab === t
                           ? "text-primary border-primary"
-                          : "text-white/30 border-transparent hover:text-white/60"
+                          : "text-foreground/30 border-transparent hover:text-foreground/60"
                       )}
                     >
                       {t === "vote" ? "Vote Only" : "Post & Vote"}
@@ -705,7 +705,7 @@ export default function BrandSettingsPage() {
                   );
                   if (filtered.length === 0) {
                     return (
-                      <p className="text-sm font-black text-white/20 uppercase tracking-wide py-4">
+                      <p className="text-sm font-black text-foreground/20 uppercase tracking-wide py-4">
                         No {eventTypeTab === "vote" ? "vote" : "post"} events yet.
                       </p>
                     );
@@ -718,7 +718,7 @@ export default function BrandSettingsPage() {
                           voting: "text-lavender",
                           scheduled: "text-blue-400",
                           draft: "text-yellow-400",
-                          completed: "text-white/30",
+                          completed: "text-foreground/30",
                           cancelled: "text-pink-400",
                         };
                         const statusLabels: Record<string, string> = {
@@ -728,24 +728,24 @@ export default function BrandSettingsPage() {
                         const thumb = ev.imageUrl || (ev.imageCid ? `https://gateway.pinata.cloud/ipfs/${ev.imageCid}` : null);
                         const date = new Date(ev.startTime).toLocaleDateString("en-US", { month: "short", day: "numeric" });
                         return (
-                          <div key={ev.id} className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:bg-white/[0.04] hover:border-white/[0.1] transition-all">
+                          <div key={ev.id} className="flex items-center gap-3 p-3 bg-surface border border-surface-border rounded-2xl hover:bg-surface hover:border-surface-border-strong transition-all">
                             {/* Thumb */}
-                            <div className="w-12 h-12 rounded-xl bg-white/[0.06] border border-white/[0.08] overflow-hidden shrink-0 flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-xl bg-surface border border-surface-border overflow-hidden shrink-0 flex items-center justify-center">
                               {thumb
                                 ? <img src={thumb} alt={ev.title} className="w-full h-full object-cover" />
-                                : <span className="text-[10px] font-black text-white/20">{ev.title[0]}</span>
+                                : <span className="text-[10px] font-black text-foreground/20">{ev.title[0]}</span>
                               }
                             </div>
                             {/* Info */}
                             <div className="flex-1 min-w-0">
-                              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30 mb-0.5">
+                              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 mb-0.5">
                                 {brandName} <span className="mx-1">·</span>
-                                <span className={statusColors[ev.status] ?? "text-white/30"}>{statusLabels[ev.status] ?? ev.status}</span>
+                                <span className={statusColors[ev.status] ?? "text-foreground/30"}>{statusLabels[ev.status] ?? ev.status}</span>
                               </p>
-                              <p className="text-sm font-black text-white truncate">{ev.title}</p>
+                              <p className="text-sm font-black text-foreground truncate">{ev.title}</p>
                             </div>
                             {/* Date */}
-                            <p className="text-[10px] font-black text-white/30 uppercase tracking-wide shrink-0">{date}</p>
+                            <p className="text-[10px] font-black text-foreground/30 uppercase tracking-wide shrink-0">{date}</p>
                           </div>
                         );
                       })}
@@ -779,7 +779,7 @@ export default function BrandSettingsPage() {
 
                   if (images.length === 0) {
                     return (
-                      <p className="text-sm font-black text-white/20 uppercase tracking-wide py-4">
+                      <p className="text-sm font-black text-foreground/20 uppercase tracking-wide py-4">
                         No uploaded images yet.
                       </p>
                     );
@@ -787,10 +787,10 @@ export default function BrandSettingsPage() {
                   return (
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                       {images.map((img, i) => (
-                        <div key={i} className="aspect-square rounded-xl overflow-hidden bg-white/[0.04] border border-white/[0.06] group relative">
+                        <div key={i} className="aspect-square rounded-xl overflow-hidden bg-surface border border-surface-border group relative">
                           <img src={img.src} alt={img.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
-                            <p className="text-[9px] font-black text-white uppercase tracking-wide line-clamp-2">{img.label}</p>
+                            <p className="text-[9px] font-black text-foreground uppercase tracking-wide line-clamp-2">{img.label}</p>
                           </div>
                         </div>
                       ))}
@@ -809,52 +809,52 @@ export default function BrandSettingsPage() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.08 }}
-              className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 space-y-4"
+              className="bg-surface border border-surface-border rounded-[24px] p-6 space-y-4"
             >
               <div>
-                <h3 className="font-display text-xl text-white uppercase tracking-tight">Account Info</h3>
-                <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-0.5">Read-only</p>
+                <h3 className="font-display text-xl text-foreground uppercase tracking-tight">Account Info</h3>
+                <p className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em] mt-0.5">Read-only</p>
               </div>
 
               <div className="space-y-2">
                 {/* Email */}
-                <div className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:bg-white/[0.04] transition-all">
-                  <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0">
-                    <Mail className="w-4 h-4 text-white/40" />
+                <div className="flex items-center gap-3 p-3 bg-surface border border-surface-border rounded-2xl hover:bg-surface transition-all">
+                  <div className="w-9 h-9 rounded-xl bg-surface border border-surface-border flex items-center justify-center shrink-0">
+                    <Mail className="w-4 h-4 text-foreground/40" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-wide">Email</p>
-                    <p className="text-sm font-black text-white truncate">{user.email || "—"}</p>
+                    <p className="text-[9px] font-black text-foreground/30 uppercase tracking-wide">Email</p>
+                    <p className="text-sm font-black text-foreground truncate">{user.email || "—"}</p>
                   </div>
                 </div>
 
                 {/* Role */}
-                <div className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:bg-white/[0.04] transition-all">
-                  <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0">
-                    <Building2 className="w-4 h-4 text-white/40" />
+                <div className="flex items-center gap-3 p-3 bg-surface border border-surface-border rounded-2xl hover:bg-surface transition-all">
+                  <div className="w-9 h-9 rounded-xl bg-surface border border-surface-border flex items-center justify-center shrink-0">
+                    <Building2 className="w-4 h-4 text-foreground/40" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-wide">Role</p>
-                    <p className="text-sm font-black text-white">{user.role || "—"}</p>
+                    <p className="text-[9px] font-black text-foreground/30 uppercase tracking-wide">Role</p>
+                    <p className="text-sm font-black text-foreground">{user.role || "—"}</p>
                   </div>
                   <span className={cn(
                     "text-[9px] font-black px-2 py-0.5 rounded-full border uppercase tracking-widest shrink-0",
                     user.isOnboarded
                       ? "bg-green-500/10 border-green-500/20 text-green-400"
-                      : "bg-white/[0.04] border-white/[0.08] text-white/30"
+                      : "bg-surface border-surface-border text-foreground/30"
                   )}>
                     {user.isOnboarded ? "Active" : "Pending"}
                   </span>
                 </div>
 
                 {/* Member since */}
-                <div className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:bg-white/[0.04] transition-all">
-                  <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0">
-                    <Calendar className="w-4 h-4 text-white/40" />
+                <div className="flex items-center gap-3 p-3 bg-surface border border-surface-border rounded-2xl hover:bg-surface transition-all">
+                  <div className="w-9 h-9 rounded-xl bg-surface border border-surface-border flex items-center justify-center shrink-0">
+                    <Calendar className="w-4 h-4 text-foreground/40" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-wide">Member Since</p>
-                    <p className="text-sm font-black text-white">
+                    <p className="text-[9px] font-black text-foreground/30 uppercase tracking-wide">Member Since</p>
+                    <p className="text-sm font-black text-foreground">
                       {new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
                     </p>
                   </div>
@@ -862,32 +862,32 @@ export default function BrandSettingsPage() {
 
                 {/* Company size */}
                 {userSocialLinks.companySize && (
-                  <div className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:bg-white/[0.04] transition-all">
-                    <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0">
-                      <Shield className="w-4 h-4 text-white/40" />
+                  <div className="flex items-center gap-3 p-3 bg-surface border border-surface-border rounded-2xl hover:bg-surface transition-all">
+                    <div className="w-9 h-9 rounded-xl bg-surface border border-surface-border flex items-center justify-center shrink-0">
+                      <Shield className="w-4 h-4 text-foreground/40" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[9px] font-black text-white/30 uppercase tracking-wide">Company Size</p>
-                      <p className="text-sm font-black text-white">{userSocialLinks.companySize}</p>
+                      <p className="text-[9px] font-black text-foreground/30 uppercase tracking-wide">Company Size</p>
+                      <p className="text-sm font-black text-foreground">{userSocialLinks.companySize}</p>
                     </div>
                   </div>
                 )}
 
                 {/* Wallet */}
                 {user.walletAddress && (
-                  <div className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:bg-white/[0.04] transition-all">
-                    <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0">
-                      <Wallet className="w-4 h-4 text-white/40" />
+                  <div className="flex items-center gap-3 p-3 bg-surface border border-surface-border rounded-2xl hover:bg-surface transition-all">
+                    <div className="w-9 h-9 rounded-xl bg-surface border border-surface-border flex items-center justify-center shrink-0">
+                      <Wallet className="w-4 h-4 text-foreground/40" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[9px] font-black text-white/30 uppercase tracking-wide">Wallet</p>
-                      <p className="text-[11px] font-bold text-white/60 font-mono">
+                      <p className="text-[9px] font-black text-foreground/30 uppercase tracking-wide">Wallet</p>
+                      <p className="text-[11px] font-bold text-foreground/60 font-mono">
                         {`${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}`}
                       </p>
                     </div>
                     <button
                       onClick={copyWallet}
-                      className="shrink-0 text-white/20 hover:text-white/60 transition-colors"
+                      className="shrink-0 text-foreground/20 hover:text-foreground/60 transition-colors"
                       title="Copy wallet address"
                     >
                       {walletCopied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
@@ -896,9 +896,9 @@ export default function BrandSettingsPage() {
                 )}
               </div>
 
-              <div className="flex items-start gap-2.5 p-3 bg-white/[0.02] border border-white/[0.04] rounded-2xl">
-                <Info className="w-3.5 h-3.5 text-white/20 mt-0.5 shrink-0" />
-                <p className="text-[10px] text-white/30 font-medium leading-relaxed">
+              <div className="flex items-start gap-2.5 p-3 bg-surface border border-surface-border rounded-2xl">
+                <Info className="w-3.5 h-3.5 text-foreground/20 mt-0.5 shrink-0" />
+                <p className="text-[10px] text-foreground/30 font-medium leading-relaxed">
                   Account details are managed by your auth provider and cannot be changed here.
                 </p>
               </div>

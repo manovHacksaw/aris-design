@@ -32,19 +32,19 @@ export function AppSkeleton() {
     <div className="min-h-screen bg-background flex overflow-hidden">
       {/* Sidebar skeleton (collapsed, 72px) */}
       <div className="hidden md:flex flex-col w-[72px] shrink-0 border-r border-white/5 py-4 px-3 gap-3">
-        <div className="h-9 w-9 rounded-xl bg-white/[0.07] animate-pulse mx-auto" />
+        <div className="h-9 w-9 rounded-xl bg-surface-hover animate-pulse mx-auto" />
         <div className="flex-1 space-y-2 mt-1">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="h-9 w-9 rounded-xl bg-white/[0.04] animate-pulse mx-auto"
+              className="h-9 w-9 rounded-xl bg-surface animate-pulse mx-auto"
               style={{ animationDelay: `${i * 80}ms` }}
             />
           ))}
         </div>
         <div className="space-y-2 items-center flex flex-col">
-          <div className="h-9 w-9 rounded-xl bg-white/[0.04] animate-pulse" />
-          <div className="h-8 w-8 rounded-full bg-white/[0.07] animate-pulse" />
+          <div className="h-9 w-9 rounded-xl bg-surface animate-pulse" />
+          <div className="h-8 w-8 rounded-full bg-surface-hover animate-pulse" />
         </div>
       </div>
 
@@ -52,10 +52,10 @@ export function AppSkeleton() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile header */}
         <div className="md:hidden flex items-center justify-between h-14 px-4 border-b border-white/5">
-          <div className="h-6 w-20 rounded-lg bg-white/[0.06] animate-pulse" />
+          <div className="h-6 w-20 rounded-lg bg-surface animate-pulse" />
           <div className="flex gap-2">
-            <div className="h-8 w-8 rounded-full bg-white/[0.04] animate-pulse" />
-            <div className="h-8 w-8 rounded-xl bg-white/[0.04] animate-pulse" />
+            <div className="h-8 w-8 rounded-full bg-surface animate-pulse" />
+            <div className="h-8 w-8 rounded-xl bg-surface animate-pulse" />
           </div>
         </div>
 
@@ -64,30 +64,30 @@ export function AppSkeleton() {
           <div className="max-w-[1600px] mx-auto space-y-10 pt-4">
 
             {/* Hero block skeleton */}
-            <div className="rounded-3xl border border-white/[0.06] bg-white/[0.02] p-8 space-y-4">
+            <div className="rounded-3xl border border-surface-border bg-surface p-8 space-y-4">
               <div className="space-y-2">
-                <div className="h-12 w-72 rounded-xl bg-white/[0.07] animate-pulse" />
-                <div className="h-12 w-56 rounded-xl bg-white/[0.07] animate-pulse" style={{ animationDelay: "80ms" }} />
-                <div className="h-12 w-40 rounded-xl bg-white/[0.07] animate-pulse" style={{ animationDelay: "160ms" }} />
+                <div className="h-12 w-72 rounded-xl bg-surface-hover animate-pulse" />
+                <div className="h-12 w-56 rounded-xl bg-surface-hover animate-pulse" style={{ animationDelay: "80ms" }} />
+                <div className="h-12 w-40 rounded-xl bg-surface-hover animate-pulse" style={{ animationDelay: "160ms" }} />
               </div>
-              <div className="h-4 w-64 rounded-lg bg-white/[0.04] animate-pulse" style={{ animationDelay: "240ms" }} />
+              <div className="h-4 w-64 rounded-lg bg-surface animate-pulse" style={{ animationDelay: "240ms" }} />
             </div>
 
             {/* Search bar skeleton */}
-            <div className="h-14 max-w-3xl rounded-2xl bg-white/[0.04] border border-white/[0.06] animate-pulse" />
+            <div className="h-14 max-w-3xl rounded-2xl bg-surface border border-surface-border animate-pulse" />
 
             {/* Event rows skeleton (3 rows) */}
             {Array.from({ length: 3 }).map((_, row) => (
               <div key={row} className="space-y-4" style={{ animationDelay: `${row * 100}ms` }}>
                 <div className="flex items-center justify-between">
-                  <div className="h-6 w-40 rounded-lg bg-white/[0.07] animate-pulse" />
-                  <div className="h-4 w-16 rounded-lg bg-white/[0.04] animate-pulse" />
+                  <div className="h-6 w-40 rounded-lg bg-surface-hover animate-pulse" />
+                  <div className="h-4 w-16 rounded-lg bg-surface animate-pulse" />
                 </div>
                 <div className="flex gap-3 overflow-hidden">
                   {Array.from({ length: 4 }).map((_, i) => (
                     <div
                       key={i}
-                      className="flex-shrink-0 w-[280px] aspect-[4/5] rounded-2xl bg-white/[0.05] animate-pulse border border-white/[0.06]"
+                      className="flex-shrink-0 w-[280px] aspect-[4/5] rounded-2xl bg-surface animate-pulse border border-surface-border"
                       style={{ animationDelay: `${i * 70}ms` }}
                     />
                   ))}

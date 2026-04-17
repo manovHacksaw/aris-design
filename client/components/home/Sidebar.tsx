@@ -90,7 +90,7 @@ export default function Sidebar() {
                 {/* Logo Section */}
                 <div className={cn("flex items-center pt-8 pb-6 h-[88px]", isCollapsed ? "justify-center" : "pl-6 pr-3")}>
                     <Link href="/home" className="flex items-center group">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center transition-transform duration-150 group-hover:scale-105 active:scale-95">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-foreground/10 flex items-center justify-center transition-transform duration-150 group-hover:scale-105 active:scale-95">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-foreground">
                                 <path d="M12 4L4 18H20L12 4Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>

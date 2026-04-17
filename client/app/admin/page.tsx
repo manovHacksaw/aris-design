@@ -90,27 +90,27 @@ export default function AdminDashboard() {
 
     if (!isSessionConfirmed) {
         return (
-            <div className="min-h-screen bg-black flex items-center justify-center p-4">
-                <div className="w-full max-w-md bg-zinc-900 rounded-xl border border-zinc-800 p-8 shadow-2xl text-center">
+            <div className="min-h-screen bg-gray-50 dark:bg-black flex items-center justify-center p-4">
+                <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-8 shadow-2xl text-center">
                     <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                         <ShieldCheck className="w-8 h-8 text-green-500" />
                     </div>
-                    <h1 className="text-2xl font-bold text-white mb-2">Session Active</h1>
-                    <p className="text-gray-400 mb-8">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground mb-2">Session Active</h1>
+                    <p className="text-gray-500 dark:text-gray-400 mb-8">
                         You are currently logged in as{' '}
-                        <span className="text-white font-mono text-sm">{adminName}</span>
+                        <span className="text-gray-900 dark:text-foreground font-mono text-sm">{adminName}</span>
                     </p>
                     <div className="space-y-3">
                         <button
                             onClick={() => { setIsSessionConfirmed(true); fetchData(); }}
-                            className="w-full flex items-center justify-center gap-2 bg-white text-black hover:bg-gray-200 h-12 text-base font-medium rounded-lg transition-colors"
+                            className="w-full flex items-center justify-center gap-2 bg-gray-900 dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 h-12 text-base font-medium rounded-lg transition-colors"
                         >
                             Continue with this account
                             <ArrowRight className="w-4 h-4" />
                         </button>
                         <button
                             onClick={handleLogout}
-                            className="w-full flex items-center justify-center gap-2 border border-zinc-700 text-gray-300 hover:bg-zinc-800 h-12 text-base font-medium rounded-lg transition-colors"
+                            className="w-full flex items-center justify-center gap-2 border border-gray-300 dark:border-zinc-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 h-12 text-base font-medium rounded-lg transition-colors"
                         >
                             <LogOut className="mr-2 w-4 h-4" />
                             Logout & Switch Account
@@ -153,7 +153,7 @@ export default function AdminDashboard() {
                     <Icon className="w-5 h-5 text-orange-600 dark:text-orange-400" />
                 </div>
             </div>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white">{loading ? '...' : value}</p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-foreground">{loading ? '...' : value}</p>
             <p className="text-xs text-gray-500 mt-1">{description}</p>
         </div>
     );
@@ -163,7 +163,7 @@ export default function AdminDashboard() {
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Admin Dashboard</h1>
                     <p className="text-gray-500 dark:text-gray-400 mt-1">Overview of brand applications and system activity</p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -208,7 +208,7 @@ export default function AdminDashboard() {
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        className="h-10 px-3 rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none text-gray-900 dark:text-white"
+                        className="h-10 px-3 rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none text-gray-900 dark:text-foreground"
                     >
                         <option value="ALL">All Status</option>
                         <option value="PENDING">Pending</option>
@@ -232,7 +232,7 @@ export default function AdminDashboard() {
             {/* Applications table */}
             <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-zinc-800">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Brand Applications</h2>
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-foreground">Brand Applications</h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Manage and review brand registration requests</p>
                 </div>
                 <div className="overflow-x-auto">
@@ -290,7 +290,7 @@ export default function AdminDashboard() {
                                                         <span className="text-xs font-bold text-gray-400">{app.brandName.substring(0, 2).toUpperCase()}</span>
                                                     )}
                                                 </div>
-                                                <span className="font-medium text-gray-900 dark:text-white">{app.brandName}</span>
+                                                <span className="font-medium text-gray-900 dark:text-foreground">{app.brandName}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{app.companyName}</td>

@@ -69,7 +69,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         <div className="w-8 h-8 bg-black dark:bg-white rounded-lg flex items-center justify-center">
                             <span className="text-white dark:text-black font-bold text-lg">A</span>
                         </div>
-                        <h1 className="font-bold text-gray-900 dark:text-white leading-none">Aris Admin</h1>
+                        <h1 className="font-bold text-gray-900 dark:text-foreground leading-none">Aris Admin</h1>
                     </div>
                     <button
                         className="ml-auto lg:hidden"
@@ -153,7 +153,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     >
                         <Menu className="w-6 h-6" />
                     </button>
-                    <span className="ml-4 text-lg font-semibold text-gray-900 dark:text-white">
+                    <span className="ml-4 text-lg font-semibold text-gray-900 dark:text-foreground">
                         Aris Admin
                     </span>
                 </header>

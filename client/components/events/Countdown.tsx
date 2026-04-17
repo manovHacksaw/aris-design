@@ -33,8 +33,8 @@ export default function Countdown({ targetDate, label, className, onEnd }: Count
     if (timeLeft <= 0) {
         return (
             <div className={cn("bg-white/10 backdrop-blur-xl border border-white/15 px-4 py-2 rounded-xl flex items-center gap-2", className)}>
-                <Clock className="text-white/40 w-3.5 h-3.5" />
-                <span className="text-xs font-black text-white/40 uppercase tracking-wider">Ended</span>
+                <Clock className="text-foreground/40 w-3.5 h-3.5" />
+                <span className="text-xs font-black text-foreground/40 uppercase tracking-wider">Ended</span>
             </div>
         );
     }
@@ -56,8 +56,8 @@ export default function Countdown({ targetDate, label, className, onEnd }: Count
         <div className={cn("bg-white/10 backdrop-blur-xl border border-white/15 px-4 py-2 rounded-xl flex items-center gap-2", className)}>
             <Clock className="text-primary w-3.5 h-3.5 animate-pulse" />
             <div className="flex flex-col">
-                {label && <span className="text-[8px] font-black text-white/50 uppercase tracking-[0.1em] leading-none mb-0.5">{label}</span>}
-                <span className="text-xs font-black text-white font-mono leading-none">
+                {label && <span className="text-[8px] font-black text-foreground/50 uppercase tracking-[0.1em] leading-none mb-0.5">{label}</span>}
+                <span className="text-xs font-black text-foreground font-mono leading-none">
                     {parts.join(" ")}
                 </span>
             </div>

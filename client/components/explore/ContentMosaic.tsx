@@ -32,13 +32,13 @@ export default function ContentMosaic({ submissions }: ContentMosaicProps) {
                         {image ? (
                             <img src={image} alt="Submission" className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105" />
                         ) : (
-                            <div className="w-full aspect-square flex items-center justify-center p-4 text-center text-foreground/40 text-sm">
+                            <div className="w-full aspect-square flex items-center justify-center p-4 text-center text-white/40 text-sm">
                                 {sub.caption || "Text Submission"}
                             </div>
                         )}
 
                         {/* Overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 dark:from-black/80 via-black/10 dark:via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2 min-w-0">
                                     <div className="w-6 h-6 rounded-full bg-white/20 overflow-hidden flex items-center justify-center shrink-0">

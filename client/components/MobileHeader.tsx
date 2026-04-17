@@ -13,7 +13,7 @@ export default function MobileHeader() {
             <div className="flex items-center gap-3">
                 <Link href="/home" className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-                        <span className="text-white font-bold text-sm">A</span>
+                        <span className="text-primary-foreground font-bold text-sm">A</span>
                     </div>
                     <span className="text-lg font-bold tracking-tight text-foreground">Aris</span>
                 </Link>

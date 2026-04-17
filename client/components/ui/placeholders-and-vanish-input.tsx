@@ -144,7 +144,9 @@ export function PlaceholdersAndVanishInput({
     return (
         <form
             className={cn(
-                "w-full relative bg-black/40 backdrop-blur-xl border border-white/[0.08] rounded-[30px] overflow-hidden transition-all duration-300 focus-within:border-white/20",
+                "w-full relative rounded-[30px] overflow-hidden transition-all duration-300",
+                "bg-white/95 dark:bg-black/40 backdrop-blur-xl border border-black/[0.08] dark:border-white/[0.08] focus-within:border-black/20 dark:focus-within:border-white/20",
+                "shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-none",
                 className
             )}
             onSubmit={handleSubmit}
@@ -166,7 +168,7 @@ export function PlaceholdersAndVanishInput({
                     value={value}
                     type="text"
                     className={cn(
-                        "flex-1 relative text-sm z-50 border-none bg-transparent text-white h-full focus:outline-none focus:ring-0 pl-4 sm:pl-12 py-5 pr-4",
+                        "flex-1 relative text-sm z-50 border-none bg-transparent text-foreground h-full focus:outline-none focus:ring-0 pl-4 sm:pl-12 py-5 pr-4",
                         animating && "text-transparent"
                     )}
                 />
@@ -181,7 +183,7 @@ export function PlaceholdersAndVanishInput({
                             animate={{ y: 0, opacity: 1 }}
                             exit={{ y: -15, opacity: 0 }}
                             transition={{ duration: 0.3, ease: "linear" }}
-                            className="text-sm font-medium text-white/20 pl-8 truncate max-w-[420px]"
+                            className="text-sm font-medium text-foreground/20 pl-8 truncate max-w-[420px]"
                         >
                             {placeholders[currentPlaceholder]}
                         </motion.p>

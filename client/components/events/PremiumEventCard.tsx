@@ -61,7 +61,7 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
                 aria-label={`View ${event.title}`}
             />
 
-            <div className="relative z-10 pointer-events-none w-full aspect-[16/13] rounded-2xl overflow-hidden bg-[#111] border border-white/5 transition-all duration-500 ease-out group-hover:border-white/20 group-hover:-translate-y-1 group-hover:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.8)] active:scale-[0.98] cursor-pointer">
+            <div className="relative z-10 pointer-events-none w-full aspect-[16/13] rounded-2xl overflow-hidden bg-[#111] border border-black/10 dark:border-white/5 transition-all duration-500 ease-out group-hover:border-black/20 dark:group-hover:border-white/20 group-hover:-translate-y-1 group-hover:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.3)] dark:group-hover:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.8)] active:scale-[0.98] cursor-pointer">
 
                 {/* Background Image Area */}
                 <div className="absolute inset-0 w-full h-full">
@@ -202,12 +202,12 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
 
 export function PremiumEventCardSkeleton({ className }: { className?: string }) {
     return (
-        <div className={cn("relative w-full aspect-[16/13] rounded-2xl overflow-hidden bg-[#111] animate-pulse border border-white/5", className)}>
-            <div className="absolute inset-0 bg-white/5" />
+        <div className={cn("relative w-full aspect-[16/13] rounded-2xl overflow-hidden bg-gray-100 dark:bg-[#111] animate-pulse border border-black/5 dark:border-white/5", className)}>
+            <div className="absolute inset-0 bg-black/5 dark:bg-white/5" />
             <div className="absolute bottom-0 left-0 w-full p-5 space-y-4">
-                <div className="h-4 bg-white/10 rounded w-1/4" />
-                <div className="h-8 bg-white/10 rounded w-3/4" />
-                <div className="h-6 bg-white/5 rounded w-full" />
+                <div className="h-4 bg-black/10 dark:bg-white/10 rounded w-1/4" />
+                <div className="h-8 bg-black/10 dark:bg-white/10 rounded w-3/4" />
+                <div className="h-6 bg-black/5 dark:bg-white/5 rounded w-full" />
             </div>
         </div>
     );

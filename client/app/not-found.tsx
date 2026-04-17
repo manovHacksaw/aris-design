@@ -6,7 +6,7 @@ import { AlertTriangle } from "lucide-react";
 
 export default function NotFound() {
     return (
-        <div className="min-h-screen bg-background text-white font-sans selection:bg-primary/30">
+        <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
             <SidebarLayout>
                 <main className="flex-1 flex flex-col w-full items-center justify-center min-h-[80vh]">
                     <div className="text-center space-y-6 max-w-md px-4">
@@ -23,7 +23,7 @@ export default function NotFound() {
 
                         <Link
                             href="/home"
-                            className="inline-block px-8 py-3 bg-primary text-white font-bold rounded-[16px] hover:bg-primary/90 hover:-translate-y-[1px] transition-all duration-150 ease-out shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
+                            className="inline-block px-8 py-3 bg-primary text-foreground font-bold rounded-[16px] hover:bg-primary/90 hover:-translate-y-[1px] transition-all duration-150 ease-out shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
                         >
                             Back to Home
                         </Link>

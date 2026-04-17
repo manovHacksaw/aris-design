@@ -31,11 +31,11 @@ export default function SidebarButton({
                 // Hover effect
                 isDestructive
                     ? "text-[#FF60B6] hover:bg-[#FF60B6]/10"
-                    : "text-white/50 hover:bg-white/5 hover:text-white",
+                    : "text-foreground/50 hover:bg-foreground/5 hover:text-foreground",
                 // Rounded
                 "rounded-xl",
                 // Active Styling
-                isActive && !isDestructive && "text-white font-black bg-[#6366F1] border border-white/10 shadow-[4px_4px_0px_0px_#FFFFFF]"
+                isActive && !isDestructive && "text-foreground font-black bg-[#6366F1] border border-white/10 dark:shadow-[4px_4px_0px_0px_#FFFFFF] shadow-[4px_4px_0px_0px_#6366F1]"
             )}
         >
             <div className="flex-shrink-0 relative flex items-center justify-center w-7 h-7">
@@ -44,10 +44,10 @@ export default function SidebarButton({
                     className={cn(
                         "transition-colors duration-150",
                         isActive && !isDestructive
-                            ? "text-white"
+                            ? "text-foreground"
                             : "",
-                        isDestructive ? "text-[#FF60B6]" : "group-hover:text-white",
-                        !isActive && !isDestructive && "text-white/40"
+                        isDestructive ? "text-[#FF60B6]" : "group-hover:text-foreground",
+                        !isActive && !isDestructive && "text-foreground/40"
                     )}
                 />
             </div>

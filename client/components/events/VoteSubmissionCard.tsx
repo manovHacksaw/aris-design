@@ -79,7 +79,7 @@ export default function VoteSubmissionCard({
                     </div>
                 ) : imgError || !submission.media ? (
                     <div className="w-full h-full flex items-center justify-center bg-secondary">
-                        <ImageIcon className="w-8 h-8 text-foreground/20" />
+                        <ImageIcon className="w-8 h-8 text-white/20" />
                     </div>
                 ) : isCloudinary ? (
                     <Image
@@ -126,7 +126,7 @@ export default function VoteSubmissionCard({
 
                 {/* Bottom gradient — only show when voted or pending (to frame the voted card's label) */}
                 {(isVoted || isPending || !disabled) && (
-                    <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/85 to-transparent pointer-events-none" />
+                    <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/50 dark:from-black/85 to-transparent pointer-events-none" />
                 )}
 
                 {/* Bottom bar: buttons right */}

@@ -51,7 +51,7 @@ function NotificationAvatar({ n }: { n: Notification }) {
     if (brandLogoCid && ["EVENT_RESULT", "VOTING_LIVE", "BRAND_POST", "EVENT_PHASE_CHANGE",
         "EVENT_SUBMISSION", "EVENT_VOTE", "EVENT_CANCELLED", "SUBMISSION_VOTE"].includes(n.type)) {
         return (
-            <div className="shrink-0 w-10 h-10 rounded-full overflow-hidden border border-white/10 bg-white/[0.04]">
+            <div className="shrink-0 w-10 h-10 rounded-full overflow-hidden border border-white/10 bg-surface">
                 <img
                     src={`${PINATA_GW}/${brandLogoCid}`}
                     alt={n.brand?.name ?? "Brand"}
@@ -70,7 +70,7 @@ function NotificationAvatar({ n }: { n: Notification }) {
     const imageUrl = meta?.eventImageUrl ?? meta?.userContentImageUrl ?? meta?.imageUrl;
     if (imageUrl && ["EVENT_RESULT", "SUBMISSION_VOTE", "VOTING_LIVE"].includes(n.type)) {
         return (
-            <div className="shrink-0 w-10 h-10 rounded-full overflow-hidden border border-white/10 bg-white/[0.04]">
+            <div className="shrink-0 w-10 h-10 rounded-full overflow-hidden border border-white/10 bg-surface">
                 <img
                     src={imageUrl}
                     alt=""
@@ -82,7 +82,7 @@ function NotificationAvatar({ n }: { n: Notification }) {
     }
 
     // 3. Type-specific icon
-    const cfg = TYPE_CONFIG[n.type] ?? { icon: Bell, bg: "bg-white/[0.06]", color: "text-foreground/40" };
+    const cfg = TYPE_CONFIG[n.type] ?? { icon: Bell, bg: "bg-surface", color: "text-foreground/40" };
     const Icon = cfg.icon;
     return (
         <div className={cn("shrink-0 w-10 h-10 rounded-full flex items-center justify-center", cfg.bg)}>
@@ -164,12 +164,12 @@ export default function NotificationsPage() {
                     {isLoading && (
                         <div className="space-y-[3px]">
                             {[1, 2, 3, 4, 5].map((i) => (
-                                <div key={i} className="flex items-center gap-4 px-5 py-4 rounded-xl bg-white/[0.03]">
-                                    <div className="w-10 h-10 rounded-full bg-white/[0.06] animate-pulse shrink-0" />
+                                <div key={i} className="flex items-center gap-4 px-5 py-4 rounded-xl bg-surface">
+                                    <div className="w-10 h-10 rounded-full bg-surface animate-pulse shrink-0" />
                                     <div className="flex-1 space-y-2">
-                                        <div className="h-3 w-2/5 rounded-md bg-white/[0.07] animate-pulse" />
-                                        <div className="h-2.5 w-3/5 rounded-md bg-white/[0.04] animate-pulse" />
-                                        <div className="h-2 w-16 rounded-md bg-white/[0.03] animate-pulse" />
+                                        <div className="h-3 w-2/5 rounded-md bg-surface-hover animate-pulse" />
+                                        <div className="h-2.5 w-3/5 rounded-md bg-surface animate-pulse" />
+                                        <div className="h-2 w-16 rounded-md bg-surface animate-pulse" />
                                     </div>
                                 </div>
                             ))}
@@ -191,8 +191,8 @@ export default function NotificationsPage() {
                                         className={cn(
                                             "flex items-center gap-4 px-5 py-4 rounded-xl transition-all cursor-pointer",
                                             n.isRead
-                                                ? "bg-white/[0.03] hover:bg-white/[0.05]"
-                                                : "bg-white/[0.06] hover:bg-white/[0.08]"
+                                                ? "bg-surface hover:bg-surface"
+                                                : "bg-surface hover:bg-surface-hover"
                                         )}
                                     >
                                         <NotificationAvatar n={n} />
@@ -215,7 +215,7 @@ export default function NotificationsPage() {
                                     </motion.div>
                                 )) : (
                                     <div className="py-28 text-center">
-                                        <div className="w-12 h-12 rounded-full bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
+                                        <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center mx-auto mb-4">
                                             <Bell className="w-5 h-5 text-foreground/20" />
                                         </div>
                                         <p className="text-[11px] font-black uppercase tracking-[0.25em] text-foreground/30">

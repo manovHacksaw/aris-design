@@ -114,7 +114,7 @@ export default function PostSubmissionCard({
                 <button
                     type="button"
                     onClick={handleShare}
-                    className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center text-foreground/40 hover:bg-white/10 hover:text-foreground/70 transition-all shrink-0 ml-1"
+                    className="w-8 h-8 rounded-full bg-surface-hover border border-surface-border flex items-center justify-center text-foreground/40 hover:text-foreground/70 transition-all shrink-0 ml-1"
                 >
                     <Share2 className="w-3.5 h-3.5" />
                 </button>
@@ -147,14 +147,14 @@ export default function PostSubmissionCard({
                 )}
 
                 {submission.isAiAssisted && (
-                    <div className="absolute top-3 left-3 inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-background/70 backdrop-blur-md text-[9px] font-bold text-foreground/60">
+                    <div className="absolute top-3 left-3 inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-background/70 backdrop-blur-md text-[9px] font-bold text-white/60">
                         <Sparkles className="w-2.5 h-2.5" />
                         AI
                     </div>
                 )}
 
                 {showVoteCount && (
-                    <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+                    <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 dark:from-black/80 to-transparent pointer-events-none" />
                 )}
 
                 {/* Vote count */}
@@ -198,7 +198,7 @@ export default function PostSubmissionCard({
                 <button
                     type="button"
                     onClick={handleShare}
-                    className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center text-foreground/40 hover:bg-white/10 hover:text-foreground/70 transition-all shrink-0"
+                    className="w-8 h-8 rounded-full bg-surface-hover border border-surface-border flex items-center justify-center text-foreground/40 hover:text-foreground/70 transition-all shrink-0"
                 >
                     <Share2 className="w-3.5 h-3.5" />
                 </button>

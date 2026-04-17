@@ -21,7 +21,7 @@ export default function HeroBanner() {
                 <motion.div
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center gap-2 bg-white/10 backdrop-blur-xl border border-white/20 text-white text-[9px] font-black uppercase tracking-[0.3em] px-4 py-2 rounded-full mb-6 w-fit"
+                    className="flex items-center gap-2 bg-white/10 backdrop-blur-xl border border-white/20 text-foreground text-[9px] font-black uppercase tracking-[0.3em] px-4 py-2 rounded-full mb-6 w-fit"
                 >
                     <Sparkles className="w-3.5 h-3.5 fill-current" />
                     Seasonal Update

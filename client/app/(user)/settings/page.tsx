@@ -214,8 +214,8 @@ export default function SettingsPage() {
                                             </div>
                                             <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                                 {isUploadingAvatar
-                                                    ? <Loader2 className="w-8 h-8 text-white animate-spin" />
-                                                    : <Camera className="w-8 h-8 text-white" />
+                                                    ? <Loader2 className="w-8 h-8 text-foreground animate-spin" />
+                                                    : <Camera className="w-8 h-8 text-foreground" />
                                                 }
                                             </div>
                                         </div>
@@ -449,7 +449,7 @@ export default function SettingsPage() {
                                         </div>
                                         <button
                                             onClick={disconnect}
-                                            className="text-[10px] font-black text-primary uppercase tracking-widest border border-primary/20 bg-primary/5 px-4 py-2.5 rounded-xl hover:bg-primary hover:text-white transition-all"
+                                            className="text-[10px] font-black text-primary uppercase tracking-widest border border-primary/20 bg-primary/5 px-4 py-2.5 rounded-xl hover:bg-primary hover:text-foreground transition-all"
                                         >
                                             Disconnect
                                         </button>

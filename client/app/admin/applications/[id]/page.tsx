@@ -175,7 +175,7 @@ export default function ApplicationDetailsPage() {
     if (error || !application) {
         return (
             <div className="min-h-screen bg-gray-50/50 dark:bg-black p-8 text-center">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Error</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground mb-4">Error</h1>
                 <p className="text-red-500 mb-6">{error || 'Application not found'}</p>
                 <button onClick={() => router.back()} className="px-4 py-2 bg-orange-500 text-white rounded-lg">Go Back</button>
             </div>
@@ -228,21 +228,21 @@ export default function ApplicationDetailsPage() {
                     <div className="lg:col-span-2 space-y-6">
                         {/* Brand details */}
                         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-6">
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-foreground mb-4 flex items-center gap-2">
                                 <Building2 className="w-5 h-5 text-gray-400" /> Brand Information
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Company Name</label>
-                                    <p className="mt-1 text-gray-900 dark:text-white font-medium">{application.companyName || '—'}</p>
+                                    <p className="mt-1 text-gray-900 dark:text-foreground font-medium">{application.companyName || '—'}</p>
                                 </div>
                                 <div>
                                     <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tagline</label>
-                                    <p className="mt-1 text-gray-900 dark:text-white">{application.tagline || '—'}</p>
+                                    <p className="mt-1 text-gray-900 dark:text-foreground">{application.tagline || '—'}</p>
                                 </div>
                                 <div className="md:col-span-2">
                                     <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</label>
-                                    <p className="mt-1 text-gray-900 dark:text-white text-sm leading-relaxed">{application.description}</p>
+                                    <p className="mt-1 text-gray-900 dark:text-foreground text-sm leading-relaxed">{application.description}</p>
                                 </div>
                                 <div className="md:col-span-2">
                                     <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Categories</label>
@@ -257,17 +257,17 @@ export default function ApplicationDetailsPage() {
 
                         {/* Legal & Docs */}
                         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-6">
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-foreground mb-4 flex items-center gap-2">
                                 <FileText className="w-5 h-5 text-gray-400" /> Legal & Documents
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <div>
                                     <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">GST Number</label>
-                                    <p className="mt-1 text-gray-900 dark:text-white font-mono">{application.gstNumber || 'N/A'}</p>
+                                    <p className="mt-1 text-gray-900 dark:text-foreground font-mono">{application.gstNumber || 'N/A'}</p>
                                 </div>
                                 <div>
                                     <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">PAN Number</label>
-                                    <p className="mt-1 text-gray-900 dark:text-white font-mono">{application.panNumber || 'N/A'}</p>
+                                    <p className="mt-1 text-gray-900 dark:text-foreground font-mono">{application.panNumber || 'N/A'}</p>
                                 </div>
                             </div>
                             {application.documents && application.documents.length > 0 ? (
@@ -279,7 +279,7 @@ export default function ApplicationDetailsPage() {
                                                     <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-medium text-gray-900 dark:text-white">{doc.name}</p>
+                                                    <p className="text-sm font-medium text-gray-900 dark:text-foreground">{doc.name}</p>
                                                     {doc.size && <p className="text-xs text-gray-500">{doc.type} · {doc.size}</p>}
                                                 </div>
                                             </div>
@@ -304,7 +304,7 @@ export default function ApplicationDetailsPage() {
                     <div className="space-y-6">
                         {/* Contact */}
                         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-6">
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Contact Details</h2>
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-foreground mb-4">Contact Details</h2>
                             <div className="space-y-4">
                                 <div className="flex items-center gap-3">
                                     <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center">
@@ -312,7 +312,7 @@ export default function ApplicationDetailsPage() {
                                     </div>
                                     <div className="overflow-hidden">
                                         <p className="text-xs text-gray-500">Email</p>
-                                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{application.contactEmail}</p>
+                                        <p className="text-sm font-medium text-gray-900 dark:text-foreground truncate">{application.contactEmail}</p>
                                     </div>
                                 </div>
                                 {application.phoneNumber && (
@@ -322,7 +322,7 @@ export default function ApplicationDetailsPage() {
                                         </div>
                                         <div>
                                             <p className="text-xs text-gray-500">Phone</p>
-                                            <p className="text-sm font-medium text-gray-900 dark:text-white">{application.phoneNumber}</p>
+                                            <p className="text-sm font-medium text-gray-900 dark:text-foreground">{application.phoneNumber}</p>
                                         </div>
                                     </div>
                                 )}
@@ -333,7 +333,7 @@ export default function ApplicationDetailsPage() {
                                         </div>
                                         <div>
                                             <p className="text-xs text-gray-500">Telegram</p>
-                                            <p className="text-sm font-medium text-gray-900 dark:text-white">{application.telegramHandle}</p>
+                                            <p className="text-sm font-medium text-gray-900 dark:text-foreground">{application.telegramHandle}</p>
                                         </div>
                                     </div>
                                 )}
@@ -343,7 +343,7 @@ export default function ApplicationDetailsPage() {
                         {/* Social links */}
                         {application.socialLinks && Object.values(application.socialLinks).some(Boolean) && (
                             <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-6">
-                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Social Presence</h2>
+                                <h2 className="text-lg font-semibold text-gray-900 dark:text-foreground mb-4">Social Presence</h2>
                                 <div className="space-y-3">
                                     {application.socialLinks.website && (
                                         <a href={application.socialLinks.website} target="_blank" rel="noopener noreferrer"
@@ -381,18 +381,18 @@ export default function ApplicationDetailsPage() {
 
                         {/* Metadata */}
                         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-6">
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Metadata</h2>
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-foreground mb-4">Metadata</h2>
                             <div className="space-y-3 text-sm">
                                 <div className="flex justify-between">
                                     <span className="text-gray-500">Submitted</span>
-                                    <span className="text-gray-900 dark:text-white font-medium">
+                                    <span className="text-gray-900 dark:text-foreground font-medium">
                                         {new Date(application.submittedAt).toLocaleDateString()}
                                     </span>
                                 </div>
                                 {application.reviewedBy && (
                                     <div className="flex justify-between">
                                         <span className="text-gray-500">Reviewed By</span>
-                                        <span className="text-gray-900 dark:text-white font-medium">{application.reviewedBy}</span>
+                                        <span className="text-gray-900 dark:text-foreground font-medium">{application.reviewedBy}</span>
                                     </div>
                                 )}
                                 {application.rejectionReason && (
@@ -418,7 +418,7 @@ export default function ApplicationDetailsPage() {
                                     : <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
                                 }
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{confirmAction.title}</h3>
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-foreground mb-2">{confirmAction.title}</h3>
                             <p className="text-gray-500 dark:text-gray-400 mb-4">{confirmAction.message}</p>
 
                             {confirmAction.type === 'reject' && (
@@ -426,7 +426,7 @@ export default function ApplicationDetailsPage() {
                                     value={rejectReason}
                                     onChange={e => setRejectReason(e.target.value)}
                                     placeholder="Rejection reason..."
-                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm text-gray-900 dark:text-white mb-4 resize-none"
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm text-gray-900 dark:text-foreground mb-4 resize-none"
                                     rows={2}
                                 />
                             )}
@@ -492,7 +492,7 @@ export default function ApplicationDetailsPage() {
                         <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-full">
                             <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
                         </div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{successMessage}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-foreground">{successMessage}</p>
                     </div>
                 </div>
             )}

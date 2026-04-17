@@ -73,7 +73,7 @@ export default function BrandSidebar() {
 
     return (
         <motion.aside
-            className="sticky top-0 h-screen bg-[#111111] border-r border-white/5 hidden md:flex flex-col z-50 overflow-hidden shrink-0"
+            className="sticky top-0 h-screen bg-card border-r border-border hidden md:flex flex-col z-50 overflow-hidden shrink-0"
             initial={false}
             animate={{
                 width: showExpanded ? 260 : 72
@@ -86,14 +86,14 @@ export default function BrandSidebar() {
             {/* Logo Section */}
             <div className="flex items-center pt-4 pb-2 pl-6 pr-3 h-[64px]">
                 <Link href="/brand/dashboard" className="flex items-center group">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center transition-transform duration-150 group-hover:scale-105 active:scale-95">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-foreground/10 flex items-center justify-center transition-transform duration-150 group-hover:scale-105 active:scale-95">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-foreground">
                             <path d="M12 4L4 18H20L12 4Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                     </div>
                     <span
                         className={cn(
-                            "text-xl font-black tracking-[0.15em] text-white uppercase overflow-hidden transition-all duration-150 ease-out whitespace-nowrap ml-4",
+                            "text-xl font-black tracking-[0.15em] text-foreground uppercase overflow-hidden transition-all duration-150 ease-out whitespace-nowrap ml-4",
                             showExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
                         )}
                     >
@@ -122,7 +122,7 @@ export default function BrandSidebar() {
                                 />
                                 {item.badge !== undefined && item.badge > 0 ? (
                                     <span className={cn(
-                                        "absolute top-2.5 flex items-center justify-center rounded-full bg-primary text-white text-[9px] font-black pointer-events-none",
+                                        "absolute top-2.5 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[9px] font-black pointer-events-none",
                                         showExpanded ? "right-3 min-w-[18px] h-[18px] px-1" : "right-2 w-2 h-2"
                                     )}>
                                         {showExpanded ? (item.badge > 99 ? "99+" : item.badge) : ""}
@@ -154,7 +154,7 @@ export default function BrandSidebar() {
                             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                             className={cn(
                                 "group flex items-center w-full pl-3 py-2 rounded-xl",
-                                "text-white/50 hover:bg-white/5 hover:text-white",
+                                "text-foreground/50 hover:bg-foreground/5 hover:text-foreground",
                                 "transition-colors duration-150 ease-out"
                             )}
                         >

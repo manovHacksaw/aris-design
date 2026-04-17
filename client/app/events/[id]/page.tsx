@@ -60,7 +60,7 @@ function ExpandableDescription({ text, className }: { text: string; className?: 
                     <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
                     <button
                         onClick={() => setExpanded(true)}
-                        className="text-[10px] text-white/35 hover:text-white/60 font-medium mt-0.5 transition-colors"
+                        className="text-[10px] text-white/35 hover:text-foreground/60 font-medium mt-0.5 transition-colors"
                     >
                         Read more
                     </button>
@@ -137,14 +137,14 @@ function ParticipantAvatars({ avatars = [], totalCount, onShowAll }: { avatars?:
                             <img src={p.avatarUrl} alt="participant" className="w-full h-full object-cover" />
                         ) : (
                             <div className="w-full h-full bg-gradient-to-br from-white/5 to-white/15 flex items-center justify-center">
-                                <span className="text-[10px] font-black text-white/30 uppercase tracking-tighter">?</span>
+                                <span className="text-[10px] font-black text-foreground/30 uppercase tracking-tighter">?</span>
                             </div>
                         )}
                     </div>
                 ))}
                 {overflow > 0 && (
                     <div className="relative w-9 h-9 rounded-full border-2 border-zinc-950 bg-zinc-900 ring-1 ring-white/10 flex items-center justify-center shrink-0 z-0 group-hover/avatars:bg-zinc-800 transition-colors">
-                        <span className="text-[10px] font-black text-white/60 tracking-tighter">+{overflow}</span>
+                        <span className="text-[10px] font-black text-foreground/60 tracking-tighter">+{overflow}</span>
                     </div>
                 )}
             </div>
@@ -262,7 +262,7 @@ function SocialLinks({ links, eventId, variant = 'full' }: { links?: Record<stri
                             rel="noopener noreferrer"
                             title={label}
                             onClick={() => trackLink(key)}
-                            className="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/15 hover:border-white/25 transition-all"
+                            className="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-foreground/40 hover:text-foreground hover:bg-white/15 hover:border-white/25 transition-all"
                         >
                             {icon}
                         </a>
@@ -273,7 +273,7 @@ function SocialLinks({ links, eventId, variant = 'full' }: { links?: Record<stri
     }
 
     return (
-        <div className="pt-3 border-t border-white/[0.06] mt-3">
+        <div className="pt-3 border-t border-surface-border mt-3">
             <p className="text-[9px] font-black uppercase tracking-widest text-foreground/30 mb-2.5">Brand Links</p>
             <div className="flex gap-2">
                 {SOCIAL_SLOTS.map(({ key, label, icon }) => {
@@ -286,7 +286,7 @@ function SocialLinks({ links, eventId, variant = 'full' }: { links?: Record<stri
                             rel="noopener noreferrer"
                             title={label}
                             onClick={() => trackLink(key)}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-white/[0.05] border border-white/[0.08] text-foreground/60 hover:text-foreground hover:bg-white/[0.08] hover:border-white/[0.15] transition-all"
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-surface border border-surface-border text-foreground/60 hover:text-foreground hover:bg-surface-hover hover:border-surface-border-strong transition-all"
                         >
                             {icon}
                             <span className="text-[9px] font-black uppercase tracking-wider hidden sm:block">{label}</span>
@@ -295,7 +295,7 @@ function SocialLinks({ links, eventId, variant = 'full' }: { links?: Record<stri
                         <div
                             key={key}
                             title={`${label} not linked`}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-white/[0.02] border border-white/[0.04] text-foreground/20 cursor-not-allowed"
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-surface border border-surface-border text-foreground/20 cursor-not-allowed"
                         >
                             {icon}
                         </div>
@@ -356,7 +356,7 @@ function EventSidebar({
             {/* ── Rewards card ── */}
             {mode === "vote" || (mode === "completed" && event.eventType === "vote_only") ? (
                 /* ── Vote-only flat card ── */
-                <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5">
+                <div className="bg-surface border border-surface-border rounded-[20px] p-5">
                     <div className="mb-4">
                         <span className="text-sm font-black text-foreground">Reward Breakdown</span>
                     </div>
@@ -415,7 +415,7 @@ function EventSidebar({
                                 </div>
                                 <div className="flex items-center justify-between pt-1.5 border-t border-border/30 mt-1">
                                     <span className="text-[11px] font-black text-foreground/70">Total Earned</span>
-                                    <span className="text-sm font-black text-white">${(event.baseReward ?? 0.03).toFixed(2)} USDC</span>
+                                    <span className="text-sm font-black text-foreground">${(event.baseReward ?? 0.03).toFixed(2)} USDC</span>
                                 </div>
                             </div>
                         </div>
@@ -423,7 +423,7 @@ function EventSidebar({
                 </div>
             ) : mode === "completed" && event.eventType === "post_and_vote" ? (
                 /* ── Post+Vote completed flat card ── */
-                <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5">
+                <div className="bg-surface border border-surface-border rounded-[20px] p-5">
                     <div className="mb-4">
                         <span className="text-sm font-black text-foreground">Reward Breakdown</span>
                     </div>
@@ -456,7 +456,7 @@ function EventSidebar({
                             const p2 = leaderboardPool * 0.35;
                             const p3 = leaderboardPool * 0.15;
                             return (
-                                <div className="border border-white/[0.08] rounded-[12px] px-3 py-3 space-y-2">
+                                <div className="border border-surface-border rounded-[12px] px-3 py-3 space-y-2">
                                     <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40">Leaderboard Rewards</p>
                                     <p className="text-[10px] text-foreground/35">Top 3 creators ranked by votes received</p>
                                     {[
@@ -496,7 +496,7 @@ function EventSidebar({
                                     )}
                                     <div className="flex items-center justify-between pt-1.5 border-t border-border/30 mt-1">
                                         <span className="text-[11px] font-black text-foreground/70">Total Earned</span>
-                                        <span className="text-sm font-black text-white">${total.toFixed(2)} USDC</span>
+                                        <span className="text-sm font-black text-foreground">${total.toFixed(2)} USDC</span>
                                     </div>
                                 </div>
                             </div>
@@ -505,8 +505,8 @@ function EventSidebar({
                 </div>
             ) : (
                 /* ── Non-vote mode: hero card (completed / upcoming) ── */
-                <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] overflow-hidden">
-                    <div className="relative bg-gradient-to-br from-[#A78BFA]/15 via-[#A78BFA]/8 to-transparent border-b border-white/[0.07] p-5">
+                <div className="bg-surface border border-surface-border rounded-[20px] overflow-hidden">
+                    <div className="relative bg-gradient-to-br from-[#A78BFA]/15 via-[#A78BFA]/8 to-transparent border-b border-surface-border p-5">
                         <div className="flex items-start justify-between">
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
@@ -515,7 +515,7 @@ function EventSidebar({
                                 </div>
                                 <p className="text-[9px] font-black uppercase tracking-widest text-foreground/35 mb-1">Total Prizes</p>
                                 <div className="flex items-baseline gap-2">
-                                    <p className="text-4xl font-black text-white leading-none">${calculateTotalPool(event).toLocaleString()}</p>
+                                    <p className="text-4xl font-black text-foreground leading-none">${calculateTotalPool(event).toLocaleString()}</p>
                                     <span className="text-xs font-black text-foreground/40">USDC</span>
                                 </div>
                             </div>
@@ -527,7 +527,7 @@ function EventSidebar({
                     <div className="p-5 space-y-4">
                         <div className="space-y-2">
                             {topReward > 0 && (
-                                <div className="flex items-center justify-between bg-white/[0.04] border border-white/[0.07] rounded-[12px] px-4 py-3">
+                                <div className="flex items-center justify-between bg-surface border border-surface-border rounded-[12px] px-4 py-3">
                                     <div className="flex items-center gap-2.5">
                                         <div className="w-7 h-7 rounded-lg bg-yellow-400/10 flex items-center justify-center shrink-0">
                                             <Trophy className="w-3.5 h-3.5 text-yellow-400" />
@@ -544,7 +544,7 @@ function EventSidebar({
                                 </div>
                             )}
                             {leaderboardPool > 0 && (
-                                <div className="flex items-center justify-between bg-white/[0.04] border border-white/[0.07] rounded-[12px] px-4 py-3">
+                                <div className="flex items-center justify-between bg-surface border border-surface-border rounded-[12px] px-4 py-3">
                                     <div className="flex items-center gap-2.5">
                                         <div className="w-7 h-7 rounded-lg bg-[#A78BFA]/10 flex items-center justify-center shrink-0">
                                             <Users className="w-3.5 h-3.5 text-[#A78BFA]" />
@@ -584,7 +584,7 @@ function EventSidebar({
 
 
             {mode === "post" && !hasSubmitted && fileRef && !isBrand && (
-                <div className="bg-white/[0.03] border border-white/[0.08] rounded-[24px] overflow-hidden">
+                <div className="bg-surface border border-surface-border rounded-[24px] overflow-hidden">
                     <div className="px-5 pt-5 pb-3 border-b border-border/30 flex items-center gap-3">
                         <div className="w-7 h-7 rounded-xl bg-orange-500/10 flex items-center justify-center">
                             <PlusCircle className="w-3.5 h-3.5 text-orange-400" />
@@ -606,7 +606,7 @@ function EventSidebar({
                                 <>
                                     <img src={preview} className="w-full h-full object-cover" />
                                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                                        <span className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-black text-white">Change</span>
+                                        <span className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-black text-foreground">Change</span>
                                     </div>
                                 </>
                             ) : (
@@ -1001,14 +1001,14 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         >
                             <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-white/5">
                                 <div>
-                                    <h3 className="text-sm font-black text-white uppercase tracking-widest">Participants</h3>
-                                    <p className="text-[11px] text-white/40 font-medium mt-0.5">{participantCount.toLocaleString()} total</p>
+                                    <h3 className="text-sm font-black text-foreground uppercase tracking-widest">Participants</h3>
+                                    <p className="text-[11px] text-foreground/40 font-medium mt-0.5">{participantCount.toLocaleString()} total</p>
                                 </div>
                                 <button
                                     onClick={() => setShowParticipantsModal(false)}
                                     className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
                                 >
-                                    <X className="w-3.5 h-3.5 text-white/60" />
+                                    <X className="w-3.5 h-3.5 text-foreground/60" />
                                 </button>
                             </div>
                             <div className="p-4 max-h-[360px] overflow-y-auto no-scrollbar space-y-2">
@@ -1017,7 +1017,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                         <Link 
                                             href={`/profile/${p.username}`}
                                             key={p.id} 
-                                            className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/[0.03] transition-colors group/p"
+                                            className="flex items-center gap-3 p-2 rounded-xl hover:bg-surface transition-colors group/p"
                                             onClick={() => setShowParticipantsModal(false)}
                                         >
                                             <div className="w-9 h-9 rounded-full bg-zinc-800 border border-white/10 overflow-hidden shrink-0 group-hover/p:border-primary/50 transition-colors">
@@ -1025,15 +1025,15 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                     <img src={p.avatarUrl} alt="participant" className="w-full h-full object-cover px-0" />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center">
-                                                        <Users className="w-4 h-4 text-white/20" />
+                                                        <Users className="w-4 h-4 text-foreground/20" />
                                                     </div>
                                                 )}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-[12px] font-bold text-white/80 truncate group-hover/p:text-primary transition-colors">
+                                                <p className="text-[12px] font-bold text-foreground/80 truncate group-hover/p:text-primary transition-colors">
                                                     {p.displayName || p.username}
                                                 </p>
-                                                <p className="text-[10px] text-white/30 truncate">@{p.username}</p>
+                                                <p className="text-[10px] text-foreground/30 truncate">@{p.username}</p>
                                             </div>
                                             <ChevronRight className="w-3.5 h-3.5 text-white/10 group-hover/p:text-primary/50 transition-colors" />
                                         </Link>
@@ -1041,12 +1041,12 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                 ) : (
                                     <div className="py-8 text-center">
                                         <Users className="w-8 h-8 text-white/10 mx-auto mb-2" />
-                                        <p className="text-[11px] text-white/30 font-medium">No participant details available</p>
+                                        <p className="text-[11px] text-foreground/30 font-medium">No participant details available</p>
                                     </div>
                                 )}
                                 {participantCount > participantAvatars.length && (
                                     <div className="pt-2 text-center">
-                                        <p className="text-[10px] font-bold text-white/20 uppercase tracking-wider">
+                                        <p className="text-[10px] font-bold text-foreground/20 uppercase tracking-wider">
                                             +{(participantCount - participantAvatars.length).toLocaleString()} more participants
                                         </p>
                                     </div>
@@ -1084,7 +1084,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         {/* Cancel */}
                         <button
                             onClick={handleCancelVote}
-                            className="px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider text-foreground/40 hover:text-foreground hover:bg-white/[0.06] transition-all shrink-0"
+                            className="px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider text-foreground/40 hover:text-foreground hover:bg-surface transition-all shrink-0"
                         >
                             Cancel
                         </button>
@@ -1163,9 +1163,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                 <div className="w-full md:w-[260px] shrink-0 flex flex-col gap-3">
                                     {/* Caption */}
                                     {previewSub.content && (
-                                        <div className="bg-white/[0.04] border border-white/[0.08] rounded-[16px] p-4">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2">Caption</p>
-                                            <p className="text-sm text-white/80 leading-relaxed">{previewSub.content}</p>
+                                        <div className="bg-surface border border-surface-border rounded-[16px] p-4">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30 mb-2">Caption</p>
+                                            <p className="text-sm text-foreground/80 leading-relaxed">{previewSub.content}</p>
                                         </div>
                                     )}
 
@@ -1244,7 +1244,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         {loading ? "Loading…" : event?.title ?? "Event"}
                     </span>
                     <div className="ml-auto flex items-center gap-2">
-                        <button className="p-2 rounded-full bg-white/[0.04] border border-white/[0.08] text-foreground/40 hover:text-foreground transition-colors">
+                        <button className="p-2 rounded-full bg-surface border border-surface-border text-foreground/40 hover:text-foreground transition-colors">
                             <Share2 className="w-3.5 h-3.5" />
                         </button>
                     </div>
@@ -1255,25 +1255,25 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         {/* Left skeleton */}
                         <div className="flex-1 min-w-0">
                             {/* Banner */}
-                            <div className="rounded-[24px] bg-white/[0.05] h-[220px] md:h-[260px] mb-5" />
+                            <div className="rounded-[24px] bg-surface h-[220px] md:h-[260px] mb-5" />
                             {/* Tab bar */}
                             <div className="flex items-center gap-6 border-b border-border/40 pb-3 mb-5">
-                                <div className="h-3 w-20 bg-white/[0.06] rounded-full" />
-                                <div className="h-3 w-14 bg-white/[0.04] rounded-full" />
-                                <div className="h-3 w-10 bg-white/[0.04] rounded-full" />
-                                <div className="ml-auto h-3 w-28 bg-white/[0.04] rounded-full" />
+                                <div className="h-3 w-20 bg-surface rounded-full" />
+                                <div className="h-3 w-14 bg-surface rounded-full" />
+                                <div className="h-3 w-10 bg-surface rounded-full" />
+                                <div className="ml-auto h-3 w-28 bg-surface rounded-full" />
                             </div>
                             {/* Cards grid */}
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                 {Array.from({ length: 6 }).map((_, i) => (
-                                    <div key={i} className="rounded-[20px] bg-white/[0.05] aspect-[3/4]" />
+                                    <div key={i} className="rounded-[20px] bg-surface aspect-[3/4]" />
                                 ))}
                             </div>
                         </div>
                         {/* Right skeleton */}
                         <div className="lg:w-[300px] shrink-0 space-y-4">
-                            <div className="rounded-[20px] bg-white/[0.05] h-[180px]" />
-                            <div className="rounded-[20px] bg-white/[0.05] h-[320px]" />
+                            <div className="rounded-[20px] bg-surface h-[180px]" />
+                            <div className="rounded-[20px] bg-surface h-[320px]" />
                         </div>
                     </div>
                 ) : fetchError ? (
@@ -1299,7 +1299,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                             alt={event.title}
                                         />
                                     ) : (
-                                        <div className="w-full h-full bg-white/[0.04]" />
+                                        <div className="w-full h-full bg-surface" />
                                     )}
                                     {/* Dark overlay */}
                                     <div className="absolute inset-0 bg-black/60" />
@@ -1328,7 +1328,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
                             {/* Right — minimal info */}
                             <div className="lg:w-[280px] shrink-0 space-y-4">
-                                <div className="bg-white/[0.03] border border-white/[0.07] rounded-[20px] p-5 space-y-3">
+                                <div className="bg-surface border border-surface-border rounded-[20px] p-5 space-y-3">
                                     <div className="flex items-center gap-3">
                                         {event.brand?.logoCid ? (
                                             <img src={`https://gateway.pinata.cloud/ipfs/${event.brand.logoCid}`} className="w-9 h-9 rounded-xl object-cover" alt={event.brand.name} />
@@ -1342,7 +1342,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                             <p className="text-[10px] text-foreground/40">Event Host</p>
                                         </div>
                                     </div>
-                                    <div className="h-px bg-white/[0.06]" />
+                                    <div className="h-px bg-surface" />
                                     <div className="flex items-center justify-between">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Category</p>
                                         <span className="text-[10px] font-black text-foreground/60 uppercase">{event.category}</span>
@@ -1352,7 +1352,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                         <span className="text-[10px] font-black text-red-400 uppercase">Cancelled</span>
                                     </div>
                                 </div>
-                                <Link href="/explore" className="block w-full py-3 rounded-[14px] bg-white/[0.04] border border-white/[0.08] text-center text-xs font-black uppercase tracking-widest text-foreground/50 hover:bg-white/[0.08] hover:text-foreground transition-all">
+                                <Link href="/explore" className="block w-full py-3 rounded-[14px] bg-surface border border-surface-border text-center text-xs font-black uppercase tracking-widest text-foreground/50 hover:bg-surface-hover hover:text-foreground transition-all">
                                     Browse other events
                                 </Link>
                             </div>
@@ -1382,7 +1382,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                             </div>
                                             <SocialLinks links={(event.brand as any)?.socialLinks} eventId={event.id} variant="compact" />
                                             {event.category && (
-                                                <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.10] text-white/50">
+                                                <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-black/50 border border-white/20 text-white/70">
                                                     {event.category}
                                                 </span>
                                             )}
@@ -1419,7 +1419,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                             <>
                                                 <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
                                                 <div>
-                                                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Total Prize Pool</p>
+                                                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-foreground/40 mb-1">Total Prize Pool</p>
                                                     <div className="flex items-center gap-2">
                                                         <Trophy className="w-5 h-5 text-yellow-400 shrink-0" />
                                                         <p className="text-4xl md:text-5xl font-black text-yellow-400 leading-none tabular-nums">${calculateTotalPool(event).toLocaleString()}</p>
@@ -1470,7 +1470,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                 </div>
                                             )}
                                             {/* Voting phase info */}
-                                            <div className="mx-4 mb-4 rounded-[14px] bg-white/[0.03] border border-white/[0.07] px-4 py-3 space-y-1.5">
+                                            <div className="mx-4 mb-4 rounded-[14px] bg-surface border border-surface-border px-4 py-3 space-y-1.5">
                                                 <p className="text-[9px] font-black uppercase tracking-widest text-foreground/35">What happens next?</p>
                                                 <p className="text-[11px] text-foreground/55 leading-relaxed">
                                                     Once the posting phase ends, the <span className="text-foreground/80 font-semibold">voting phase begins</span>. You'll be able to see all other submissions and vote on your favourite. Other participants will also see your entry and can vote for it — every vote earns you <span className="text-lime-400 font-semibold">$0.05 USDC</span>.
@@ -1482,13 +1482,13 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                         <motion.div
                                             initial={{ opacity: 0, y: 8 }}
                                             animate={{ opacity: 1, y: 0 }}
-                                            className="rounded-[28px] bg-[#0c0c10] border border-white/[0.07]"
+                                            className="rounded-[28px] bg-[#0c0c10] border border-surface-border"
                                         >
                                             <div className="px-6 py-8 sm:px-8 space-y-6">
                                                 {/* Heading */}
                                                 <div>
-                                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">{event.brand?.name}</p>
-                                                    <h2 className="font-display text-4xl md:text-5xl text-white leading-[0.9] uppercase tracking-tight">
+                                                    <p className="text-[10px] font-black text-foreground/40 uppercase tracking-widest mb-2">{event.brand?.name}</p>
+                                                    <h2 className="font-display text-4xl md:text-5xl text-foreground leading-[0.9] uppercase tracking-tight">
                                                         Compete for the{" "}
                                                         <span className="bg-gradient-to-r from-lime-300 via-lime-400 to-green-400 bg-clip-text text-transparent">top spot</span>
                                                     </h2>
@@ -1497,7 +1497,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                 {/* AI prompt + generate — always shown */}
                                                 <div className="space-y-3">
                                                     {/* Create-page style prompt row */}
-                                                    <div className="flex items-center gap-2 px-4 py-3 rounded-[14px] border border-white/[0.1] bg-white/[0.03] focus-within:border-lime-400/40 focus-within:shadow-[0_0_0_1px_rgba(163,230,53,0.15)] transition-all">
+                                                    <div className="flex items-center gap-2 px-4 py-3 rounded-[14px] border border-surface-border-strong bg-surface focus-within:border-lime-400/40 focus-within:shadow-[0_0_0_1px_rgba(163,230,53,0.15)] transition-all">
                                                         <input
                                                             value={aiPrompt}
                                                             onChange={(e) => setAiPrompt(e.target.value)}
@@ -1511,7 +1511,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                                 type="button"
                                                                 onClick={handleRefinePrompt}
                                                                 disabled={aiRefining}
-                                                                className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all disabled:opacity-30 shrink-0"
+                                                                className="p-2 rounded-xl bg-surface border border-surface-border text-foreground/40 hover:bg-surface-hover hover:text-foreground transition-all disabled:opacity-30 shrink-0"
                                                                 title="Enhance prompt"
                                                             >
                                                                 {aiRefining ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
@@ -1520,7 +1520,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                             <button
                                                                 type="button"
                                                                 onClick={() => { if (!isAuthenticated) { openLoginModal(); return; } fileRef.current?.click(); }}
-                                                                className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all shrink-0"
+                                                                className="p-2 rounded-xl bg-surface border border-surface-border text-foreground/40 hover:bg-surface-hover hover:text-foreground transition-all shrink-0"
                                                                 title="Upload your own image"
                                                             >
                                                                 <Upload className="w-4 h-4" />
@@ -1542,7 +1542,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                                 key={hint}
                                                                 type="button"
                                                                 onClick={() => setAiPrompt((p) => p ? `${p}, ${hint}` : hint)}
-                                                                className="px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.07] text-[10px] font-black uppercase tracking-wider text-white/30 hover:text-white/70 hover:bg-white/[0.08] hover:border-white/[0.14] transition-all"
+                                                                className="px-3 py-1 rounded-full bg-surface border border-surface-border text-[10px] font-black uppercase tracking-wider text-foreground/30 hover:text-foreground/70 hover:bg-surface-hover hover:border-surface-border-strong transition-all"
                                                             >
                                                                 {hint}
                                                             </button>
@@ -1552,12 +1552,12 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                     {/* Sample images reference */}
                                                     {event.sampleUrls && event.sampleUrls.length > 0 && (
                                                         <div className="space-y-2">
-                                                            <p className="text-[10px] font-black uppercase tracking-widest text-white/30 flex items-center gap-1.5">
+                                                            <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30 flex items-center gap-1.5">
                                                                 <ImageIcon className="w-3 h-3" /> Sample references — match this style
                                                             </p>
                                                             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                                                                 {event.sampleUrls.map((s, i) => (
-                                                                    <div key={i} className="shrink-0 w-24 h-24 rounded-xl overflow-hidden border border-white/[0.08]">
+                                                                    <div key={i} className="shrink-0 w-24 h-24 rounded-xl overflow-hidden border border-surface-border">
                                                                         <img
                                                                             src={s.urls?.medium || s.urls?.thumbnail}
                                                                             alt={`Sample ${i + 1}`}
@@ -1581,7 +1581,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                                 <>
                                                                     <button
                                                                         onClick={() => { if (!isAuthenticated) { openLoginModal(); return; } setSubmitModalOpen(true); }}
-                                                                        className="flex-1 px-4 py-2 rounded-xl bg-purple-500 text-white font-black uppercase tracking-widest text-[10px] hover:bg-purple-400 transition-colors"
+                                                                        className="flex-1 px-4 py-2 rounded-xl bg-purple-500 text-foreground font-black uppercase tracking-widest text-[10px] hover:bg-purple-400 transition-colors"
                                                                     >
                                                                         Review &amp; Submit
                                                                     </button>
@@ -1592,7 +1592,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                                             if (preview) URL.revokeObjectURL(preview);
                                                                             setFile(null); setPreview(null);
                                                                         }}
-                                                                        className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-white/40 hover:bg-red-500/20 hover:text-red-400 transition-colors shrink-0"
+                                                                        className="w-8 h-8 rounded-xl bg-surface border border-surface-border flex items-center justify-center text-foreground/40 hover:bg-red-500/20 hover:text-red-400 transition-colors shrink-0"
                                                                     >
                                                                         <X className="w-3.5 h-3.5" />
                                                                     </button>
@@ -1621,7 +1621,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                     animate={{ opacity: 1, scale: 1, y: 0 }}
                                                     exit={{ opacity: 0, scale: 0.95, y: 12 }}
                                                     transition={{ duration: 0.22 }}
-                                                    className="w-full max-w-3xl bg-[#0e0e12] border border-white/[0.08] rounded-[28px] overflow-hidden flex flex-col md:flex-row"
+                                                    className="w-full max-w-3xl bg-[#0e0e12] border border-surface-border rounded-[28px] overflow-hidden flex flex-col md:flex-row"
                                                 >
                                                     {/* Left — image */}
                                                     <div className="md:w-[52%] shrink-0 relative bg-black flex items-center justify-center min-h-[320px]">
@@ -1632,7 +1632,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                             alt="Submission preview"
                                                         />
                                                         <div className="absolute top-3 left-3 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1.5" style={{ background: aiImageUrl ? "rgba(163,230,53,0.8)" : "rgba(255,255,255,0.15)" }}>
-                                                            {aiImageUrl ? <Sparkles className="w-3 h-3 text-black" /> : <Upload className="w-3 h-3 text-white" />}
+                                                            {aiImageUrl ? <Sparkles className="w-3 h-3 text-black" /> : <Upload className="w-3 h-3 text-foreground" />}
                                                             <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: aiImageUrl ? "black" : "white" }}>{aiImageUrl ? "AI Generated" : "Your Upload"}</span>
                                                         </div>
                                                     </div>
@@ -1641,12 +1641,12 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                     <div className="flex-1 flex flex-col p-6 gap-4">
                                                         <div className="flex items-start justify-between">
                                                             <div>
-                                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">{event.brand?.name}</p>
-                                                                <h3 className="font-display text-2xl text-white uppercase leading-tight">Submit Entry</h3>
+                                                                <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-1">{event.brand?.name}</p>
+                                                                <h3 className="font-display text-2xl text-foreground uppercase leading-tight">Submit Entry</h3>
                                                             </div>
                                                             <button
                                                                 onClick={() => setSubmitModalOpen(false)}
-                                                                className="w-8 h-8 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.1] transition-colors shrink-0"
+                                                                className="w-8 h-8 rounded-xl bg-surface border border-surface-border flex items-center justify-center text-foreground/40 hover:text-foreground hover:bg-surface-hover transition-colors shrink-0"
                                                             >
                                                                 <X className="w-4 h-4" />
                                                             </button>
@@ -1654,7 +1654,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
                                                         {/* Optional caption */}
                                                         <div>
-                                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">
+                                                            <label className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-2 block">
                                                                 Optional Caption
                                                             </label>
                                                             <textarea
@@ -1663,22 +1663,22 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                                 placeholder="Describe your entry…"
                                                                 rows={3}
                                                                 maxLength={280}
-                                                                className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-foreground/30 resize-none focus:outline-none focus:border-white/20 transition-colors"
+                                                                className="w-full bg-surface border border-surface-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-foreground/30 resize-none focus:outline-none focus:border-foreground/20 transition-colors"
                                                             />
                                                             <p className="text-[10px] text-white/25 text-right mt-1">{caption.length}/280</p>
                                                         </div>
 
                                                         {/* Reward info */}
-                                                        <div className="rounded-[14px] bg-white/[0.03] border border-white/[0.07] p-3 space-y-2">
-                                                            <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-1">Your Earnings</p>
+                                                        <div className="rounded-[14px] bg-surface border border-surface-border p-3 space-y-2">
+                                                            <p className="text-[9px] font-black uppercase tracking-widest text-foreground/30 mb-1">Your Earnings</p>
                                                             <div className="flex items-center justify-between">
                                                                 <p className="text-[11px] text-white/55">Per vote received on your post</p>
                                                                 <p className="text-xs font-black text-lime-400">$0.05 USDC</p>
                                                             </div>
                                                             {(event.leaderboardPool ?? 0) > 0 && (
                                                                 <>
-                                                                    <div className="border-t border-white/[0.06] pt-2 space-y-1.5">
-                                                                        <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-1">Leaderboard Pool · ${(event.leaderboardPool ?? 0).toLocaleString()} USDC</p>
+                                                                    <div className="border-t border-surface-border pt-2 space-y-1.5">
+                                                                        <p className="text-[9px] font-black uppercase tracking-widest text-foreground/30 mb-1">Leaderboard Pool · ${(event.leaderboardPool ?? 0).toLocaleString()} USDC</p>
                                                                         {([
                                                                             { place: "🥇 1st", pct: 0.50 },
                                                                             { place: "🥈 2nd", pct: 0.35 },
@@ -1686,7 +1686,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                                         ] as const).map(({ place, pct }) => (
                                                                             <div key={place} className="flex items-center justify-between">
                                                                                 <p className="text-[11px] text-white/55">{place} Place</p>
-                                                                                <p className="text-xs font-black text-white/70">${((event.leaderboardPool ?? 0) * pct).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC</p>
+                                                                                <p className="text-xs font-black text-foreground/70">${((event.leaderboardPool ?? 0) * pct).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC</p>
                                                                             </div>
                                                                         ))}
                                                                     </div>
@@ -1711,7 +1711,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                     </AnimatePresence>
 
                                     {/* ── Rules (quick) ── */}
-                                    <div className="rounded-[24px] border border-border/40 bg-white/[0.02] p-5 space-y-4">
+                                    <div className="rounded-[24px] border border-border/40 bg-surface p-5 space-y-4">
                                         <div className="flex items-center gap-2">
                                             <Info className="w-3.5 h-3.5 text-foreground/40" />
                                             <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Rules (quick)</p>
@@ -1780,7 +1780,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
 
                                         {/* Rewards card */}
-                                        <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5">
+                                        <div className="bg-surface border border-surface-border rounded-[20px] p-5">
                                             <div className="mb-4">
                                                 <span className="text-sm font-black text-foreground">Reward Breakdown</span>
                                             </div>
@@ -1835,7 +1835,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                                     <p className="text-[9px] text-foreground/40">USDC</p>
                                                                 </div>
                                                             </div>
-                                                            <div className="flex items-center justify-between bg-white/[0.03] border border-white/[0.07] rounded-[12px] px-3 py-2.5">
+                                                            <div className="flex items-center justify-between bg-surface border border-surface-border rounded-[12px] px-3 py-2.5">
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="text-sm leading-none">🥈</span>
                                                                     <div>
@@ -1848,7 +1848,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                                     <p className="text-[9px] text-foreground/40">USDC</p>
                                                                 </div>
                                                             </div>
-                                                            <div className="flex items-center justify-between bg-white/[0.03] border border-white/[0.07] rounded-[12px] px-3 py-2.5">
+                                                            <div className="flex items-center justify-between bg-surface border border-surface-border rounded-[12px] px-3 py-2.5">
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="text-sm leading-none">🥉</span>
                                                                     <div>
@@ -1906,7 +1906,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                             </div>
                                             <SocialLinks links={(event.brand as any)?.socialLinks} eventId={event.id} variant="compact" />
                                             {event.category && (
-                                                <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.10] text-white/50">
+                                                <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-black/50 border border-white/20 text-white/70">
                                                     {event.category}
                                                 </span>
                                             )}
@@ -2133,7 +2133,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                             onClick={() => setLightboxOpen(false)}
                             className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors"
                         >
-                            <X className="w-4 h-4 text-white" />
+                            <X className="w-4 h-4 text-foreground" />
                         </button>
                     </motion.div>
                 )}
@@ -2219,16 +2219,16 @@ function CompletedView({ event, submissions, currentUserId, gridView, votedSubmi
                         onClick={() => setLightboxIdx(null)}
                     >
                         <button onClick={() => setLightboxIdx(null)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors z-10">
-                            <X className="w-4 h-4 text-white" />
+                            <X className="w-4 h-4 text-foreground" />
                         </button>
                         {hasPrev && (
                             <button onClick={(e) => { e.stopPropagation(); setLightboxIdx((i) => (i ?? 0) - 1); }} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors z-10">
-                                <ChevronLeft className="w-5 h-5 text-white" />
+                                <ChevronLeft className="w-5 h-5 text-foreground" />
                             </button>
                         )}
                         {hasNext && (
                             <button onClick={(e) => { e.stopPropagation(); setLightboxIdx((i) => (i ?? 0) + 1); }} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors z-10">
-                                <ChevronRight className="w-5 h-5 text-white" />
+                                <ChevronRight className="w-5 h-5 text-foreground" />
                             </button>
                         )}
                         <motion.div
@@ -2246,7 +2246,7 @@ function CompletedView({ event, submissions, currentUserId, gridView, votedSubmi
                                 <span className="text-[11px] text-neutral-400">{currentItem.votes} votes</span>
                             </div>
                             <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/50 border border-white/10">
-                                <span className="text-[10px] font-medium text-white/50">{lightboxIdx + 1} / {lightboxItems.length}</span>
+                                <span className="text-[10px] font-medium text-foreground/50">{lightboxIdx + 1} / {lightboxItems.length}</span>
                             </div>
                         </motion.div>
                     </motion.div>
@@ -2265,8 +2265,8 @@ function CompletedView({ event, submissions, currentUserId, gridView, votedSubmi
                                 "text-[10px] font-black px-2 py-0.5 rounded-full",
                                 myPost.rank === 1 ? "bg-yellow-400 text-black" :
                                     myPost.rank === 2 ? "bg-slate-300 text-black" :
-                                        myPost.rank === 3 ? "bg-amber-600 text-white" :
-                                            "bg-white/10 text-white/70"
+                                        myPost.rank === 3 ? "bg-amber-600 text-foreground" :
+                                            "bg-white/10 text-foreground/70"
                             )}>#{myPost.rank}</span>
                         )}
                     </div>
@@ -2318,7 +2318,7 @@ function CompletedView({ event, submissions, currentUserId, gridView, votedSubmi
                                         "absolute -top-3 left-4 z-10 px-2.5 py-0.5 rounded-md text-xs font-black",
                                         i === 0 ? "bg-yellow-400 text-black" :
                                             i === 1 ? "bg-slate-300 text-black" :
-                                                "bg-amber-600 text-white"
+                                                "bg-amber-600 text-foreground"
                                     )}>
                                         #{i + 1}
                                     </div>

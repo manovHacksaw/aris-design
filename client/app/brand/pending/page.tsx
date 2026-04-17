@@ -111,7 +111,7 @@ export default function BrandPendingPage() {
                     "border-border/30 bg-transparent",
                   ].join(" ")}>
                     {state === "done" ? (
-                      <CheckCircle2 className="w-4 h-4 text-white" />
+                      <CheckCircle2 className="w-4 h-4 text-foreground" />
                     ) : state === "active" ? (
                       <Icon className="w-4 h-4 text-amber-400" />
                     ) : (

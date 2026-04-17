@@ -45,13 +45,13 @@ export default function FeedItem({ username, image, caption, reward, votes: init
                         <img src={`https://ui-avatars.com/api/?name=${username}&background=random`} alt={username} className="w-full h-full rounded-full object-cover" />
                     </div>
                     <div>
-                        <div className="font-bold text-white text-sm tracking-tight">@{username}</div>
-                        <div className="text-white/60 text-[10px] font-bold uppercase tracking-widest">2 hours ago</div>
+                        <div className="font-bold text-foreground text-sm tracking-tight">@{username}</div>
+                        <div className="text-foreground/60 text-[10px] font-bold uppercase tracking-widest">2 hours ago</div>
                     </div>
                 </div>
                 <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-full px-4 py-2 flex items-center gap-1.5">
                     <DollarSign className="w-4 h-4 text-primary" />
-                    <span className="text-white text-sm font-black font-mono tracking-tighter">${reward.toFixed(2)}</span>
+                    <span className="text-foreground text-sm font-black font-mono tracking-tighter">${reward.toFixed(2)}</span>
                 </div>
             </div>
 
@@ -69,7 +69,7 @@ export default function FeedItem({ username, image, caption, reward, votes: init
 
             {/* Bottom Content Overlay */}
             <div className="absolute bottom-0 left-0 right-0 p-8 z-10 space-y-4">
-                <p className="text-white font-medium text-[15px] leading-relaxed line-clamp-2">
+                <p className="text-foreground font-medium text-[15px] leading-relaxed line-clamp-2">
                     {caption}
                 </p>
 
@@ -80,15 +80,15 @@ export default function FeedItem({ username, image, caption, reward, votes: init
                             className="flex flex-col items-center gap-1 group/btn"
                         >
                             <Heart className={clsx("w-7 h-7 transition-all duration-300", hasVoted ? "fill-red-500 text-red-500 scale-110" : "text-white group-hover/btn:text-red-400")} />
-                            <span className="text-xs text-white/80 font-medium">{votes.toLocaleString()}</span>
+                            <span className="text-xs text-foreground/80 font-medium">{votes.toLocaleString()}</span>
                         </button>
                         <button className="flex flex-col items-center gap-1 group/btn">
                             <MessageCircle className="w-7 h-7 text-white group-hover/btn:text-primary transition-colors" />
-                            <span className="text-xs text-white/80 font-medium">45</span>
+                            <span className="text-xs text-foreground/80 font-medium">45</span>
                         </button>
                         <button className="flex flex-col items-center gap-1 group/btn">
                             <Share2 className="w-7 h-7 text-white group-hover/btn:text-primary transition-colors" />
-                            <span className="text-xs text-white/80 font-medium">Share</span>
+                            <span className="text-xs text-foreground/80 font-medium">Share</span>
                         </button>
                     </div>
 

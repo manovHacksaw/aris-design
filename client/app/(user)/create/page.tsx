@@ -82,7 +82,7 @@ export default function Create() {
 
                     {/* Category Filter — compact pills */}
                     <section className="space-y-3">
-                        <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Filter by Category</p>
+                        <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em]">Filter by Category</p>
                         <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
                             {categoryTabs.map((cat) => {
                                 const isActive = activeCategory === cat.label;
@@ -95,10 +95,10 @@ export default function Create() {
                                             "relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all duration-200 shrink-0",
                                             isActive
                                                 ? "bg-lime-400 text-black shadow-[0_2px_12px_rgba(163,230,53,0.15)]"
-                                                : "bg-white/[0.04] text-white/40 border border-white/[0.08] hover:bg-white/[0.08] hover:text-white/70"
+                                                : "bg-surface text-foreground/40 border border-surface-border hover:bg-surface-hover hover:text-foreground/70"
                                         )}
                                     >
-                                        <Icon className={cn("w-3 h-3", isActive ? "text-black" : "text-white/30")} />
+                                        <Icon className={cn("w-3 h-3", isActive ? "text-black" : "text-foreground/30")} />
                                         <span>{cat.label}</span>
                                     </button>
                                 );
@@ -107,22 +107,22 @@ export default function Create() {
                     </section>
 
                     {/* Opportunities Header — dynamic creator pool */}
-                    <div className="flex items-end justify-between border-t border-white/[0.06] pt-6">
+                    <div className="flex items-end justify-between border-t border-surface-border pt-6">
                         <div>
-                            <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-1">
+                            <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-1">
                                 Submit your work
                             </p>
-                            <h2 className="font-display text-3xl md:text-4xl text-white uppercase tracking-tight">
+                            <h2 className="font-display text-3xl md:text-4xl text-foreground uppercase tracking-tight">
                                 Opportunities
                             </h2>
                         </div>
                         <div className="hidden sm:flex items-center gap-6">
                             <div className="text-right">
-                                <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-0.5">Live Events</p>
-                                <p className="text-xl font-black text-white">{openEvents.length}</p>
+                                <p className="text-[10px] font-black text-foreground/20 uppercase tracking-widest mb-0.5">Live Events</p>
+                                <p className="text-xl font-black text-foreground">{openEvents.length}</p>
                             </div>
                             <div className="text-right">
-                                <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-0.5">Creator Pool</p>
+                                <p className="text-[10px] font-black text-foreground/20 uppercase tracking-widest mb-0.5">Creator Pool</p>
                                 <p className="text-xl font-black text-lime-400">
                                     {creatorPool > 0 ? `$${creatorPool.toLocaleString()}` : "—"}
                                 </p>
@@ -157,14 +157,14 @@ export default function Create() {
                             <div className="absolute top-0 right-0 w-20 h-full bg-gradient-to-l from-background to-transparent pointer-events-none" />
                         </div>
                     ) : (
-                        <div className="py-16 text-center bg-white/[0.02] rounded-2xl border border-dashed border-white/[0.06]">
-                            <div className="w-10 h-10 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto mb-3">
-                                <Star className="w-5 h-5 text-white/20" />
+                        <div className="py-16 text-center bg-surface rounded-2xl border border-dashed border-surface-border">
+                            <div className="w-10 h-10 rounded-2xl bg-surface border border-surface-border flex items-center justify-center mx-auto mb-3">
+                                <Star className="w-5 h-5 text-foreground/20" />
                             </div>
-                            <p className="font-display text-xl text-white/30 uppercase tracking-tight mb-0.5">
+                            <p className="font-display text-xl text-foreground/30 uppercase tracking-tight mb-0.5">
                                 No Active Opportunities
                             </p>
-                            <p className="text-[10px] text-white/20 font-medium">Check back soon for new challenges</p>
+                            <p className="text-[10px] text-foreground/20 font-medium">Check back soon for new challenges</p>
                         </div>
                     )}
 

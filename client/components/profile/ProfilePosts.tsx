@@ -45,12 +45,12 @@ export default function ProfilePosts() {
                     </div>
 
                     {/* Gradient overlay on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 dark:from-black/80 via-black/10 dark:via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                     {/* Info on hover */}
                     <div className="absolute bottom-0 left-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
                         <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest mb-1">{post.eventName}</p>
-                        <p className="text-xs font-black text-white mb-3 tracking-tight">{post.title}</p>
+                        <p className="text-xs font-black text-foreground mb-3 tracking-tight">{post.title}</p>
 
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3 text-white/60">

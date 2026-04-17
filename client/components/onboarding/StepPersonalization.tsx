@@ -119,7 +119,7 @@ export default function StepPersonalization({
                                 <div className="ml-auto shrink-0">
                                     {isSelected ? (
                                         <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                                            <Check className="w-3 h-3 text-white" />
+                                            <Check className="w-3 h-3 text-foreground" />
                                         </div>
                                     ) : (
                                         <div className="w-5 h-5 rounded-full border-2 border-foreground/15" />

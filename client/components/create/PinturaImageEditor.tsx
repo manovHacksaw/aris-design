@@ -188,7 +188,7 @@ export function PinturaImageEditor({
             ) : (
               <>
                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                <p className="text-[11px] font-black uppercase tracking-widest text-white/60">
+                <p className="text-[11px] font-black uppercase tracking-widest text-foreground/60">
                   {stage === "uploading" ? "Uploading image…" : "Saving edits…"}
                 </p>
               </>

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, Calendar, Building2, User, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { searchAll, EventSearchResult, BrandSearchResult, UserSearchResult } from "@/services/search.service";
 
 /* ─────────────────────────────────────────────────────────
@@ -108,6 +109,8 @@ function AnimatedHeadline() {
 ───────────────────────────────────────────────────────── */
 export default function HomeHeader() {
     const router = useRouter();
+    const { resolvedTheme } = useTheme();
+    const isDark = resolvedTheme === "dark";
     const [searchQuery, setSearchQuery] = useState("");
     const [results, setResults] = useState<{ events: EventSearchResult[]; brands: BrandSearchResult[]; users: UserSearchResult[] } | null>(null);
     const [loading, setLoading] = useState(false);
@@ -153,17 +156,36 @@ export default function HomeHeader() {
         <div className="space-y-8 mb-8">
 
             {/* ── HERO BLOCK ── */}
-            <div className="relative rounded-3xl overflow-hidden border border-border bg-card/60">
+            <div
+                className="relative rounded-3xl overflow-hidden border"
+                style={isDark
+                    ? { background: "rgba(13,13,16,0.6)", borderColor: "rgba(255,255,255,0.08)" }
+                    : { background: "linear-gradient(135deg, #E4EDE0 0%, #E6EBF7 50%, #EDE6F9 100%)", borderColor: "rgba(0,0,0,0.07)", boxShadow: "0 8px 48px rgba(0,0,0,0.08)" }
+                }
+            >
                 <SparkleCanvas />
 
-                {/* Dot grid */}
+                {/* Dot grid — dark: white dots, light: dark dots (matches CreateHero) */}
                 <div
-                    className="absolute inset-0 pointer-events-none opacity-[0.025]"
-                    style={{
+                    className="absolute inset-0 pointer-events-none"
+                    style={isDark ? {
                         backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)",
                         backgroundSize: "28px 28px",
+                        opacity: 0.025,
+                    } : {
+                        backgroundImage: "radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px)",
+                        backgroundSize: "22px 22px",
                     }}
                 />
+
+                {/* Light mode glow orbs — matches CreateHero */}
+                {!isDark && (
+                    <div className="absolute inset-0 pointer-events-none">
+                        <div className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full blur-[130px]" style={{ background: "rgba(126,203,42,0.18)" }} />
+                        <div className="absolute -bottom-20 right-0 w-[400px] h-[400px] rounded-full blur-[110px]" style={{ background: "rgba(167,139,250,0.14)" }} />
+                        <div className="absolute top-1/2 left-1/3 w-[300px] h-[300px] rounded-full blur-[90px]" style={{ background: "rgba(96,182,255,0.10)" }} />
+                    </div>
+                )}
 
                 {/* Bottom fade */}
                 <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background/70 to-transparent pointer-events-none" />
@@ -195,7 +217,7 @@ export default function HomeHeader() {
                 className="relative group max-w-3xl"
             >
                 <div className="absolute -inset-px bg-gradient-to-r from-lime-400/20 via-green-400/15 to-lime-400/20 rounded-2xl opacity-0 group-focus-within:opacity-100 transition-all duration-500 blur-sm pointer-events-none" />
-                <div className="relative flex items-center bg-white/[0.03] border border-border group-focus-within:border-lime-400/35 rounded-2xl transition-all duration-300">
+                <div className="relative flex items-center bg-surface border border-border group-focus-within:border-lime-400/35 rounded-2xl transition-all duration-300">
                     {loading
                         ? <Loader2 className="absolute left-5 w-4 h-4 text-lime-400 animate-spin pointer-events-none" />
                         : <Search className="absolute left-5 w-4 h-4 text-foreground/30 group-focus-within:text-lime-400 transition-colors duration-300 pointer-events-none" />
@@ -231,7 +253,7 @@ export default function HomeHeader() {
                             {!hasResults ? (
                                 <p className="px-5 py-4 text-sm text-foreground/50">No results for "{searchQuery}"</p>
                             ) : (
-                                <div className="divide-y divide-white/[0.05]">
+                                <div className="divide-y divide-surface-border">
                                     {/* Events */}
                                     {results!.events.length > 0 && (
                                         <div className="p-3">
@@ -240,17 +262,17 @@ export default function HomeHeader() {
                                                 <button
                                                     key={ev.id}
                                                     onClick={() => { router.push(`/events/${ev.id}`); setOpen(false); setSearchQuery(""); }}
-                                                    className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/[0.04] transition-colors text-left"
+                                                    className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-surface transition-colors text-left"
                                                 >
                                                     {ev.imageUrls?.thumbnail
                                                         ? <img src={ev.imageUrls.thumbnail} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
-                                                        : <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0"><Calendar className="w-4 h-4 text-white/20" /></div>
+                                                        : <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0"><Calendar className="w-4 h-4 text-foreground/20" /></div>
                                                     }
                                                     <div className="min-w-0">
                                                         <p className="text-sm font-semibold text-foreground truncate">{ev.title}</p>
                                                         {ev.brand && <p className="text-xs text-foreground/50 truncate">{ev.brand.name}</p>}
                                                     </div>
-                                                    <span className={`ml-auto text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full flex-shrink-0 ${ev.status === 'posting' || ev.status === 'voting' ? 'bg-lime-400/10 text-lime-400' : 'bg-white/5 text-white/30'}`}>
+                                                    <span className={`ml-auto text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full flex-shrink-0 ${ev.status === 'posting' || ev.status === 'voting' ? 'bg-lime-400/10 text-lime-400' : 'bg-white/5 text-foreground/30'}`}>
                                                         {ev.status}
                                                     </span>
                                                 </button>
@@ -266,11 +288,11 @@ export default function HomeHeader() {
                                                 <button
                                                     key={brand.id}
                                                     onClick={() => { router.push(`/brand/${brand.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`); setOpen(false); setSearchQuery(""); }}
-                                                    className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/[0.04] transition-colors text-left"
+                                                    className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-surface transition-colors text-left"
                                                 >
                                                     {brand.logoCid
                                                         ? <img src={`https://gateway.pinata.cloud/ipfs/${brand.logoCid}`} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
-                                                        : <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0"><Building2 className="w-4 h-4 text-white/20" /></div>
+                                                        : <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0"><Building2 className="w-4 h-4 text-foreground/20" /></div>
                                                     }
                                                     <div className="min-w-0">
                                                         <p className="text-sm font-semibold text-foreground truncate">{brand.name}</p>
@@ -289,11 +311,11 @@ export default function HomeHeader() {
                                                 <button
                                                     key={user.id}
                                                     onClick={() => { router.push(`/profile/${user.username}`); setOpen(false); setSearchQuery(""); }}
-                                                    className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/[0.04] transition-colors text-left"
+                                                    className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-surface transition-colors text-left"
                                                 >
                                                     {user.avatarUrl
                                                         ? <img src={user.avatarUrl} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-                                                        : <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0"><User className="w-4 h-4 text-white/20" /></div>
+                                                        : <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0"><User className="w-4 h-4 text-foreground/20" /></div>
                                                     }
                                                     <div className="min-w-0">
                                                         <p className="text-sm font-semibold text-foreground truncate">{user.displayName}</p>

@@ -106,9 +106,9 @@ export default function OnboardingPage() {
                             className="space-y-6"
                         >
                             <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl flex items-center justify-center">
-                                <VisualIcon className="w-8 h-8 text-white" />
+                                <VisualIcon className="w-8 h-8 text-foreground" />
                             </div>
-                            <h2 className="text-4xl font-black text-white tracking-tighter leading-tight">
+                            <h2 className="text-4xl font-black text-foreground tracking-tighter leading-tight">
                                 {STEPS_INFO[step - 1].visual.text}
                             </h2>
                             <div className="flex gap-2">

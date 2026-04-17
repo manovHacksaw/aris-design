@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "next-themes";
 
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
@@ -19,6 +20,9 @@ function getEventImage(event: any): string | null {
 }
 
 export default function HeroPreviewPanel({ events }: HeroPreviewPanelProps) {
+    const { resolvedTheme } = useTheme();
+    const isDark = resolvedTheme === "dark";
+
     const images = events
         .map(getEventImage)
         .filter((img): img is string => img !== null)
@@ -38,8 +42,23 @@ export default function HeroPreviewPanel({ events }: HeroPreviewPanelProps) {
 
     if (images.length === 0) {
         return (
-            <div className="w-full h-full rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center">
-                <p className="text-[10px] text-white/20 font-medium uppercase tracking-wider">
+            <div
+                className="w-full h-full rounded-2xl flex items-center justify-center border overflow-hidden relative"
+                style={isDark
+                    ? { background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.08)" }
+                    : { background: "linear-gradient(135deg, #E4EDE0 0%, #E6EBF7 50%, #EDE6F9 100%)", borderColor: "rgba(0,0,0,0.07)" }
+                }
+            >
+                {!isDark && (
+                    <div
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                            backgroundImage: "radial-gradient(circle, rgba(0,0,0,0.05) 1px, transparent 1px)",
+                            backgroundSize: "18px 18px",
+                        }}
+                    />
+                )}
+                <p className={`text-[10px] font-medium uppercase tracking-wider relative z-10 ${isDark ? "text-white/20" : "text-black/25"}`}>
                     No previews yet
                 </p>
             </div>
@@ -47,7 +66,7 @@ export default function HeroPreviewPanel({ events }: HeroPreviewPanelProps) {
     }
 
     return (
-        <div className="relative w-full h-full min-h-[240px] rounded-2xl overflow-hidden bg-white/[0.03] border border-white/[0.06]">
+        <div className="relative w-full h-full min-h-[240px] rounded-2xl overflow-hidden bg-surface border border-surface-border">
             <AnimatePresence mode="wait">
                 <motion.img
                     key={images[current]}

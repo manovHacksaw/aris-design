@@ -8,10 +8,10 @@ interface ActivityFeedProps {
 
 // Placeholder activity feed — replace with real API data when available
 const PLACEHOLDER_ITEMS = [
-  { id: 1, icon: Zap, label: "Earned 50 XP", sub: "Completed daily challenge", time: "2h ago", color: "text-yellow-400" },
+  { id: 1, icon: Zap, label: "Earned 50 XP", sub: "Completed daily challenge", time: "2h ago", color: "text-yellow-600 dark:text-yellow-400" },
   { id: 2, icon: ThumbsUp, label: "Voted on a submission", sub: "Nike Street Style campaign", time: "5h ago", color: "text-primary" },
-  { id: 3, icon: Award, label: "Unlocked Bronze III", sub: "Rank milestone reached", time: "1d ago", color: "text-orange-400" },
-  { id: 4, icon: UserPlus, label: "New follower", sub: "Someone started following you", time: "2d ago", color: "text-green-400" },
+  { id: 3, icon: Award, label: "Unlocked Bronze III", sub: "Rank milestone reached", time: "1d ago", color: "text-orange-600 dark:text-orange-400" },
+  { id: 4, icon: UserPlus, label: "New follower", sub: "Someone started following you", time: "2d ago", color: "text-green-600 dark:text-green-400" },
 ];
 
 export function ActivityFeed({ userId }: ActivityFeedProps) {
@@ -22,9 +22,9 @@ export function ActivityFeed({ userId }: ActivityFeedProps) {
         return (
           <div
             key={item.id}
-            className="flex items-start gap-4 p-4 bg-card border-[3px] border-foreground rounded-2xl shadow-[4px_4px_0px_#1A1A1A] dark:shadow-[4px_4px_0px_#FDF6E3] hover:-translate-y-0.5 hover:translate-x-0.5 transition-transform"
+            className="flex items-start gap-4 p-4 bg-card border-[3px] border-foreground/15 dark:border-foreground rounded-2xl shadow-[4px_4px_0px_rgba(0,0,0,0.08)] dark:shadow-[4px_4px_0px_#FDF6E3] hover:-translate-y-0.5 hover:translate-x-0.5 transition-transform"
           >
-            <div className="w-10 h-10 rounded-xl bg-secondary border-2 border-foreground flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-secondary border-2 border-foreground/15 dark:border-foreground flex items-center justify-center shrink-0">
               <Icon className={`w-5 h-5 ${item.color}`} />
             </div>
             <div className="flex-1 min-w-0">

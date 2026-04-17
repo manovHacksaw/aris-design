@@ -489,7 +489,7 @@ export default function ApplicationDetailPage() {
                           "w-5 h-5 rounded border-2 flex items-center justify-center shrink-0",
                           has ? "bg-green-500 border-green-500" : "border-border/30"
                         )}>
-                          {has && <Check className="w-3 h-3 text-white" />}
+                          {has && <Check className="w-3 h-3 text-foreground" />}
                         </div>
                         <p className={cn("text-xs font-semibold", has ? "text-foreground/70" : "text-foreground/25")}>
                           {label}
@@ -688,7 +688,7 @@ export default function ApplicationDetailPage() {
                 <p className="text-[10px] font-black text-foreground/30 uppercase tracking-widest">Decision</p>
                 <button
                   onClick={() => setShowApproveModal(true)}
-                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-[14px] bg-green-500 text-white font-black text-xs uppercase tracking-widest hover:bg-green-600 active:scale-[0.98] transition-all shadow-md shadow-green-500/20"
+                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-[14px] bg-green-500 text-foreground font-black text-xs uppercase tracking-widest hover:bg-green-600 active:scale-[0.98] transition-all shadow-md shadow-green-500/20"
                 >
                   <CheckCircle2 className="w-4 h-4" /> Approve Application
                 </button>
@@ -771,7 +771,7 @@ export default function ApplicationDetailPage() {
                 <button
                   onClick={handleApprove}
                   disabled={actionLoading}
-                  className="flex-1 py-3.5 rounded-[14px] bg-green-500 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-green-600 transition-all disabled:opacity-50 shadow-lg shadow-green-500/20"
+                  className="flex-1 py-3.5 rounded-[14px] bg-green-500 text-foreground font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-green-600 transition-all disabled:opacity-50 shadow-lg shadow-green-500/20"
                 >
                   {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   Confirm Approval
@@ -833,7 +833,7 @@ export default function ApplicationDetailPage() {
                 <button
                   onClick={handleReject}
                   disabled={actionLoading || !rejectReason.trim()}
-                  className="flex-1 py-3.5 rounded-[14px] bg-red-500 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-600 transition-all disabled:opacity-50"
+                  className="flex-1 py-3.5 rounded-[14px] bg-red-500 text-foreground font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-600 transition-all disabled:opacity-50"
                 >
                   {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
                   Confirm Rejection

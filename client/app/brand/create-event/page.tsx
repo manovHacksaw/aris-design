@@ -1104,7 +1104,7 @@ export default function CreateEventPage() {
                                                     onClick={() => { if (!src) sampleFileRefs.current[i]?.click(); }}
                                                 >
                                                     {/* Number badge */}
-                                                    <span className="absolute top-2 left-2 z-10 w-6 h-6 rounded-full bg-black/60 backdrop-blur-sm text-white text-xs font-black flex items-center justify-center">
+                                                    <span className="absolute top-2 left-2 z-10 w-6 h-6 rounded-full bg-black/60 backdrop-blur-sm text-foreground text-xs font-black flex items-center justify-center">
                                                         {i + 1}
                                                     </span>
 
@@ -1488,7 +1488,7 @@ export default function CreateEventPage() {
                                         onClick={() => { if (!p.mediaPreview) proposalFileRefs.current[idx]?.click(); }}
                                     >
                                         {/* Number badge */}
-                                        <span className="absolute top-2 left-2 z-10 w-6 h-6 rounded-full bg-black/60 backdrop-blur-sm text-white text-xs font-black flex items-center justify-center">
+                                        <span className="absolute top-2 left-2 z-10 w-6 h-6 rounded-full bg-black/60 backdrop-blur-sm text-foreground text-xs font-black flex items-center justify-center">
                                             {idx + 1}
                                         </span>
 
@@ -1652,7 +1652,7 @@ export default function CreateEventPage() {
                             {/* Banner — click to edit basics */}
                             <div
                                 onClick={() => goTo(basicsIdx)}
-                                className="relative rounded-[24px] overflow-hidden h-[220px] md:h-[260px] mb-5 border border-white/[0.05] cursor-pointer group"
+                                className="relative rounded-[24px] overflow-hidden h-[220px] md:h-[260px] mb-5 border border-surface-border cursor-pointer group"
                             >
                                 {bannerPreview
                                     ? <img src={bannerPreview} alt="Banner" className="absolute inset-0 w-full h-full object-cover" />
@@ -1667,21 +1667,21 @@ export default function CreateEventPage() {
                                                 ? "bg-orange-500/80 border-orange-400/30"
                                                 : "bg-black/30 border-white/10"
                                         )}>
-                                            <Clock className="w-3 h-3 text-white" />
-                                            <span className="text-[10px] font-black text-white">
+                                            <Clock className="w-3 h-3 text-foreground" />
+                                            <span className="text-[10px] font-black text-foreground">
                                                 {isPost ? "Posting Open" : "Voting phase"}
                                             </span>
                                         </div>
                                     </div>
                                     <div>
                                         {form.title && (
-                                            <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mb-0.5">{user?.username ?? "Your Brand"}</p>
+                                            <p className="text-[10px] font-black text-foreground/50 uppercase tracking-widest mb-0.5">{user?.username ?? "Your Brand"}</p>
                                         )}
-                                        <h1 className="font-display text-3xl md:text-[2.6rem] text-white leading-tight mb-1">
+                                        <h1 className="font-display text-3xl md:text-[2.6rem] text-foreground leading-tight mb-1">
                                             {form.title || "Untitled Event"}
                                         </h1>
                                         {form.description && (
-                                            <p className="text-xs text-white/60 font-medium leading-relaxed line-clamp-2 max-w-[420px] mb-4">
+                                            <p className="text-xs text-foreground/60 font-medium leading-relaxed line-clamp-2 max-w-[420px] mb-4">
                                                 {form.description}
                                             </p>
                                         )}
@@ -1702,8 +1702,8 @@ export default function CreateEventPage() {
                                 {/* Edit overlay */}
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                                     <div className="bg-black/80 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2 border border-white/20 shadow-2xl">
-                                        <Pencil className="w-4 h-4 text-white" />
-                                        <span className="text-xs font-black text-white">EDIT BASICS</span>
+                                        <Pencil className="w-4 h-4 text-foreground" />
+                                        <span className="text-xs font-black text-foreground">EDIT BASICS</span>
                                     </div>
                                 </div>
                             </div>
@@ -1712,7 +1712,7 @@ export default function CreateEventPage() {
                             {isPost ? (
                                 <>
                                     {/* Submit Your Entry card */}
-                                    <div className="rounded-[24px] border border-border/40 bg-white/[0.02] overflow-hidden mb-5">
+                                    <div className="rounded-[24px] border border-border/40 bg-surface overflow-hidden mb-5">
                                         {/* Header */}
                                         <div className="px-5 pt-5 pb-4 border-b border-border/30 flex items-center gap-3">
                                             <div className="w-9 h-9 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
@@ -1724,7 +1724,7 @@ export default function CreateEventPage() {
                                             </div>
                                             {/* Mode toggle — static preview */}
                                             <div className="flex items-center bg-foreground/5 border border-border/40 rounded-xl p-0.5 shrink-0">
-                                                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500 text-white text-[10px] font-black uppercase tracking-wider">
+                                                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500 text-foreground text-[10px] font-black uppercase tracking-wider">
                                                     <Upload className="w-3 h-3" /> Upload
                                                 </div>
                                                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-foreground/40 text-[10px] font-black uppercase tracking-wider">
@@ -1763,7 +1763,7 @@ export default function CreateEventPage() {
                                     {/* Rules & Eligibility */}
                                     <div
                                         onClick={() => goTo(basicsIdx)}
-                                        className="rounded-[24px] border border-border/40 bg-white/[0.02] p-5 space-y-5 cursor-pointer group relative"
+                                        className="rounded-[24px] border border-border/40 bg-surface p-5 space-y-5 cursor-pointer group relative"
                                     >
                                         <div>
                                             <div className="flex items-center gap-2 mb-3">
@@ -1803,8 +1803,8 @@ export default function CreateEventPage() {
                                         )}
                                         <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-[24px] pointer-events-none">
                                             <div className="bg-black/80 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2 border border-white/20 shadow-2xl">
-                                                <Pencil className="w-4 h-4 text-white" />
-                                                <span className="text-xs font-black text-white">EDIT BASICS</span>
+                                                <Pencil className="w-4 h-4 text-foreground" />
+                                                <span className="text-xs font-black text-foreground">EDIT BASICS</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1854,20 +1854,20 @@ export default function CreateEventPage() {
                                 ) : (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         {filledProposals.map((p, i) => (
-                                            <div key={i} className="relative rounded-[20px] bg-white/[0.03] border border-white/[0.06] overflow-hidden group/card hover:border-lime-400/20 transition-colors">
+                                            <div key={i} className="relative rounded-[20px] bg-surface border border-surface-border overflow-hidden group/card hover:border-lime-400/20 transition-colors">
                                                 {p.mediaPreview ? (
                                                     <div className="relative w-full aspect-[4/3] overflow-hidden">
                                                         <img src={p.mediaPreview} alt={p.title} className="w-full h-full object-cover" />
                                                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                                                     </div>
                                                 ) : (
-                                                    <div className="w-full aspect-[4/3] bg-lime-400/5 flex items-center justify-center border-b border-white/[0.04]">
+                                                    <div className="w-full aspect-[4/3] bg-lime-400/5 flex items-center justify-center border-b border-surface-border">
                                                         <span className="text-4xl font-black text-lime-400/20">{i + 1}</span>
                                                     </div>
                                                 )}
                                                 <div className="p-4">
                                                     <p className="text-sm font-bold text-foreground mb-3 truncate">{p.title}</p>
-                                                    <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden mb-2">
+                                                    <div className="h-1.5 w-full bg-surface rounded-full overflow-hidden mb-2">
                                                         <div className="h-full rounded-full bg-gradient-to-r from-lime-400/60 to-lime-400/30" style={{ width: "0%" }} />
                                                     </div>
                                                     <div className="flex items-center justify-between">
@@ -1885,15 +1885,15 @@ export default function CreateEventPage() {
                                 {contentIdx >= 0 && (
                                     <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none rounded-[20px]">
                                         <div className="bg-black/80 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2 border border-white/20 shadow-2xl">
-                                            <Pencil className="w-4 h-4 text-white" />
-                                            <span className="text-xs font-black text-white">EDIT OPTIONS</span>
+                                            <Pencil className="w-4 h-4 text-foreground" />
+                                            <span className="text-xs font-black text-foreground">EDIT OPTIONS</span>
                                         </div>
                                     </div>
                                 )}
                             </div>
 
                             {/* Voting guidelines + about */}
-                            <div onClick={() => goTo(basicsIdx)} className="mt-6 rounded-[24px] border border-border/40 bg-white/[0.02] p-5 space-y-5 cursor-pointer group relative">
+                            <div onClick={() => goTo(basicsIdx)} className="mt-6 rounded-[24px] border border-border/40 bg-surface p-5 space-y-5 cursor-pointer group relative">
                                 <div>
                                     <div className="flex items-center gap-2 mb-3">
                                         <ShieldCheck className="w-3.5 h-3.5 text-foreground/40" />
@@ -1929,8 +1929,8 @@ export default function CreateEventPage() {
                                 )}
                                 <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-[24px] pointer-events-none">
                                     <div className="bg-black/80 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2 border border-white/20 shadow-2xl">
-                                        <Pencil className="w-4 h-4 text-white" />
-                                        <span className="text-xs font-black text-white">EDIT BASICS</span>
+                                        <Pencil className="w-4 h-4 text-foreground" />
+                                        <span className="text-xs font-black text-foreground">EDIT BASICS</span>
                                     </div>
                                 </div>
                             </div>
@@ -1944,7 +1944,7 @@ export default function CreateEventPage() {
                             {/* Event info card */}
                             <div
                                 onClick={() => goTo(basicsIdx)}
-                                className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5 relative group cursor-pointer hover:border-[#A78BFA]/40 transition-all"
+                                className="bg-surface border border-surface-border rounded-[20px] p-5 relative group cursor-pointer hover:border-[#A78BFA]/40 transition-all"
                             >
                                 <div className="flex items-center gap-3 mb-4">
                                     <div className="w-10 h-10 rounded-xl bg-[#A78BFA]/10 flex items-center justify-center">
@@ -1990,7 +1990,7 @@ export default function CreateEventPage() {
                                             <span className="text-[10px] text-foreground/35 font-medium">/ {form.maxParticipants || "—"}</span>
                                         </div>
                                     </div>
-                                    <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
+                                    <div className="h-1.5 w-full bg-surface rounded-full overflow-hidden">
                                         <div className="h-full rounded-full bg-gradient-to-r from-[#F97316] via-[#EA580C] to-[#C2410C]" style={{ width: "0%" }} />
                                     </div>
                                 </div>
@@ -2002,7 +2002,7 @@ export default function CreateEventPage() {
                             {/* Rewards card */}
                             <div
                                 onClick={() => goTo(rewardsIdx)}
-                                className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] p-5 relative group cursor-pointer hover:border-[#A78BFA]/40 transition-all"
+                                className="bg-surface border border-surface-border rounded-[20px] p-5 relative group cursor-pointer hover:border-[#A78BFA]/40 transition-all"
                             >
                                 {/* Vote & Earn */}
                                 {!isPost && (
@@ -2379,7 +2379,7 @@ export default function CreateEventPage() {
                             {savingDraft ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                             Save Draft
                         </button>
-                        <button onClick={goNext} className="flex items-center gap-2 px-8 py-3.5 bg-foreground text-background rounded-2xl text-sm font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl hover:bg-accent hover:text-white group">
+                        <button onClick={goNext} className="flex items-center gap-2 px-8 py-3.5 bg-foreground text-background rounded-2xl text-sm font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl hover:bg-accent hover:text-foreground group">
                             Continue <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                         </button>
                     </div>

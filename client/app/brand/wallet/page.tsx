@@ -189,7 +189,7 @@ export default function BrandWalletPage() {
                             <ArrowDownLeft className="w-4 h-4" />
                             Deposit
                         </button>
-                        <button className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-white text-sm font-black hover:bg-primary/90 transition-all shadow-md shadow-primary/20">
+                        <button className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-foreground text-sm font-black hover:bg-primary/90 transition-all shadow-md shadow-primary/20">
                             <ArrowUpRight className="w-4 h-4" />
                             Withdraw
                         </button>
@@ -202,8 +202,8 @@ export default function BrandWalletPage() {
                 <div className="lg:col-span-2 space-y-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <Clock className="w-5 h-5 text-white/40" />
-                            <h3 className="font-display text-xl text-white uppercase tracking-tight pt-1">Activity History</h3>
+                            <Clock className="w-5 h-5 text-foreground/40" />
+                            <h3 className="font-display text-xl text-foreground uppercase tracking-tight pt-1">Activity History</h3>
                         </div>
                         <button className="text-xs font-black text-primary hover:underline flex items-center gap-1">
                             View Explorer <ExternalLink className="w-3 h-3" />
@@ -265,8 +265,8 @@ export default function BrandWalletPage() {
                         
                         <div className="p-6 space-y-5">
                             <div>
-                                <h3 className="font-display text-2xl text-white uppercase tracking-tight mb-1">Send Funds</h3>
-                                <p className="text-[11px] font-black text-white/30 uppercase tracking-widest">Enter an EVM address and a chain to withdraw to.</p>
+                                <h3 className="font-display text-2xl text-foreground uppercase tracking-tight mb-1">Send Funds</h3>
+                                <p className="text-[11px] font-black text-foreground/30 uppercase tracking-widest">Enter an EVM address and a chain to withdraw to.</p>
                             </div>
                             
                             <div className="space-y-4">
@@ -304,7 +304,7 @@ export default function BrandWalletPage() {
                                     />
                                 </div>
                                 
-                                <button className="w-full h-12 bg-primary text-white text-sm font-black rounded-xl hover:bg-primary/90 transition-all shadow-md shadow-primary/20 mt-2">
+                                <button className="w-full h-12 bg-primary text-foreground text-sm font-black rounded-xl hover:bg-primary/90 transition-all shadow-md shadow-primary/20 mt-2">
                                     Withdraw Funds
                                 </button>
                                 
@@ -341,11 +341,11 @@ export default function BrandWalletPage() {
                             }
                         </div>
                         <div>
-                            <p className="text-xs font-black uppercase tracking-[0.2em] text-white/40 mb-0.5">On-Chain Refund Balance</p>
-                            <p className="font-display text-4xl text-white uppercase tracking-tight mt-1">
+                            <p className="text-xs font-black uppercase tracking-[0.2em] text-foreground/40 mb-0.5">On-Chain Refund Balance</p>
+                            <p className="font-display text-4xl text-foreground uppercase tracking-tight mt-1">
                                 {fmt$(onChainBalance)}
                             </p>
-                            <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mt-1">
+                            <p className="text-[10px] font-black text-foreground/30 uppercase tracking-widest mt-1">
                                 Live from RewardsVault contract
                             </p>
                         </div>
@@ -538,25 +538,25 @@ export default function BrandWalletPage() {
                 {/* Header skeleton */}
                 <div className="flex items-start justify-between">
                     <div className="space-y-2">
-                        <div className="h-16 w-72 bg-white/[0.06] rounded-2xl" />
-                        <div className="h-3 w-48 bg-white/[0.04] rounded-lg" />
+                        <div className="h-16 w-72 bg-surface rounded-2xl" />
+                        <div className="h-3 w-48 bg-surface rounded-lg" />
                     </div>
-                    <div className="h-9 w-24 bg-white/[0.04] border border-white/[0.06] rounded-2xl" />
+                    <div className="h-9 w-24 bg-surface border border-surface-border rounded-2xl" />
                 </div>
 
                 {/* Tabs skeleton */}
-                <div className="h-10 w-48 bg-white/[0.03] border border-white/[0.06] rounded-2xl" />
+                <div className="h-10 w-48 bg-surface border border-surface-border rounded-2xl" />
 
                 {/* Hero balance card skeleton */}
-                <div className="bg-white/[0.03] border border-white/[0.06] rounded-[28px] p-6 lg:p-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div className="bg-surface border border-surface-border rounded-[28px] p-6 lg:p-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div className="space-y-3">
-                        <div className="h-3 w-24 bg-white/[0.06] rounded-lg" />
-                        <div className="h-14 w-56 bg-white/[0.06] rounded-2xl" />
-                        <div className="h-3 w-36 bg-white/[0.04] rounded-lg" />
+                        <div className="h-3 w-24 bg-surface rounded-lg" />
+                        <div className="h-14 w-56 bg-surface rounded-2xl" />
+                        <div className="h-3 w-36 bg-surface rounded-lg" />
                     </div>
                     <div className="flex gap-3">
-                        <div className="h-11 w-32 bg-white/[0.06] rounded-xl" />
-                        <div className="h-11 w-32 bg-white/[0.06] rounded-xl" />
+                        <div className="h-11 w-32 bg-surface rounded-xl" />
+                        <div className="h-11 w-32 bg-surface rounded-xl" />
                     </div>
                 </div>
 
@@ -564,39 +564,39 @@ export default function BrandWalletPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 space-y-3">
                         <div className="flex justify-between">
-                            <div className="h-4 w-28 bg-white/[0.06] rounded-lg" />
-                            <div className="h-3 w-20 bg-white/[0.04] rounded-lg" />
+                            <div className="h-4 w-28 bg-surface rounded-lg" />
+                            <div className="h-3 w-20 bg-surface rounded-lg" />
                         </div>
-                        <div className="bg-white/[0.03] border border-white/[0.06] rounded-[20px] divide-y divide-white/[0.04]">
+                        <div className="bg-surface border border-surface-border rounded-[20px] divide-y divide-surface-border">
                             {[1, 2, 3, 4].map((i) => (
                                 <div key={i} className="flex items-center gap-4 px-5 py-4">
-                                    <div className="w-10 h-10 rounded-2xl bg-white/[0.06] shrink-0" />
+                                    <div className="w-10 h-10 rounded-2xl bg-surface shrink-0" />
                                     <div className="flex-1 space-y-2">
-                                        <div className="h-4 w-44 bg-white/[0.06] rounded-lg" />
-                                        <div className="h-3 w-24 bg-white/[0.04] rounded-lg" />
+                                        <div className="h-4 w-44 bg-surface rounded-lg" />
+                                        <div className="h-3 w-24 bg-surface rounded-lg" />
                                     </div>
                                     <div className="space-y-2 text-right">
-                                        <div className="h-4 w-16 bg-white/[0.06] rounded-lg ml-auto" />
-                                        <div className="h-3 w-10 bg-white/[0.04] rounded-lg ml-auto" />
+                                        <div className="h-4 w-16 bg-surface rounded-lg ml-auto" />
+                                        <div className="h-3 w-10 bg-surface rounded-lg ml-auto" />
                                     </div>
                                 </div>
                             ))}
                         </div>
                     </div>
-                    <div className="bg-white/[0.03] border border-white/[0.06] rounded-[24px] p-6 space-y-5 h-[360px]">
+                    <div className="bg-surface border border-surface-border rounded-[24px] p-6 space-y-5 h-[360px]">
                         <div className="space-y-2">
-                            <div className="h-4 w-20 bg-white/[0.06] rounded-lg" />
-                            <div className="h-3 w-full bg-white/[0.04] rounded-lg" />
+                            <div className="h-4 w-20 bg-surface rounded-lg" />
+                            <div className="h-3 w-full bg-surface rounded-lg" />
                         </div>
                         <div className="space-y-3">
-                            <div className="h-3 w-16 bg-white/[0.04] rounded-lg" />
-                            <div className="h-11 w-full bg-white/[0.06] rounded-xl" />
+                            <div className="h-3 w-16 bg-surface rounded-lg" />
+                            <div className="h-11 w-full bg-surface rounded-xl" />
                         </div>
                         <div className="space-y-3">
-                            <div className="h-3 w-24 bg-white/[0.04] rounded-lg" />
-                            <div className="h-11 w-full bg-white/[0.06] rounded-xl" />
+                            <div className="h-3 w-24 bg-surface rounded-lg" />
+                            <div className="h-11 w-full bg-surface rounded-xl" />
                         </div>
-                        <div className="h-11 w-full bg-white/[0.06] rounded-xl mt-2" />
+                        <div className="h-11 w-full bg-surface rounded-xl mt-2" />
                     </div>
                 </div>
             </main>
@@ -607,7 +607,7 @@ export default function BrandWalletPage() {
         return (
             <div className="max-w-2xl mx-auto p-8 text-center space-y-4">
                 <AlertCircle className="w-8 h-8 text-red-400 mx-auto" />
-                <p className="text-sm font-black text-white/40">{error}</p>
+                <p className="text-sm font-black text-foreground/40">{error}</p>
                 <button onClick={loadDbData} className="text-xs font-black text-primary hover:text-primary/80 flex items-center gap-1.5 mx-auto uppercase tracking-widest">
                     <RefreshCw className="w-3.5 h-3.5" /> Retry
                 </button>
@@ -621,16 +621,16 @@ export default function BrandWalletPage() {
                 {/* ── Header ── */}
                 <div className="flex items-start justify-between">
                     <div className="space-y-1">
-                        <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-white uppercase leading-[0.92] tracking-tight">
+                        <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight">
                             Brand Wallet
                         </h1>
-                        <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">
+                        <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em]">
                             Manage your USDC balance and campaign refunds
                         </p>
                     </div>
                     <button
                         onClick={handleRefresh}
-                        className="flex items-center gap-2 px-3 py-2 text-sm font-black text-white/40 hover:text-white bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] rounded-2xl transition-all"
+                        className="flex items-center gap-2 px-3 py-2 text-sm font-black text-foreground/40 hover:text-foreground bg-surface border border-surface-border hover:bg-surface-hover rounded-2xl transition-all"
                     >
                         <RefreshCw className={cn("w-4 h-4", balanceLoading && "animate-spin")} />
                         Refresh
@@ -638,12 +638,12 @@ export default function BrandWalletPage() {
                 </div>
 
                 {/* ── Top-level Tabs ── */}
-                <div className="flex items-center gap-1 p-1 bg-white/[0.03] border border-white/[0.06] rounded-2xl w-fit">
+                <div className="flex items-center gap-1 p-1 bg-surface border border-surface-border rounded-2xl w-fit">
                     <button
                         onClick={() => setActiveTab("wallet")}
                         className={cn(
                             "px-5 py-2 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all",
-                            activeTab === "wallet" ? "bg-white text-black" : "text-white/30 hover:text-white/60"
+                            activeTab === "wallet" ? "bg-white text-black" : "text-foreground/30 hover:text-foreground/60"
                         )}
                     >
                         Overview
@@ -652,14 +652,14 @@ export default function BrandWalletPage() {
                         onClick={() => setActiveTab("refunds")}
                         className={cn(
                             "px-5 py-2 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2",
-                            activeTab === "refunds" ? "bg-white text-black" : "text-white/30 hover:text-white/60"
+                            activeTab === "refunds" ? "bg-white text-black" : "text-foreground/30 hover:text-foreground/60"
                         )}
                     >
                         Refunds
                         {refundablePools.length > 0 && (
                             <span className={cn(
                                 "text-[9px] font-black px-1.5 py-0.5 rounded-full",
-                                activeTab === "refunds" ? "bg-primary text-white" : "bg-primary/20 text-primary"
+                                activeTab === "refunds" ? "bg-primary text-foreground" : "bg-primary/20 text-primary"
                             )}>
                                 {refundablePools.length}
                             </span>
@@ -675,7 +675,7 @@ export default function BrandWalletPage() {
                         <div className="lg:col-span-2 space-y-6">
 
                             {/* Balance Card */}
-                            <div className="bg-white/[0.03] border border-white/[0.06] rounded-[24px] p-8 relative overflow-hidden group">
+                            <div className="bg-surface border border-surface-border rounded-[24px] p-8 relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
                                     <div className="w-64 h-64 bg-blue-500 rounded-full blur-[100px]" />
                                 </div>
@@ -685,14 +685,14 @@ export default function BrandWalletPage() {
                                         <div className="space-y-4">
                                             {/* USDC Balance */}
                                             <div>
-                                                <p className="text-[9px] font-black text-white/30 mb-1 tracking-[0.2em] uppercase">USDC Balance</p>
+                                                <p className="text-[9px] font-black text-foreground/30 mb-1 tracking-[0.2em] uppercase">USDC Balance</p>
                                                 <div className="flex items-baseline gap-3">
-                                                    <h2 className="font-display text-5xl md:text-6xl text-white uppercase tracking-tight leading-none">
+                                                    <h2 className="font-display text-5xl md:text-6xl text-foreground uppercase tracking-tight leading-none">
                                                         {fmt$(balance)}
                                                     </h2>
-                                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-white/[0.05] rounded-full border border-white/[0.08]">
+                                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-surface rounded-full border border-surface-border">
                                                         <img src="/usdc.png" alt="USDC" className="w-3 h-3" />
-                                                        <span className="text-[9px] font-black text-white/30 tracking-wider uppercase">USDC</span>
+                                                        <span className="text-[9px] font-black text-foreground/30 tracking-wider uppercase">USDC</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -700,12 +700,12 @@ export default function BrandWalletPage() {
                                             {/* On-chain Refund Balance */}
                                             {onChainBalance > 0 && (
                                                 <div>
-                                                    <p className="text-[9px] font-black text-white/30 mb-1 tracking-[0.2em] uppercase">Pending Refunds</p>
+                                                    <p className="text-[9px] font-black text-foreground/30 mb-1 tracking-[0.2em] uppercase">Pending Refunds</p>
                                                     <div className="flex items-baseline gap-2">
                                                         <span className="font-display text-3xl text-primary/80 tracking-tight leading-none">
                                                             {fmt$(onChainBalance)}
                                                         </span>
-                                                        <span className="text-sm text-white/30 font-black">USDC</span>
+                                                        <span className="text-sm text-foreground/30 font-black">USDC</span>
                                                     </div>
                                                 </div>
                                             )}
@@ -716,32 +716,32 @@ export default function BrandWalletPage() {
                                                 href={address ? `${EXPLORER_BASE}/address/${address}` : EXPLORER_BASE}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.04] rounded-full w-fit border border-white/[0.08] hover:border-white/[0.15] transition-colors group/badge"
+                                                className="flex items-center gap-2 px-3 py-1.5 bg-surface rounded-full w-fit border border-surface-border hover:border-surface-border-strong transition-colors group/badge"
                                             >
                                                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-                                                <span className="text-[10px] font-black text-white/40 uppercase tracking-widest group-hover/badge:text-white/70 transition-colors">{CHAIN_NAME}</span>
-                                                <ExternalLink className="w-3 h-3 text-white/20 group-hover/badge:text-white/40 transition-colors" />
+                                                <span className="text-[10px] font-black text-foreground/40 uppercase tracking-widest group-hover/badge:text-foreground/70 transition-colors">{CHAIN_NAME}</span>
+                                                <ExternalLink className="w-3 h-3 text-foreground/20 group-hover/badge:text-foreground/40 transition-colors" />
                                             </a>
-                                            <span className="text-[9px] text-white/20 font-mono">Chain ID: {CHAIN_ID}</span>
+                                            <span className="text-[9px] text-foreground/20 font-mono">Chain ID: {CHAIN_ID}</span>
                                         </div>
                                     </div>
 
                                     {/* Address Row */}
                                     {address && (
-                                        <div className="pt-4 border-t border-white/[0.05] space-y-3">
+                                        <div className="pt-4 border-t border-surface-border space-y-3">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Brand Wallet</span>
+                                                <span className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em]">Brand Wallet</span>
                                                 <div className="flex items-center gap-3">
                                                     <a
                                                         href={`${EXPLORER_BASE}/address/${address}`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="font-mono text-sm text-white/50 hover:text-white transition-colors flex items-center gap-1"
+                                                        className="font-mono text-sm text-foreground/50 hover:text-foreground transition-colors flex items-center gap-1"
                                                     >
                                                         {truncateAddress(address)}
                                                         <ExternalLink className="w-3 h-3" />
                                                     </a>
-                                                    <button onClick={() => handleCopy(address)} className="text-white/20 hover:text-white transition-colors">
+                                                    <button onClick={() => handleCopy(address)} className="text-foreground/20 hover:text-foreground transition-colors">
                                                         {copied ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                                                     </button>
                                                 </div>
@@ -751,7 +751,7 @@ export default function BrandWalletPage() {
                                             <div className="flex gap-3 pt-2">
                                                 <button
                                                     onClick={() => setActionTab("deposit")}
-                                                    className="px-4 py-2 bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.15] rounded-xl text-sm font-black text-white/60 hover:text-white transition-all flex items-center gap-2"
+                                                    className="px-4 py-2 bg-surface hover:bg-surface-hover border border-surface-border hover:border-surface-border-strong rounded-xl text-sm font-black text-foreground/60 hover:text-foreground transition-all flex items-center gap-2"
                                                 >
                                                     <ArrowDownLeft className="w-4 h-4" />
                                                     Deposit
@@ -799,7 +799,7 @@ export default function BrandWalletPage() {
                             {/* Activity History */}
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] flex items-center gap-2">
+                                    <h3 className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] flex items-center gap-2">
                                         <History className="w-3.5 h-3.5" />
                                         Activity History
                                     </h3>
@@ -815,17 +815,17 @@ export default function BrandWalletPage() {
                                     )}
                                 </div>
 
-                                <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] overflow-hidden">
+                                <div className="bg-surface border border-surface-border rounded-[24px] overflow-hidden">
                                     {(data?.refundHistory && data.refundHistory.length > 0) ? (
-                                        <div className="divide-y divide-white/[0.04]">
+                                        <div className="divide-y divide-surface-border">
                                             {(data.refundHistory as RefundHistoryItem[]).map((item, i) => (
-                                                <div key={i} className="flex items-center gap-4 px-5 py-4 hover:bg-white/[0.02] transition-colors">
+                                                <div key={i} className="flex items-center gap-4 px-5 py-4 hover:bg-surface transition-colors">
                                                     <div className="w-9 h-9 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center shrink-0">
                                                         <ArrowDownLeft className="w-4 h-4 text-green-400" />
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-black text-white truncate">Refund: {item.eventTitle}</p>
-                                                        <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mt-0.5">{fmtDate(item.timestamp)}</p>
+                                                        <p className="text-sm font-black text-foreground truncate">Refund: {item.eventTitle}</p>
+                                                        <p className="text-[9px] font-black text-foreground/30 uppercase tracking-widest mt-0.5">{fmtDate(item.timestamp)}</p>
                                                     </div>
                                                     <div className="flex flex-col items-end gap-1 shrink-0">
                                                         <span className="text-sm font-black text-lime-400">+${fmt$(item.amount)}</span>
@@ -833,7 +833,7 @@ export default function BrandWalletPage() {
                                                             "text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border",
                                                             item.status === "CANCELLED"
                                                                 ? "bg-red-500/10 text-red-400 border-red-500/20"
-                                                                : "bg-white/[0.04] text-white/30 border-white/[0.08]"
+                                                                : "bg-surface text-foreground/30 border-surface-border"
                                                         )}>
                                                             {item.status}
                                                         </span>
@@ -843,12 +843,12 @@ export default function BrandWalletPage() {
                                         </div>
                                     ) : (
                                         <div className="flex flex-col items-center justify-center py-16 px-6 text-center space-y-4">
-                                            <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center">
-                                                <History className="w-6 h-6 text-white/20" />
+                                            <div className="w-14 h-14 rounded-2xl bg-surface border border-surface-border flex items-center justify-center">
+                                                <History className="w-6 h-6 text-foreground/20" />
                                             </div>
                                             <div>
-                                                <p className="font-black text-white/40 text-sm uppercase tracking-wide">No activity yet</p>
-                                                <p className="text-[10px] font-black text-white/20 mt-1 uppercase tracking-wide">Refunds and transactions will appear here.</p>
+                                                <p className="font-black text-foreground/40 text-sm uppercase tracking-wide">No activity yet</p>
+                                                <p className="text-[10px] font-black text-foreground/20 mt-1 uppercase tracking-wide">Refunds and transactions will appear here.</p>
                                             </div>
                                             {address && (
                                                 <a
@@ -870,14 +870,14 @@ export default function BrandWalletPage() {
                         <div className="space-y-6">
 
                             {/* Action Panel */}
-                            <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 space-y-6">
+                            <div className="bg-surface border border-surface-border rounded-[24px] p-6 space-y-6">
                                 {/* Tabs */}
-                                <div className="grid grid-cols-2 p-1 bg-white/[0.04] rounded-2xl border border-white/[0.06]">
+                                <div className="grid grid-cols-2 p-1 bg-surface rounded-2xl border border-surface-border">
                                     <button
                                         onClick={() => setActionTab("withdraw")}
                                         className={cn(
                                             "py-2 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all",
-                                            actionTab === "withdraw" ? "bg-white text-black" : "text-white/30 hover:text-white/60"
+                                            actionTab === "withdraw" ? "bg-white text-black" : "text-foreground/30 hover:text-foreground/60"
                                         )}
                                     >
                                         Withdraw
@@ -886,7 +886,7 @@ export default function BrandWalletPage() {
                                         onClick={() => setActionTab("deposit")}
                                         className={cn(
                                             "py-2 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all",
-                                            actionTab === "deposit" ? "bg-white text-black" : "text-white/30 hover:text-white/60"
+                                            actionTab === "deposit" ? "bg-white text-black" : "text-foreground/30 hover:text-foreground/60"
                                         )}
                                     >
                                         Deposit
@@ -897,21 +897,21 @@ export default function BrandWalletPage() {
                                     {actionTab === "withdraw" ? (
                                         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                             <div>
-                                                <h3 className="font-display text-2xl text-white uppercase tracking-tight">Send Funds</h3>
-                                                <p className="text-[10px] font-black text-white/30 uppercase tracking-wide mt-1">Enter an EVM address to withdraw to.</p>
+                                                <h3 className="font-display text-2xl text-foreground uppercase tracking-tight">Send Funds</h3>
+                                                <p className="text-[10px] font-black text-foreground/30 uppercase tracking-wide mt-1">Enter an EVM address to withdraw to.</p>
                                             </div>
 
                                             <div className="space-y-5">
                                                 <div className="space-y-2">
-                                                    <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Amount</label>
+                                                    <label className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em]">Amount</label>
                                                     <div className="relative group">
-                                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 font-black">$</span>
+                                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/30 font-black">$</span>
                                                         <input
                                                             type="number"
                                                             placeholder="0.00"
                                                             value={sendAmount}
                                                             onChange={(e) => setSendAmount(e.target.value)}
-                                                            className="w-full bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.15] rounded-xl pl-8 pr-16 py-3.5 text-white focus:ring-1 focus:ring-white/20 focus:border-white/20 outline-none transition-all placeholder-white/20 font-mono text-lg"
+                                                            className="w-full bg-surface border border-surface-border hover:border-surface-border-strong rounded-xl pl-8 pr-16 py-3.5 text-foreground focus:ring-1 focus:ring-foreground/20 focus:border-foreground/20 outline-none transition-all placeholder-foreground/20 font-mono text-lg"
                                                         />
                                                         <button className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-black text-primary hover:text-primary/80 bg-primary/10 px-2 py-1 rounded hover:bg-primary/20 transition-colors uppercase tracking-widest">
                                                             MAX
@@ -920,32 +920,32 @@ export default function BrandWalletPage() {
                                                 </div>
 
                                                 <div className="space-y-2">
-                                                    <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">EVM Address</label>
+                                                    <label className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em]">EVM Address</label>
                                                     <input
                                                         type="text"
                                                         placeholder="0x..."
                                                         value={sendAddress}
                                                         onChange={(e) => setSendAddress(e.target.value)}
-                                                        className="w-full bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.15] rounded-xl px-4 py-3.5 text-white focus:ring-1 focus:ring-white/20 focus:border-white/20 outline-none transition-all placeholder-white/20 font-mono text-sm"
+                                                        className="w-full bg-surface border border-surface-border hover:border-surface-border-strong rounded-xl px-4 py-3.5 text-foreground focus:ring-1 focus:ring-foreground/20 focus:border-foreground/20 outline-none transition-all placeholder-foreground/20 font-mono text-sm"
                                                     />
                                                 </div>
 
                                                 <div className="space-y-2">
-                                                    <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Network</label>
-                                                    <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3.5 flex items-center gap-2">
+                                                    <label className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em]">Network</label>
+                                                    <div className="w-full bg-surface border border-surface-border rounded-xl px-4 py-3.5 flex items-center gap-2">
                                                         <div className="w-2 h-2 rounded-full bg-green-500" />
-                                                        <span className="text-white/60 text-sm font-black">{CHAIN_NAME}</span>
-                                                        <span className="ml-auto text-[9px] text-white/20 font-mono">ID: {CHAIN_ID}</span>
+                                                        <span className="text-foreground/60 text-sm font-black">{CHAIN_NAME}</span>
+                                                        <span className="ml-auto text-[9px] text-foreground/20 font-mono">ID: {CHAIN_ID}</span>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             <button
                                                 disabled
-                                                className="w-full bg-white/[0.05] cursor-not-allowed text-white/20 font-black text-[11px] uppercase tracking-[0.2em] py-3.5 rounded-xl transition-all flex items-center justify-center gap-2"
+                                                className="w-full bg-surface cursor-not-allowed text-foreground/20 font-black text-[11px] uppercase tracking-[0.2em] py-3.5 rounded-xl transition-all flex items-center justify-center gap-2"
                                             >
                                                 Withdraw Funds
-                                                <span className="text-[9px] font-black text-white/20 normal-case tracking-normal">(coming soon)</span>
+                                                <span className="text-[9px] font-black text-foreground/20 normal-case tracking-normal">(coming soon)</span>
                                             </button>
 
                                             <div className="flex items-start gap-3 p-3 bg-yellow-500/5 border border-yellow-500/10 rounded-xl">
@@ -958,8 +958,8 @@ export default function BrandWalletPage() {
                                     ) : (
                                         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                             <div>
-                                                <h3 className="font-display text-2xl text-white uppercase tracking-tight">Deposit USDC</h3>
-                                                <p className="text-[10px] font-black text-white/30 uppercase tracking-wide mt-1">Scan or copy your address to deposit.</p>
+                                                <h3 className="font-display text-2xl text-foreground uppercase tracking-tight">Deposit USDC</h3>
+                                                <p className="text-[10px] font-black text-foreground/30 uppercase tracking-wide mt-1">Scan or copy your address to deposit.</p>
                                             </div>
 
                                             {address ? (
@@ -969,24 +969,24 @@ export default function BrandWalletPage() {
                                                     </div>
 
                                                     <div className="space-y-2">
-                                                        <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Your Address</label>
+                                                        <label className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em]">Your Address</label>
                                                         <div
-                                                            className="w-full bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.15] rounded-xl px-4 py-3.5 flex items-center justify-between group/copy cursor-pointer transition-colors"
+                                                            className="w-full bg-surface border border-surface-border hover:border-surface-border-strong rounded-xl px-4 py-3.5 flex items-center justify-between group/copy cursor-pointer transition-colors"
                                                             onClick={() => handleCopy(address)}
                                                         >
-                                                            <span className="font-mono text-white/60 text-sm truncate mr-2 select-all">
+                                                            <span className="font-mono text-foreground/60 text-sm truncate mr-2 select-all">
                                                                 {truncateAddress(address)}
                                                             </span>
                                                             {copied ? (
                                                                 <span className="text-[10px] font-black text-green-400 uppercase tracking-widest animate-in fade-in">Copied!</span>
                                                             ) : (
-                                                                <Copy className="w-4 h-4 text-white/20 group-hover/copy:text-white/50 transition-colors" />
+                                                                <Copy className="w-4 h-4 text-foreground/20 group-hover/copy:text-foreground/50 transition-colors" />
                                                             )}
                                                         </div>
                                                         <p className="text-[9px] font-mono text-white/15 break-all px-1">{address}</p>
                                                     </div>
 
-                                                    <div className="flex items-center justify-between text-[9px] font-black text-white/30 bg-white/[0.04] py-2 px-3 rounded-xl border border-white/[0.06] uppercase tracking-widest">
+                                                    <div className="flex items-center justify-between text-[9px] font-black text-foreground/30 bg-surface py-2 px-3 rounded-xl border border-surface-border uppercase tracking-widest">
                                                         <span className="flex items-center gap-1.5">
                                                             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                                                             {CHAIN_NAME}
@@ -995,7 +995,7 @@ export default function BrandWalletPage() {
                                                             href={`${EXPLORER_BASE}/address/${address}`}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            className="flex items-center gap-1 hover:text-white transition-colors"
+                                                            className="flex items-center gap-1 hover:text-foreground transition-colors"
                                                         >
                                                             Explorer <ExternalLink className="w-3 h-3" />
                                                         </a>
@@ -1013,10 +1013,10 @@ export default function BrandWalletPage() {
                             </div>
 
                             {/* How it works */}
-                            <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 space-y-5">
+                            <div className="bg-surface border border-surface-border rounded-[24px] p-6 space-y-5">
                                 <div className="flex items-center gap-2">
-                                    <Info className="w-3.5 h-3.5 text-white/30" />
-                                    <h3 className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">
+                                    <Info className="w-3.5 h-3.5 text-foreground/30" />
+                                    <h3 className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em]">
                                         How brand wallet works
                                     </h3>
                                 </div>
@@ -1027,8 +1027,8 @@ export default function BrandWalletPage() {
                                             <Shield className="w-4 h-4 text-blue-400" />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-black text-white/70">Privy Embedded Wallet</p>
-                                            <p className="text-[10px] font-black text-white/30 mt-0.5 leading-relaxed">
+                                            <p className="text-sm font-black text-foreground/70">Privy Embedded Wallet</p>
+                                            <p className="text-[10px] font-black text-foreground/30 mt-0.5 leading-relaxed">
                                                 Your brand wallet is a non-custodial smart account secured by Privy MPC. You hold the keys.
                                             </p>
                                         </div>
@@ -1039,8 +1039,8 @@ export default function BrandWalletPage() {
                                             <Zap className="w-4 h-4 text-purple-400" />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-black text-white/70">Gasless Transactions</p>
-                                            <p className="text-[10px] font-black text-white/30 mt-0.5 leading-relaxed">
+                                            <p className="text-sm font-black text-foreground/70">Gasless Transactions</p>
+                                            <p className="text-[10px] font-black text-foreground/30 mt-0.5 leading-relaxed">
                                                 Campaign deposits and refund withdrawals are sponsored — no POL required to interact.
                                             </p>
                                         </div>
@@ -1051,16 +1051,16 @@ export default function BrandWalletPage() {
                                             <KeyRound className="w-4 h-4 text-green-400" />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-black text-white/70">Full Self-Custody</p>
-                                            <p className="text-[10px] font-black text-white/30 mt-0.5 leading-relaxed">
+                                            <p className="text-sm font-black text-foreground/70">Full Self-Custody</p>
+                                            <p className="text-[10px] font-black text-foreground/30 mt-0.5 leading-relaxed">
                                                 Export your private key anytime and import into any EVM wallet — you always have full control.
                                             </p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="pt-3 border-t border-white/[0.05] flex items-center justify-between">
-                                    <span className="text-[9px] text-white/20 uppercase tracking-[0.2em] font-black">Network</span>
+                                <div className="pt-3 border-t border-surface-border flex items-center justify-between">
+                                    <span className="text-[9px] text-foreground/20 uppercase tracking-[0.2em] font-black">Network</span>
                                     <a
                                         href="https://amoy.polygonscan.com"
                                         target="_blank"
@@ -1081,8 +1081,8 @@ export default function BrandWalletPage() {
 
                         {/* On-chain balance card */}
                         <div className={cn(
-                            "bg-white/[0.03] border rounded-[24px] p-8 relative overflow-hidden group",
-                            onChainBalance > 0 ? "border-primary/30" : "border-white/[0.06]"
+                            "bg-surface border rounded-[24px] p-8 relative overflow-hidden group",
+                            onChainBalance > 0 ? "border-primary/30" : "border-surface-border"
                         )}>
                             {onChainBalance > 0 && (
                                 <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
@@ -1094,22 +1094,22 @@ export default function BrandWalletPage() {
                                 <div className="flex items-center gap-5 flex-1">
                                     <div className={cn(
                                         "w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border",
-                                        onChainBalance > 0 ? "bg-primary/10 border-primary/20" : "bg-white/[0.04] border-white/[0.06]"
+                                        onChainBalance > 0 ? "bg-primary/10 border-primary/20" : "bg-surface border-surface-border"
                                     )}>
                                         {balanceLoading
                                             ? <Loader2 className="w-6 h-6 animate-spin text-primary/50" />
-                                            : <DollarSign className={cn("w-7 h-7", onChainBalance > 0 ? "text-primary" : "text-white/20")} />
+                                            : <DollarSign className={cn("w-7 h-7", onChainBalance > 0 ? "text-primary" : "text-foreground/20")} />
                                         }
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-black text-white/30 mb-1 tracking-[0.2em] uppercase">On-Chain Refund Balance</p>
+                                        <p className="text-[9px] font-black text-foreground/30 mb-1 tracking-[0.2em] uppercase">On-Chain Refund Balance</p>
                                         <div className="flex items-baseline gap-2">
-                                            <span className="font-display text-4xl text-white uppercase tracking-tight leading-none">
+                                            <span className="font-display text-4xl text-foreground uppercase tracking-tight leading-none">
                                                 ${fmt$(onChainBalance)}
                                             </span>
-                                            <span className="text-sm text-white/30 font-black">USDC</span>
+                                            <span className="text-sm text-foreground/30 font-black">USDC</span>
                                         </div>
-                                        <p className="text-[9px] font-black text-white/20 mt-1 uppercase tracking-widest">
+                                        <p className="text-[9px] font-black text-foreground/20 mt-1 uppercase tracking-widest">
                                             Live from RewardsVault contract
                                         </p>
                                     </div>
@@ -1132,7 +1132,7 @@ export default function BrandWalletPage() {
                                     <button
                                         onClick={loadOnChainBalance}
                                         disabled={balanceLoading}
-                                        className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] hover:border-white/[0.12] text-[11px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-all disabled:opacity-40"
+                                        className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-surface border border-surface-border hover:bg-surface-hover hover:border-white/[0.12] text-[11px] font-black uppercase tracking-widest text-foreground/40 hover:text-foreground transition-all disabled:opacity-40"
                                     >
                                         <RefreshCw className={cn("w-3.5 h-3.5", balanceLoading && "animate-spin")} />
                                         Refresh
@@ -1169,7 +1169,7 @@ export default function BrandWalletPage() {
                         {refundablePools.length > 0 && (
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] flex items-center gap-2">
+                                    <h3 className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] flex items-center gap-2">
                                         <Gift className="w-3.5 h-3.5" />
                                         By Event
                                         <span className="text-primary font-black">(${fmt$(dbTotal)} projected)</span>
@@ -1191,7 +1191,7 @@ export default function BrandWalletPage() {
                                         const unusedSlots = Math.max(0, pool.maxParticipants - pool.participantCount);
 
                                         return (
-                                            <div key={pool.eventId} className="bg-white/[0.02] border border-white/[0.05] rounded-[20px] overflow-hidden">
+                                            <div key={pool.eventId} className="bg-surface border border-surface-border rounded-[20px] overflow-hidden">
                                                 <div className="p-5 flex items-center gap-4">
                                                     <div className={cn(
                                                         "w-10 h-10 rounded-xl border flex items-center justify-center shrink-0",
@@ -1204,28 +1204,28 @@ export default function BrandWalletPage() {
 
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center gap-2 flex-wrap">
-                                                            <p className="text-sm font-black text-white truncate">
+                                                            <p className="text-sm font-black text-foreground truncate">
                                                                 {(pool as any).eventTitle ?? pool.eventId.slice(0, 12) + "…"}
                                                             </p>
                                                             <span className={cn(
                                                                 "text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border",
                                                                 pool.status === "CANCELLED"
                                                                     ? "bg-red-500/10 text-red-400 border-red-500/20"
-                                                                    : "bg-white/[0.04] text-white/30 border-white/[0.08]"
+                                                                    : "bg-surface text-foreground/30 border-surface-border"
                                                             )}>
                                                                 {pool.status === "CANCELLED" ? "Cancelled" : "Completed"}
                                                             </span>
                                                         </div>
-                                                        <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mt-0.5">
+                                                        <p className="text-[9px] font-black text-foreground/30 uppercase tracking-widest mt-0.5">
                                                             {unusedSlots} unused slot{unusedSlots !== 1 ? "s" : ""} · {pool.participantCount}/{pool.maxParticipants} participated
                                                         </p>
                                                     </div>
 
                                                     <div className="text-right shrink-0">
-                                                        <p className="font-display text-2xl text-white tracking-tight uppercase">${fmt$(refund)}</p>
+                                                        <p className="font-display text-2xl text-foreground tracking-tight uppercase">${fmt$(refund)}</p>
                                                         <button
                                                             onClick={() => setExpandedId(isExpanded ? null : pool.eventId)}
-                                                            className="text-[9px] font-black text-white/30 hover:text-white/60 uppercase tracking-widest flex items-center gap-0.5 ml-auto transition-colors"
+                                                            className="text-[9px] font-black text-foreground/30 hover:text-foreground/60 uppercase tracking-widest flex items-center gap-0.5 ml-auto transition-colors"
                                                         >
                                                             Breakdown {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                                                         </button>
@@ -1233,7 +1233,7 @@ export default function BrandWalletPage() {
                                                 </div>
 
                                                 {isExpanded && pool.refundBreakdown && (
-                                                    <div className="px-5 pb-4 border-t border-white/[0.04]">
+                                                    <div className="px-5 pb-4 border-t border-surface-border">
                                                         <div className="pt-4 space-y-2">
                                                             {([
                                                                 ["Base pool (unused)", pool.refundBreakdown.unusedBase],
@@ -1245,13 +1245,13 @@ export default function BrandWalletPage() {
                                                                 .filter(([, v]) => v > 0)
                                                                 .map(([label, value]) => (
                                                                     <div key={label} className="flex items-center justify-between">
-                                                                        <span className="text-[10px] font-black text-white/30 uppercase tracking-wide">{label}</span>
-                                                                        <span className="text-[10px] font-black text-white">${fmt$(value)}</span>
+                                                                        <span className="text-[10px] font-black text-foreground/30 uppercase tracking-wide">{label}</span>
+                                                                        <span className="text-[10px] font-black text-foreground">${fmt$(value)}</span>
                                                                     </div>
                                                                 ))}
-                                                            <div className="flex items-center justify-between pt-2 border-t border-white/[0.04]">
-                                                                <span className="text-[10px] font-black text-white/50 uppercase tracking-wide">Total refund</span>
-                                                                <span className="text-sm font-black text-white">${fmt$(refund)}</span>
+                                                            <div className="flex items-center justify-between pt-2 border-t border-surface-border">
+                                                                <span className="text-[10px] font-black text-foreground/50 uppercase tracking-wide">Total refund</span>
+                                                                <span className="text-sm font-black text-foreground">${fmt$(refund)}</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1262,7 +1262,7 @@ export default function BrandWalletPage() {
                                     })}
                                 </div>
 
-                                <p className="text-[9px] font-black text-white/20 text-center pt-1 uppercase tracking-wide">
+                                <p className="text-[9px] font-black text-foreground/20 text-center pt-1 uppercase tracking-wide">
                                     Amounts credited to on-chain balance after event finalization. Withdraw above or apply as credit when creating a new event.
                                 </p>
                             </div>
@@ -1270,13 +1270,13 @@ export default function BrandWalletPage() {
 
                         {/* Empty state */}
                         {refundablePools.length === 0 && onChainBalance === 0 && (
-                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] py-16 px-6 flex flex-col items-center gap-4 text-center">
-                                <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center">
-                                    <Wallet className="w-6 h-6 text-white/20" />
+                            <div className="bg-surface border border-surface-border rounded-[24px] py-16 px-6 flex flex-col items-center gap-4 text-center">
+                                <div className="w-14 h-14 rounded-2xl bg-surface border border-surface-border flex items-center justify-center">
+                                    <Wallet className="w-6 h-6 text-foreground/20" />
                                 </div>
                                 <div>
-                                    <p className="font-black text-white/40 text-sm uppercase tracking-wide">No refunds available</p>
-                                    <p className="text-[10px] font-black text-white/20 mt-1 uppercase tracking-wide max-w-sm">
+                                    <p className="font-black text-foreground/40 text-sm uppercase tracking-wide">No refunds available</p>
+                                    <p className="text-[10px] font-black text-foreground/20 mt-1 uppercase tracking-wide max-w-sm">
                                         Refunds appear when an event ends with fewer participants than its maximum capacity.
                                     </p>
                                 </div>
@@ -1286,19 +1286,19 @@ export default function BrandWalletPage() {
                         {/* Refund History */}
                         {(data?.refundHistory ?? []).length > 0 && (
                             <div className="space-y-4">
-                                <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] flex items-center gap-2">
+                                <h3 className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em] flex items-center gap-2">
                                     <History className="w-3.5 h-3.5" />
                                     Refund History
                                 </h3>
-                                <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] overflow-hidden divide-y divide-white/[0.04]">
+                                <div className="bg-surface border border-surface-border rounded-[24px] overflow-hidden divide-y divide-surface-border">
                                     {(data!.refundHistory as RefundHistoryItem[]).map((item, i) => (
-                                        <div key={i} className="flex items-center gap-4 px-5 py-4 hover:bg-white/[0.02] transition-colors">
-                                            <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0">
-                                                <Clock className="w-4 h-4 text-white/30" />
+                                        <div key={i} className="flex items-center gap-4 px-5 py-4 hover:bg-surface transition-colors">
+                                            <div className="w-9 h-9 rounded-xl bg-surface border border-surface-border flex items-center justify-center shrink-0">
+                                                <Clock className="w-4 h-4 text-foreground/30" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-black text-white truncate">{item.eventTitle}</p>
-                                                <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mt-0.5">{fmtDate(item.timestamp)}</p>
+                                                <p className="text-sm font-black text-foreground truncate">{item.eventTitle}</p>
+                                                <p className="text-[9px] font-black text-foreground/30 uppercase tracking-widest mt-0.5">{fmtDate(item.timestamp)}</p>
                                             </div>
                                             <div className="flex flex-col items-end gap-1 shrink-0">
                                                 <span className="text-sm font-black text-lime-400">+${fmt$(item.amount)}</span>
@@ -1306,7 +1306,7 @@ export default function BrandWalletPage() {
                                                     "text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border",
                                                     item.status === "CANCELLED"
                                                         ? "bg-red-500/10 text-red-400 border-red-500/20"
-                                                        : "bg-white/[0.04] text-white/30 border-white/[0.08]"
+                                                        : "bg-surface text-foreground/30 border-surface-border"
                                                 )}>
                                                     {item.status}
                                                 </span>

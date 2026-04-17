@@ -87,7 +87,7 @@ export default function LoginModal() {
               {/* Close */}
               <button
                 onClick={closeLoginModal}
-                className="absolute top-4 right-4 z-10 w-8 h-8 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center text-foreground/50 hover:text-foreground transition-colors"
+                className="absolute top-4 right-4 z-10 w-8 h-8 rounded-xl bg-surface hover:bg-surface-hover flex items-center justify-center text-foreground/50 hover:text-foreground transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -123,7 +123,7 @@ export default function LoginModal() {
                   {BENEFITS.map((b) => (
                     <div
                       key={b.title}
-                      className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-3.5 space-y-1.5"
+                      className="bg-surface border border-surface-border rounded-2xl p-3.5 space-y-1.5"
                     >
                       <div className="flex items-center gap-2">
                         {b.icon}

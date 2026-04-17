@@ -54,10 +54,10 @@ export default function MilestonesTableModal({ open, onClose, overallLevel }: Pr
                         exit={{ opacity: 0, y: 16, scale: 0.97 }}
                         transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
                         onClick={(e) => e.stopPropagation()}
-                        className="w-full max-w-3xl bg-background border border-white/[0.08] rounded-[28px] flex flex-col overflow-hidden shadow-2xl"
+                        className="w-full max-w-3xl bg-background border border-surface-border rounded-[28px] flex flex-col overflow-hidden shadow-2xl"
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06] shrink-0">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-surface-border shrink-0">
                             <div>
                                 <h2 className="font-display text-2xl text-foreground uppercase tracking-tight">Global Milestone Tiers</h2>
                                 <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em] mt-0.5">
@@ -66,7 +66,7 @@ export default function MilestonesTableModal({ open, onClose, overallLevel }: Pr
                             </div>
                             <button
                                 onClick={onClose}
-                                className="w-8 h-8 rounded-full bg-white/[0.05] hover:bg-white/[0.1] flex items-center justify-center transition-colors"
+                                className="w-8 h-8 rounded-full bg-surface hover:bg-white/[0.1] flex items-center justify-center transition-colors"
                             >
                                 <X className="w-4 h-4 text-foreground/50" />
                             </button>
@@ -86,7 +86,7 @@ export default function MilestonesTableModal({ open, onClose, overallLevel }: Pr
                                             Levels
                                         </th>
                                     </tr>
-                                    <tr className="border-b border-white/[0.06]">
+                                    <tr className="border-b border-surface-border">
                                         <th className="pb-3 text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em]" />
                                         {LEVELS.map((lvl) => {
                                             const isCurrent = overallLevel === lvl;
@@ -115,7 +115,7 @@ export default function MilestonesTableModal({ open, onClose, overallLevel }: Pr
                                         <tr
                                             key={row.label}
                                             className={cn(
-                                                "border-b border-white/[0.04] last:border-0",
+                                                "border-b border-surface-border last:border-0",
                                                 row.highlight && "bg-lime-400/[0.04]"
                                             )}
                                         >

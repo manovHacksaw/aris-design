@@ -79,12 +79,12 @@ export default function MilestonesPage() {
                     className="mb-8"
                 >
                     <div className="flex items-center gap-3 mb-4">
-                        <div className="h-12 w-80 bg-white/[0.05] rounded-2xl animate-pulse" />
-                        <div className="h-8 w-24 bg-white/[0.05] rounded-full animate-pulse" />
+                        <div className="h-12 w-80 bg-surface rounded-2xl animate-pulse" />
+                        <div className="h-8 w-24 bg-surface rounded-full animate-pulse" />
                     </div>
                     <div className="space-y-2">
-                        <div className="h-4 w-full max-w-2xl bg-white/[0.03] rounded-lg animate-pulse" />
-                        <div className="h-4 w-2/3 max-w-md bg-white/[0.03] rounded-lg animate-pulse" />
+                        <div className="h-4 w-full max-w-2xl bg-surface rounded-lg animate-pulse" />
+                        <div className="h-4 w-2/3 max-w-md bg-surface rounded-lg animate-pulse" />
                     </div>
                 </motion.div>
 
@@ -97,14 +97,14 @@ export default function MilestonesPage() {
                         className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6"
                     >
                         {[...Array(4)].map((_, i) => (
-                            <div key={i} className="h-[160px] bg-white/[0.03] border border-white/[0.06] rounded-[28px] animate-pulse" />
+                            <div key={i} className="h-[160px] bg-surface border border-surface-border rounded-[28px] animate-pulse" />
                         ))}
                     </motion.div>
                     <motion.div
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.5, delay: 0.3 }}
-                        className="lg:col-span-4 h-full min-h-[300px] bg-white/[0.03] border border-white/[0.06] rounded-[32px] animate-pulse"
+                        className="lg:col-span-4 h-full min-h-[300px] bg-surface border border-surface-border rounded-[32px] animate-pulse"
                     />
                 </div>
 
@@ -114,13 +114,13 @@ export default function MilestonesPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: 0.4 }}
-                        className="lg:col-span-8 min-h-[450px] bg-white/[0.03] border border-white/[0.06] rounded-[28px] animate-pulse"
+                        className="lg:col-span-8 min-h-[450px] bg-surface border border-surface-border rounded-[28px] animate-pulse"
                     />
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.5, delay: 0.5 }}
-                        className="lg:col-span-4 min-h-[450px] bg-white/[0.03] border border-white/[0.06] rounded-[28px] animate-pulse"
+                        className="lg:col-span-4 min-h-[450px] bg-surface border border-surface-border rounded-[28px] animate-pulse"
                     />
                 </div>
             </div>
@@ -182,26 +182,26 @@ export default function MilestonesPage() {
                 {/* Top Left: 4 Data Metric Cards */}
                 <div className="lg:col-span-8 grid grid-cols-2 md:grid-cols-2 gap-3 sm:gap-6">
                     {/* Card 1: Lime Hero Card (Discount Reward) */}
-                    <div onClick={() => setProgressModalOpen(true)} className="bg-white/[0.03] border border-lime-400/20 rounded-[28px] p-4 sm:p-8 flex flex-col justify-center min-h-[140px] sm:min-h-[160px] relative overflow-hidden group cursor-pointer hover:bg-lime-400/[0.02] transition-all">
+                    <div onClick={() => setProgressModalOpen(true)} className="bg-surface border border-lime-400/20 rounded-[28px] p-4 sm:p-8 flex flex-col justify-center min-h-[140px] sm:min-h-[160px] relative overflow-hidden group cursor-pointer hover:bg-lime-400/[0.02] transition-all">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-lime-400/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-lime-400/10 transition-colors duration-700" />
                         <h2 className="font-display text-[3.5rem] lg:text-[4.8rem] text-lime-400 uppercase tracking-tight leading-none mb-1 sm:mb-2">{currentReward}%</h2>
                         <p className="text-[10px] font-black text-lime-400/40 uppercase tracking-[0.2em]">Reward Discount</p>
                     </div>
 
                     {/* Card 2: Tokens Minted */}
-                    <div onClick={() => setProgressModalOpen(true)} className="bg-white/[0.03] border border-white/[0.06] rounded-[28px] p-4 sm:p-8 flex flex-col justify-center min-h-[140px] sm:min-h-[160px] hover:bg-white/[0.05] hover:border-white/[0.1] transition-all cursor-pointer">
+                    <div onClick={() => setProgressModalOpen(true)} className="bg-surface border border-surface-border rounded-[28px] p-4 sm:p-8 flex flex-col justify-center min-h-[140px] sm:min-h-[160px] hover:bg-surface hover:border-white/[0.1] transition-all cursor-pointer">
                         <h2 className="font-display text-[2rem] sm:text-[3rem] lg:text-[4rem] text-foreground tracking-tight leading-none mb-1 sm:mb-2">${data.usdcDistributed.toLocaleString(undefined, { maximumFractionDigits: 1 })}</h2>
                         <p className="text-[9px] sm:text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em]">Tokens Minted</p>
                     </div>
 
                     {/* Card 3: Events Created */}
-                    <div onClick={() => setProgressModalOpen(true)} className="bg-white/[0.03] border border-white/[0.06] rounded-[28px] p-4 sm:p-8 flex flex-col justify-center min-h-[140px] sm:min-h-[160px] hover:bg-white/[0.05] hover:border-white/[0.1] transition-all cursor-pointer">
+                    <div onClick={() => setProgressModalOpen(true)} className="bg-surface border border-surface-border rounded-[28px] p-4 sm:p-8 flex flex-col justify-center min-h-[140px] sm:min-h-[160px] hover:bg-surface hover:border-white/[0.1] transition-all cursor-pointer">
                         <h2 className="font-display text-[2.5rem] sm:text-[3rem] lg:text-[4rem] text-foreground tracking-tight leading-none mb-1 sm:mb-2">{data.eventsCreated.toLocaleString()}</h2>
                         <p className="text-[9px] sm:text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em]">Events Created</p>
                     </div>
 
                     {/* Card 4: Participants */}
-                    <div onClick={() => setProgressModalOpen(true)} className="bg-white/[0.03] border border-white/[0.06] rounded-[28px] p-4 sm:p-8 flex flex-col justify-center min-h-[140px] sm:min-h-[160px] hover:bg-white/[0.05] hover:border-white/[0.1] transition-all cursor-pointer">
+                    <div onClick={() => setProgressModalOpen(true)} className="bg-surface border border-surface-border rounded-[28px] p-4 sm:p-8 flex flex-col justify-center min-h-[140px] sm:min-h-[160px] hover:bg-surface hover:border-white/[0.1] transition-all cursor-pointer">
                         <h2 className="font-display text-[2.5rem] sm:text-[3rem] lg:text-[4rem] text-foreground tracking-tight leading-none mb-1 sm:mb-2">{data.uniqueParticipants.toLocaleString()}</h2>
                         <p className="text-[9px] sm:text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em]">Participants</p>
                     </div>
@@ -210,7 +210,7 @@ export default function MilestonesPage() {
                 {/* Top Right: Overall Brand Level & Timeline */}
                 <div
                     onClick={() => setTiersModalOpen(true)}
-                    className="lg:col-span-4 bg-white/[0.03] border border-white/[0.06] rounded-[32px] p-5 lg:p-6 flex flex-col relative min-h-[300px] cursor-pointer hover:border-white/[0.12] hover:bg-white/[0.05] transition-all group"
+                    className="lg:col-span-4 bg-surface border border-surface-border rounded-[32px] p-5 lg:p-6 flex flex-col relative min-h-[300px] cursor-pointer hover:border-white/[0.12] hover:bg-surface transition-all group"
                 >
                     <div className="flex items-center justify-between gap-2 mb-2 relative z-10 w-full pr-1">
                         <h3 className="font-display text-2xl text-foreground uppercase tracking-tight truncate group-hover:text-lime-400 transition-colors">
@@ -226,7 +226,7 @@ export default function MilestonesPage() {
 
                     <div className="relative flex-1 flex flex-col justify-center mt-2 w-full">
                         {/* Timeline line */}
-                        <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-white/[0.06] z-0 -translate-y-1/2" />
+                        <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-surface z-0 -translate-y-1/2" />
 
                         {/* Horizontal scrollable wrapper */}
                         <div className="flex items-center overflow-x-auto scrollbar-hide -mx-5 px-5 w-[calc(100%+40px)] relative z-10 snap-x snap-mandatory py-6">
@@ -239,8 +239,8 @@ export default function MilestonesPage() {
                                             <div className={cn(
                                                 "w-[120px] md:w-[140px] p-4 rounded-[24px] flex flex-col items-center justify-center transition-all duration-300 relative",
                                                 isCurrent
-                                                    ? "bg-white/[0.05] border-[2px] border-lime-400 shadow-[0_0_20px_rgba(163,230,53,0.2)] min-h-[110px]"
-                                                    : "bg-white/[0.03] border border-white/[0.06] min-h-[150px]"
+                                                    ? "bg-surface border-[2px] border-lime-400 shadow-[0_0_20px_rgba(163,230,53,0.2)] min-h-[110px]"
+                                                    : "bg-surface border border-surface-border min-h-[150px]"
                                             )}>
                                                 <h4 className={cn(
                                                     "text-[10px] font-black uppercase tracking-[0.15em] mb-2",
@@ -282,13 +282,13 @@ export default function MilestonesPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
                 {/* Bottom Left: Detailed Sub-Milestones Table */}
-                <div className="lg:col-span-8 bg-white/[0.03] border border-white/[0.06] rounded-[28px] p-6 lg:p-8 overflow-hidden flex flex-col">
+                <div className="lg:col-span-8 bg-surface border border-surface-border rounded-[28px] p-6 lg:p-8 overflow-hidden flex flex-col">
                     <h3 className="font-display text-2xl lg:text-3xl text-foreground uppercase tracking-tight mb-6">Milestone Requirements Data</h3>
 
                     <div className="overflow-x-auto w-full pb-4">
                         <table className="w-full text-left min-w-[500px]">
                             <thead>
-                                <tr className="border-b border-white/[0.06]">
+                                <tr className="border-b border-surface-border">
                                     <th className="pb-4 text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em]">Category</th>
                                     <th className="pb-4 text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em] text-center">Current Value</th>
                                     <th className="pb-4 text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em] text-center">Required Target</th>
@@ -297,7 +297,7 @@ export default function MilestonesPage() {
                             </thead>
                             <tbody>
                                 {/* Tokens Row */}
-                                <tr className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.03] transition-colors group">
+                                <tr className="border-b border-surface-border last:border-0 hover:bg-surface transition-colors group">
                                     <td className="py-6 font-black text-foreground text-[11px] uppercase tracking-widest flex items-center gap-4">
                                         <div className="w-12 h-12 rounded-2xl bg-lime-400/10 flex items-center justify-center text-lime-400 group-hover:scale-105 transition-transform">
                                             <Coins className="w-6 h-6" />
@@ -311,7 +311,7 @@ export default function MilestonesPage() {
                                     <td className="py-6 text-right">
                                         <span className={cn(
                                             "inline-flex items-center px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full border",
-                                            usdcDistributedLevel >= 7 ? "bg-lime-400 border-lime-400 text-black" : "bg-white/[0.04] text-foreground/50 border-white/[0.06]"
+                                            usdcDistributedLevel >= 7 ? "bg-lime-400 border-lime-400 text-black" : "bg-surface text-foreground/50 border-surface-border"
                                         )}>
                                             {usdcDistributedLevel >= 7 ? "MAXED" : `LVL ${usdcDistributedLevel}`}
                                         </span>
@@ -319,7 +319,7 @@ export default function MilestonesPage() {
                                 </tr>
 
                                 {/* Events Row */}
-                                <tr className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.03] transition-colors group">
+                                <tr className="border-b border-surface-border last:border-0 hover:bg-surface transition-colors group">
                                     <td className="py-6 font-black text-foreground text-[11px] uppercase tracking-widest flex items-center gap-4">
                                         <div className="w-12 h-12 rounded-2xl bg-lime-400/10 flex items-center justify-center text-lime-400 group-hover:scale-105 transition-transform">
                                             <Megaphone className="w-6 h-6" />
@@ -333,7 +333,7 @@ export default function MilestonesPage() {
                                     <td className="py-6 text-right">
                                         <span className={cn(
                                             "inline-flex items-center px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full border",
-                                            eventsCreatedLevel >= 7 ? "bg-lime-400 border-lime-400 text-black" : "bg-white/[0.04] text-foreground/50 border-white/[0.06]"
+                                            eventsCreatedLevel >= 7 ? "bg-lime-400 border-lime-400 text-black" : "bg-surface text-foreground/50 border-surface-border"
                                         )}>
                                             {eventsCreatedLevel >= 7 ? "MAXED" : `LVL ${eventsCreatedLevel}`}
                                         </span>
@@ -341,7 +341,7 @@ export default function MilestonesPage() {
                                 </tr>
 
                                 {/* Participants Row */}
-                                <tr className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.03] transition-colors group">
+                                <tr className="border-b border-surface-border last:border-0 hover:bg-surface transition-colors group">
                                     <td className="py-6 font-black text-foreground text-[11px] uppercase tracking-widest flex items-center gap-4">
                                         <div className="w-12 h-12 rounded-2xl bg-lime-400/10 flex items-center justify-center text-lime-400 group-hover:scale-105 transition-transform">
                                             <Users className="w-6 h-6" />
@@ -355,7 +355,7 @@ export default function MilestonesPage() {
                                     <td className="py-6 text-right">
                                         <span className={cn(
                                             "inline-flex items-center px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full border",
-                                            uniqueParticipantsLevel >= 7 ? "bg-lime-400 border-lime-400 text-black" : "bg-white/[0.04] text-foreground/50 border-white/[0.06]"
+                                            uniqueParticipantsLevel >= 7 ? "bg-lime-400 border-lime-400 text-black" : "bg-surface text-foreground/50 border-surface-border"
                                         )}>
                                             {uniqueParticipantsLevel >= 7 ? "MAXED" : `LVL ${uniqueParticipantsLevel}`}
                                         </span>
@@ -367,9 +367,9 @@ export default function MilestonesPage() {
                 </div>
 
                 {/* Bottom Right: Upgrade Info Modal-style Container */}
-                <div className="lg:col-span-4 bg-white/[0.03] border border-white/[0.06] rounded-[28px] overflow-hidden relative h-full flex flex-col group">
+                <div className="lg:col-span-4 bg-surface border border-surface-border rounded-[28px] overflow-hidden relative h-full flex flex-col group">
                     {/* Top Hero Section of the card */}
-                    <div className="bg-white/[0.04] p-8 border-b border-white/[0.06] relative flex-shrink-0 z-10">
+                    <div className="bg-surface p-8 border-b border-surface-border relative flex-shrink-0 z-10">
                         {/* Decorative glow inside header */}
                         <div className="absolute top-0 right-0 p-24 bg-lime-400/5 blur-[60px] rounded-full -z-10 translate-x-1/2 -translate-y-1/2 pointer-events-none" />
 
@@ -393,7 +393,7 @@ export default function MilestonesPage() {
                                 <div className={cn("shrink-0 w-8 h-8 rounded-full flex items-center justify-center border",
                                     data.usdcDistributed >= targetTier.tokens
                                         ? "bg-lime-400 border-lime-400"
-                                        : "bg-white/[0.04] border-white/[0.08]"
+                                        : "bg-surface border-surface-border"
                                 )}>
                                     {data.usdcDistributed >= targetTier.tokens ? <CheckCircle className="w-4 h-4 text-black" /> : <Clock className="w-4 h-4 text-foreground/30" />}
                                 </div>
@@ -407,7 +407,7 @@ export default function MilestonesPage() {
                                 <div className={cn("shrink-0 w-8 h-8 rounded-full flex items-center justify-center border",
                                     data.eventsCreated >= targetTier.events
                                         ? "bg-lime-400 border-lime-400"
-                                        : "bg-white/[0.04] border-white/[0.08]"
+                                        : "bg-surface border-surface-border"
                                 )}>
                                     {data.eventsCreated >= targetTier.events ? <CheckCircle className="w-4 h-4 text-black" /> : <Clock className="w-4 h-4 text-foreground/30" />}
                                 </div>
@@ -421,7 +421,7 @@ export default function MilestonesPage() {
                                 <div className={cn("shrink-0 w-8 h-8 rounded-full flex items-center justify-center border",
                                     data.uniqueParticipants >= targetTier.participants
                                         ? "bg-lime-400 border-lime-400"
-                                        : "bg-white/[0.04] border-white/[0.08]"
+                                        : "bg-surface border-surface-border"
                                 )}>
                                     {data.uniqueParticipants >= targetTier.participants ? <CheckCircle className="w-4 h-4 text-black" /> : <Clock className="w-4 h-4 text-foreground/30" />}
                                 </div>

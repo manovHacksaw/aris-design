@@ -84,7 +84,7 @@ export default function LandingVisual() {
                 transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
                 className="absolute top-[45%] right-0 xl:-right-16 z-20 bg-card border border-card-border p-3 rounded-[22px] shadow-[0_10px_30px_rgba(0,0,0,0.25)] flex items-center gap-3"
             >
-                <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white font-bold text-xs">
+                <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-foreground font-bold text-xs">
                     $
                 </div>
                 <div className="flex flex-col">

@@ -157,7 +157,7 @@ export default function StepIdentity({ initial, prefillName, prefillAvatar, onNe
               <>
                 <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Camera className="w-5 h-5 text-white" />
+                  <Camera className="w-5 h-5 text-foreground" />
                 </div>
               </>
             ) : (
@@ -165,13 +165,13 @@ export default function StepIdentity({ initial, prefillName, prefillAvatar, onNe
             )}
             {isUploadingAvatar && (
               <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                <Loader2 className="w-5 h-5 text-white animate-spin" />
+                <Loader2 className="w-5 h-5 text-foreground animate-spin" />
               </div>
             )}
           </div>
           {avatarPreview && !isUploadingAvatar && (
             <button onClick={removeAvatar} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors">
-              <X className="w-2.5 h-2.5 text-white" />
+              <X className="w-2.5 h-2.5 text-foreground" />
             </button>
           )}
         </div>

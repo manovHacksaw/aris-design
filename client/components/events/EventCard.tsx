@@ -93,11 +93,11 @@ export default function EventCard({ event, className, isJoined }: EventCardProps
 
                 {/* Footer row */}
                 <div className="flex items-center justify-between px-4 py-3.5">
-                    <div className="flex items-center gap-1.5 text-foreground/40">
+                    <div className="flex items-center gap-1.5 text-white/40">
                         <Users className="w-3.5 h-3.5" />
                         <span className="text-[10px] font-medium">{formatCount(participants)}</span>
                     </div>
-                    <button className="bg-secondary text-foreground/70 group-hover:bg-primary group-hover:text-white px-4 py-1.5 rounded-full text-[10px] font-semibold tracking-wide transition-all">
+                    <button className="bg-secondary text-white/70 group-hover:bg-primary group-hover:text-white px-4 py-1.5 rounded-full text-[10px] font-semibold tracking-wide transition-all">
                         {isJoined ? "View Entry" : ctaText}
                     </button>
                 </div>

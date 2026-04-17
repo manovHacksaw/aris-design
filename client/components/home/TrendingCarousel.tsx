@@ -84,20 +84,20 @@ export default function TrendingCarousel() {
     return (
         <section className="relative">
             <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-display flex items-center gap-2.5 text-foreground">
+                <h2 className="text-2xl font-display flex items-center gap-2.5 text-white">
                     <TrendingUp className="text-primary w-5 h-5" />
                     Trending Challenges
                 </h2>
                 <div className="flex gap-2 relative z-20">
                     <button
                         onClick={() => scroll('left')}
-                        className="w-10 h-10 flex items-center justify-center rounded-full bg-card hover:bg-primary hover:text-white text-foreground/40 transition-all border border-border shadow-soft hover:border-primary"
+                        className="w-10 h-10 flex items-center justify-center rounded-full bg-card hover:bg-primary hover:text-white text-white/40 transition-all border border-border shadow-soft hover:border-primary"
                     >
                         <ChevronLeft className="w-5 h-5" />
                     </button>
                     <button
                         onClick={() => scroll('right')}
-                        className="w-10 h-10 flex items-center justify-center rounded-full bg-card hover:bg-primary hover:text-white text-foreground/40 transition-all border border-border shadow-soft hover:border-primary"
+                        className="w-10 h-10 flex items-center justify-center rounded-full bg-card hover:bg-primary hover:text-white text-white/40 transition-all border border-border shadow-soft hover:border-primary"
                     >
                         <ChevronRight className="w-5 h-5" />
                     </button>
@@ -123,7 +123,7 @@ export default function TrendingCarousel() {
                                         alt={item.title}
                                         className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                                     />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 dark:from-black/60 via-transparent to-transparent" />
 
                                     {/* Pool badge top right */}
                                     <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full flex items-center gap-1 border border-white/20">
@@ -142,7 +142,7 @@ export default function TrendingCarousel() {
 
                                 {/* Footer */}
                                 <div className="flex items-center justify-between px-4 py-3.5">
-                                    <div className="flex items-center gap-1.5 text-foreground/40">
+                                    <div className="flex items-center gap-1.5 text-white/40">
                                         <Users className="w-3.5 h-3.5" />
                                         <span className="text-[10px] font-medium">{formatCount(item.totalParticipants)}</span>
                                     </div>

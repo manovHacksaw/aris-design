@@ -123,7 +123,7 @@ export default function ActivityPage() {
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-[80px] rounded-[20px] bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+                <div key={i} className="h-[80px] rounded-[20px] bg-surface border border-surface-border animate-pulse" />
               ))}
             </div>
           ) : (
@@ -140,9 +140,9 @@ export default function ActivityPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.06 }}
-                  className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-4 py-3.5 flex items-center gap-3 transition-all"
+                  className="bg-surface border border-surface-border hover:bg-surface hover:border-surface-border-strong rounded-[20px] px-4 py-3.5 flex items-center gap-3 transition-all"
                 >
-                  <div className="w-8 h-8 rounded-xl bg-white/[0.04] flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-surface flex items-center justify-center shrink-0">
                     <s.icon className={cn("w-4 h-4", s.color)} />
                   </div>
                   <div className="min-w-0">
@@ -155,7 +155,7 @@ export default function ActivityPage() {
           )}
 
           {/* ── Tabs ── */}
-          <div className="flex items-center gap-1.5 border-t border-white/[0.05] pt-6">
+          <div className="flex items-center gap-1.5 border-t border-surface-border pt-6">
             {(["all", "post", "vote"] as TabFilter[]).map(t => (
               <button
                 key={t}
@@ -164,7 +164,7 @@ export default function ActivityPage() {
                   "px-6 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all border",
                   tab === t
                     ? "bg-white text-black border-white"
-                    : "bg-white/[0.04] text-foreground/40 border-white/[0.06] hover:bg-white/[0.08] hover:text-foreground/80"
+                    : "bg-surface text-foreground/40 border-surface-border hover:bg-surface-hover hover:text-foreground/80"
                 )}
               >
                 {t === "all" ? "All Activity" : t === "post" ? `Posts (${posts.length})` : `Votes (${votes.length})`}
@@ -184,12 +184,12 @@ export default function ActivityPage() {
               {loading ? (
                 <div className="space-y-2">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="h-[80px] rounded-[20px] bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+                    <div key={i} className="h-[80px] rounded-[20px] bg-surface border border-surface-border animate-pulse" />
                   ))}
                 </div>
               ) : feed.length === 0 ? (
-                <div className="py-20 text-center bg-white/[0.02] rounded-[24px] border border-dashed border-white/[0.07]">
-                  <div className="w-12 h-12 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
+                <div className="py-20 text-center bg-surface rounded-[24px] border border-dashed border-surface-border">
+                  <div className="w-12 h-12 rounded-2xl bg-surface flex items-center justify-center mx-auto mb-4">
                     {tab === "vote"
                       ? <MousePointerClick className="w-5 h-5 text-foreground/20" />
                       : <ImageIcon className="w-5 h-5 text-foreground/20" />
@@ -206,10 +206,10 @@ export default function ActivityPage() {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.03 }}
-                      className="flex items-center gap-4 p-4 rounded-[20px] bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08] transition-all group cursor-pointer"
+                      className="flex items-center gap-4 p-4 rounded-[20px] bg-surface border border-surface-border hover:bg-surface hover:border-surface-border transition-all group cursor-pointer"
                     >
                       {/* Thumbnail */}
-                      <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-white/[0.05] border border-white/[0.06]">
+                      <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-surface border border-surface-border">
                         {item.imageUrl ? (
                           <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
                         ) : (
@@ -319,7 +319,7 @@ export default function ActivityPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <div className="w-full h-2 bg-white/[0.06] rounded-full overflow-hidden">
+                    <div className="w-full h-2 bg-surface rounded-full overflow-hidden">
                       <motion.div
                         className={cn("h-full rounded-full", tier.bar)}
                         initial={{ width: 0 }}
@@ -336,7 +336,7 @@ export default function ActivityPage() {
               </div>
 
               {/* Growth Index */}
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-5 space-y-5">
+              <div className="bg-surface border border-surface-border rounded-[24px] p-5 space-y-5">
                 <div className="flex items-center justify-between">
                   <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/50">Growth Index</h3>
                   <TrendingUp className="w-3.5 h-3.5 text-foreground/40" />
@@ -356,7 +356,7 @@ export default function ActivityPage() {
                           <span className="text-[10px] font-black text-foreground/60">{g.value}%</span>
                         </div>
                       </div>
-                      <div className="w-full h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+                      <div className="w-full h-1.5 bg-surface rounded-full overflow-hidden">
                         <motion.div
                           className={cn("h-full rounded-full", g.bar)}
                           initial={{ width: 0 }}
@@ -369,7 +369,7 @@ export default function ActivityPage() {
                 </div>
 
                 {(user?.currentStreak ?? 0) > 0 && (
-                  <div className="pt-4 border-t border-white/[0.04] flex items-center gap-3">
+                  <div className="pt-4 border-t border-surface-border flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-orange-400/10 border border-orange-400/20 flex items-center justify-center shrink-0">
                       <Flame className="w-4 h-4 text-orange-400" />
                     </div>

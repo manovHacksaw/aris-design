@@ -62,10 +62,10 @@ export default function DraftsSection() {
         <section>
             <div className="flex items-end justify-between mb-5">
                 <div>
-                    <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-1">Continue where you left off</p>
-                    <h2 className="font-display text-3xl text-white uppercase tracking-tight">Drafts</h2>
+                    <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-1">Continue where you left off</p>
+                    <h2 className="font-display text-3xl text-foreground uppercase tracking-tight">Drafts</h2>
                 </div>
-                <span className="text-[11px] font-black text-white/20 uppercase tracking-[0.15em]">
+                <span className="text-[11px] font-black text-foreground/20 uppercase tracking-[0.15em]">
                     {drafts.length} saved
                 </span>
             </div>
@@ -78,16 +78,16 @@ export default function DraftsSection() {
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: i * 0.04 }}
                             whileHover={{ scale: 1.02 }}
-                            className="group relative p-3 rounded-[20px] bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.05] hover:border-white/[0.10] transition-all duration-200"
+                            className="group relative p-3 rounded-[20px] bg-surface border border-surface-border hover:bg-surface hover:border-surface-border-strong transition-all duration-200"
                         >
                             <button
                                 onClick={(e) => handleDelete(e, draft.eventId)}
                                 className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/20 hover:border-red-500/30"
                             >
-                                <Trash2 className="w-3 h-3 text-white/50 hover:text-red-400" />
+                                <Trash2 className="w-3 h-3 text-foreground/50 hover:text-red-400" />
                             </button>
 
-                            <div className="relative aspect-square rounded-xl overflow-hidden bg-white/[0.06] mb-3">
+                            <div className="relative aspect-square rounded-xl overflow-hidden bg-surface mb-3">
                                 {draft.imagePreview || draft.eventImage ? (
                                     <img src={draft.imagePreview || draft.eventImage} alt={draft.eventTitle} className="w-full h-full object-cover transition-all duration-500 group-hover:brightness-50" />
                                 ) : (
@@ -106,8 +106,8 @@ export default function DraftsSection() {
                                 </div>
                             </div>
 
-                            <h3 className="text-xs font-bold text-white line-clamp-2 leading-snug mb-1">{draft.eventTitle}</h3>
-                            <p className="text-[10px] text-white/30 flex items-center gap-1">
+                            <h3 className="text-xs font-bold text-foreground line-clamp-2 leading-snug mb-1">{draft.eventTitle}</h3>
+                            <p className="text-[10px] text-foreground/30 flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
                                 {timeAgo(draft.savedAt)}
                             </p>

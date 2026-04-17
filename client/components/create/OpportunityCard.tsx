@@ -36,10 +36,10 @@ export default function OpportunityCard({ event, className }: OpportunityCardPro
             <motion.div
                 whileHover={{ y: -4 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                className="w-full h-full bg-white/[0.02] rounded-2xl overflow-hidden flex flex-col border border-white/[0.06] hover:border-white/[0.10] transition-all duration-200"
+                className="w-full h-full bg-surface rounded-2xl overflow-hidden flex flex-col border border-surface-border hover:border-surface-border-strong transition-all duration-200"
             >
                 {/* Image — shorter 4:3 ratio */}
-                <div className="relative w-full aspect-[4/3] overflow-hidden bg-white/[0.04] flex-shrink-0">
+                <div className="relative w-full aspect-[4/3] overflow-hidden bg-surface flex-shrink-0">
                     <img
                         src={image}
                         alt={event.title}
@@ -53,7 +53,7 @@ export default function OpportunityCard({ event, className }: OpportunityCardPro
                     {isLive && (
                         <div className="absolute top-2.5 left-2.5 bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/10">
                             <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-                            <span className="text-[8px] font-bold uppercase tracking-widest text-white">
+                            <span className="text-[8px] font-bold uppercase tracking-widest text-foreground">
                                 LIVE
                             </span>
                         </div>
@@ -81,20 +81,20 @@ export default function OpportunityCard({ event, className }: OpportunityCardPro
 
                 {/* Bottom info */}
                 <div className="px-3 py-2.5 flex flex-col gap-1.5 flex-1">
-                    <h3 className="text-xs font-semibold text-white leading-snug line-clamp-2">
+                    <h3 className="text-xs font-semibold text-foreground leading-snug line-clamp-2">
                         {event.title}
                     </h3>
                     <p className="text-[9px] text-white/35 font-medium">by {brandName}</p>
 
                     {/* Stats row */}
-                    <div className="flex items-center justify-between mt-auto pt-2 border-t border-white/[0.04]">
+                    <div className="flex items-center justify-between mt-auto pt-2 border-t border-surface-border">
                         <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1 text-white/30">
+                            <div className="flex items-center gap-1 text-foreground/30">
                                 <Users className="w-3 h-3" />
                                 <span className="text-[9px] font-medium">{formatCount(participants)}</span>
                             </div>
                             {basePool && (
-                                <div className="flex items-center gap-1 text-white/30">
+                                <div className="flex items-center gap-1 text-foreground/30">
                                     <Zap className="w-2.5 h-2.5 text-blue-400/60" />
                                     <span className="text-[9px] font-medium">{basePool}/vote</span>
                                 </div>
@@ -112,14 +112,14 @@ export default function OpportunityCard({ event, className }: OpportunityCardPro
 
 export function OpportunityCardSkeleton({ className }: { className?: string }) {
     return (
-        <div className={cn("w-full bg-white/[0.02] rounded-2xl overflow-hidden border border-white/[0.06] animate-pulse", className)}>
-            <div className="w-full aspect-[4/3] bg-white/[0.04]" />
+        <div className={cn("w-full bg-surface rounded-2xl overflow-hidden border border-surface-border animate-pulse", className)}>
+            <div className="w-full aspect-[4/3] bg-surface" />
             <div className="px-3 py-2.5 space-y-2">
-                <div className="h-3 bg-white/[0.04] rounded w-3/4" />
-                <div className="h-2.5 bg-white/[0.03] rounded w-1/2" />
-                <div className="flex items-center justify-between pt-2 border-t border-white/[0.04]">
-                    <div className="h-2.5 w-10 bg-white/[0.04] rounded" />
-                    <div className="h-2.5 w-14 bg-white/[0.04] rounded" />
+                <div className="h-3 bg-surface rounded w-3/4" />
+                <div className="h-2.5 bg-surface rounded w-1/2" />
+                <div className="flex items-center justify-between pt-2 border-t border-surface-border">
+                    <div className="h-2.5 w-10 bg-surface rounded" />
+                    <div className="h-2.5 w-14 bg-surface rounded" />
                 </div>
             </div>
         </div>

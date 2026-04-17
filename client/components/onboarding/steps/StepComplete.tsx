@@ -108,7 +108,7 @@ export default function StepComplete({ displayName, isSaving, onComplete, onBack
           style={{ opacity: visible ? 1 : 0, transition: "opacity 0.3s ease" }}
         >
           <p className="text-xs font-black text-primary uppercase tracking-widest">{slide.label}</p>
-          <p className="text-sm font-medium text-white/80">{slide.caption}</p>
+          <p className="text-sm font-medium text-foreground/80">{slide.caption}</p>
         </div>
 
         {/* dot indicators */}

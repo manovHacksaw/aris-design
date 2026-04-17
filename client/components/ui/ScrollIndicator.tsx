@@ -75,7 +75,7 @@ export function ScrollIndicator({ scrollRef, className, bottomOffset = 96 }: Scr
                             "-translate-y-full pointer-events-auto",
                             "flex items-center justify-center w-8 h-8 rounded-full",
                             "bg-white/10 border border-white/20 backdrop-blur-md",
-                            "text-white/60 hover:text-white hover:bg-white/20 transition-colors",
+                            "text-foreground/60 hover:text-foreground hover:bg-white/20 transition-colors",
                             className
                         )}
                     >

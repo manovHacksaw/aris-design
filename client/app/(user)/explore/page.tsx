@@ -149,12 +149,12 @@ function ArisSelect({ value, onChange, options, placeholder, minWidth = "150px" 
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={cn(
-                    "w-full flex items-center justify-between bg-white/[0.03] border border-white/10 text-white/60 hover:text-white hover:border-white/20 rounded-xl pl-5 pr-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all cursor-pointer backdrop-blur-md",
-                    isOpen && "border-primary/40 bg-white/[0.05] text-white"
+                    "w-full flex items-center justify-between bg-surface border border-surface-border-strong text-foreground/60 hover:text-foreground hover:border-foreground/20 rounded-xl pl-5 pr-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all cursor-pointer backdrop-blur-md",
+                    isOpen && "border-primary/40 bg-surface text-foreground"
                 )}
             >
                 <span className="truncate mr-2">{value === "ALL" || value === "TRENDING" ? placeholder : value}</span>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform duration-300 text-white/20", isOpen ? "rotate-180 text-white" : "")}><path d="m6 9 6 6 6-6"/></svg>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform duration-300 text-foreground/20", isOpen ? "rotate-180 text-foreground" : "")}><path d="m6 9 6 6 6-6"/></svg>
             </button>
             
             <AnimatePresence>
@@ -166,7 +166,7 @@ function ArisSelect({ value, onChange, options, placeholder, minWidth = "150px" 
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -10, scale: 0.95 }}
                             transition={{ duration: 0.2, ease: "easeOut" }}
-                            className="absolute top-full left-0 mt-2 w-full bg-[#0a0a0c] border border-white/20 rounded-xl overflow-hidden z-[999] backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
+                            className="absolute top-full left-0 mt-2 w-full bg-card border border-surface-border-strong rounded-xl overflow-hidden z-[999] backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.12)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
                         >
                             <div className="max-h-[300px] overflow-y-auto no-scrollbar py-2">
                                 {options.map((opt) => (
@@ -178,9 +178,9 @@ function ArisSelect({ value, onChange, options, placeholder, minWidth = "150px" 
                                         }}
                                         className={cn(
                                             "w-full text-left px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.2em] transition-all border-l-2",
-                                            (value === opt) 
-                                                ? "bg-white/10 border-primary text-white" 
-                                                : "border-transparent text-white/40 hover:bg-white/5 hover:text-white hover:border-white/20"
+                                            (value === opt)
+                                                ? "bg-surface-hover border-primary text-foreground"
+                                                : "border-transparent text-foreground/40 hover:bg-surface-hover hover:text-foreground hover:border-foreground/20"
                                         )}
                                     >
                                         {opt === "ALL" || opt === "TRENDING" ? placeholder : opt}
@@ -334,7 +334,7 @@ export default function Explore() {
                         {/* Banner */}
                         {loadingEvents ? (
                             <div className="w-full mb-6 px-4 md:px-0">
-                                <div className="w-full h-[280px] md:h-[340px] rounded-2xl bg-white/[0.03] border border-white/5 animate-pulse" />
+                                <div className="w-full h-[280px] md:h-[340px] rounded-2xl bg-surface border border-white/5 animate-pulse" />
                             </div>
                         ) : (
                             eventsData?.trending && eventsData.trending.length > 0 && (
@@ -350,7 +350,7 @@ export default function Explore() {
                         <div className="flex flex-col lg:flex-row items-center gap-4 w-full">
                             
                             {/* Search Input */}
-                            <div className="w-full lg:flex-1 relative group bg-white/[0.03] border border-white/10 hover:border-white/20 focus-within:border-primary/40 focus-within:bg-white/[0.05] rounded-xl overflow-hidden transition-all shadow-2xl shadow-black/40 flex items-center backdrop-blur-md">
+                            <div className="w-full lg:flex-1 relative group bg-surface border border-white/10 hover:border-white/20 focus-within:border-primary/40 focus-within:bg-surface rounded-xl overflow-hidden transition-all shadow-2xl shadow-black/40 flex items-center backdrop-blur-md">
                                 <Search className="absolute left-4 w-4 h-4 text-foreground/20 group-focus-within:text-primary transition-colors shrink-0 pointer-events-none" />
                                 <input
                                     type="text"
@@ -362,7 +362,7 @@ export default function Explore() {
                                 {searchQuery && (
                                     <button
                                         onClick={() => setSearchQuery("")}
-                                        className="absolute right-4 text-foreground/20 hover:text-white transition-colors"
+                                        className="absolute right-4 text-foreground/20 hover:text-foreground transition-colors"
                                     >
                                         <X className="w-4 h-4" />
                                     </button>
@@ -443,11 +443,11 @@ export default function Explore() {
 
                             {loadingEvents && activeTab === "events" ? (
                                 <div className="space-y-12 animate-pulse mt-8">
-                                    <div className="h-60 w-full bg-white/[0.02] rounded-2xl border border-white/5" />
+                                    <div className="h-60 w-full bg-surface rounded-2xl border border-white/5" />
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        <div className="h-80 w-full bg-white/[0.02] rounded-2xl border border-white/5" />
-                                        <div className="h-80 w-full bg-white/[0.02] rounded-2xl border border-white/5" />
-                                        <div className="h-80 w-full bg-white/[0.02] rounded-2xl border border-white/5" />
+                                        <div className="h-80 w-full bg-surface rounded-2xl border border-white/5" />
+                                        <div className="h-80 w-full bg-surface rounded-2xl border border-white/5" />
+                                        <div className="h-80 w-full bg-surface rounded-2xl border border-white/5" />
                                     </div>
                                 </div>
                             ) : (
@@ -472,7 +472,7 @@ export default function Explore() {
                                             {/* All Campaigns Header (Matching layout) */}
                                             {eventsData?.allRanked && eventsData.allRanked.length > 0 ? (
                                                 <div className="space-y-6">
-                                                    <h3 className="text-xl font-black text-white capitalize tracking-wider pl-4 sm:pl-0 border-white/5">
+                                                    <h3 className="text-xl font-black text-foreground capitalize tracking-wider pl-4 sm:pl-0 border-white/5">
                                                         {(debouncedSearch || activeDomain !== "ALL") ? "Search Results" : "All Campaigns"}
                                                     </h3>
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-0">

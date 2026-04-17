@@ -657,7 +657,7 @@ function RankBadge({ rank }: { rank: number }) {
         </span>
     );
     return (
-        <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-white/40 text-[10px] font-bold border border-white/[0.08]">
+        <span className="px-2 py-0.5 rounded-full bg-surface text-foreground/40 text-[10px] font-bold border border-surface-border">
             #{rank}
         </span>
     );
@@ -678,15 +678,15 @@ function ViewAllPanel({
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 30 }}
                     transition={{ duration: 0.22, ease: "easeOut" }}
-                    className="absolute inset-0 z-20 bg-[#070709]/98 border border-white/[0.08] rounded-[20px] flex flex-col"
+                    className="absolute inset-0 z-20 bg-[#070709]/98 border border-surface-border rounded-[20px] flex flex-col"
                 >
-                    <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/[0.06] shrink-0">
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">{title}</span>
+                    <div className="flex items-center justify-between px-4 py-3.5 border-b border-surface-border shrink-0">
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">{title}</span>
                         <button
                             onClick={onClose}
-                            className="w-7 h-7 rounded-full bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center transition-colors"
+                            className="w-7 h-7 rounded-full bg-surface hover:bg-surface-hover flex items-center justify-center transition-colors"
                         >
-                            <X className="w-3.5 h-3.5 text-white/50" />
+                            <X className="w-3.5 h-3.5 text-foreground/50" />
                         </button>
                     </div>
                     <div className="flex-1 overflow-y-auto p-3 space-y-2">
@@ -706,7 +706,7 @@ function statusConfig(status: string) {
     if (status === "voting")    return { dot: "bg-emerald-400", label: "Voting",    text: "text-emerald-400" };
     if (status === "posting")   return { dot: "bg-blue-400",    label: "Posting",   text: "text-blue-400" };
     if (status === "scheduled") return { dot: "bg-yellow-400",  label: "Scheduled", text: "text-yellow-400" };
-    if (status === "completed") return { dot: "bg-white/20",    label: "Done",      text: "text-white/30" };
+    if (status === "completed") return { dot: "bg-white/20",    label: "Done",      text: "text-foreground/30" };
     return                             { dot: "bg-white/15",    label: status,      text: "text-white/25" };
 }
 
@@ -723,12 +723,12 @@ function ActivityRow({ item, index, isLast }: { item: ActivityItem; index: numbe
             transition={{ delay: index * 0.03, duration: 0.2 }}
             className={cn(
                 "group flex items-center gap-4 px-1 py-3 cursor-pointer transition-colors duration-100",
-                "hover:bg-white/[0.025] rounded-lg -mx-1",
-                !isLast && "border-b border-white/[0.04]"
+                "hover:bg-surface rounded-lg -mx-1",
+                !isLast && "border-b border-surface-border"
             )}
         >
             {/* LEFT — Avatar / thumbnail */}
-            <div className="shrink-0 w-8 h-8 rounded-lg overflow-hidden bg-white/[0.06]">
+            <div className="shrink-0 w-8 h-8 rounded-lg overflow-hidden bg-surface">
                 {item.imageUrl ? (
                     <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
                 ) : item.brandLogoUrl ? (
@@ -752,7 +752,7 @@ function ActivityRow({ item, index, isLast }: { item: ActivityItem; index: numbe
 
                 {/* Line 2: Brand · Category · Type · votes */}
                 <p className="text-[11px] text-white/35 font-medium mt-0.5 truncate">
-                    <span className="text-white/50 font-semibold">{item.brand}</span>
+                    <span className="text-foreground/50 font-semibold">{item.brand}</span>
                     {item.domain && <><span className="mx-1.5 text-white/15">·</span><span>{item.domain}</span></>}
                     <span className="mx-1.5 text-white/15">·</span>
                     <span className={isPost ? "text-lime-400/50" : "text-blue-400/50"}>{isPost ? "Post" : "Vote"}</span>
@@ -765,7 +765,7 @@ function ActivityRow({ item, index, isLast }: { item: ActivityItem; index: numbe
                 </p>
 
                 {/* Line 3: Date */}
-                <p className="text-[10px] text-white/20 font-medium mt-0.5">{item.date}</p>
+                <p className="text-[10px] text-foreground/20 font-medium mt-0.5">{item.date}</p>
             </div>
 
             {/* RIGHT — Earnings · Rank · Status */}
@@ -1124,7 +1124,7 @@ export default function DashboardPage() {
                             {[0, 1].map(r => (
                                 <div key={r} className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                     {Array.from({ length: 4 }).map((_, i) => (
-                                        <div key={i} className="h-[70px] rounded-2xl bg-white/[0.03] border border-white/[0.05] animate-pulse" />
+                                        <div key={i} className="h-[70px] rounded-2xl bg-surface border border-surface-border animate-pulse" />
                                     ))}
                                 </div>
                             ))}
@@ -1136,7 +1136,7 @@ export default function DashboardPage() {
                                     {row.map((stat) => (
                                         <div
                                             key={stat.label}
-                                            className="bg-white/[0.03] border border-white/[0.06] rounded-2xl px-4 py-3.5 flex items-center gap-3 hover:bg-white/[0.05] hover:border-white/[0.1] transition-all"
+                                            className="bg-surface border border-surface-border rounded-2xl px-4 py-3.5 flex items-center gap-3 hover:bg-surface hover:border-surface-border-strong transition-all"
                                         >
                                             <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center shrink-0", stat.bg)}>
                                                 <stat.icon className={cn("w-4 h-4", stat.color)} />
@@ -1164,7 +1164,7 @@ export default function DashboardPage() {
                     )}
 
                     {/* ── Tabs + View toggle ─────────────────── */}
-                    <div className="flex items-center justify-between gap-3 border-t border-white/[0.05] pt-6 flex-wrap">
+                    <div className="flex items-center justify-between gap-3 border-t border-surface-border pt-6 flex-wrap">
                         <div className="flex items-center gap-1.5">
                             {tabs.map((tab) => (
                                 <button
@@ -1174,7 +1174,7 @@ export default function DashboardPage() {
                                         "px-6 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
                                         activeTab === tab.id
                                             ? "bg-white text-black border-white"
-                                            : "bg-white/[0.04] text-foreground/40 border-white/[0.06] hover:bg-white/[0.08] hover:text-foreground/80"
+                                            : "bg-surface text-foreground/40 border-surface-border hover:bg-surface-hover hover:text-foreground/80"
                                     )}
                                 >
                                     {tab.label}
@@ -1182,7 +1182,7 @@ export default function DashboardPage() {
                             ))}
                         </div>
                         {/* View toggle: Activity / Graphs */}
-                        <div className="flex items-center gap-0.5 bg-white/[0.04] border border-white/[0.06] rounded-xl p-0.5">
+                        <div className="flex items-center gap-0.5 bg-surface border border-surface-border rounded-xl p-0.5">
                             {(["activity", "graphs"] as const).map((v) => (
                                 <button
                                     key={v}
@@ -1213,13 +1213,13 @@ export default function DashboardPage() {
                             </div>
 
                             {loading ? (
-                                <div className="divide-y divide-white/[0.04]">
+                                <div className="divide-y divide-surface-border">
                                     {Array.from({ length: 5 }).map((_, i) => (
                                         <div key={i} className="flex items-center gap-4 py-3">
-                                            <div className="w-8 h-8 rounded-lg bg-white/[0.05] animate-pulse shrink-0" />
+                                            <div className="w-8 h-8 rounded-lg bg-surface animate-pulse shrink-0" />
                                             <div className="flex-1 space-y-1.5">
-                                                <div className="h-3 bg-white/[0.05] rounded animate-pulse w-2/3" />
-                                                <div className="h-2.5 bg-white/[0.03] rounded animate-pulse w-1/2" />
+                                                <div className="h-3 bg-surface rounded animate-pulse w-2/3" />
+                                                <div className="h-2.5 bg-surface rounded animate-pulse w-1/2" />
                                             </div>
                                         </div>
                                     ))}
@@ -1229,7 +1229,7 @@ export default function DashboardPage() {
                                     {transactions.length > 0 ? (
                                         <>
                                             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/25 px-1">Recent Activity</p>
-                                            <div className="bg-white/[0.015] rounded-xl px-3 divide-y divide-white/[0.04]">
+                                            <div className="bg-surface rounded-xl px-3 divide-y divide-surface-border">
                                                 {transactions.slice(0, 6).map((tx) => {
                                                     const typeMap: Record<string, { label: string; icon: React.ElementType; color: string; bg: string }> = {
                                                         VOTE_CAST:    { label: "Vote cast", icon: ThumbsUp, color: "text-blue-400", bg: "bg-blue-400/10" },
@@ -1246,7 +1246,7 @@ export default function DashboardPage() {
                                                             <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", meta.bg)}>
                                                                 <Icon className={cn("w-3.5 h-3.5", meta.color)} />
                                                             </div>
-                                                            <p className="flex-1 text-[12px] font-semibold text-white/70 truncate">
+                                                            <p className="flex-1 text-[12px] font-semibold text-foreground/70 truncate">
                                                                 {tx.description || meta.label}
                                                             </p>
                                                             <span className="text-[11px] font-black text-yellow-400 shrink-0">
@@ -1256,13 +1256,13 @@ export default function DashboardPage() {
                                                     );
                                                 })}
                                             </div>
-                                            <p className="text-[10px] text-white/20 font-medium text-center pt-1">
+                                            <p className="text-[10px] text-foreground/20 font-medium text-center pt-1">
                                                 {activeTab === "post" ? "Submit a post to see events here" : activeTab === "vote" ? "Vote in an event to see it here" : "Join an event to start tracking performance"}
                                             </p>
                                         </>
                                     ) : (
                                         <div className="py-12 text-center space-y-2">
-                                            <p className="text-[13px] font-semibold text-white/30">
+                                            <p className="text-[13px] font-semibold text-foreground/30">
                                                 {activeTab === "post" ? "No posts yet" : activeTab === "vote" ? "No votes yet" : "No activity yet"}
                                             </p>
                                             <p className="text-[11px] text-white/15 font-medium">
@@ -1294,8 +1294,8 @@ export default function DashboardPage() {
                                     <div className="space-y-5">
                                         {groups.map(({ label, items }) => (
                                             <div key={label}>
-                                                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20 mb-2 px-1">{label}</p>
-                                                <div className="bg-white/[0.015] rounded-xl px-3">
+                                                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/20 mb-2 px-1">{label}</p>
+                                                <div className="bg-surface rounded-xl px-3">
                                                     {items.map((item, i) => (
                                                         <ActivityRow key={item.id + i} item={item} index={i} isLast={i === items.length - 1} />
                                                     ))}
@@ -1305,7 +1305,7 @@ export default function DashboardPage() {
                                         {hasMore && (
                                             <button
                                                 onClick={() => setPage(p => p + 1)}
-                                                className="w-full py-2.5 text-[10px] font-medium text-white/25 hover:text-white/50 transition-colors"
+                                                className="w-full py-2.5 text-[10px] font-medium text-white/25 hover:text-foreground/50 transition-colors"
                                             >
                                                 Load more
                                             </button>
@@ -1325,7 +1325,7 @@ export default function DashboardPage() {
                                     "relative overflow-hidden rounded-[24px] border p-5 w-full text-left cursor-pointer",
                                     "hover:brightness-110 active:scale-[0.99] transition-all duration-200",
                                     tier.border, tier.glow,
-                                    "bg-gradient-to-br from-white/[0.04] to-transparent"
+                                    "bg-gradient-to-br from-surface to-transparent"
                                 )}
                             >
                                 {/* Background glow blob */}
@@ -1358,7 +1358,7 @@ export default function DashboardPage() {
 
                                     {/* XP progress bar */}
                                     <div className="space-y-1.5">
-                                        <div className="w-full h-2 bg-white/[0.06] rounded-full overflow-hidden">
+                                        <div className="w-full h-2 bg-surface rounded-full overflow-hidden">
                                             <motion.div
                                                 className={cn("h-full rounded-full", tier.color.replace("text-", "bg-"))}
                                                 initial={{ width: 0 }}
@@ -1382,7 +1382,7 @@ export default function DashboardPage() {
                                                     <div className={cn(
                                                         "w-full h-1 rounded-full transition-all",
                                                         isActive ? tier.color.replace("text-", "bg-") :
-                                                            isPast ? "bg-white/20" : "bg-white/[0.06]"
+                                                            isPast ? "bg-white/20" : "bg-surface"
                                                     )} />
                                                     {isActive && (
                                                         <span className={cn("text-[8px] font-black uppercase tracking-wider", tier.color)}>{t.name}</span>
@@ -1418,13 +1418,13 @@ export default function DashboardPage() {
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                                             transition={{ duration: 0.18, delay: i * 0.03 }}
-                                            className="flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-white/[0.03] transition-colors"
+                                            className="flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-surface transition-colors"
                                         >
                                             <div className={cn(
                                                 "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border transition-all",
                                                 done ? cn(a.bg, a.border) :
-                                                inProgress ? "bg-white/[0.06] border-white/[0.1]" :
-                                                "bg-white/[0.02] border-white/[0.04]"
+                                                inProgress ? "bg-surface border-surface-border-strong" :
+                                                "bg-surface border-surface-border"
                                             )}>
                                                 {done
                                                     ? <CheckCircle2 className={cn("w-3.5 h-3.5", a.color)} />
@@ -1440,7 +1440,7 @@ export default function DashboardPage() {
                                                 )}>{a.label}</p>
                                                 {inProgress && (
                                                     <div className="flex items-center gap-2 mt-1">
-                                                        <div className="flex-1 h-[3px] bg-white/[0.06] rounded-full overflow-hidden">
+                                                        <div className="flex-1 h-[3px] bg-surface rounded-full overflow-hidden">
                                                             <motion.div
                                                                 initial={{ width: 0 }}
                                                                 animate={{ width: `${pct}%` }}
@@ -1461,11 +1461,11 @@ export default function DashboardPage() {
                                 }
 
                                 return (
-                                    <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] overflow-hidden">
+                                    <div className="bg-surface border border-surface-border rounded-[24px] overflow-hidden">
                                         {/* Header — click to expand inline */}
                                         <button
                                             onClick={() => setAchievementsExpanded(e => !e)}
-                                            className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-white/[0.025] transition-colors"
+                                            className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-surface transition-colors"
                                         >
                                             <div className="flex items-center gap-2.5">
                                                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Milestones</span>
@@ -1473,7 +1473,7 @@ export default function DashboardPage() {
                                                     "text-[8px] font-black px-1.5 py-0.5 rounded-full border",
                                                     completedCount > 0
                                                         ? "bg-lime-400/10 border-lime-400/20 text-lime-400/70"
-                                                        : "bg-white/[0.04] border-white/[0.06] text-foreground/20"
+                                                        : "bg-surface border-surface-border text-foreground/20"
                                                 )}>{completedCount}/{achievements.length}</span>
                                                 {inProgressCount > 0 && (
                                                     <span className="text-[8px] font-bold text-yellow-400/50">{inProgressCount} in progress</span>
@@ -1482,7 +1482,7 @@ export default function DashboardPage() {
                                             <motion.div
                                                 animate={{ rotate: achievementsExpanded ? 180 : 0 }}
                                                 transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                                                className="w-6 h-6 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0"
+                                                className="w-6 h-6 rounded-lg bg-surface border border-surface-border flex items-center justify-center shrink-0"
                                             >
                                                 <svg className="w-3 h-3 text-foreground/30" fill="none" viewBox="0 0 12 12">
                                                     <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -1491,7 +1491,7 @@ export default function DashboardPage() {
                                         </button>
 
                                         {/* Content */}
-                                        <div className="px-3 pb-1 space-y-0.5 border-t border-white/[0.04]">
+                                        <div className="px-3 pb-1 space-y-0.5 border-t border-surface-border">
                                             {/* Preview rows — always visible */}
                                             {achievements.slice(0, PREVIEW_COUNT).map((a, i) => (
                                                 <MilestoneRow key={a.id} a={a} i={i} />
@@ -1509,13 +1509,13 @@ export default function DashboardPage() {
                                                 <div className="flex gap-2 pt-1 pb-1">
                                                     <button
                                                         onClick={() => setAchievementsExpanded(e => !e)}
-                                                        className="flex-1 py-2 rounded-xl bg-white/[0.03] border border-white/[0.05] text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 hover:bg-white/[0.06] hover:text-foreground/50 transition-all"
+                                                        className="flex-1 py-2 rounded-xl bg-surface border border-surface-border text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 hover:bg-surface hover:text-foreground/50 transition-all"
                                                     >
                                                         {achievementsExpanded ? "Show less" : `+${achievements.length - PREVIEW_COUNT} more`}
                                                     </button>
                                                     <button
                                                         onClick={() => setShowMilestonesModal(true)}
-                                                        className="px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.05] text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 hover:bg-white/[0.06] hover:text-foreground/50 transition-all"
+                                                        className="px-3 py-2 rounded-xl bg-surface border border-surface-border text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 hover:bg-surface hover:text-foreground/50 transition-all"
                                                     >
                                                         Full
                                                     </button>
@@ -1586,7 +1586,7 @@ export default function DashboardPage() {
                                     const meta = getIconMeta(tx.description, tx.type);
                                     const Icon = meta.icon;
                                     return (
-                                        <div className="flex items-center gap-2.5 px-2 py-2.5 rounded-xl hover:bg-white/[0.03] transition-colors">
+                                        <div className="flex items-center gap-2.5 px-2 py-2.5 rounded-xl hover:bg-surface transition-colors">
                                             <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", meta.bg)}>
                                                 <Icon className={cn("w-3.5 h-3.5", meta.color)} />
                                             </div>
@@ -1607,8 +1607,8 @@ export default function DashboardPage() {
 
                                 return (
                                     <>
-                                        <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] overflow-hidden">
-                                            <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/[0.05]">
+                                        <div className="bg-surface border border-surface-border rounded-[24px] overflow-hidden">
+                                            <div className="flex items-center justify-between px-4 py-3.5 border-b border-surface-border">
                                                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">XP History</span>
                                                 {transactions.length > 0 && (
                                                     <button
@@ -1632,7 +1632,7 @@ export default function DashboardPage() {
                                             {transactions.length > 6 && (
                                                 <button
                                                     onClick={() => setShowXpModal(true)}
-                                                    className="w-full py-2.5 text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 hover:text-foreground/60 hover:bg-white/[0.02] transition-all border-t border-white/[0.04]"
+                                                    className="w-full py-2.5 text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 hover:text-foreground/60 hover:bg-surface transition-all border-t border-surface-border"
                                                 >
                                                     +{transactions.length - 6} more entries
                                                 </button>
@@ -1642,13 +1642,13 @@ export default function DashboardPage() {
                                         {/* XP History Modal */}
                                         {showXpModal && (
                                             <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setShowXpModal(false)}>
-                                                <div className="bg-[#0d0d0f] border border-white/[0.08] rounded-[28px] w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
-                                                    <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] shrink-0">
+                                                <div className="bg-[#0d0d0f] border border-surface-border rounded-[28px] w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+                                                    <div className="flex items-center justify-between px-5 py-4 border-b border-surface-border shrink-0">
                                                         <div>
                                                             <p className="text-sm font-black text-foreground">XP History</p>
                                                             <p className="text-[10px] text-foreground/35 mt-0.5">{transactions.length} entries</p>
                                                         </div>
-                                                        <button onClick={() => setShowXpModal(false)} className="w-8 h-8 rounded-full bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-foreground/50 hover:bg-white/10 transition-all">
+                                                        <button onClick={() => setShowXpModal(false)} className="w-8 h-8 rounded-full bg-surface border border-surface-border flex items-center justify-center text-foreground/50 hover:bg-white/10 transition-all">
                                                             <X className="w-3.5 h-3.5" />
                                                         </button>
                                                     </div>
@@ -1673,7 +1673,7 @@ export default function DashboardPage() {
                             <div className="flex items-center justify-between">
                                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/30">Graphs &amp; Insights</p>
                                 {/* Time filter */}
-                                <div className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.06] rounded-xl p-0.5">
+                                <div className="flex items-center gap-1 bg-surface border border-surface-border rounded-xl p-0.5">
                                     {([7, 30, 90] as const).map((d) => (
                                         <button
                                             key={d}
@@ -1694,7 +1694,7 @@ export default function DashboardPage() {
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
                             {/* XP Growth (cumulative area chart) */}
-                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
+                            <div className="bg-surface border border-surface-border rounded-[24px] p-5">
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
                                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">XP Growth</p>
@@ -1747,7 +1747,7 @@ export default function DashboardPage() {
                             </div>
 
                             {/* Daily Earnings (Cumulative) */}
-                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
+                            <div className="bg-surface border border-surface-border rounded-[24px] p-5">
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
                                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Daily Earnings</p>
@@ -1794,7 +1794,7 @@ export default function DashboardPage() {
                             </div>
 
                             {/* Activity bar chart */}
-                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
+                            <div className="bg-surface border border-surface-border rounded-[24px] p-5">
                                 <div className="flex items-center justify-between mb-3">
                                     <div>
                                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Activity</p>
@@ -1833,7 +1833,7 @@ export default function DashboardPage() {
                             </div>
 
                             {/* Follower Growth */}
-                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
+                            <div className="bg-surface border border-surface-border rounded-[24px] p-5">
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
                                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Follower Growth</p>

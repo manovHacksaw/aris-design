@@ -54,10 +54,10 @@ function LeaderboardContent() {
                     </div>
 
                     {/* Toolbar */}
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-white/[0.05] pb-4">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-surface-border pb-4">
 
                         {/* Type tabs */}
-                        <div className="flex items-center gap-0.5 bg-white/[0.03] border border-white/[0.06] rounded-xl p-1 shrink-0">
+                        <div className="flex items-center gap-0.5 bg-surface border border-surface-border rounded-xl p-1 shrink-0">
                             {TABS.map((tab) => (
                                 <button
                                     key={tab.id}
@@ -66,7 +66,7 @@ function LeaderboardContent() {
                                         "px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-150",
                                         activeTab === tab.id
                                             ? "bg-white text-black shadow"
-                                            : "text-white/30 hover:text-white/65"
+                                            : "text-foreground/30 hover:text-white/65"
                                     )}
                                 >
                                     {tab.label}
@@ -84,8 +84,8 @@ function LeaderboardContent() {
                                         className={cn(
                                             "px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all shrink-0 border",
                                             activeDomain === d
-                                                ? "border-white/20 bg-white/[0.07] text-white/80"
-                                                : "border-transparent text-white/22 hover:text-white/50"
+                                                ? "border-white/20 bg-surface-hover text-foreground/80"
+                                                : "border-transparent text-white/22 hover:text-foreground/50"
                                         )}
                                     >
                                         {d}
@@ -96,7 +96,7 @@ function LeaderboardContent() {
                         {activeTab === "users" && <div className="flex-1" />}
 
                         {/* Timeline */}
-                        <div className="flex items-center gap-0.5 bg-white/[0.03] border border-white/[0.06] rounded-lg p-0.5 shrink-0">
+                        <div className="flex items-center gap-0.5 bg-surface border border-surface-border rounded-lg p-0.5 shrink-0">
                             {TIMELINES.map((t) => (
                                 <button
                                     key={t.key}
@@ -104,8 +104,8 @@ function LeaderboardContent() {
                                     className={cn(
                                         "px-3 py-1.5 rounded-md text-[10px] font-bold transition-all",
                                         timeline === t.key
-                                            ? "bg-white/10 text-white"
-                                            : "text-white/30 hover:text-white/60"
+                                            ? "bg-white/10 text-foreground"
+                                            : "text-foreground/30 hover:text-foreground/60"
                                     )}
                                 >
                                     {t.label}

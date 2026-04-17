@@ -159,7 +159,7 @@ function AdminLoginGate({ onLogin }: { onLogin: (creds: string) => void }) {
             <button
               onClick={handleLogin}
               disabled={loading}
-              className="w-full py-4 rounded-[14px] bg-primary text-white font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 shadow-lg shadow-primary/20"
+              className="w-full py-4 rounded-[14px] bg-primary text-foreground font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 shadow-lg shadow-primary/20"
             >
               {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Signing in…</> : <>Sign In <ChevronRight className="w-4 h-4" /></>}
             </button>

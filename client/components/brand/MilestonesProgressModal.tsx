@@ -36,7 +36,7 @@ interface Props {
 function ProgressBar({ pct, label }: { pct: number; label: string }) {
     const clamped = Math.min(pct, 100);
     return (
-        <div className="relative w-full h-2.5 bg-white/[0.06] rounded-full overflow-visible">
+        <div className="relative w-full h-2.5 bg-surface rounded-full overflow-visible">
             <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${clamped}%` }}
@@ -118,10 +118,10 @@ export default function MilestonesProgressModal({
                         exit={{ opacity: 0, y: 16, scale: 0.97 }}
                         transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
                         onClick={(e) => e.stopPropagation()}
-                        className="w-full max-w-lg bg-background border border-white/[0.08] rounded-[28px] flex flex-col overflow-hidden shadow-2xl"
+                        className="w-full max-w-lg bg-background border border-surface-border rounded-[28px] flex flex-col overflow-hidden shadow-2xl"
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06] shrink-0">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-surface-border shrink-0">
                             <div>
                                 <h2 className="font-display text-2xl text-foreground uppercase tracking-tight">
                                     {isMaxed ? "Max Level Reached" : `Next Goal — Level ${overallLevel + 1}`}
@@ -132,7 +132,7 @@ export default function MilestonesProgressModal({
                             </div>
                             <button
                                 onClick={onClose}
-                                className="w-8 h-8 rounded-full bg-white/[0.05] hover:bg-white/[0.1] flex items-center justify-center transition-colors"
+                                className="w-8 h-8 rounded-full bg-surface hover:bg-white/[0.1] flex items-center justify-center transition-colors"
                             >
                                 <X className="w-4 h-4 text-foreground/50" />
                             </button>
@@ -157,7 +157,7 @@ export default function MilestonesProgressModal({
                                         <div className="flex items-center gap-3">
                                             <div className={cn(
                                                 "w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
-                                                done ? "bg-lime-400/15" : "bg-white/[0.04]"
+                                                done ? "bg-lime-400/15" : "bg-surface"
                                             )}>
                                                 <Icon className={cn("w-4 h-4", done ? "text-lime-400" : "text-foreground/30")} />
                                             </div>
@@ -178,7 +178,7 @@ export default function MilestonesProgressModal({
                                                 "shrink-0 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest",
                                                 done
                                                     ? "bg-lime-400/15 text-lime-400 border border-lime-400/30"
-                                                    : "bg-white/[0.04] text-foreground/30 border border-white/[0.06]"
+                                                    : "bg-surface text-foreground/30 border border-surface-border"
                                             )}>
                                                 {done ? "Done" : `${Math.floor(pct)}%`}
                                             </div>

@@ -15,7 +15,7 @@ export default function BrandMobileHeader() {
             <div className="flex items-center gap-3">
                 <Link href="/brand/dashboard" className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
-                        <span className="text-white font-black text-sm">B</span>
+                        <span className="text-primary-foreground font-black text-sm">B</span>
                     </div>
                     <div className="flex flex-col">
                         <span className="text-base font-black tracking-tight text-foreground leading-none">Brand Portal</span>
@@ -39,7 +39,7 @@ export default function BrandMobileHeader() {
                 >
                     <IoNotificationsOutline size={22} />
                     {unreadCount > 0 && (
-                        <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-primary text-white text-[9px] font-black px-0.5 border border-background">
+                        <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[9px] font-black px-0.5 border border-background">
                             {unreadCount > 99 ? "99+" : unreadCount}
                         </span>
                     )}

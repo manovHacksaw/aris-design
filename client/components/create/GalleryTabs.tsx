@@ -104,7 +104,7 @@ export default function GalleryTabs({ userId }: { userId?: string }) {
                 className="w-full flex items-center justify-between group mb-1"
             >
                 <div className="flex items-center gap-3">
-                    <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">
+                    <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em]">
                         Your gallery
                     </p>
                     {totalCount > 0 && (
@@ -142,13 +142,13 @@ export default function GalleryTabs({ userId }: { userId?: string }) {
                                             className={cn(
                                                 "relative pb-1.5 text-sm font-bold uppercase tracking-wide transition-colors",
                                                 activeTab === tab.key
-                                                    ? "text-white"
-                                                    : "text-white/30 hover:text-white/50"
+                                                    ? "text-foreground"
+                                                    : "text-foreground/30 hover:text-foreground/50"
                                             )}
                                         >
                                             {tab.label}
                                             {tab.count > 0 && (
-                                                <span className="ml-1.5 text-[10px] text-white/20">
+                                                <span className="ml-1.5 text-[10px] text-foreground/20">
                                                     {tab.count}
                                                 </span>
                                             )}
@@ -199,9 +199,9 @@ function PostedGrid({
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {Array.from({ length: 8 }).map((_, i) => (
                     <div key={i} className="space-y-2">
-                        <div className="aspect-[4/5] rounded-xl bg-white/[0.04] animate-pulse" />
-                        <div className="h-3 bg-white/[0.04] rounded animate-pulse w-3/4" />
-                        <div className="h-2.5 bg-white/[0.03] rounded animate-pulse w-1/2" />
+                        <div className="aspect-[4/5] rounded-xl bg-surface animate-pulse" />
+                        <div className="h-3 bg-surface rounded animate-pulse w-3/4" />
+                        <div className="h-2.5 bg-surface rounded animate-pulse w-1/2" />
                     </div>
                 ))}
             </div>
@@ -210,7 +210,7 @@ function PostedGrid({
 
     if (posts.length === 0) {
         return (
-            <div className="py-12 text-center rounded-2xl border border-dashed border-white/[0.06] bg-white/[0.01]">
+            <div className="py-12 text-center rounded-2xl border border-dashed border-surface-border bg-surface">
                 <FileImage className="w-8 h-8 text-white/10 mx-auto mb-2" />
                 <p className="text-xs text-white/25 font-medium">
                     No posts yet — start creating!
@@ -235,7 +235,7 @@ function PostedGrid({
                             transition={{ delay: i * 0.03, duration: 0.25 }}
                             className="hover:-translate-y-0.5 transition-transform duration-200"
                         >
-                            <div className="relative aspect-[4/5] rounded-xl overflow-hidden bg-white/[0.04] mb-2">
+                            <div className="relative aspect-[4/5] rounded-xl overflow-hidden bg-surface mb-2">
                                 {img ? (
                                     <img
                                         src={img}
@@ -250,7 +250,7 @@ function PostedGrid({
                                 {/* Vote pill */}
                                 <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/50 backdrop-blur-sm">
                                     <Heart className="w-2.5 h-2.5 text-rose-400 fill-rose-400" />
-                                    <span className="text-[9px] font-bold text-white">
+                                    <span className="text-[9px] font-bold text-foreground">
                                         {post._count?.votes ?? 0}
                                     </span>
                                 </div>
@@ -260,7 +260,7 @@ function PostedGrid({
                                         <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-lime-400 shadow-[0_0_4px_1px_rgba(163,230,53,0.4)]" />
                                     )}
                             </div>
-                            <h3 className="text-[11px] font-semibold text-white line-clamp-1 leading-snug mb-0.5">
+                            <h3 className="text-[11px] font-semibold text-foreground line-clamp-1 leading-snug mb-0.5">
                                 {post.event?.title ?? "Event"}
                             </h3>
                             <p className="text-[10px] text-white/25 flex items-center gap-1">
@@ -286,7 +286,7 @@ function DraftsGrid({
 }) {
     if (drafts.length === 0) {
         return (
-            <div className="py-12 text-center rounded-2xl border border-dashed border-white/[0.06] bg-white/[0.01]">
+            <div className="py-12 text-center rounded-2xl border border-dashed border-surface-border bg-surface">
                 <FileImage className="w-8 h-8 text-white/10 mx-auto mb-2" />
                 <p className="text-xs text-white/25 font-medium">
                     No saved images yet
@@ -308,7 +308,7 @@ function DraftsGrid({
                         transition={{ delay: i * 0.03, duration: 0.25 }}
                         className="opacity-80 hover:opacity-100 hover:-translate-y-0.5 transition-all duration-200"
                     >
-                        <div className="relative aspect-[4/5] rounded-xl overflow-hidden bg-white/[0.04] mb-2">
+                        <div className="relative aspect-[4/5] rounded-xl overflow-hidden bg-surface mb-2">
                             {draft.imageUrl ? (
                                 <img
                                     src={draft.imageUrl}
@@ -325,13 +325,13 @@ function DraftsGrid({
                                 onClick={(e) => onDelete(e, draft.id)}
                                 className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/20"
                             >
-                                <Trash2 className="w-2.5 h-2.5 text-white/50" />
+                                <Trash2 className="w-2.5 h-2.5 text-foreground/50" />
                             </button>
                         </div>
-                        <h3 className="text-[11px] font-semibold text-white/70 line-clamp-1 leading-snug mb-0.5">
+                        <h3 className="text-[11px] font-semibold text-foreground/70 line-clamp-1 leading-snug mb-0.5">
                             {draft.prompt ? `"${draft.prompt}"` : "Saved image"}
                         </h3>
-                        <p className="text-[10px] text-white/20 flex items-center gap-1">
+                        <p className="text-[10px] text-foreground/20 flex items-center gap-1">
                             <Clock className="w-2.5 h-2.5" />
                             {timeAgo(draft.createdAt)}
                         </p>

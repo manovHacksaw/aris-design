@@ -1,34 +1,34 @@
 @import "tailwindcss";
 
 :root {
-  /* Vibrant "Navigate" Inspired Theme */
-  --color-background: #F8F9FA;
-  --color-foreground: #111111;
+  /* Light Theme — "Day Mode" of the dark theme */
+  --color-background: #F4F6FA;
+  --color-foreground: #1A1A1A;
 
-  /* Primary: Neon Lime */
-  --color-primary: #B6FF60;
-  --color-primary-foreground: #111111;
-  --color-primary-dark: #9EE050;
-  --color-primary-light: #CFFF90;
+  /* Primary: Neon Lime (softened for light) */
+  --color-primary: #7ECB2A;
+  --color-primary-foreground: #FFFFFF;
+  --color-primary-dark: #6AB522;
+  --color-primary-light: #A8E65C;
 
-  /* Secondary: Soft Lavender/Purple */
-  --color-secondary: #9D9DFF;
-  --color-secondary-foreground: #111111;
+  /* Secondary: Soft Lavender/Purple (richer for light) */
+  --color-secondary: #EEEEFF;
+  --color-secondary-foreground: #1A1A1A;
 
   /* Accent: Vibrant Orange */
-  --color-accent: #FF6B00;
+  --color-accent: #E85D00;
   --color-accent-foreground: #FFFFFF;
 
   /* UI Surfaces */
   --color-card: #FFFFFF;
-  --color-card-border: #111111;
+  --color-card-border: rgba(0, 0, 0, 0.08);
   --color-input: #FFFFFF;
-  --color-folder: #F1F3F5;
+  --color-folder: #EEF0F4;
 
   /* Additional Vibrant Colors */
-  --color-vibrant-yellow: #FFC700;
-  --color-vibrant-pink: #FF60B6;
-  --color-vibrant-blue: #60B6FF;
+  --color-vibrant-yellow: #E5A800;
+  --color-vibrant-pink: #E0459E;
+  --color-vibrant-blue: #3A9BE0;
 
   /* Radius System (Heavily rounded as per image) */
   --radius-sm: 12px;
@@ -37,12 +37,18 @@
   --radius-xl: 40px;
   --radius-full: 9999px;
 
-  /* Shadows (minimal, preference for solid borders) */
-  --shadow-soft: 0 4px 0 rgba(17, 17, 17, 0.05);
-  --shadow-card: 0 8px 0 rgba(17, 17, 17, 0.08);
-  --shadow-spotify: 0 12px 48px rgba(0, 0, 0, 0.12);
+  /* Theme-adaptive surfaces (replaces bg-white/[0.0x] pattern) */
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F4F5F7;
+  --color-surface-border: rgba(0, 0, 0, 0.08);
+  --color-surface-border-strong: rgba(0, 0, 0, 0.12);
 
-  --border-thick: 1.5px solid #111111;
+  /* Shadows (soft and elevated for light mode) */
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-spotify: 0 12px 48px rgba(0, 0, 0, 0.1);
+
+  --border-thick: 1.5px solid rgba(0, 0, 0, 0.1);
 }
 
 .dark {
@@ -52,6 +58,8 @@
 
   --color-primary: #B6FF60;
   --color-primary-foreground: #111111;
+  --color-primary-dark: #9EE050;
+  --color-primary-light: #CFFF90;
 
   --color-secondary: #8A8AFF;
   --color-secondary-foreground: #FFFFFF;
@@ -64,8 +72,20 @@
   --color-input: #1A1A1A;
   --color-folder: #1A1A1A;
 
+  --color-vibrant-yellow: #FFC700;
+  --color-vibrant-pink: #FF60B6;
+  --color-vibrant-blue: #60B6FF;
+
+  --color-surface: rgba(255, 255, 255, 0.03);
+  --color-surface-hover: rgba(255, 255, 255, 0.06);
+  --color-surface-border: rgba(255, 255, 255, 0.08);
+  --color-surface-border-strong: rgba(255, 255, 255, 0.15);
+
   --shadow-soft: 0 4px 0 rgba(0, 0, 0, 0.3);
   --shadow-card: 0 8px 0 rgba(0, 0, 0, 0.4);
+  --shadow-spotify: 0 12px 48px rgba(0, 0, 0, 0.4);
+
+  --border-thick: 1.5px solid #111111;
 }
 
 @theme inline {
@@ -83,21 +103,25 @@
   --color-accent: var(--color-accent);
   --color-accent-foreground: var(--color-accent-foreground);
 
-  /* Semantic design tokens */
-  --color-neon-lime: #B6FF60;
-  --color-lavender: #9D9DFF;
-  --color-vibrant-orange: #FF6B00;
-  --color-vibrant-yellow: #FFC700;
-  --color-vibrant-pink: #FF60B6;
-  --color-vibrant-blue: #60B6FF;
+  /* Semantic design tokens — follow theme via CSS variables */
+  --color-neon-lime: var(--color-primary);
+  --color-lavender: var(--color-secondary);
+  --color-vibrant-orange: var(--color-accent);
+  --color-vibrant-yellow: var(--color-vibrant-yellow);
+  --color-vibrant-pink: var(--color-vibrant-pink);
+  --color-vibrant-blue: var(--color-vibrant-blue);
 
-  --color-aris-bg: #F8F9FA;
-  --color-aris-card: #FFFFFF;
-  --color-aris-border: #111111;
+  --color-aris-bg: var(--color-background);
+  --color-aris-card: var(--color-card);
+  --color-aris-border: var(--color-card-border);
 
   --color-card: var(--color-card);
   --color-card-border: var(--color-card-border);
   --color-border: var(--color-card-border);
+  --color-surface: var(--color-surface);
+  --color-surface-hover: var(--color-surface-hover);
+  --color-surface-border: var(--color-surface-border);
+  --color-surface-border-strong: var(--color-surface-border-strong);
   --color-input: var(--color-input);
   --color-folder: var(--color-folder);
 
@@ -154,23 +178,41 @@ body {
   -webkit-backdrop-filter: blur(16px);
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar — Light */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F0EAE4;
+  background: #ECEEF2;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #B8DDE0;
+  background: #C5C9D3;
   border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #45B8C2;
+  background: #9CA3AF;
+}
+
+/* Custom Scrollbar — Dark */
+.dark ::-webkit-scrollbar-track {
+  background: #1A1A1A;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #3A3A3A;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Light mode surface shadow — adds elevation to bg-surface cards */
+:root:not(.dark) .bg-surface {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 /* Utility to hide scrollbar but keep functionality */

@@ -60,8 +60,8 @@ export default function SidebarProfile({ forceExpanded }: SidebarProfileProps) {
           "flex-1 min-w-0 overflow-hidden transition-all duration-300 ease-in-out",
           showExpanded ? "opacity-100 max-w-[200px] ml-3" : "opacity-0 max-w-0 ml-0"
         )}>
-          <p className="text-sm font-medium text-[#E5E7EB] truncate">Sign in</p>
-          <p className="text-[11px] text-[#9CA3AF] truncate">Connect wallet</p>
+          <p className="text-sm font-medium text-foreground/80 truncate">Sign in</p>
+          <p className="text-[11px] text-foreground/50 truncate">Connect wallet</p>
         </div>
       </Link>
     );
@@ -125,10 +125,10 @@ export default function SidebarProfile({ forceExpanded }: SidebarProfileProps) {
 
         {/* Name + handle */}
         <div className="flex-1 min-w-0 ml-3 pr-2">
-          <p className="text-sm font-medium text-[#E5E7EB] truncate group-hover/profile:text-white transition-colors">
+          <p className="text-sm font-medium text-foreground/80 truncate group-hover/profile:text-foreground transition-colors">
             {displayName}
           </p>
-          <p className="text-[11px] text-[#9CA3AF] truncate">
+          <p className="text-[11px] text-foreground/50 truncate">
             @{username}
           </p>
         </div>

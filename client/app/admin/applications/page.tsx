@@ -63,7 +63,7 @@ export default function ApplicationsPage() {
     return (
         <div className="p-8 bg-gray-50/50 dark:bg-black min-h-full">
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Brand Applications</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Brand Applications</h1>
                 <p className="text-gray-500 dark:text-gray-400 mt-1">Review and manage brand registration requests</p>
             </div>
 
@@ -125,7 +125,7 @@ export default function ApplicationsPage() {
                                     >
                                         <td className="px-6 py-4">
                                             <div>
-                                                <p className="font-medium text-gray-900 dark:text-white">{app.brandName}</p>
+                                                <p className="font-medium text-gray-900 dark:text-foreground">{app.brandName}</p>
                                                 <p className="text-xs text-gray-500 mt-0.5">{app.companyName}</p>
                                             </div>
                                         </td>

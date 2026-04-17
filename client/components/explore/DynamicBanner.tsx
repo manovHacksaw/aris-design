@@ -99,10 +99,10 @@ export default function DynamicBanner({ events }: { events: BannerEvent[] }) {
                             initial={{ opacity: 0, x: -30 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8, ease: "easeOut" }}
-                            className="text-5xl sm:text-7xl lg:text-8xl font-black text-white leading-[0.9] uppercase tracking-tighter"
+                            className="text-5xl sm:text-7xl lg:text-8xl font-black text-foreground leading-[0.9] uppercase tracking-tighter"
                         >
                             {currentEvent.title.split(' ').map((word, i) => (
-                                <span key={i} className={i % 2 === 1 ? "text-primary/90 italic" : "text-white"}>
+                                <span key={i} className={i % 2 === 1 ? "text-primary/90 italic" : "text-foreground"}>
                                     {word}{' '}
                                 </span>
                             ))}
@@ -118,7 +118,7 @@ export default function DynamicBanner({ events }: { events: BannerEvent[] }) {
                     >
                         <div className="bg-white/5 backdrop-blur-2xl border border-white/10 px-5 py-2.5 rounded-full flex items-center gap-3">
                             <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_10px_#a3e635]" />
-                            <span className="text-[10px] font-black text-white/80 uppercase tracking-widest">
+                            <span className="text-[10px] font-black text-foreground/80 uppercase tracking-widest">
                                 {currentEvent.brand?.name || "Global"}
                             </span>
                         </div>
@@ -131,8 +131,8 @@ export default function DynamicBanner({ events }: { events: BannerEvent[] }) {
                         </div>
 
                         <div className="bg-white/5 backdrop-blur-2xl border border-white/10 px-5 py-2.5 rounded-full flex items-center gap-3">
-                            <Users className="w-4 h-4 text-white/40" />
-                            <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">
+                            <Users className="w-4 h-4 text-foreground/40" />
+                            <span className="text-[10px] font-black text-foreground/60 uppercase tracking-widest">
                                 {participants.toLocaleString()} Active
                             </span>
                         </div>
@@ -176,7 +176,7 @@ export default function DynamicBanner({ events }: { events: BannerEvent[] }) {
                         </div>
                         <span className={cn(
                             "text-[10px] font-black uppercase tracking-widest transition-colors",
-                            i === currentIndex ? "text-primary" : "text-white/20 group-hover:text-white/40"
+                            i === currentIndex ? "text-primary" : "text-foreground/20 group-hover:text-foreground/40"
                         )}>
                             0{i + 1}
                         </span>

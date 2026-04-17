@@ -817,7 +817,7 @@ export default function BrandApplicationPage() {
                         key={key}
                         className="flex rounded-[14px] overflow-hidden border border-border/50 focus-within:border-primary/50 transition-colors"
                       >
-                        <div className="flex items-center px-3 py-3 bg-white/[0.03] border-r border-border/30 text-[11px] text-foreground/30 font-medium whitespace-nowrap shrink-0">
+                        <div className="flex items-center px-3 py-3 bg-surface border-r border-border/30 text-[11px] text-foreground/30 font-medium whitespace-nowrap shrink-0">
                           <AtSign className="w-3 h-3 mr-1" />{prefix}
                         </div>
                         <input
@@ -903,7 +903,7 @@ export default function BrandApplicationPage() {
                             "w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
                             selected ? "bg-primary border-primary" : "border-border/50"
                           )}>
-                            {selected && <Check className="w-2.5 h-2.5 text-white" />}
+                            {selected && <Check className="w-2.5 h-2.5 text-foreground" />}
                           </div>
                           <span className="text-xs font-semibold flex-1">{label}</span>
                           {selected && (
@@ -966,7 +966,7 @@ export default function BrandApplicationPage() {
                         "w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors",
                         form[key] ? "bg-primary border-primary" : "border-border/50"
                       )}>
-                        {form[key] && <Check className="w-3 h-3 text-white" />}
+                        {form[key] && <Check className="w-3 h-3 text-foreground" />}
                       </div>
                       <span className="text-xs text-foreground/60 leading-relaxed">{label}</span>
                     </button>

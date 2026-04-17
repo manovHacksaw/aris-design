@@ -55,15 +55,15 @@ export default function ExploreSidebar({
 function BrandSkeleton() {
     return (
         <div className="space-y-4">
-            <div className="h-3 w-32 bg-white/[0.04] rounded animate-pulse" />
+            <div className="h-3 w-32 bg-surface rounded animate-pulse" />
             {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 animate-pulse">
-                    <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex-shrink-0" />
+                    <div className="w-8 h-8 rounded-lg bg-surface flex-shrink-0" />
                     <div className="flex-1 space-y-1.5">
-                        <div className="h-2.5 bg-white/[0.04] rounded w-3/4" />
-                        <div className="h-2 bg-white/[0.04] rounded w-1/2" />
+                        <div className="h-2.5 bg-surface rounded w-3/4" />
+                        <div className="h-2 bg-surface rounded w-1/2" />
                     </div>
-                    <div className="h-6 w-14 bg-white/[0.04] rounded" />
+                    <div className="h-6 w-14 bg-surface rounded" />
                 </div>
             ))}
         </div>
@@ -136,7 +136,7 @@ function SuggestedItemCard({ item, type }: { item: SuggestedItem; type: "brand" 
 
     return (
         <div
-            className="flex items-center justify-between group py-2 px-2 -mx-2 rounded-xl hover:bg-white/[0.02] transition-colors cursor-pointer"
+            className="flex items-center justify-between group py-2 px-2 -mx-2 rounded-xl hover:bg-surface transition-colors cursor-pointer"
             onClick={handleNavigate}
         >
             <div className="flex items-center gap-3 min-w-0">
@@ -145,7 +145,7 @@ function SuggestedItemCard({ item, type }: { item: SuggestedItem; type: "brand" 
                         {item.avatar ? (
                             <img src={item.avatar} className="w-full h-full object-cover" alt={item.name} />
                         ) : (
-                            <span className={cn("text-xs font-black", type === "brand" ? "text-white" : "text-foreground/30")}>
+                            <span className={cn("text-xs font-black", type === "brand" ? "text-foreground" : "text-foreground/30")}>
                                 {item.name[0]}
                             </span>
                         )}
@@ -153,7 +153,7 @@ function SuggestedItemCard({ item, type }: { item: SuggestedItem; type: "brand" 
                 </div>
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 w-full">
-                        <p className="text-[12px] font-bold text-foreground truncate group-hover:text-white transition-colors">
+                        <p className="text-[12px] font-bold text-foreground truncate group-hover:text-foreground transition-colors">
                             {item.name}
                         </p>
                     </div>
@@ -172,7 +172,7 @@ function SuggestedItemCard({ item, type }: { item: SuggestedItem; type: "brand" 
                 disabled={loading}
                 className={cn(
                     "ml-3 shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all group-hover:bg-white/5 hover:!bg-white/10",
-                    followed ? "text-foreground/30 hover:!text-red-400" : "text-foreground/50 hover:!text-white"
+                    followed ? "text-foreground/30 hover:!text-red-400" : "text-foreground/50 hover:!text-foreground"
                 )}
             >
                 {loading ? (

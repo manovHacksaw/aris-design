@@ -362,11 +362,11 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                   <Wand2 className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-[11px] font-black text-white uppercase tracking-widest">
+                  <p className="text-[11px] font-black text-foreground uppercase tracking-widest">
                     Aris AI Engine
                   </p>
                   {remainingGenerations !== null && (
-                    <p className="text-[9px] font-bold text-white/30 uppercase tracking-wider">
+                    <p className="text-[9px] font-bold text-foreground/30 uppercase tracking-wider">
                       {remainingGenerations} generations left today
                     </p>
                   )}
@@ -376,7 +376,7 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                 onClick={() => !isPosting && onClose()}
                 className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
               >
-                <X className="w-4 h-4 text-white/50" />
+                <X className="w-4 h-4 text-foreground/50" />
               </button>
             </div>
 
@@ -393,11 +393,11 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                     className="p-6 space-y-6"
                   >
                     <div>
-                      <h2 className="text-2xl font-black text-white tracking-tighter leading-tight">
+                      <h2 className="text-2xl font-black text-foreground tracking-tighter leading-tight">
                         What are you <br />
                         <span className="text-primary italic">creating?</span>
                       </h2>
-                      <p className="text-white/40 text-xs font-medium mt-2">
+                      <p className="text-foreground/40 text-xs font-medium mt-2">
                         Select the type of post you want to generate
                       </p>
                     </div>
@@ -416,15 +416,15 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                             <div className="flex items-center gap-3">
                               <span className="text-2xl">{type.icon}</span>
                               <div>
-                                <p className="text-sm font-black text-white tracking-tight">
+                                <p className="text-sm font-black text-foreground tracking-tight">
                                   {type.label}
                                 </p>
-                                <p className="text-[10px] font-medium text-white/40 mt-0.5">
+                                <p className="text-[10px] font-medium text-foreground/40 mt-0.5">
                                   {type.description}
                                 </p>
                               </div>
                             </div>
-                            <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors" />
+                            <ChevronRight className="w-4 h-4 text-foreground/30 group-hover:text-foreground/60 transition-colors" />
                           </div>
                         </button>
                       ))}
@@ -446,16 +446,16 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                       {!initialPrompt && (
                         <button
                           onClick={() => setStep("select_type")}
-                          className="text-[10px] font-bold text-white/30 uppercase tracking-widest hover:text-white/60 transition-colors mb-4 flex items-center gap-1"
+                          className="text-[10px] font-bold text-foreground/30 uppercase tracking-widest hover:text-foreground/60 transition-colors mb-4 flex items-center gap-1"
                         >
                           ← Back
                         </button>
                       )}
-                      <h2 className="text-2xl font-black text-white tracking-tighter leading-tight">
+                      <h2 className="text-2xl font-black text-foreground tracking-tighter leading-tight">
                         Describe your <br />
                         <span className="text-primary italic">vision</span>
                       </h2>
-                      <p className="text-white/40 text-xs font-medium mt-2">
+                      <p className="text-foreground/40 text-xs font-medium mt-2">
                         {isFirstGeneration
                           ? "Type anything — press Enter or hit Generate."
                           : "Edit your prompt and generate again."}
@@ -473,8 +473,8 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                         )}
                         {initialRatio && (
                           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
-                            <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">Ratio</span>
-                            <span className="text-[10px] font-black text-white/70">{initialRatio}</span>
+                            <span className="text-[9px] font-black text-foreground/30 uppercase tracking-widest">Ratio</span>
+                            <span className="text-[10px] font-black text-foreground/70">{initialRatio}</span>
                           </div>
                         )}
                       </div>
@@ -491,7 +491,7 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                           <button
                             key={hint}
                             onClick={() => setPrompt(hint)}
-                            className="w-full text-left px-4 py-2.5 rounded-xl bg-white/5 border border-white/5 text-xs font-medium text-white/40 hover:text-white/70 hover:bg-white/8 transition-all"
+                            className="w-full text-left px-4 py-2.5 rounded-xl bg-white/5 border border-white/5 text-xs font-medium text-foreground/40 hover:text-foreground/70 hover:bg-white/8 transition-all"
                           >
                             "{hint}"
                           </button>
@@ -528,10 +528,10 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                       />
                     </div>
                     <div className="text-center">
-                      <p className="text-lg font-black text-white tracking-tight">
+                      <p className="text-lg font-black text-foreground tracking-tight">
                         Generating...
                       </p>
-                      <p className="text-xs font-medium text-white/30 mt-1">
+                      <p className="text-xs font-medium text-foreground/30 mt-1">
                         "{currentPrompt || prompt}"
                       </p>
                     </div>
@@ -567,20 +567,20 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                       {/* AI badge */}
                       <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md">
                         <Sparkles className="w-3 h-3 text-primary" />
-                        <span className="text-[9px] font-black text-white uppercase tracking-widest">
+                        <span className="text-[9px] font-black text-foreground uppercase tracking-widest">
                           AI Generated
                         </span>
                       </div>
                       {remainingGenerations !== null && (
                         <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md">
-                          <span className="text-[9px] font-bold text-white/60">
+                          <span className="text-[9px] font-bold text-foreground/60">
                             {remainingGenerations} left
                           </span>
                         </div>
                       )}
                     </div>
 
-                    <p className="text-[11px] font-medium text-white/40 px-1">
+                    <p className="text-[11px] font-medium text-foreground/40 px-1">
                       "{currentPrompt}"
                     </p>
 
@@ -597,13 +597,13 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                       <div className="flex gap-2">
                         <button
                           onClick={handleDiscard}
-                          className="flex-1 py-3 rounded-2xl bg-white/5 border border-white/10 text-xs font-black text-white/50 uppercase tracking-widest hover:bg-white/8 hover:text-white/70 transition-all active:scale-95"
+                          className="flex-1 py-3 rounded-2xl bg-white/5 border border-white/10 text-xs font-black text-foreground/50 uppercase tracking-widest hover:bg-white/8 hover:text-foreground/70 transition-all active:scale-95"
                         >
                           Cancel
                         </button>
                         <button
                           onClick={() => setPinturaOpen(true)}
-                          className="flex items-center justify-center gap-1.5 px-4 py-3 rounded-2xl bg-white/5 border border-white/15 text-xs font-black text-white/60 uppercase tracking-widest hover:bg-white/10 hover:text-white/80 transition-all active:scale-95"
+                          className="flex items-center justify-center gap-1.5 px-4 py-3 rounded-2xl bg-white/5 border border-white/15 text-xs font-black text-foreground/60 uppercase tracking-widest hover:bg-white/10 hover:text-foreground/80 transition-all active:scale-95"
                         >
                           <Pencil className="w-3 h-3" />
                           Edit
@@ -614,7 +614,7 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                         <button
                           onClick={handleSave}
                           disabled={isSaving || saveSuccess}
-                          className="flex-1 py-3 rounded-2xl bg-white/5 border border-white/15 text-xs font-black text-white/60 uppercase tracking-widest hover:bg-white/8 hover:text-white/80 transition-all active:scale-95 flex items-center justify-center gap-1.5 disabled:opacity-60"
+                          className="flex-1 py-3 rounded-2xl bg-white/5 border border-white/15 text-xs font-black text-foreground/60 uppercase tracking-widest hover:bg-white/8 hover:text-foreground/80 transition-all active:scale-95 flex items-center justify-center gap-1.5 disabled:opacity-60"
                         >
                           {saveSuccess ? (
                             <><Check className="w-3 h-3 text-emerald-400" /> Saved</>
@@ -641,7 +641,7 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                     <button
                       onClick={handleRegenerate}
                       disabled={remainingGenerations === 0}
-                      className="w-full flex items-center justify-center gap-2 py-2.5 text-[10px] font-bold text-white/30 uppercase tracking-widest hover:text-white/60 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="w-full flex items-center justify-center gap-2 py-2.5 text-[10px] font-bold text-foreground/30 uppercase tracking-widest hover:text-foreground/60 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       <RefreshCw className="w-3 h-3" />
                       Regenerate
@@ -661,14 +661,14 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                     <div>
                       <button
                         onClick={() => setStep("preview")}
-                        className="text-[10px] font-bold text-white/30 uppercase tracking-widest hover:text-white/60 transition-colors mb-4 flex items-center gap-1"
+                        className="text-[10px] font-bold text-foreground/30 uppercase tracking-widest hover:text-foreground/60 transition-colors mb-4 flex items-center gap-1"
                       >
                         ← Back
                       </button>
-                      <h2 className="text-xl font-black text-white tracking-tight">
+                      <h2 className="text-xl font-black text-foreground tracking-tight">
                         Select an Event
                       </h2>
-                      <p className="text-white/40 text-xs font-medium mt-1">
+                      <p className="text-foreground/40 text-xs font-medium mt-1">
                         Choose where to post your AI creation
                       </p>
                     </div>
@@ -690,8 +690,8 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                     ) : events.length === 0 ? (
                       <div className="text-center py-12">
                         <ImageIcon className="w-10 h-10 text-white/10 mx-auto mb-3" />
-                        <p className="text-sm font-bold text-white/30">No open events right now</p>
-                        <p className="text-xs text-white/20 mt-1">Check back later</p>
+                        <p className="text-sm font-bold text-foreground/30">No open events right now</p>
+                        <p className="text-xs text-foreground/20 mt-1">Check back later</p>
                       </div>
                     ) : (
                       <div className="space-y-3">
@@ -715,27 +715,27 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                                   />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center">
-                                    <Zap className="w-5 h-5 text-white/20" />
+                                    <Zap className="w-5 h-5 text-foreground/20" />
                                   </div>
                                 )}
                               </div>
 
                               <div className="flex-1 min-w-0">
-                                <p className="text-xs font-black text-white truncate">
+                                <p className="text-xs font-black text-foreground truncate">
                                   {event.title}
                                 </p>
                                 {event.brand?.name && (
-                                  <p className="text-[10px] font-medium text-white/30 mt-0.5">
+                                  <p className="text-[10px] font-medium text-foreground/30 mt-0.5">
                                     {event.brand.name}
                                   </p>
                                 )}
                                 <div className="flex items-center gap-3 mt-1.5">
-                                  <span className="flex items-center gap-1 text-[9px] font-bold text-white/30">
+                                  <span className="flex items-center gap-1 text-[9px] font-bold text-foreground/30">
                                     <Clock className="w-3 h-3" />
                                     {formatTimeLeft(event.endTime)}
                                   </span>
                                   {event.eventAnalytics && (
-                                    <span className="flex items-center gap-1 text-[9px] font-bold text-white/30">
+                                    <span className="flex items-center gap-1 text-[9px] font-bold text-foreground/30">
                                       <Users className="w-3 h-3" />
                                       {event.eventAnalytics.uniqueParticipants} joined
                                     </span>
@@ -743,7 +743,7 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                                 </div>
                               </div>
 
-                              <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-primary shrink-0 transition-colors mt-1" />
+                              <ChevronRight className="w-4 h-4 text-foreground/20 group-hover:text-primary shrink-0 transition-colors mt-1" />
                             </div>
                           </button>
                         ))}
@@ -766,10 +766,10 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                           <Check className="w-9 h-9 text-emerald-400" />
                         </div>
                         <div className="text-center">
-                          <p className="text-lg font-black text-white tracking-tight">Posted!</p>
-                          <p className="text-xs font-medium text-white/30 mt-1">
+                          <p className="text-lg font-black text-foreground tracking-tight">Posted!</p>
+                          <p className="text-xs font-medium text-foreground/30 mt-1">
                             Your creation is live on{" "}
-                            <span className="text-white/60">{selectedEvent?.title}</span>
+                            <span className="text-foreground/60">{selectedEvent?.title}</span>
                           </p>
                         </div>
                       </>
@@ -781,10 +781,10 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                           </div>
                         </div>
                         <div className="text-center">
-                          <p className="text-lg font-black text-white tracking-tight">
+                          <p className="text-lg font-black text-foreground tracking-tight">
                             Uploading...
                           </p>
-                          <p className="text-xs font-medium text-white/30 mt-1">
+                          <p className="text-xs font-medium text-foreground/30 mt-1">
                             Pinning to IPFS and submitting to event
                           </p>
                         </div>
@@ -823,14 +823,14 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                           ? "Describe your image..."
                           : "Describe a new image..."
                       }
-                      className="flex-1 bg-transparent text-sm font-medium text-white placeholder:text-white/20 focus:outline-none"
+                      className="flex-1 bg-transparent text-sm font-medium text-white placeholder:text-foreground/20 focus:outline-none"
                     />
                     <button
                       onClick={handleSendPrompt}
                       disabled={!prompt.trim() || remainingGenerations === 0}
                       className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center hover:bg-primary/90 active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
                     >
-                      <Send className="w-3.5 h-3.5 text-white" />
+                      <Send className="w-3.5 h-3.5 text-foreground" />
                     </button>
                   </div>
                   {remainingGenerations === 0 && (

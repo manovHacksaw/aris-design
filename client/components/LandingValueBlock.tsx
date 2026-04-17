@@ -31,7 +31,7 @@ export default function LandingValueBlock() {
 
             {/* Main Content */}
             <div className="relative z-10">
-                <h2 className="text-3xl md:text-4xl font-bold text-white mb-8 leading-tight">
+                <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-8 leading-tight">
                     From Views <br />
                     <span className="text-primary">to Value</span>
                 </h2>

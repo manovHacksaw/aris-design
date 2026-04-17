@@ -187,7 +187,7 @@ export default function ProfileView({
     ? Math.min(100, Math.floor((stats.votesReceived / Math.max(stats.posts, 1)) * 10))
     : 0;
   const engagementLabel = engagementScore >= 80 ? "Legendary" : engagementScore >= 50 ? "High" : engagementScore >= 20 ? "Rising" : "Building";
-  const engagementColor = engagementScore >= 80 ? "text-lime-400" : engagementScore >= 50 ? "text-yellow-400" : engagementScore >= 20 ? "text-blue-400" : "text-white/30";
+  const engagementColor = engagementScore >= 80 ? "text-lime-400" : engagementScore >= 50 ? "text-yellow-400" : engagementScore >= 20 ? "text-blue-400" : "text-foreground/30";
 
   const participatedEvents = (votedEvents || []).map(event => ({
     event,
@@ -227,7 +227,7 @@ export default function ProfileView({
   const socialList = showSocialModal.type === "followers" ? followers : following;
 
   return (
-    <div className="min-h-screen bg-background text-white font-sans selection:bg-primary/30">
+    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
       <SidebarLayout>
         <main className="w-full pt-6 lg:pt-10 pb-24 md:pb-12 space-y-6">
 
@@ -238,17 +238,17 @@ export default function ProfileView({
             <div className="flex-1 min-w-0 space-y-6">
 
               {/* ── Identity Card ── */}
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 md:p-8">
+              <div className="bg-surface border border-surface-border rounded-[24px] p-6 md:p-8">
                 <div className="flex flex-wrap items-start gap-5">
 
                   {/* Avatar */}
                   <div className="relative shrink-0">
-                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-white/[0.1] bg-white/[0.05]">
+                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-surface-border-strong bg-surface">
                       {user?.avatarUrl ? (
                         <img src={user.avatarUrl} alt={displayName} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <span className="font-display text-4xl text-white/30 uppercase">{displayName[0]}</span>
+                          <span className="font-display text-4xl text-foreground/30 uppercase">{displayName[0]}</span>
                         </div>
                       )}
                     </div>
@@ -267,19 +267,19 @@ export default function ProfileView({
                       {walletAddr && (
                         <button
                           onClick={() => handleCopy(walletAddr)}
-                          className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.2] rounded-full transition-colors group"
+                          className="flex items-center gap-1.5 px-2.5 py-1 bg-surface border border-surface-border hover:border-surface-border-strong rounded-full transition-colors group"
                         >
                           <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                          <span className="text-[10px] font-black text-white/40 font-mono group-hover:text-white/70 transition-colors">
+                          <span className="text-[10px] font-black text-foreground/40 font-mono group-hover:text-foreground/70 transition-colors">
                             {copied ? "Copied!" : truncateAddress(walletAddr)}
                           </span>
-                          <Copy className="w-2.5 h-2.5 text-white/20 group-hover:text-white/50 transition-colors" />
+                          <Copy className="w-2.5 h-2.5 text-foreground/20 group-hover:text-foreground/50 transition-colors" />
                         </button>
                       )}
                       {joinDate && (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.04] border border-white/[0.06] rounded-full">
-                          <Calendar className="w-3 h-3 text-white/30" />
-                          <span className="text-[10px] font-black text-white/30 uppercase tracking-wide">Joined {joinDate}</span>
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-surface border border-surface-border rounded-full">
+                          <Calendar className="w-3 h-3 text-foreground/30" />
+                          <span className="text-[10px] font-black text-foreground/30 uppercase tracking-wide">Joined {joinDate}</span>
                         </div>
                       )}
                     </div>
@@ -288,7 +288,7 @@ export default function ProfileView({
                   {/* Actions */}
                   <div className="flex items-center gap-3 ml-auto">
                     {isOwnProfile ? (
-                      <button className="flex items-center gap-2 px-4 py-2 bg-white/[0.04] border border-white/[0.1] hover:bg-white/[0.08] hover:border-white/[0.2] rounded-xl text-[11px] font-black text-white/60 hover:text-white uppercase tracking-widest transition-all">
+                      <button className="flex items-center gap-2 px-4 py-2 bg-surface border border-surface-border-strong hover:bg-surface-hover hover:border-surface-border-strong rounded-xl text-[11px] font-black text-foreground/60 hover:text-foreground uppercase tracking-widest transition-all">
                         <Edit3 className="w-3.5 h-3.5" />
                         Edit Profile
                       </button>
@@ -299,7 +299,7 @@ export default function ProfileView({
                         className={cn(
                           "px-5 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all",
                           isFollowing
-                            ? "bg-white/[0.06] border border-white/[0.1] text-white/50 hover:border-red-500/30 hover:text-red-400"
+                            ? "bg-surface border border-surface-border-strong text-foreground/50 hover:border-red-500/30 hover:text-red-400"
                             : "bg-white hover:bg-white/90 text-black"
                         )}
                       >
@@ -314,73 +314,73 @@ export default function ProfileView({
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {subsLoading ? (
                   Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="h-[90px] rounded-[20px] bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+                    <div key={i} className="h-[90px] rounded-[20px] bg-surface border border-surface-border animate-pulse" />
                   ))
                 ) : (
                   <>
-                    <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
+                    <div className="bg-surface border border-surface-border hover:bg-surface hover:border-surface-border-strong rounded-[20px] px-5 py-4 transition-all">
                       <p className={cn("text-[9px] font-black uppercase tracking-[0.2em] mb-1", tier.color)}>XP Level</p>
-                      <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">Lvl {level}</p>
-                      <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">{tier.name} Tier</p>
+                      <p className="font-display text-4xl text-foreground uppercase tracking-tight leading-none">Lvl {level}</p>
+                      <p className="text-[10px] font-black text-foreground/30 mt-1 uppercase tracking-wide">{tier.name} Tier</p>
                     </div>
 
-                    <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
+                    <div className="bg-surface border border-surface-border hover:bg-surface hover:border-surface-border-strong rounded-[20px] px-5 py-4 transition-all">
                       <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-lime-400">Earnings</p>
-                      <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">
+                      <p className="font-display text-4xl text-foreground uppercase tracking-tight leading-none">
                         {stats?.earnings ? stats.earnings.toLocaleString() : "0"}
                       </p>
-                      <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">USDC Total</p>
+                      <p className="text-[10px] font-black text-foreground/30 mt-1 uppercase tracking-wide">USDC Total</p>
                     </div>
 
-                    <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
+                    <div className="bg-surface border border-surface-border hover:bg-surface hover:border-surface-border-strong rounded-[20px] px-5 py-4 transition-all">
                       <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-blue-400">Events</p>
-                      <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">
+                      <p className="font-display text-4xl text-foreground uppercase tracking-tight leading-none">
                         {stats?.events ?? 0}
                       </p>
-                      <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Joined</p>
+                      <p className="text-[10px] font-black text-foreground/30 mt-1 uppercase tracking-wide">Joined</p>
                     </div>
 
-                    <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
+                    <div className="bg-surface border border-surface-border hover:bg-surface hover:border-surface-border-strong rounded-[20px] px-5 py-4 transition-all">
                       <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-yellow-400">Win Rate</p>
-                      <p className={cn("font-display text-4xl uppercase tracking-tight leading-none", winRate >= 50 ? "text-lime-400" : "text-white")}>
+                      <p className={cn("font-display text-4xl uppercase tracking-tight leading-none", winRate >= 50 ? "text-lime-400" : "text-foreground")}>
                         {winRate}%
                       </p>
-                      <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Success Score</p>
+                      <p className="text-[10px] font-black text-foreground/30 mt-1 uppercase tracking-wide">Success Score</p>
                     </div>
                   </>
                 )}
               </div>
 
               {/* ── About ── */}
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 md:p-8 space-y-5">
-                <h2 className="font-display text-2xl text-white uppercase tracking-tight">
+              <div className="bg-surface border border-surface-border rounded-[24px] p-6 md:p-8 space-y-5">
+                <h2 className="font-display text-2xl text-foreground uppercase tracking-tight">
                   About {displayName.split(" ")[0]}
                 </h2>
                 {user?.bio ? (
-                  <p className="text-sm font-medium text-white/50 leading-relaxed">{user.bio}</p>
+                  <p className="text-sm font-medium text-foreground/50 leading-relaxed">{user.bio}</p>
                 ) : (
-                  <p className="text-sm font-black text-white/20 uppercase tracking-wide">No bio yet.</p>
+                  <p className="text-sm font-black text-foreground/20 uppercase tracking-wide">No bio yet.</p>
                 )}
 
-                <div className="flex items-center gap-8 pt-3 border-t border-white/[0.04]">
+                <div className="flex items-center gap-8 pt-3 border-t border-surface-border">
                   <button
                     onClick={() => setShowSocialModal({ show: true, type: "followers" })}
                     className="text-left group"
                   >
-                    <p className="font-display text-3xl text-white tracking-tight leading-none group-hover:text-primary transition-colors">
+                    <p className="font-display text-3xl text-foreground tracking-tight leading-none group-hover:text-primary transition-colors">
                       {formatK(stats?.subscribers ?? followers.length)}
                     </p>
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-1">Followers</p>
+                    <p className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em] mt-1">Followers</p>
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowSocialModal({ show: true, type: "following" })}
                     className="text-left group"
                   >
-                    <p className="font-display text-3xl text-white tracking-tight leading-none group-hover:text-primary transition-colors">
+                    <p className="font-display text-3xl text-foreground tracking-tight leading-none group-hover:text-primary transition-colors">
                       {following.length}
                     </p>
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-1">Brands Followed</p>
+                    <p className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em] mt-1">Brands Followed</p>
                   </button>
                 </div>
               </div>
@@ -389,14 +389,14 @@ export default function ProfileView({
               <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                   <div className="space-y-1">
-                    <h2 className="font-display text-4xl text-white uppercase tracking-tight">Showcase</h2>
+                    <h2 className="font-display text-4xl text-foreground uppercase tracking-tight">Showcase</h2>
                     {/* Tab Switcher */}
                     <div className="flex items-center gap-6">
                       <button
                         onClick={() => setActiveTab("events")}
                         className={cn(
                           "pb-1 text-xs font-black uppercase tracking-widest transition-all relative",
-                          activeTab === "events" ? "text-primary" : "text-white/30 hover:text-white/50"
+                          activeTab === "events" ? "text-primary" : "text-foreground/30 hover:text-foreground/50"
                         )}
                       >
                         Activity
@@ -406,7 +406,7 @@ export default function ProfileView({
                         onClick={() => setActiveTab("creations")}
                         className={cn(
                           "pb-1 text-xs font-black uppercase tracking-widest transition-all relative",
-                          activeTab === "creations" ? "text-primary" : "text-white/30 hover:text-white/50"
+                          activeTab === "creations" ? "text-primary" : "text-foreground/30 hover:text-foreground/50"
                         )}
                       >
                         Creations
@@ -415,14 +415,14 @@ export default function ProfileView({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1 p-1 bg-white/[0.04] border border-white/[0.06] rounded-2xl h-fit">
+                  <div className="flex items-center gap-1 p-1 bg-surface border border-surface-border rounded-2xl h-fit">
                     {(["all", "live", "completed"] as ContentFilter[]).map(f => (
                       <button
                         key={f}
                         onClick={() => setContentFilter(f)}
                         className={cn(
                           "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                          contentFilter === f ? "bg-white text-black" : "text-white/30 hover:text-white/60"
+                          contentFilter === f ? "bg-white text-black" : "text-foreground/30 hover:text-foreground/60"
                         )}
                       >
                         {f}
@@ -434,18 +434,18 @@ export default function ProfileView({
                 {subsLoading ? (
                   <div className="space-y-3">
                     {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="h-[80px] rounded-[24px] bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+                      <div key={i} className="h-[80px] rounded-[24px] bg-surface border border-surface-border animate-pulse" />
                     ))}
                   </div>
                 ) : activeTab === "events" ? (
                   /* ── Activity Tab: Participated Events List ── */
                   <div className="space-y-3">
                     {filteredParticipated.length === 0 ? (
-                      <div className="py-16 text-center bg-white/[0.02] rounded-[24px] border border-dashed border-white/[0.07]">
-                        <div className="w-12 h-12 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
-                          <MousePointerClick className="w-5 h-5 text-white/20" />
+                      <div className="py-16 text-center bg-surface rounded-[24px] border border-dashed border-surface-border">
+                        <div className="w-12 h-12 rounded-2xl bg-surface flex items-center justify-center mx-auto mb-4">
+                          <MousePointerClick className="w-5 h-5 text-foreground/20" />
                         </div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">No activity yet</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/20">No activity yet</p>
                       </div>
                     ) : (
                       filteredParticipated.map((item, i) => (
@@ -454,10 +454,10 @@ export default function ProfileView({
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: i * 0.05 }}
-                          className="group relative bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.12] rounded-[24px] p-4 flex items-center gap-4 transition-all"
+                          className="group relative bg-surface border border-surface-border hover:bg-surface hover:border-surface-border-strong rounded-[24px] p-4 flex items-center gap-4 transition-all"
                         >
                           {/* Left: Event Banner / Logo */}
-                          <div className="w-12 h-12 rounded-2xl overflow-hidden bg-white/[0.05] border border-white/[0.08] shrink-0">
+                          <div className="w-12 h-12 rounded-2xl overflow-hidden bg-surface border border-surface-border shrink-0">
                             {item.event.imageUrl || item.event.imageCid ? (
                               <img
                                 src={item.event.imageUrl || `https://gateway.pinata.cloud/ipfs/${item.event.imageCid}`}
@@ -472,7 +472,7 @@ export default function ProfileView({
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-white/5">
-                                <Building2 className="w-6 h-6 text-white/20" />
+                                <Building2 className="w-6 h-6 text-foreground/20" />
                               </div>
                             )}
                           </div>
@@ -480,18 +480,18 @@ export default function ProfileView({
                           {/* Center: Info */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <span className="text-[9px] font-black text-white/30 uppercase tracking-widest truncate">
+                              <span className="text-[9px] font-black text-foreground/30 uppercase tracking-widest truncate">
                                 {item.event.brand?.name || "Unknown Brand"}
                               </span>
                               <span className="w-1 h-1 rounded-full bg-white/10" />
                               <span className={cn(
                                 "text-[9px] font-black uppercase tracking-widest",
-                                item.event.status === "completed" ? "text-white/20" : "text-lime-400"
+                                item.event.status === "completed" ? "text-foreground/20" : "text-lime-400"
                               )}>
                                 {item.event.status}
                               </span>
                             </div>
-                            <h4 className="text-base font-black text-white truncate group-hover:text-primary transition-colors">
+                            <h4 className="text-base font-black text-foreground truncate group-hover:text-primary transition-colors">
                               {item.event.title}
                             </h4>
                           </div>
@@ -511,7 +511,7 @@ export default function ProfileView({
                                   </span>
                                 ) : null}
                               </div>
-                              <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mt-1">
+                              <p className="text-[10px] font-black text-foreground/30 uppercase tracking-widest mt-1">
                                 {new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                               </p>
                             </div>
@@ -521,7 +521,7 @@ export default function ProfileView({
                                 <p className="text-sm font-black text-lime-400 font-mono tracking-tighter">
                                   +${item.earnings.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                 </p>
-                                <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">USDC Earned</p>
+                                <p className="text-[8px] font-black text-foreground/20 uppercase tracking-widest">USDC Earned</p>
                               </div>
                             )}
                           </div>
@@ -535,11 +535,11 @@ export default function ProfileView({
                   /* ── Creations Tab: Visual Grid ── */
                   <div className="space-y-4">
                     {filteredSubmissions.length === 0 ? (
-                      <div className="py-16 text-center bg-white/[0.02] rounded-[24px] border border-dashed border-white/[0.07]">
-                        <div className="w-12 h-12 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
-                          <ImageIcon className="w-5 h-5 text-white/20" />
+                      <div className="py-16 text-center bg-surface rounded-[24px] border border-dashed border-surface-border">
+                        <div className="w-12 h-12 rounded-2xl bg-surface flex items-center justify-center mx-auto mb-4">
+                          <ImageIcon className="w-5 h-5 text-foreground/20" />
                         </div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">No creations yet</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/20">No creations yet</p>
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -549,7 +549,7 @@ export default function ProfileView({
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: i * 0.05 }}
-                            className="group relative aspect-[4/5] bg-white/[0.02] border border-white/[0.06] hover:border-white/20 rounded-[28px] overflow-hidden transition-all"
+                            className="group relative aspect-[4/5] bg-surface border border-surface-border hover:border-white/20 rounded-[28px] overflow-hidden transition-all"
                           >
                             <img
                               src={s.imageUrl || `https://gateway.pinata.cloud/ipfs/${s.imageCid}`}
@@ -565,21 +565,21 @@ export default function ProfileView({
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                             <div className="absolute bottom-0 left-0 right-0 p-5 space-y-2">
-                              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">
+                              <p className="text-[10px] font-black text-foreground/40 uppercase tracking-[0.2em]">
                                 {s.event?.brand?.name || "Brand"}
                               </p>
-                              <h5 className="text-lg font-black text-white uppercase tracking-tight line-clamp-2">
+                              <h5 className="text-lg font-black text-foreground uppercase tracking-tight line-clamp-2">
                                 {s.event?.title}
                               </h5>
                               <div className="flex items-center justify-between pt-2 border-t border-white/10">
                                 <div className="flex items-center gap-1.5">
-                                  <ThumbsUp className="w-3.5 h-3.5 text-white/40" />
-                                  <span className="text-xs font-black text-white/60">{(s._count?.votes || 0).toLocaleString()}</span>
+                                  <ThumbsUp className="w-3.5 h-3.5 text-foreground/40" />
+                                  <span className="text-xs font-black text-foreground/60">{(s._count?.votes || 0).toLocaleString()}</span>
                                 </div>
                                 {s.finalRank != null && (
                                   <div className={cn(
                                     "px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-widest",
-                                    s.finalRank === 1 ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/20" : "bg-white/10 text-white/40"
+                                    s.finalRank === 1 ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/20" : "bg-white/10 text-foreground/40"
                                   )}>
                                     #{s.finalRank} Rank
                                   </div>
@@ -600,17 +600,17 @@ export default function ProfileView({
             <div className="lg:w-[300px] xl:w-[320px] flex-shrink-0 space-y-6">
 
               {/* ── Reputation ── */}
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 space-y-4">
-                <h3 className="font-display text-xl text-white uppercase tracking-tight">Reputation</h3>
+              <div className="bg-surface border border-surface-border rounded-[24px] p-6 space-y-4">
+                <h3 className="font-display text-xl text-foreground uppercase tracking-tight">Reputation</h3>
                 <div className="space-y-2">
 
-                  <div className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:bg-white/[0.04] transition-all">
+                  <div className="flex items-center gap-3 p-3 bg-surface border border-surface-border rounded-2xl hover:bg-surface transition-all">
                     <div className="w-9 h-9 rounded-xl bg-yellow-400/10 border border-yellow-400/20 flex items-center justify-center shrink-0">
                       <Trophy className="w-4 h-4 text-yellow-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-black text-white">Best Ranking</p>
-                      <p className="text-[9px] font-black text-white/30 uppercase tracking-wide mt-0.5">
+                      <p className="text-sm font-black text-foreground">Best Ranking</p>
+                      <p className="text-[9px] font-black text-foreground/30 uppercase tracking-wide mt-0.5">
                         {bestRank ? `Global Rank #${bestRank}` : "No rankings yet"}
                       </p>
                     </div>
@@ -621,26 +621,26 @@ export default function ProfileView({
                     )}
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:bg-white/[0.04] transition-all">
+                  <div className="flex items-center gap-3 p-3 bg-surface border border-surface-border rounded-2xl hover:bg-surface transition-all">
                     <div className="w-9 h-9 rounded-xl bg-orange-400/10 border border-orange-400/20 flex items-center justify-center shrink-0">
                       <Flame className="w-4 h-4 text-orange-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-black text-white">Current Streak</p>
-                      <p className="text-[9px] font-black text-white/30 uppercase tracking-wide mt-0.5">Daily submissions</p>
+                      <p className="text-sm font-black text-foreground">Current Streak</p>
+                      <p className="text-[9px] font-black text-foreground/30 uppercase tracking-wide mt-0.5">Daily submissions</p>
                     </div>
                     <span className="text-[10px] font-black text-orange-400 shrink-0">
                       {streak > 0 ? `${streak} Days` : "—"}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:bg-white/[0.04] transition-all">
+                  <div className="flex items-center gap-3 p-3 bg-surface border border-surface-border rounded-2xl hover:bg-surface transition-all">
                     <div className="w-9 h-9 rounded-xl bg-blue-400/10 border border-blue-400/20 flex items-center justify-center shrink-0">
                       <TrendingUp className="w-4 h-4 text-blue-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-black text-white">Engagement</p>
-                      <p className="text-[9px] font-black text-white/30 uppercase tracking-wide mt-0.5">Votes & posts</p>
+                      <p className="text-sm font-black text-foreground">Engagement</p>
+                      <p className="text-[9px] font-black text-foreground/30 uppercase tracking-wide mt-0.5">Votes & posts</p>
                     </div>
                     <span className={cn("text-[10px] font-black shrink-0", engagementColor)}>
                       {engagementLabel}
@@ -651,11 +651,11 @@ export default function ProfileView({
               </div>
 
               {/* ── Achievements ── */}
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 space-y-4">
+              <div className="bg-surface border border-surface-border rounded-[24px] p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-display text-xl text-white uppercase tracking-tight">Achievements</h3>
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-0.5">
+                    <h3 className="font-display text-xl text-foreground uppercase tracking-tight">Achievements</h3>
+                    <p className="text-[9px] font-black text-foreground/30 uppercase tracking-[0.2em] mt-0.5">
                       {unlockedCount}/{MILESTONES.length} Unlocked
                     </p>
                   </div>
@@ -681,8 +681,8 @@ export default function ProfileView({
                           done
                             ? cn(m.bg, m.border)
                             : pct > 0
-                              ? "bg-white/[0.04] border-white/[0.08]"
-                              : "bg-white/[0.02] border-white/[0.04]"
+                              ? "bg-surface border-surface-border"
+                              : "bg-surface border-surface-border"
                         )}
                       >
                         {done ? (
@@ -693,7 +693,7 @@ export default function ProfileView({
                           <Lock className="w-4 h-4 text-white/15" />
                         )}
                         {!done && pct > 0 && (
-                          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-white/[0.06] rounded-full overflow-hidden">
+                          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-surface rounded-full overflow-hidden">
                             <div
                               className={cn("h-full rounded-full", m.color.replace("text-", "bg-"))}
                               style={{ width: `${pct}%` }}
@@ -708,25 +708,25 @@ export default function ProfileView({
 
               {/* ── Brands Followed ── */}
               {following.length > 0 && (
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 space-y-4">
-                  <h3 className="font-display text-xl text-white uppercase tracking-tight">Brands Followed</h3>
+                <div className="bg-surface border border-surface-border rounded-[24px] p-6 space-y-4">
+                  <h3 className="font-display text-xl text-foreground uppercase tracking-tight">Brands Followed</h3>
                   <div className="space-y-3">
                     {following.slice(0, 5).map((brand: User) => (
                       <div key={brand.id} className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-white/[0.05] border border-white/[0.06] shrink-0">
+                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-surface border border-surface-border shrink-0">
                           {brand.avatarUrl ? (
                             <img src={brand.avatarUrl} alt={brand.displayName || ""} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                              <Building2 className="w-4 h-4 text-white/20" />
+                              <Building2 className="w-4 h-4 text-foreground/20" />
                             </div>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-black text-white truncate">{brand.displayName || brand.username}</p>
-                          <p className="text-[9px] font-black text-white/30 uppercase tracking-wide">Brand</p>
+                          <p className="text-sm font-black text-foreground truncate">{brand.displayName || brand.username}</p>
+                          <p className="text-[9px] font-black text-foreground/30 uppercase tracking-wide">Brand</p>
                         </div>
-                        <span className="text-[9px] font-black text-white/30 border border-white/[0.08] px-2 py-0.5 rounded-full uppercase tracking-widest shrink-0">
+                        <span className="text-[9px] font-black text-foreground/30 border border-surface-border px-2 py-0.5 rounded-full uppercase tracking-widest shrink-0">
                           Following
                         </span>
                       </div>
@@ -756,22 +756,22 @@ export default function ProfileView({
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="relative w-full max-w-md bg-[#0c0c10] border border-white/[0.08] rounded-[24px] overflow-hidden shadow-2xl"
+            className="relative w-full max-w-md bg-[#0c0c10] border border-surface-border rounded-[24px] overflow-hidden shadow-2xl"
           >
-            <div className="p-5 border-b border-white/[0.06] flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">
+            <div className="p-5 border-b border-surface-border flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">
                 {showSocialModal.type} ({socialList.length})
               </span>
               <button
                 onClick={() => setShowSocialModal(s => ({ ...s, show: false }))}
-                className="w-7 h-7 rounded-full bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center transition-colors"
+                className="w-7 h-7 rounded-full bg-surface hover:bg-surface-hover flex items-center justify-center transition-colors"
               >
-                <X className="w-3.5 h-3.5 text-white/50" />
+                <X className="w-3.5 h-3.5 text-foreground/50" />
               </button>
             </div>
             <div className="p-2 max-h-[60vh] overflow-y-auto">
               {socialList.length === 0 ? (
-                <p className="text-center text-[11px] font-black text-white/20 uppercase tracking-widest py-10">
+                <p className="text-center text-[11px] font-black text-foreground/20 uppercase tracking-widest py-10">
                   No {showSocialModal.type} yet
                 </p>
               ) : (
@@ -781,7 +781,7 @@ export default function ProfileView({
                   return (
                     <div
                       key={person.id}
-                      className="flex items-center justify-between p-3 hover:bg-white/[0.04] rounded-[14px] transition-colors"
+                      className="flex items-center justify-between p-3 hover:bg-surface rounded-[14px] transition-colors"
                     >
                       <Link
                         href={`/profile/${person.username || person.id}`}
@@ -789,7 +789,7 @@ export default function ProfileView({
                         className="flex items-center gap-3 flex-1 min-w-0"
                       >
                         {person.avatarUrl ? (
-                          <img src={person.avatarUrl} className="w-9 h-9 rounded-xl object-cover border border-white/[0.08] shrink-0" alt={person.displayName || ""} />
+                          <img src={person.avatarUrl} className="w-9 h-9 rounded-xl object-cover border border-surface-border shrink-0" alt={person.displayName || ""} />
                         ) : (
                           <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
                             <span className="text-primary text-sm font-black uppercase">
@@ -798,8 +798,8 @@ export default function ProfileView({
                           </div>
                         )}
                         <div className="min-w-0">
-                          <p className="text-xs font-black text-white truncate">{person.displayName || person.username || "Unknown"}</p>
-                          <p className="text-[10px] text-white/30 font-bold">{person.username ? `@${person.username}` : ""}</p>
+                          <p className="text-xs font-black text-foreground truncate">{person.displayName || person.username || "Unknown"}</p>
+                          <p className="text-[10px] text-foreground/30 font-bold">{person.username ? `@${person.username}` : ""}</p>
                         </div>
                       </Link>
                       {!isSelf && currentUser && (
@@ -809,7 +809,7 @@ export default function ProfileView({
                           className={cn(
                             "ml-3 shrink-0 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-40",
                             isPersonFollowed
-                              ? "bg-white/[0.05] border border-white/[0.08] text-white/40 hover:border-red-500/30 hover:text-red-400"
+                              ? "bg-surface border border-surface-border text-foreground/40 hover:border-red-500/30 hover:text-red-400"
                               : "bg-white text-black hover:bg-white/90"
                           )}
                         >

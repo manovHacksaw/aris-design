@@ -38,10 +38,10 @@ export default function CompactEventCard({ event }: CompactEventCardProps) {
 
                 {/* Content */}
                 <div className="p-2.5 sm:p-3 flex flex-col flex-1">
-                    <h3 className="text-xs sm:text-sm font-bold text-foreground leading-tight line-clamp-2 mb-1.5 sm:mb-2">
+                    <h3 className="text-xs sm:text-sm font-bold text-white leading-tight line-clamp-2 mb-1.5 sm:mb-2">
                         {event.title}
                     </h3>
-                    <p className="text-[9px] sm:text-[10px] text-foreground/50 line-clamp-1 mb-2">
+                    <p className="text-[9px] sm:text-[10px] text-white/50 line-clamp-1 mb-2">
                         {event.creator.name}
                     </p>
 
@@ -49,12 +49,12 @@ export default function CompactEventCard({ event }: CompactEventCardProps) {
                         {event.mode === 'vote' ? (
                             <>
                                 <div className="flex flex-col min-w-0">
-                                    <span className="text-[8px] uppercase font-bold text-foreground/40 leading-none mb-0.5">Base</span>
-                                    <span className="text-[10px] font-black text-foreground truncate">{event.baseReward}</span>
+                                    <span className="text-[8px] uppercase font-bold text-white/40 leading-none mb-0.5">Base</span>
+                                    <span className="text-[10px] font-black text-white truncate">{event.baseReward}</span>
                                 </div>
                                 {event.topReward && (
                                     <div className="flex flex-col items-end min-w-0">
-                                        <span className="text-[8px] uppercase font-bold text-foreground/40 leading-none mb-0.5">Top Prize</span>
+                                        <span className="text-[8px] uppercase font-bold text-white/40 leading-none mb-0.5">Top Prize</span>
                                         <span className="text-[10px] font-black text-accent truncate">{event.topReward}</span>
                                     </div>
                                 )}
@@ -62,11 +62,11 @@ export default function CompactEventCard({ event }: CompactEventCardProps) {
                         ) : (
                             <>
                                 <div className="flex flex-col min-w-0">
-                                    <span className="text-[8px] uppercase font-bold text-foreground/40 leading-none mb-0.5">Base</span>
-                                    <span className="text-[10px] font-black text-foreground truncate">{event.baseReward}</span>
+                                    <span className="text-[8px] uppercase font-bold text-white/40 leading-none mb-0.5">Base</span>
+                                    <span className="text-[10px] font-black text-white truncate">{event.baseReward}</span>
                                 </div>
                                 <div className="flex flex-col items-end min-w-0">
-                                    <span className="text-[8px] uppercase font-bold text-foreground/40 leading-none mb-0.5">Pool</span>
+                                    <span className="text-[8px] uppercase font-bold text-white/40 leading-none mb-0.5">Pool</span>
                                     <span className="text-[10px] font-black text-primary truncate">{event.rewardPool}</span>
                                 </div>
                             </>

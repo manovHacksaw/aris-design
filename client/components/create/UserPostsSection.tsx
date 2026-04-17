@@ -54,8 +54,8 @@ export default function UserPostsSection({ userId }: { userId: string }) {
         <section>
             <div className="flex items-end justify-between mb-5">
                 <div>
-                    <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-1">Your work</p>
-                    <h2 className="font-display text-3xl text-white uppercase tracking-tight">Posted</h2>
+                    <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-1">Your work</p>
+                    <h2 className="font-display text-3xl text-foreground uppercase tracking-tight">Posted</h2>
                 </div>
                 <Link href="/dashboard" className="text-[10px] font-black text-[#A78BFA] hover:text-[#A78BFA]/80 uppercase tracking-[0.15em] transition-colors">
                     Show all
@@ -66,9 +66,9 @@ export default function UserPostsSection({ userId }: { userId: string }) {
                 {loading
                     ? Array.from({ length: 5 }).map((_, i) => (
                         <div key={i} className="flex-shrink-0 w-[160px] sm:w-[176px] p-3">
-                            <div className="aspect-square rounded-xl bg-white/[0.06] animate-pulse mb-3" />
-                            <div className="h-3.5 bg-white/[0.06] rounded animate-pulse mb-2 w-4/5" />
-                            <div className="h-3 bg-white/[0.04] rounded animate-pulse w-3/5" />
+                            <div className="aspect-square rounded-xl bg-surface animate-pulse mb-3" />
+                            <div className="h-3.5 bg-surface rounded animate-pulse mb-2 w-4/5" />
+                            <div className="h-3 bg-surface rounded animate-pulse w-3/5" />
                         </div>
                     ))
                     : posts.map((post, i) => (
@@ -78,9 +78,9 @@ export default function UserPostsSection({ userId }: { userId: string }) {
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: i * 0.04 }}
                                 whileHover={{ scale: 1.02 }}
-                                className="group p-3 rounded-[20px] bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.05] hover:border-white/[0.10] transition-all duration-200"
+                                className="group p-3 rounded-[20px] bg-surface border border-surface-border hover:bg-surface hover:border-surface-border-strong transition-all duration-200"
                             >
-                                <div className="relative aspect-square rounded-xl overflow-hidden bg-white/[0.06] mb-3">
+                                <div className="relative aspect-square rounded-xl overflow-hidden bg-surface mb-3">
                                     <img
                                         src={imageFor(post)}
                                         alt={post.event?.title ?? "Submission"}
@@ -88,14 +88,14 @@ export default function UserPostsSection({ userId }: { userId: string }) {
                                     />
                                     <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm border border-white/10">
                                         <Heart className="w-3 h-3 text-rose-400 fill-rose-400" />
-                                        <span className="text-[10px] font-black text-white">{post._count?.votes ?? 0}</span>
+                                        <span className="text-[10px] font-black text-foreground">{post._count?.votes ?? 0}</span>
                                     </div>
                                     {(post.event?.status === "voting" || post.event?.status === "posting") && (
                                         <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-lime-400 shadow-[0_0_6px_2px_rgba(163,230,53,0.4)]" />
                                     )}
                                 </div>
-                                <h3 className="text-xs font-bold text-white line-clamp-2 leading-snug mb-1">{post.event?.title ?? "Event"}</h3>
-                                <p className="text-[10px] text-white/30 flex items-center gap-1">
+                                <h3 className="text-xs font-bold text-foreground line-clamp-2 leading-snug mb-1">{post.event?.title ?? "Event"}</h3>
+                                <p className="text-[10px] text-foreground/30 flex items-center gap-1">
                                     <Clock className="w-3 h-3" />
                                     {timeAgo(post.createdAt)}
                                 </p>

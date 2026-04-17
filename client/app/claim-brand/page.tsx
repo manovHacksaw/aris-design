@@ -209,7 +209,7 @@ function ClaimBrandContent() {
             <a href="/register" className="flex-1 py-3.5 rounded-[14px] border border-border/50 text-foreground/50 hover:text-foreground font-bold text-xs uppercase tracking-widest text-center transition-colors">
               Back to Register
             </a>
-            <a href="mailto:support@aris.xyz" className="flex-1 py-3.5 rounded-[14px] bg-primary text-white font-black text-xs uppercase tracking-widest text-center hover:bg-primary/90 transition-colors">
+            <a href="mailto:support@aris.xyz" className="flex-1 py-3.5 rounded-[14px] bg-primary text-foreground font-black text-xs uppercase tracking-widest text-center hover:bg-primary/90 transition-colors">
               Contact Support
             </a>
           </div>
@@ -322,7 +322,7 @@ function ClaimBrandContent() {
 
           <button
             onClick={handleSignIn}
-            className="w-full flex items-center justify-center gap-2 py-4 rounded-[14px] bg-primary text-white font-black text-xs uppercase tracking-[0.2em] hover:bg-primary/90 active:scale-[0.98] transition-all shadow-lg shadow-primary/20"
+            className="w-full flex items-center justify-center gap-2 py-4 rounded-[14px] bg-primary text-foreground font-black text-xs uppercase tracking-[0.2em] hover:bg-primary/90 active:scale-[0.98] transition-all shadow-lg shadow-primary/20"
           >
             <ShieldCheck className="w-4 h-4" />
             Sign In with Privy
