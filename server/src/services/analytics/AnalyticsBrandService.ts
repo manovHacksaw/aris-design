@@ -197,7 +197,7 @@ export class AnalyticsBrandService {
         eventsSummary,
       };
     } catch (error) {
-      logger.error('Failed to get brand analytics:', error);
+      logger.error({ err: error }, 'Failed to get brand analytics:');
       throw error;
     }
   }
@@ -227,7 +227,7 @@ export class AnalyticsBrandService {
         totalUsdcSpent: brand.totalUsdcGiven || 0,
       };
     } catch (error) {
-      logger.error('Failed to get brand stats:', error);
+      logger.error({ err: error }, 'Failed to get brand stats:');
       throw error;
     }
   }
@@ -289,7 +289,7 @@ export class AnalyticsBrandService {
 
       return timeseries;
     } catch (error) {
-      logger.error('Failed to get brand timeseries:', error);
+      logger.error({ err: error }, 'Failed to get brand timeseries:');
       throw error;
     }
   }
@@ -322,7 +322,7 @@ export class AnalyticsBrandService {
 
       return breakdown;
     } catch (error) {
-      logger.error('Failed to get brand clicks breakdown:', error);
+      logger.error({ err: error }, 'Failed to get brand clicks breakdown:');
       throw error;
     }
   }
@@ -339,7 +339,7 @@ export class AnalyticsBrandService {
         },
       });
     } catch (error) {
-      logger.error('Failed to track brand view:', error);
+      logger.error({ err: error }, 'Failed to track brand view:');
     }
   }
 
@@ -354,7 +354,7 @@ export class AnalyticsBrandService {
       });
       return { profileViews: brand?.profileViews || 0 };
     } catch (error) {
-      logger.error('Failed to get brand views:', error);
+      logger.error({ err: error }, 'Failed to get brand views:');
       throw error;
     }
   }
@@ -409,7 +409,7 @@ export class AnalyticsBrandService {
 
       return result;
     } catch (error) {
-      logger.error('Failed to get follower growth:', error);
+      logger.error({ err: error }, 'Failed to get follower growth:');
       throw error;
     }
   }

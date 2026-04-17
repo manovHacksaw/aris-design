@@ -86,7 +86,7 @@ export const submitApplication = async (req: Request, res: Response): Promise<vo
       },
     });
   } catch (error: any) {
-    logger.error('Error submitting brand application:', error);
+    logger.error({ err: error }, 'Error submitting brand application:');
 
     // Handle known errors
     if (error.message.includes('already')) {
@@ -143,7 +143,7 @@ export const getApplication = async (req: Request, res: Response): Promise<void>
 
     res.json(application);
   } catch (error) {
-    logger.error('Error fetching application:', error);
+    logger.error({ err: error }, 'Error fetching application:');
     res.status(500).json({ error: 'Failed to fetch application' });
   }
 };
@@ -178,7 +178,7 @@ export const getApplications = async (req: Request, res: Response): Promise<void
       applications,
     });
   } catch (error) {
-    logger.error('Error fetching applications:', error);
+    logger.error({ err: error }, 'Error fetching applications:');
     res.status(500).json({ error: 'Failed to fetch applications' });
   }
 };
@@ -209,7 +209,7 @@ export const approveApplication = async (req: Request, res: Response): Promise<v
       application,
     });
   } catch (error: any) {
-    logger.error('Error approving application:', error);
+    logger.error({ err: error }, 'Error approving application:');
 
     if (error.message === 'Application not found') {
       res.status(404).json({ error: error.message });
@@ -256,7 +256,7 @@ export const rejectApplication = async (req: Request, res: Response): Promise<vo
       application,
     });
   } catch (error: any) {
-    logger.error('Error rejecting application:', error);
+    logger.error({ err: error }, 'Error rejecting application:');
 
     if (error.message === 'Application not found') {
       res.status(404).json({ error: error.message });
@@ -301,7 +301,7 @@ export const getApplicationByEmail = async (req: Request, res: Response): Promis
       rejectionReason: application.rejectionReason,
     });
   } catch (error) {
-    logger.error('Error fetching application by email:', error);
+    logger.error({ err: error }, 'Error fetching application by email:');
     res.status(500).json({ error: 'Failed to fetch application' });
   }
 };

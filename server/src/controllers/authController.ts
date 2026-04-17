@@ -28,7 +28,7 @@ export const privyLogin = async (req: Request, res: Response): Promise<void> => 
     const result = await AuthService.privyLogin(verifiedClaims, walletAddress, email, deviceInfo, ip, avatarUrl, eoaAddress);
     res.json(result);
   } catch (error: any) {
-    logger.error('Error during Privy authentication:', error);
+    logger.error({ err: error }, 'Error during Privy authentication:');
     const status = error.message?.includes('Invalid') || error.message?.includes('expired') ? 401 : 500;
     res.status(status).json({ error: error.message || 'Authentication failed' });
   }
@@ -43,7 +43,7 @@ export const logout = async (_req: AuthenticatedRequest, res: Response): Promise
     // Session states are handled statelessly with Privy on the frontend
     res.json({ success: true, message: 'Logged out successfully' });
   } catch (error: any) {
-    logger.error('Error during logout:', error);
+    logger.error({ err: error }, 'Error during logout:');
     res.status(500).json({ error: 'Logout failed' });
   }
 };

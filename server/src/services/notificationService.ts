@@ -56,7 +56,7 @@ const createAndEmitNotification = async (data: NotificationData) => {
 
         logger.info(`📬 Notification sent to user ${data.userId}: ${data.type}`);
     } catch (error) {
-        logger.error('Failed to emit notification via socket:', error);
+        logger.error({ err: error }, 'Failed to emit notification via socket:');
         // Don't throw - notification is still saved in DB
     }
 

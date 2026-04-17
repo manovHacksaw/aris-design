@@ -104,7 +104,7 @@ const handleConnection = (socket: AuthenticatedSocket) => {
 
         // Track view in analytics (unique check handled inside)
         AnalyticsTrackingService.trackEventView(eventId, userId).catch(err => {
-            logger.error('Failed to track event view from socket:', err);
+            logger.error({ err: err }, 'Failed to track event view from socket:');
         });
 
         // Notify all users in the room (including the joiner)

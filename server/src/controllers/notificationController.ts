@@ -72,7 +72,7 @@ export const getNotifications = async (req: Request, res: Response): Promise<voi
 
         res.json({ notifications: items, nextCursor, ...(unreadCount !== undefined ? { unreadCount } : {}) });
     } catch (error) {
-        logger.error('Failed to get notifications:', error);
+        logger.error({ err: error }, 'Failed to get notifications:');
         res.status(500).json({ error: 'Failed to fetch notifications' });
     }
 };
@@ -117,7 +117,7 @@ export const getUnreadNotifications = async (req: Request, res: Response): Promi
             count: notifications.length,
         });
     } catch (error) {
-        logger.error('Failed to get unread notifications:', error);
+        logger.error({ err: error }, 'Failed to get unread notifications:');
         res.status(500).json({ error: 'Failed to fetch unread notifications' });
     }
 };
@@ -160,7 +160,7 @@ export const markNotificationAsRead = async (req: Request, res: Response): Promi
 
         res.json({ notification: updatedNotification });
     } catch (error) {
-        logger.error('Failed to mark notification as read:', error);
+        logger.error({ err: error }, 'Failed to mark notification as read:');
         res.status(500).json({ error: 'Failed to update notification' });
     }
 };
@@ -194,7 +194,7 @@ export const markAllNotificationsAsRead = async (req: Request, res: Response): P
             count: result.count,
         });
     } catch (error) {
-        logger.error('Failed to mark all notifications as read:', error);
+        logger.error({ err: error }, 'Failed to mark all notifications as read:');
         res.status(500).json({ error: 'Failed to update notifications' });
     }
 };
@@ -236,7 +236,7 @@ export const deleteNotification = async (req: Request, res: Response): Promise<v
 
         res.json({ message: 'Notification deleted successfully' });
     } catch (error) {
-        logger.error('Failed to delete notification:', error);
+        logger.error({ err: error }, 'Failed to delete notification:');
         res.status(500).json({ error: 'Failed to delete notification' });
     }
 };
@@ -268,7 +268,7 @@ export const getUnreadCount = async (req: Request, res: Response): Promise<void>
 
         res.json({ count });
     } catch (error) {
-        logger.error('Failed to get unread count:', error);
+        logger.error({ err: error }, 'Failed to get unread count:');
         res.status(500).json({ error: 'Failed to get unread count' });
     }
 };

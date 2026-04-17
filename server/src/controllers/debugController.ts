@@ -81,7 +81,7 @@ export const checkVotingState = async (req: AuthenticatedRequest, res: Response)
             },
         });
     } catch (error: any) {
-        logger.error('Error in checkVotingState:', error);
+        logger.error({ err: error }, 'Error in checkVotingState:');
         res.status(500).json({
             success: false,
             error: error.message,
@@ -181,7 +181,7 @@ export const getPendingRewardUsers = async (_req: AuthenticatedRequest, res: Res
             users: Array.from(byUser.values()),
         });
     } catch (error: any) {
-        logger.error('Error in getPendingRewardUsers:', error);
+        logger.error({ err: error }, 'Error in getPendingRewardUsers:');
         res.status(500).json({
             success: false,
             error: error.message,

@@ -68,7 +68,7 @@ async function startServer(): Promise<void> {
                 }
             }
         } catch (error) {
-            logger.error('Error in background transition task:', error);
+            logger.error({ err: error }, 'Error in background transition task:');
         }
     }, 60000); // Run every minute
 
@@ -92,7 +92,7 @@ async function startServer(): Promise<void> {
 
     // Handle unhandled promise rejections
     process.on('unhandledRejection', async (err: Error) => {
-        logger.error('Unhandled Promise Rejection:', err);
+        logger.error({ err: err }, 'Unhandled Promise Rejection:');
         await disconnectDatabase();
         process.exit(1);
     });
@@ -100,7 +100,7 @@ async function startServer(): Promise<void> {
     // Handle uncaught exceptions
     process.on('uncaughtException', async (err: Error) => {
         console.error('CRITICAL UNCAUGHT EXCEPTION:', err);
-        logger.error('Uncaught Exception:', err);
+        logger.error({ err: err }, 'Uncaught Exception:');
         await disconnectDatabase();
         process.exit(1);
     });
@@ -108,7 +108,7 @@ async function startServer(): Promise<void> {
 
 // Start the server
 startServer().catch(async (error) => {
-    logger.error('Failed to start server:', error);
+    logger.error({ err: error }, 'Failed to start server:');
     await disconnectDatabase();
     process.exit(1);
 });

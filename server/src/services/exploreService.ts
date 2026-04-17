@@ -319,7 +319,7 @@ export const ExploreService = {
 
             return { trending, domains, closed: closedWithAvatars, allRanked: scoredEventsWithAvatars };
         } catch (error) {
-            logger.error('Failed to get explore events:', error);
+            logger.error({ err: error }, 'Failed to get explore events:');
             throw error;
         }
     },
@@ -352,7 +352,7 @@ export const ExploreService = {
 
             return rankedBrands.slice(0, 20);
         } catch (error) {
-            logger.error('Failed to get explore brands:', error);
+            logger.error({ err: error }, 'Failed to get explore brands:');
             throw error;
         }
     },
@@ -387,7 +387,7 @@ export const ExploreService = {
 
             return rankedCreators.slice(0, 20); // Return top 20 creators
         } catch (error) {
-            logger.error('Failed to get explore creators:', error);
+            logger.error({ err: error }, 'Failed to get explore creators:');
             throw error;
         }
     },
@@ -435,7 +435,7 @@ export const ExploreService = {
 
             return filteredContent;
         } catch (error) {
-            logger.error('Failed to get explore content:', error);
+            logger.error({ err: error }, 'Failed to get explore content:');
             throw error;
         }
     }

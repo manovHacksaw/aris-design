@@ -62,7 +62,7 @@ export const createEvent = async (req: AuthenticatedRequest, res: Response): Pro
     if (error.code === 'P2002') {
       return res.status(409).json({ success: false, error: 'An event with this information already exists' });
     }
-    logger.error('Error in createEvent:', error);
+    logger.error({ err: error }, 'Error in createEvent:');
     res.status(500).json({ success: false, error: 'Failed to create event. Please try again.' });
   }
 };
@@ -118,7 +118,7 @@ export const getEvents = async (req: AuthenticatedRequest, res: Response) => {
       },
     });
   } catch (error: any) {
-    logger.error('Error in getEvents:', error);
+    logger.error({ err: error }, 'Error in getEvents:');
 
     res.status(500).json({
       success: false,
@@ -153,7 +153,7 @@ export const getEventById = async (req: AuthenticatedRequest, res: Response): Pr
       lockedFields,
     });
   } catch (error: any) {
-    logger.error('Error in getEventById:', error);
+    logger.error({ err: error }, 'Error in getEventById:');
 
     res.status(500).json({
       success: false,
@@ -200,7 +200,7 @@ export const getBrandEvents = async (req: AuthenticatedRequest, res: Response): 
       events,
     });
   } catch (error: any) {
-    logger.error('Error in getBrandEvents:', error);
+    logger.error({ err: error }, 'Error in getBrandEvents:');
 
     res.status(500).json({
       success: false,
@@ -261,7 +261,7 @@ export const updateEvent = async (req: AuthenticatedRequest, res: Response): Pro
     if (error.code === 'P2002') {
       return res.status(409).json({ success: false, error: 'Duplicate entry' });
     }
-    logger.error('Error in updateEvent:', error);
+    logger.error({ err: error }, 'Error in updateEvent:');
     res.status(500).json({ success: false, error: 'Failed to update event' });
   }
 };
@@ -307,7 +307,7 @@ export const updateEventStatus = async (req: AuthenticatedRequest, res: Response
     }
 
     // Update status
-    const event = await EventMutationService.updateEventStatus(id, brand.id, status);
+    const event = await EventLifecycleService.updateEventStatus(id, brand.id, status);
 
     res.status(200).json({
       success: true,
@@ -318,7 +318,7 @@ export const updateEventStatus = async (req: AuthenticatedRequest, res: Response
     if (error instanceof AppError) {
       return res.status(error.status).json({ success: false, error: error.message });
     }
-    logger.error('Error in updateEventStatus:', error);
+    logger.error({ err: error }, 'Error in updateEventStatus:');
     res.status(500).json({ success: false, error: 'Failed to update event status' });
   }
 };
@@ -364,7 +364,7 @@ export const publishEvent = async (req: AuthenticatedRequest, res: Response): Pr
     if (error instanceof AppError) {
       return res.status(error.status).json({ success: false, error: error.message });
     }
-    logger.error('Error in publishEvent:', error);
+    logger.error({ err: error }, 'Error in publishEvent:');
     res.status(500).json({ success: false, error: 'Failed to publish event' });
   }
 };
@@ -408,7 +408,7 @@ export const deleteEvent = async (req: AuthenticatedRequest, res: Response): Pro
       message: 'Event deleted successfully',
     });
   } catch (error: any) {
-    logger.error('Error in deleteEvent:', error);
+    logger.error({ err: error }, 'Error in deleteEvent:');
 
     // Ownership error
     if (error.message.includes('Forbidden') || error.message.includes('do not own')) {
@@ -470,7 +470,7 @@ export const cancelEvent = async (req: AuthenticatedRequest, res: Response): Pro
       event,
     });
   } catch (error: any) {
-    logger.error('Error in cancelEvent:', error);
+    logger.error({ err: error }, 'Error in cancelEvent:');
     res.status(error.message.includes('Forbidden') ? 403 : 400).json({
       success: false,
       error: error.message,
@@ -514,7 +514,7 @@ export const stopEventEarly = async (req: AuthenticatedRequest, res: Response): 
       event,
     });
   } catch (error: any) {
-    logger.error('Error in stopEventEarly:', error);
+    logger.error({ err: error }, 'Error in stopEventEarly:');
     res.status(error.message.includes('Forbidden') ? 403 : 400).json({
       success: false,
       error: error.message,
@@ -544,7 +544,7 @@ export const getEventsVotedByUser = async (req: AuthenticatedRequest, res: Respo
       events,
     });
   } catch (error: any) {
-    logger.error('Error in getEventsVotedByUser:', error);
+    logger.error({ err: error }, 'Error in getEventsVotedByUser:');
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -599,7 +599,7 @@ export const updateBlockchainStatus = async (req: AuthenticatedRequest, res: Res
       event,
     });
   } catch (error: any) {
-    logger.error('Error in updateBlockchainStatus:', error);
+    logger.error({ err: error }, 'Error in updateBlockchainStatus:');
 
     if (error.message.includes('not found')) {
       return res.status(404).json({
@@ -667,7 +667,7 @@ export const failBlockchainStatus = async (req: AuthenticatedRequest, res: Respo
       event,
     });
   } catch (error: any) {
-    logger.error('Error in failBlockchainStatus:', error);
+    logger.error({ err: error }, 'Error in failBlockchainStatus:');
     res.status(500).json({
       success: false,
       error: 'Internal server error',

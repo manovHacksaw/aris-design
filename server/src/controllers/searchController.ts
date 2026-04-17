@@ -89,7 +89,7 @@ export const searchUsers = async (req: AuthenticatedRequest, res: Response): Pro
             count: users.length,
         });
     } catch (error) {
-        logger.error('Error searching users:', error);
+        logger.error({ err: error }, 'Error searching users:');
         res.status(500).json({
             success: false,
             error: 'Failed to search users',
@@ -161,7 +161,7 @@ export const searchBrands = async (req: AuthenticatedRequest, res: Response): Pr
             count: brands.length,
         });
     } catch (error) {
-        logger.error('Error searching brands:', error);
+        logger.error({ err: error }, 'Error searching brands:');
         res.status(500).json({
             success: false,
             error: 'Failed to search brands',
@@ -230,7 +230,7 @@ export const searchEvents = async (req: AuthenticatedRequest, res: Response): Pr
             count: events.length,
         });
     } catch (error) {
-        logger.error('Error searching events:', error);
+        logger.error({ err: error }, 'Error searching events:');
         res.status(500).json({
             success: false,
             error: 'Failed to search events',
@@ -373,7 +373,7 @@ export const searchAll = async (req: AuthenticatedRequest, res: Response): Promi
             },
         });
     } catch (error) {
-        logger.error('Error searching:', error);
+        logger.error({ err: error }, 'Error searching:');
         res.status(500).json({
             success: false,
             error: 'Failed to search',
@@ -432,7 +432,7 @@ export const getUserByUsername = async (req: AuthenticatedRequest, res: Response
             user,
         });
     } catch (error) {
-        logger.error('Error fetching user by username:', error);
+        logger.error({ err: error }, 'Error fetching user by username:');
         res.status(500).json({
             success: false,
             error: 'Failed to fetch user',
@@ -495,7 +495,7 @@ export const getBrandByIdentifier = async (req: AuthenticatedRequest, res: Respo
             brand: addBrandLogoUrls(brand),
         });
     } catch (error) {
-        logger.error('Error fetching brand:', error);
+        logger.error({ err: error }, 'Error fetching brand:');
         res.status(500).json({
             success: false,
             error: 'Failed to fetch brand',

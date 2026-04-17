@@ -20,7 +20,7 @@ export const checkPhoneAvailability = async (req: AuthenticatedRequest, res: Res
     const available = await PhoneService.checkAvailability(phoneNumber, userId);
     res.json({ available });
   } catch (error: any) {
-    logger.error('Error checking phone availability:', error);
+    logger.error({ err: error }, 'Error checking phone availability:');
     res.status(500).json({
       error: 'Failed to check phone availability',
     });
@@ -94,7 +94,7 @@ export const verifyFirebasePhone = async (req: AuthenticatedRequest, res: Respon
       },
     });
   } catch (error: any) {
-    logger.error('Error verifying Firebase token:', error);
+    logger.error({ err: error }, 'Error verifying Firebase token:');
     res.status(error.message.includes('already registered') ? 400 : 500).json({
       error: error.message || 'Failed to verify phone number',
     });

@@ -65,7 +65,7 @@ export class AnalyticsTrackingService {
 
       logger.info(`👁️ Event view tracked: ${eventId} by ${userId ? `user ${userId}` : 'anonymous'} (first: ${isFirstView})`);
     } catch (error) {
-      logger.error('Failed to track event view:', error);
+      logger.error({ err: error }, 'Failed to track event view:');
       // Don't throw - analytics shouldn't break the app
     }
   }
@@ -89,7 +89,7 @@ export class AnalyticsTrackingService {
         },
       });
     } catch (error) {
-      logger.error('Failed to track vote:', error);
+      logger.error({ err: error }, 'Failed to track vote:');
     }
   }
 
@@ -112,7 +112,7 @@ export class AnalyticsTrackingService {
         },
       });
     } catch (error) {
-      logger.error('Failed to track submission:', error);
+      logger.error({ err: error }, 'Failed to track submission:');
     }
   }
 
@@ -148,7 +148,7 @@ export class AnalyticsTrackingService {
 
       logger.info(`🔗 Share tracked: ${eventId} by ${userId || 'anonymous'}`);
     } catch (error) {
-      logger.error('Failed to track share:', error);
+      logger.error({ err: error }, 'Failed to track share:');
     }
   }
 
@@ -184,7 +184,7 @@ export class AnalyticsTrackingService {
 
       logger.info(`👆 Click tracked: ${eventId} target=${target} by ${userId || 'anonymous'}`);
     } catch (error) {
-      logger.error('Failed to track click:', error);
+      logger.error({ err: error }, 'Failed to track click:');
     }
   }
 }

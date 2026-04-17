@@ -229,7 +229,7 @@ export class EventMutationService {
         try {
           await NotificationService.createBrandPostNotification(brandId, event.id);
         } catch (error) {
-          logger.error('Failed to send brand post notification:', error);
+          logger.error({ err: error }, 'Failed to send brand post notification:');
         }
       })();
     }

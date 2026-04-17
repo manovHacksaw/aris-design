@@ -155,13 +155,13 @@ export class EventLifecycleService {
 
     // Update trust scores for all voters (async, don't block completion)
     TrustService.updateTrustScores(eventId).catch((error) => {
-      logger.error('Failed to update trust scores:', error);
+      logger.error({ err: error }, 'Failed to update trust scores:');
     });
 
     // Process event completion milestones (async, don't block completion)
     // This checks TOP_VOTES, TOP_3_CONTENT, and VOTES_RECEIVED milestones
     MilestoneService.processEventCompletion(eventId).catch((error) => {
-      logger.error('Failed to process event completion milestones:', error);
+      logger.error({ err: error }, 'Failed to process event completion milestones:');
     });
 
     // Recalculate brand level after event completion (async, don't block completion)
@@ -170,7 +170,7 @@ export class EventLifecycleService {
       'event_completion',
       eventId
     ).catch((error) => {
-      logger.error('Failed to recalculate brand level:', error);
+      logger.error({ err: error }, 'Failed to recalculate brand level:');
     });
 
     // Process USDC rewards (async, don't block completion)
@@ -362,7 +362,7 @@ export class EventLifecycleService {
               EventStatus.COMPLETED
             );
           } catch (error) {
-            logger.error('Failed to send event completion notifications:', error);
+            logger.error({ err: error }, 'Failed to send event completion notifications:');
           }
         })();
 
@@ -406,7 +406,7 @@ export class EventLifecycleService {
           try {
             await NotificationService.createEventCancellationNotification(eventId, 'INSUFFICIENT_POSTS');
           } catch (error) {
-            logger.error('Failed to send cancellation notifications:', error);
+            logger.error({ err: error }, 'Failed to send cancellation notifications:');
           }
         })();
 
@@ -424,7 +424,7 @@ export class EventLifecycleService {
           try {
             await NotificationService.createVotingLiveNotification(eventId);
           } catch (error) {
-            logger.error('Failed to send voting live notification:', error);
+            logger.error({ err: error }, 'Failed to send voting live notification:');
           }
         })();
       }
@@ -435,7 +435,7 @@ export class EventLifecycleService {
           try {
             await NotificationService.createBrandPostNotification(event.brandId, eventId);
           } catch (error) {
-            logger.error('Failed to send brand post notification on transition:', error);
+            logger.error({ err: error }, 'Failed to send brand post notification on transition:');
           }
         })();
       }
@@ -445,7 +445,7 @@ export class EventLifecycleService {
         try {
           await NotificationService.createEventPhaseChangeNotification(eventId, event.status, newStatus!);
         } catch (error) {
-          logger.error('Failed to send phase change notification:', error);
+          logger.error({ err: error }, 'Failed to send phase change notification:');
         }
       })();
 
@@ -517,7 +517,7 @@ export class EventLifecycleService {
           try {
             await NotificationService.createBrandPostNotification(brandId, eventId);
           } catch (error) {
-            logger.error('Failed to send brand post notification (blockchain confirmed):', error);
+            logger.error({ err: error }, 'Failed to send brand post notification (blockchain confirmed):');
           }
         })();
 
@@ -527,7 +527,7 @@ export class EventLifecycleService {
             try {
               await NotificationService.createVotingLiveNotification(eventId);
             } catch (error) {
-              logger.error('Failed to send voting live notification (blockchain confirmed):', error);
+              logger.error({ err: error }, 'Failed to send voting live notification (blockchain confirmed):');
             }
           })();
         }

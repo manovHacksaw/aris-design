@@ -58,7 +58,7 @@ export class BrandClaimService {
         applicationId: applicationId,
       };
     } catch (error: any) {
-      logger.error('Error in generateClaimToken:', error);
+      logger.error({ err: error }, 'Error in generateClaimToken:');
       // Re-throw with more context
       if (error.code === 'P2002') {
         const field = error.meta?.target?.[0] || 'field';

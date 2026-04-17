@@ -38,7 +38,7 @@ export const createProposal = async (req: AuthenticatedRequest, res: Response): 
         });
     } catch (error: any) {
         if (error instanceof AppError) return res.status(error.status).json({ success: false, error: error.message });
-        logger.error('Error in createProposal:', error);
+        logger.error({ err: error }, 'Error in createProposal:');
         res.status(500).json({ success: false, error: 'Failed to create proposal' });
     }
 };
@@ -69,7 +69,7 @@ export const updateProposal = async (req: AuthenticatedRequest, res: Response): 
         });
     } catch (error: any) {
         if (error instanceof AppError) return res.status(error.status).json({ success: false, error: error.message });
-        logger.error('Error in updateProposal:', error);
+        logger.error({ err: error }, 'Error in updateProposal:');
         res.status(500).json({ success: false, error: 'Failed to update proposal' });
     }
 };
@@ -98,7 +98,7 @@ export const deleteProposal = async (req: AuthenticatedRequest, res: Response): 
         });
     } catch (error: any) {
         if (error instanceof AppError) return res.status(error.status).json({ success: false, error: error.message });
-        logger.error('Error in deleteProposal:', error);
+        logger.error({ err: error }, 'Error in deleteProposal:');
         res.status(500).json({ success: false, error: 'Failed to delete proposal' });
     }
 };
@@ -117,7 +117,7 @@ export const getProposalsByEvent = async (req: AuthenticatedRequest, res: Respon
             proposals,
         });
     } catch (error: any) {
-        logger.error('Error in getProposalsByEvent:', error);
+        logger.error({ err: error }, 'Error in getProposalsByEvent:');
         res.status(500).json({
             success: false,
             error: 'Internal server error',

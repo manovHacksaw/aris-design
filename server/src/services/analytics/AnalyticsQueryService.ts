@@ -48,7 +48,7 @@ export class AnalyticsQueryService {
         updatedAt: analytics.updatedAt,
       };
     } catch (error) {
-      logger.error('Failed to get event analytics:', error);
+      logger.error({ err: error }, 'Failed to get event analytics:');
       throw error;
     }
   }
@@ -81,7 +81,7 @@ export class AnalyticsQueryService {
         };
       });
     } catch (error) {
-      logger.error('Failed to get bulk event analytics:', error);
+      logger.error({ err: error }, 'Failed to get bulk event analytics:');
       throw error;
     }
   }
@@ -122,7 +122,7 @@ export class AnalyticsQueryService {
         totalSubmissions: analytics.totalSubmissions,
       }));
     } catch (error) {
-      logger.error('Failed to get top events by views:', error);
+      logger.error({ err: error }, 'Failed to get top events by views:');
       throw error;
     }
   }
@@ -301,7 +301,7 @@ export class AnalyticsQueryService {
         aiSummary: (analytics as any)?.aiSummary || null,
       };
     } catch (error) {
-      logger.error('Failed to get detailed event analytics:', error);
+      logger.error({ err: error }, 'Failed to get detailed event analytics:');
       throw error;
     }
   }
@@ -328,7 +328,7 @@ export class AnalyticsQueryService {
 
       return breakdown;
     } catch (error) {
-      logger.error('Failed to get event clicks breakdown:', error);
+      logger.error({ err: error }, 'Failed to get event clicks breakdown:');
       throw error;
     }
   }

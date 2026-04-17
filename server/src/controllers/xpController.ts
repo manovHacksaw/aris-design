@@ -48,7 +48,7 @@ export const loginPing = async (
 
     res.status(200).json(response);
   } catch (error: unknown) {
-    logger.error('Error in loginPing:', error);
+    logger.error({ err: error }, 'Error in loginPing:');
     res.status(500).json({
       success: false,
       error: 'Failed to record login',
@@ -80,7 +80,7 @@ export const getXpStatus = async (
 
     res.status(200).json(response);
   } catch (error: unknown) {
-    logger.error('Error in getXpStatus:', error);
+    logger.error({ err: error }, 'Error in getXpStatus:');
     res.status(500).json({
       success: false,
       error: 'Failed to get XP status',
@@ -112,7 +112,7 @@ export const getMilestoneProgress = async (
 
     res.status(200).json(response);
   } catch (error: unknown) {
-    logger.error('Error in getMilestoneProgress:', error);
+    logger.error({ err: error }, 'Error in getMilestoneProgress:');
     res.status(500).json({
       success: false,
       error: 'Failed to get milestone progress',
@@ -145,7 +145,7 @@ export const getReferralInfo = async (
 
     res.status(200).json(response);
   } catch (error: unknown) {
-    logger.error('Error in getReferralInfo:', error);
+    logger.error({ err: error }, 'Error in getReferralInfo:');
     res.status(500).json({
       success: false,
       error: 'Failed to get referral info',
@@ -177,7 +177,7 @@ export const generateReferralCode = async (
 
     res.status(200).json(response);
   } catch (error: unknown) {
-    logger.error('Error in generateReferralCode:', error);
+    logger.error({ err: error }, 'Error in generateReferralCode:');
     res.status(500).json({
       success: false,
       error: 'Failed to generate referral code',
@@ -207,7 +207,7 @@ export const getRewardMultiplier = async (
       multiplier,
     });
   } catch (error: unknown) {
-    logger.error('Error in getRewardMultiplier:', error);
+    logger.error({ err: error }, 'Error in getRewardMultiplier:');
     res.status(500).json({
       success: false,
       error: 'Failed to get reward multiplier',
@@ -262,7 +262,7 @@ export const getXpTransactions = async (
       },
     });
   } catch (error: unknown) {
-    logger.error('Error in getXpTransactions:', error);
+    logger.error({ err: error }, 'Error in getXpTransactions:');
     res.status(500).json({
       success: false,
       error: 'Failed to get XP transactions',

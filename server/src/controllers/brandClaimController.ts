@@ -34,7 +34,7 @@ export const validateClaimToken = async (req: Request, res: Response): Promise<v
       },
     });
   } catch (error: any) {
-    logger.error('Error validating claim token:', error);
+    logger.error({ err: error }, 'Error validating claim token:');
 
     if (error.message.includes('Invalid') || error.message.includes('expired') || error.message.includes('claimed')) {
       res.status(400).json({
@@ -98,7 +98,7 @@ export const claimBrand = async (req: Request, res: Response): Promise<void> => 
       },
     });
   } catch (error: any) {
-    logger.error('Error claiming brand:', error);
+    logger.error({ err: error }, 'Error claiming brand:');
 
     // Handle specific error cases
     if (error.message.includes('Invalid') ||

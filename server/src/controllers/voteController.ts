@@ -31,7 +31,7 @@ export const voteForSubmission = async (req: AuthenticatedRequest, res: Response
             vote,
         });
     } catch (error: any) {
-        logger.error('Error in voteForSubmission:', error);
+        logger.error({ err: error }, 'Error in voteForSubmission:');
         res.status(400).json({
             success: false,
             error: error.message,
@@ -67,7 +67,7 @@ export const voteForProposals = async (req: AuthenticatedRequest, res: Response)
             votes,
         });
     } catch (error: any) {
-        logger.error('Error in voteForProposals:', error);
+        logger.error({ err: error }, 'Error in voteForProposals:');
         res.status(400).json({
             success: false,
             error: error.message,
@@ -95,7 +95,7 @@ export const getUserVotesForEvent = async (req: AuthenticatedRequest, res: Respo
             votes,
         });
     } catch (error: any) {
-        logger.error('Error in getUserVotesForEvent:', error);
+        logger.error({ err: error }, 'Error in getUserVotesForEvent:');
         res.status(500).json({
             success: false,
             error: 'Internal server error',
@@ -138,7 +138,7 @@ export const getVoterBreakdown = async (req: AuthenticatedRequest, res: Response
 
         return res.status(200).json({ success: true, breakdown });
     } catch (error: any) {
-        logger.error('Error in getVoterBreakdown:', error);
+        logger.error({ err: error }, 'Error in getVoterBreakdown:');
         return res.status(500).json({ success: false, error: 'Internal server error' });
     }
 };
@@ -172,7 +172,7 @@ export const getEventParticipants = async (req: AuthenticatedRequest, res: Respo
 
         return res.status(200).json({ success: true, participants: votes.map((v) => v.user) });
     } catch (error: any) {
-        logger.error('Error in getEventParticipants:', error);
+        logger.error({ err: error }, 'Error in getEventParticipants:');
         return res.status(500).json({ success: false, error: 'Internal server error' });
     }
 };
@@ -197,7 +197,7 @@ export const checkIfUserHasVoted = async (req: AuthenticatedRequest, res: Respon
             hasVoted,
         });
     } catch (error: any) {
-        logger.error('Error in checkIfUserHasVoted:', error);
+        logger.error({ err: error }, 'Error in checkIfUserHasVoted:');
         res.status(500).json({
             success: false,
             error: 'Internal server error',

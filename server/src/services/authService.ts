@@ -139,7 +139,7 @@ export class AuthService {
                     const { ReferralService } = await import('./referralService');
                     await ReferralService.generateReferralCode(user!.id);
                 } catch (error) {
-                    logger.error('Failed to generate referral code:', error);
+                    logger.error({ err: error }, 'Failed to generate referral code:');
                 }
             })();
         } else {
@@ -177,11 +177,11 @@ export class AuthService {
                     try {
                         await NotificationService.createXpMilestoneNotification(user!.id, milestone);
                     } catch (err) {
-                        logger.error('Failed to send XP milestone notification:', err);
+                        logger.error({ err: err }, 'Failed to send XP milestone notification:');
                     }
                 }
             } catch (error) {
-                logger.error('Failed to create login notifications:', error);
+                logger.error({ err: error }, 'Failed to create login notifications:');
             }
         })();
 

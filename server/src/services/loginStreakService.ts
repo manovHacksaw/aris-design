@@ -57,7 +57,7 @@ export class LoginStreakService {
       try {
         newMilestonesClaimed = await XpService.checkAndClaimMilestones(userId, MilestoneCategory.LOGIN_STREAK, 1);
       } catch (error) {
-        logger.error('Failed to check login streak milestones:', error);
+        logger.error({ err: error }, 'Failed to check login streak milestones:');
       }
       return { ...streakData, newMilestonesClaimed };
     }
@@ -98,7 +98,7 @@ export class LoginStreakService {
           streakData.currentStreak
         );
       } catch (error) {
-        logger.error('Failed to check login streak milestones:', error);
+        logger.error({ err: error }, 'Failed to check login streak milestones:');
         // Don't fail the login for milestone errors
       }
     }

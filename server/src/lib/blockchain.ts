@@ -251,7 +251,7 @@ export class BlockchainService {
             return hash;
 
         } catch (error: any) {
-            logger.error('❌ Blockchain: Distribution Failed:', error);
+            logger.error({ err: error }, '❌ Blockchain: Distribution Failed:');
             throw new Error(`On-chain distribution failed: ${error.message || error}`);
         }
     }
@@ -287,7 +287,7 @@ export class BlockchainService {
             return hash;
 
         } catch (error: any) {
-            logger.error('❌ Blockchain: Cancel Event Failed:', error);
+            logger.error({ err: error }, '❌ Blockchain: Cancel Event Failed:');
             throw new Error(`On-chain cancellation failed: ${error.message || error}`);
         }
     }
@@ -309,7 +309,7 @@ export class BlockchainService {
 
             return Number(balance) / 1_000_000;
         } catch (error: any) {
-            logger.error('❌ Blockchain: Failed to fetch brand refund balance:', error);
+            logger.error({ err: error }, '❌ Blockchain: Failed to fetch brand refund balance:');
             return 0;
         }
     }

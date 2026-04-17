@@ -26,7 +26,7 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
             totalEvents
         });
     } catch (error) {
-        logger.error('Error fetching dashboard stats:', error);
+        logger.error({ err: error }, 'Error fetching dashboard stats:');
         res.status(500).json({ error: 'Failed to fetch dashboard stats' });
     }
 };
@@ -76,7 +76,7 @@ export const getUserActivities = async (req: Request, res: Response) => {
             }
         });
     } catch (error) {
-        logger.error('Error fetching user activities:', error);
+        logger.error({ err: error }, 'Error fetching user activities:');
         res.status(500).json({ error: 'Failed to fetch user activities' });
     }
 };

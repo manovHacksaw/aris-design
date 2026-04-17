@@ -83,7 +83,7 @@ export const authenticateJWT = async (
 
     next();
   } catch (error) {
-    logger.error('Privy authentication error:', error);
+    logger.error({ err: error }, 'Privy authentication error:');
     res.status(500).json({ error: 'Authentication failed' });
   }
 };
@@ -138,7 +138,7 @@ export const authenticateOptional = async (
 
     next();
   } catch (error) {
-    logger.error('Optional Privy auth error:', error);
+    logger.error({ err: error }, 'Optional Privy auth error:');
     next();
   }
 };
@@ -200,7 +200,7 @@ export const requireEmailVerification = async (
 
     next();
   } catch (error) {
-    logger.error('Email verification check error:', error);
+    logger.error({ err: error }, 'Email verification check error:');
     res.status(500).json({ error: 'Internal server error' });
   }
 };

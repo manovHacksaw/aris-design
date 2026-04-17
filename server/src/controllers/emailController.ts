@@ -49,7 +49,7 @@ export const sendOTP = async (req: AuthenticatedRequest, res: Response): Promise
         });
     } catch (error: any) {
         if (error instanceof AppError) { res.status(error.status).json({ error: error.message }); return; }
-        logger.error('Error sending email OTP:', error);
+        logger.error({ err: error }, 'Error sending email OTP:');
         res.status(500).json({ error: 'Failed to send verification code' });
     }
 };
@@ -122,7 +122,7 @@ export const verifyOTP = async (req: AuthenticatedRequest, res: Response): Promi
         });
     } catch (error: any) {
         if (error instanceof AppError) { res.status(error.status).json({ error: error.message }); return; }
-        logger.error('Error verifying email OTP:', error);
+        logger.error({ err: error }, 'Error verifying email OTP:');
         res.status(500).json({ error: 'Failed to verify code' });
     }
 };

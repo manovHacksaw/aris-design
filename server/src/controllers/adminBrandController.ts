@@ -78,7 +78,7 @@ export const approveBrandAndGenerateToken = async (req: Request, res: Response):
       },
     });
   } catch (error: any) {
-    logger.error('Error approving brand:', error);
+    logger.error({ err: error }, 'Error approving brand:');
 
     if (error.message.includes('not found')) {
       res.status(404).json({
@@ -176,7 +176,7 @@ export const getClaimEmailTemplate = async (req: Request, res: Response): Promis
       },
     });
   } catch (error: any) {
-    logger.error('Error getting email template:', error);
+    logger.error({ err: error }, 'Error getting email template:');
 
     res.status(500).json({
       success: false,
