@@ -30,7 +30,7 @@ export class UserStatsService {
 
             // Update login streak in background
             LoginStreakService.recordDailyLogin(userId).catch((err) => {
-                logger.error('[UserStatsService.getUserStats] Streak update failed:', err);
+                logger.error(err, '[UserStatsService.getUserStats] Streak update failed:');
             });
 
             // 2. Aggregate all metrics in parallel
@@ -42,14 +42,14 @@ export class UserStatsService {
                 take: 3,
                 select: { id: true, eventId: true }
             });
-            logger.info(`[UserStatsService.getUserStats] Sample submissions for ${userId}:`, JSON.stringify(sampleSubmissions));
+            logger.info({ sampleSubmissions }, `[UserStatsService.getUserStats] Sample submissions for ${userId}:`);
 
             const sampleVotes = await prisma.vote.findMany({
                 where: { userId },
                 take: 3,
                 select: { id: true, eventId: true }
             });
-            logger.info(`[UserStatsService.getUserStats] Sample votes for ${userId}:`, JSON.stringify(sampleVotes));
+            logger.info({ sampleVotes }, `[UserStatsService.getUserStats] Sample votes for ${userId}:`);
 
             const [
                 followersCount,
@@ -140,9 +140,13 @@ export class UserStatsService {
             
             // Log if there's a significant mismatch with denormalized fields (for debugging)
             if (submissionsCount !== user.totalSubmissions || votesCastCount !== user.totalVotes) {
-                logger.warn(`[UserStatsService.getUserStats] Counter mismatch for ${userId}: ` + 
-                    `Submissions Query: ${submissionsCount} vs Cache: ${user.totalSubmissions}, ` +
-                    `Votes Query: ${votesCastCount} vs Cache: ${user.totalVotes}`);
+                logger.warn({
+                    userId,
+                    submissionsCount,
+                    totalSubmissions: user.totalSubmissions,
+                    votesCastCount,
+                    totalVotes: user.totalVotes
+                }, `[UserStatsService.getUserStats] Counter mismatch:`);
             }
 
             const stats = {
@@ -159,11 +163,11 @@ export class UserStatsService {
                 topRankedEvents,
             };
 
-            logger.info(`[UserStatsService.getUserStats] Resulting Stats:`, JSON.stringify(stats, null, 2));
+            logger.info({ stats }, `[UserStatsService.getUserStats] Resulting Stats:`);
 
             return stats;
         } catch (error) {
-            logger.error('[UserStatsService.getUserStats] Critical error:', error);
+            logger.error(error, '[UserStatsService.getUserStats] Critical error:');
             throw error;
         }
     }

@@ -1,20 +1,9 @@
-import { RewardsPoolService } from './RewardsPoolService.js';
-import { RewardsClaimService } from './RewardsClaimService.js';
-import { RewardsRefundService } from './RewardsRefundService.js';
 import logger from '../../lib/logger';
 import { prisma } from '../../lib/prisma.js';
-import { ClaimType, ClaimStatus, WalletStatus, RewardsPoolStatus, EventType as PrismaEventType } from '@prisma/client';
+import { ClaimType, ClaimStatus, WalletStatus, RewardsPoolStatus } from '@prisma/client';
 import {
   REWARDS_CONSTANTS,
-  EventType,
-  PoolRequirements,
-  PoolCalculationParams,
-  PoolInfo,
-  ClaimInfo,
-  UserClaimableRewards,
   ProcessEventRewardsResult,
-  ClaimHistoryItem,
-  UserClaimHistory,
 } from '../../types/rewards.js';
 
 export class RewardsDistributionService {
@@ -274,7 +263,7 @@ export class RewardsDistributionService {
 
       // ==================== ON-CHAIN DISTRIBUTION ====================
       const BlockchainService = (await import('../../lib/blockchain.js')).BlockchainService;
-      const NotificationService = (await import('./notificationService.js')).NotificationService;
+      const NotificationService = (await import('../notificationService.js')).NotificationService;
 
       const usersBatch: string[] = [];
       const amountsBatch: bigint[] = [];
@@ -350,7 +339,7 @@ export class RewardsDistributionService {
             skipOnChain = true;
           }
         } catch (e) {
-          logger.warn("⚠️ RewardsService: Failed to check on-chain status, proceeding with distribution:", e);
+          logger.warn(e, "⚠️ RewardsService: Failed to check on-chain status, proceeding with distribution:");
         }
 
         if (!skipOnChain) {
@@ -375,7 +364,7 @@ export class RewardsDistributionService {
             logger.info(`✅ RewardsService: On-chain distribution successful: ${txHash}`);
             result.transactionHash = txHash;
           } catch (error: any) {
-            logger.error('❌ RewardsService: Blockchain distribution failed:', error);
+            logger.error(error, '❌ RewardsService: Blockchain distribution failed:');
             const msg = error.message ?? '';
             // Known recoverable on-chain states — proceed with DB writes
             const isEventNotActive  = msg.includes('0x0f0c1bc8') || msg.includes('EventNotActive');
@@ -414,7 +403,7 @@ export class RewardsDistributionService {
               logger.info(`✅ RewardsService: CREDITED claim saved: ${saved.id}`);
               result.claimsCreated++;
             } catch (error: any) {
-              logger.error(`❌ RewardsService: Failed to save CREDITED claim for ${claim.userId}:`, error.message);
+              logger.error(error, `❌ RewardsService: Failed to save CREDITED claim for ${claim.userId}:`);
             }
           }
 
@@ -430,7 +419,7 @@ export class RewardsDistributionService {
               logger.info(`✅ RewardsService: PENDING claim saved: ${saved.id}`);
               result.claimsCreated++;
             } catch (error: any) {
-              logger.error(`❌ RewardsService: Failed to save PENDING claim for ${claim.userId}:`, error.message);
+              logger.error(error, `❌ RewardsService: Failed to save PENDING claim for ${claim.userId}:`);
             }
           }
 
@@ -455,7 +444,7 @@ export class RewardsDistributionService {
                 }
               });
             } catch (error: any) {
-              logger.error(`❌ RewardsService: Failed to increment earnings for ${claim.userId}:`, error);
+              logger.error(error, `❌ RewardsService: Failed to increment earnings for ${claim.userId}:`);
             }
           }
         },
@@ -475,13 +464,13 @@ export class RewardsDistributionService {
             metadata: { eventId: event.id }
           });
         } catch (e) {
-          logger.error(`⚠️ RewardsService: Failed to send notification to user ${notif.userId}:`, e);
+          logger.error(e, `⚠️ RewardsService: Failed to send notification to user ${notif.userId}:`);
         }
       }
 
       result.success = true;
     } catch (error: any) {
-      logger.error("❌ RewardsService: Process Event Rewards Failed:", error);
+      logger.error(error, "❌ RewardsService: Process Event Rewards Failed:");
       result.errors.push(`Processing failed: ${error.message}`);
     }
 

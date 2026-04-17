@@ -70,11 +70,11 @@ export class UserReferralService {
             await XpService.grantXp({
                 userId: referredId,
                 amount: 5,
-                type: 'REFERRAL',
+                type: 'REFERRAL_BASE',
                 description: 'Joined with a referral code',
             });
         } catch (e) {
-            logger.warn('[UserReferralService.applyReferral] Referred-user XP grant failed:', e);
+            logger.warn(e, '[UserReferralService.applyReferral] Referred-user XP grant failed:');
         }
 
         return { success: true };

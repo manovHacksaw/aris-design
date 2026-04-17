@@ -320,7 +320,7 @@ export class XpService {
           category,
           threshold: milestone.threshold,
           xpAwarded: milestone.xp,
-        }).catch(err => logger.error('Failed to send milestone notification:', err));
+        }).catch(err => logger.error(err, 'Failed to send milestone notification:'));
       } catch (error: unknown) {
         // P2002 = unique constraint violation (already claimed by concurrent request)
         if (
@@ -332,8 +332,8 @@ export class XpService {
         }
         // Log other errors but don't fail the entire operation
         logger.error(
-          `Failed to claim milestone ${category}:${milestone.threshold}:`,
-          error
+            error,
+            `Failed to claim milestone ${category}:${milestone.threshold}:`
         );
       }
     }

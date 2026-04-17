@@ -204,7 +204,7 @@ export class VoteService {
             await NotificationService.createEventVoteNotification(eventId);
             await NotificationService.createSubmissionVoteNotification(submissionId, userId);
         } catch (error) {
-            logger.error('Failed to send vote notifications:', error);
+            logger.error(error, 'Failed to send vote notifications:');
             // Don't fail the vote if notification fails
         }
 
@@ -214,7 +214,7 @@ export class VoteService {
                 const totalVotes = await prisma.vote.count({ where: { userId } });
                 await XpService.checkAndClaimMilestones(userId, MilestoneCategory.VOTES_CAST, totalVotes);
             } catch (error) {
-                logger.error('Failed to check vote milestones:', error);
+                logger.error(error, 'Failed to check vote milestones:');
             }
         })();
 
@@ -222,7 +222,7 @@ export class VoteService {
         if (shouldClose) {
             logger.info(`🎯 Capacity reached for event ${eventId}. Triggering auto-completion...`);
             EventLifecycleService.transitionToCompleted(eventId).catch(err =>
-                logger.error(`❌ Failed to process auto-completion for event ${eventId}:`, err)
+                logger.error(err, `❌ Failed to process auto-completion for event ${eventId}:`)
             );
         }
 
@@ -407,7 +407,7 @@ export class VoteService {
         // Trigger event completion logic if auto-closed
         if (result.shouldClose) {
             EventLifecycleService.transitionToCompleted(eventId).catch(err =>
-                logger.error(`Failed to process auto-completion for event ${eventId}:`, err)
+                logger.error(err, `Failed to process auto-completion for event ${eventId}:`)
             );
         }
 
@@ -418,7 +418,7 @@ export class VoteService {
             try {
                 await NotificationService.createEventVoteNotification(eventId);
             } catch (error) {
-                logger.error('Failed to send vote notification:', error);
+                logger.error(error, 'Failed to send vote notification:');
                 // Don't fail the vote if notification fails
             }
 
@@ -428,7 +428,7 @@ export class VoteService {
                     const totalVotes = await prisma.vote.count({ where: { userId } });
                     await XpService.checkAndClaimMilestones(userId, MilestoneCategory.VOTES_CAST, totalVotes);
                 } catch (error) {
-                    logger.error('Failed to check vote milestones:', error);
+                    logger.error(error, 'Failed to check vote milestones:');
                 }
             })();
         }

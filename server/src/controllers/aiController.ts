@@ -1,6 +1,7 @@
 import logger from '../lib/logger';
 import { Request, Response } from 'express';
-import { AiService } from '../services/aiService';
+import { AiContentService } from '../services/ai/AiContentService';
+import { AiImageService } from '../services/ai/AiImageService';
 
 export const generateBannerPrompts = async (req: Request, res: Response): Promise<Response> => {
     try {
@@ -10,7 +11,7 @@ export const generateBannerPrompts = async (req: Request, res: Response): Promis
             return res.status(400).json({ success: false, error: 'Title is required' });
         }
 
-        const prompts = await AiService.generateBannerPrompts({
+        const prompts = await AiContentService.generateBannerPrompts({
             title,
             description: description || '',
             theme: theme || '',
@@ -22,7 +23,7 @@ export const generateBannerPrompts = async (req: Request, res: Response): Promis
 
         return res.json({ success: true, prompts });
     } catch (error: any) {
-        logger.error('Error in AI generateBannerPrompts:', error);
+        logger.error(error, 'Error in AI generateBannerPrompts:');
         return res.status(500).json({ success: false, error: 'Banner prompt generation failed', message: error.message });
     }
 };
@@ -35,7 +36,7 @@ export const generateVotingOptionPrompts = async (req: Request, res: Response): 
             return res.status(400).json({ success: false, error: 'eventTitle is required' });
         }
 
-        const prompts = await AiService.generateVotingOptionPrompts({
+        const prompts = await AiContentService.generateVotingOptionPrompts({
             eventTitle,
             eventDescription: eventDescription || '',
             decisionDomain: decisionDomain || '',
@@ -46,7 +47,7 @@ export const generateVotingOptionPrompts = async (req: Request, res: Response): 
 
         return res.json({ success: true, prompts });
     } catch (error: any) {
-        logger.error('Error in AI generateVotingOptionPrompts:', error);
+        logger.error(error, 'Error in AI generateVotingOptionPrompts:');
         return res.status(500).json({ success: false, error: 'Voting option prompt generation failed', message: error.message });
     }
 };
@@ -63,7 +64,7 @@ export const generateImage = async (req: Request, res: Response): Promise<Respon
         }
 
         // 1. Refine the prompt using Gemini
-        const refinedPrompt = await AiService.generateImagePrompt(prompt);
+        const refinedPrompt = await AiContentService.generateImagePrompt(prompt);
 
         if (refineOnly) {
             return res.json({
@@ -75,10 +76,10 @@ export const generateImage = async (req: Request, res: Response): Promise<Respon
 
         // 2. Generate the actual image using Imagen
         try {
-            const { buffer } = await AiService.generateImage(refinedPrompt);
+            const { buffer } = await AiImageService.generateImage(refinedPrompt);
 
             // 3. Upload to IPFS (Pinata)
-            const cid = await AiService.uploadToPinata(buffer, `ai-gen-${Date.now()}.png`);
+            const cid = await AiImageService.uploadToPinata(buffer, `ai-gen-${Date.now()}.png`);
 
             return res.json({
                 success: true,
@@ -88,7 +89,7 @@ export const generateImage = async (req: Request, res: Response): Promise<Respon
                 message: 'Image generated and uploaded successfully.'
             });
         } catch (genError: any) {
-            logger.warn('Image generation failed, returning refined prompt only:', genError.message);
+            logger.warn({ error: genError.message }, 'Image generation failed, returning refined prompt only:');
             return res.json({
                 success: true,
                 refinedPrompt,
@@ -97,7 +98,7 @@ export const generateImage = async (req: Request, res: Response): Promise<Respon
             });
         }
     } catch (error: any) {
-        logger.error('Error in AI generateImage:', error);
+        logger.error(error, 'Error in AI generateImage:');
         return res.status(500).json({
             success: false,
             error: 'AI Generation failed',
@@ -117,7 +118,7 @@ export const refinePrompt = async (req: Request, res: Response): Promise<Respons
             });
         }
 
-        const refinedPrompt = await AiService.generateImagePrompt(prompt);
+        const refinedPrompt = await AiContentService.generateImagePrompt(prompt);
 
         return res.json({
             success: true,
@@ -143,14 +144,14 @@ export const generateTagline = async (req: Request, res: Response): Promise<Resp
             });
         }
 
-        const tagline = await AiService.generateTagline(title, description);
+        const tagline = await AiContentService.generateTagline(title, description);
 
         return res.json({
             success: true,
             tagline
         });
     } catch (error: any) {
-        logger.error('Error in AI generateTagline:', error);
+        logger.error(error, 'Error in AI generateTagline:');
         return res.status(500).json({
             success: false,
             error: 'AI Tagline Generation failed',
@@ -170,7 +171,7 @@ export const generateEventDetails = async (req: Request, res: Response): Promise
             });
         }
 
-        const suggestions = await AiService.generateEventDetails({
+        const suggestions = await AiContentService.generateEventDetails({
             motive,
             brandName: brandName || '',
             brandBio: brandBio || '',
@@ -187,7 +188,7 @@ export const generateEventDetails = async (req: Request, res: Response): Promise
             suggestions,
         });
     } catch (error: any) {
-        logger.error('Error in AI generateEventDetails:', error);
+        logger.error(error, 'Error in AI generateEventDetails:');
         return res.status(500).json({
             success: false,
             error: 'AI Event Details Generation failed',
@@ -207,14 +208,14 @@ export const generateProposals = async (req: Request, res: Response): Promise<Re
             });
         }
 
-        const proposals = await AiService.generateProposals(title, description, category, count);
+        const proposals = await AiContentService.generateProposals(title, description, category, count);
 
         return res.json({
             success: true,
             proposals
         });
     } catch (error: any) {
-        logger.error('Error in AI generateProposals:', error);
+        logger.error(error, 'Error in AI generateProposals:');
         return res.status(500).json({
             success: false,
             error: 'AI Proposal Generation failed',

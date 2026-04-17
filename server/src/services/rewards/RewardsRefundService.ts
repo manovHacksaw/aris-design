@@ -1,21 +1,7 @@
 import { RewardsPoolService } from './RewardsPoolService.js';
-import { RewardsDistributionService } from './RewardsDistributionService.js';
-import { RewardsClaimService } from './RewardsClaimService.js';
 import logger from '../../lib/logger';
 import { prisma } from '../../lib/prisma.js';
-import { ClaimType, ClaimStatus, WalletStatus, RewardsPoolStatus, EventType as PrismaEventType } from '@prisma/client';
-import {
-  REWARDS_CONSTANTS,
-  EventType,
-  PoolRequirements,
-  PoolCalculationParams,
-  PoolInfo,
-  ClaimInfo,
-  UserClaimableRewards,
-  ProcessEventRewardsResult,
-  ClaimHistoryItem,
-  UserClaimHistory,
-} from '../../types/rewards.js';
+import { RewardsPoolStatus } from '@prisma/client';
 
 export class RewardsRefundService {
 
@@ -39,7 +25,7 @@ export class RewardsRefundService {
         const { BlockchainService } = await import('../../lib/blockchain.js');
         onChainBalance = await BlockchainService.getBrandRefundBalance(brand.walletAddress);
       } catch (e) {
-        logger.warn('Failed to fetch on-chain refund balance:', e);
+        logger.warn(e, 'Failed to fetch on-chain refund balance:');
       }
     }
 
@@ -69,7 +55,7 @@ export class RewardsRefundService {
         refundBreakdown = { unusedBase: baseRefund, unusedTop: 0, unusedCreator: creatorRefund, unusedLeaderboard: 0, platformFee: feeRefund, totalRefund: baseRefund + creatorRefund + feeRefund };
       }
 
-      return { ...this.formatPoolInfo(p), onChainEventId: e.onChainEventId, eventTitle: e.title, eventStatus: e.status, refundBreakdown };
+      return { ...RewardsPoolService.formatPoolInfo(p), onChainEventId: e.onChainEventId, eventTitle: e.title, eventStatus: e.status, refundBreakdown };
     });
 
     return { refundableBalanceUsdc: onChainBalance, onChainBalance, pools };

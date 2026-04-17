@@ -161,11 +161,11 @@ export class UserMutationService {
                             await XpService.grantXp({
                                 userId,
                                 amount: 10,
-                                type: 'MILESTONE',
+                                type: 'MILESTONE_REWARD',
                                 description: 'Welcome to Aris!',
                             });
                         } catch (e) {
-                            logger.warn('[updateProfile] Welcome XP grant failed:', e);
+                            logger.warn(e, '[updateProfile] Welcome XP grant failed:');
                         }
                     });
                 }

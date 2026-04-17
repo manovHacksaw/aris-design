@@ -49,10 +49,6 @@ export class UserQueryService {
         return prisma.user.findUnique({
             where: { id },
             include: {
-                sessions: {
-                    take: 1,
-                    orderBy: { createdAt: 'desc' },
-                },
                 ownedBrands: true,
                 loginStreak: true,
             },
@@ -66,10 +62,6 @@ export class UserQueryService {
         return prisma.user.findUnique({
             where: { username },
             include: {
-                sessions: {
-                    take: 1,
-                    orderBy: { createdAt: 'desc' },
-                },
                 ownedBrands: true,
                 loginStreak: true,
             },

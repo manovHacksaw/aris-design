@@ -170,7 +170,7 @@ export class ReferralService {
         totalReferrals
       );
     } catch (error) {
-      logger.error('Failed to check referral milestones:', error);
+      logger.error(error, 'Failed to check referral milestones:');
       // Don't fail the referral for milestone errors
     }
 

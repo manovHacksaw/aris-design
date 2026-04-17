@@ -1,20 +1,11 @@
-import { RewardsDistributionService } from './RewardsDistributionService.js';
-import { RewardsClaimService } from './RewardsClaimService.js';
-import { RewardsRefundService } from './RewardsRefundService.js';
-import logger from '../../lib/logger';
 import { prisma } from '../../lib/prisma.js';
-import { ClaimType, ClaimStatus, WalletStatus, RewardsPoolStatus, EventType as PrismaEventType } from '@prisma/client';
+import { RewardsPoolStatus } from '@prisma/client';
 import {
   REWARDS_CONSTANTS,
   EventType,
   PoolRequirements,
   PoolCalculationParams,
   PoolInfo,
-  ClaimInfo,
-  UserClaimableRewards,
-  ProcessEventRewardsResult,
-  ClaimHistoryItem,
-  UserClaimHistory,
 } from '../../types/rewards.js';
 
 export class RewardsPoolService {
@@ -54,18 +45,24 @@ export class RewardsPoolService {
       creatorPoolUsdc = Number(creatorPoolRaw) / Math.pow(10, USDC_DECIMALS);
     }
 
+    // Calculate leaderboard pool (only for post_and_vote if specified)
+    const leaderboardPoolUsdc = params.leaderboardPoolAmount || 0;
+    const leaderboardPoolRaw = BigInt(Math.floor(leaderboardPoolUsdc * Math.pow(10, USDC_DECIMALS)));
+
     // Calculate total
-    const totalRequiredRaw = basePoolRaw + topPoolRaw + platformFeeRaw + creatorPoolRaw;
+    const totalRequiredRaw = basePoolRaw + topPoolRaw + platformFeeRaw + creatorPoolRaw + leaderboardPoolRaw;
     const totalRequiredUsdc = Number(totalRequiredRaw) / Math.pow(10, USDC_DECIMALS);
 
     return {
       basePoolUsdc,
       topPoolUsdc,
+      leaderboardPoolUsdc,
       platformFeeUsdc,
       creatorPoolUsdc,
       totalRequiredUsdc,
       basePoolRaw,
       topPoolRaw,
+      leaderboardPoolRaw,
       platformFeeRaw,
       creatorPoolRaw,
       totalRequiredRaw,
@@ -173,5 +170,27 @@ export class RewardsPoolService {
     });
 
     return this.formatPoolInfo(pool);
+  }
+
+
+  /**
+   * Format a Prisma pool model into a PoolInfo object
+   */
+  static formatPoolInfo(pool: any): PoolInfo {
+    return {
+      id: pool.id,
+      eventId: pool.eventId,
+      maxParticipants: pool.maxParticipants,
+      basePoolUsdc: pool.basePoolUsdc,
+      topPoolUsdc: pool.topPoolUsdc,
+      leaderboardPoolUsdc: pool.leaderboardPoolUsdc || 0,
+      platformFeeUsdc: pool.platformFeeUsdc,
+      creatorPoolUsdc: pool.creatorPoolUsdc,
+      totalDisbursed: pool.totalDisbursed || 0,
+      participantCount: pool.participantCount || 0,
+      status: pool.status,
+      remainingPoolUsdc: (pool.basePoolUsdc + pool.topPoolUsdc + pool.creatorPoolUsdc + (pool.leaderboardPoolUsdc || 0)) - (pool.totalDisbursed || 0),
+      completedAt: pool.completedAt,
+    };
   }
 }

@@ -3,7 +3,7 @@ import { prisma } from '../lib/prisma';
 import { AnalyticsTrackingService } from '../services/analytics/AnalyticsTrackingService.js';
 import { AnalyticsQueryService } from '../services/analytics/AnalyticsQueryService.js';
 import { AnalyticsBrandService } from '../services/analytics/AnalyticsBrandService.js';
-import { AiService } from '../services/aiService';
+import { AiReportService } from '../services/ai/AiReportService.js';
 
 async function requireEventOwner(eventId: string, userId: string | undefined, res: Response): Promise<boolean> {
   const event = await prisma.event.findUnique({
@@ -97,7 +97,7 @@ export const generateEventSummary = async (req: Request, res: Response) => {
     const existing = await prisma.eventAnalytics.findUnique({ where: { eventId }, select: { aiSummary: true } });
     if (existing?.aiSummary) return res.status(200).json({ aiSummary: existing.aiSummary });
 
-    const summary = await AiService.generateEventSummary(eventId);
+    const summary = await AiReportService.generateEventSummary(eventId);
     if (!summary) return res.status(500).json({ error: 'Failed to generate summary' });
     res.status(200).json({ aiSummary: summary });
   } catch (e: any) {
@@ -192,7 +192,7 @@ export const generateEventInsights = async (req: Request, res: Response) => {
     if (event.brand.ownerId !== req.user?.id) return res.status(403).json({ error: 'Unauthorized' });
     if (event.status !== 'completed') return res.status(400).json({ error: 'Event must be completed to generate insights' });
 
-    const insights = await AiService.generateEventInsights(eventId);
+    const insights = await AiReportService.generateEventInsights(eventId);
     res.status(200).json(insights);
   } catch (e: any) {
     res.status(500).json({ error: e.message || 'Failed to generate event insights' });
@@ -203,7 +203,7 @@ export const generateBrandSummary = async (req: Request, res: Response) => {
   try {
     const brand = await requireBrand(req.user?.id, res);
     if (!brand) return;
-    const summary = await AiService.generateBrandSummary(brand.id);
+    const summary = await AiReportService.generateBrandSummary(brand.id);
     if (!summary) return res.status(500).json({ error: 'Failed to generate brand summary' });
     res.status(200).json({ aiSummary: summary });
   } catch (e: any) {

@@ -68,13 +68,13 @@ const createAndEmitNotification = async (data: NotificationData) => {
  */
 export const createWelcomeNotification = async (userId: string) => {
     try {
-        // Check if this is the first session
-        const sessionCount = await prisma.userSession.count({
-            where: { userId },
+        // Check if a welcome notification already exists
+        const welcomeCount = await prisma.notification.count({
+            where: { userId, type: 'WELCOME' },
         });
 
-        if (sessionCount !== 1) {
-            // Not first login, skip welcome notification
+        if (welcomeCount > 0) {
+            // Already welcomed
             return null;
         }
 
@@ -97,7 +97,7 @@ export const createWelcomeNotification = async (userId: string) => {
             },
         });
     } catch (error) {
-        logger.error('Failed to create welcome notification:', error);
+        logger.error(error, 'Failed to create welcome notification:');
         return null;
     }
 };
@@ -156,7 +156,7 @@ export const createStreakNotification = async (userId: string, streakCount: numb
             },
         });
     } catch (error) {
-        logger.error('Failed to create streak notification:', error);
+        logger.error(error, 'Failed to create streak notification:');
         return null;
     }
 };
@@ -222,7 +222,7 @@ export const createEventResultNotification = async (eventId: string) => {
         logger.info(`📊 Sent ${notifications.length} event result notifications for event ${eventId}`);
         return notifications;
     } catch (error) {
-        logger.error('Failed to create event result notifications:', error);
+        logger.error(error, 'Failed to create event result notifications:');
         return [];
     }
 };
@@ -276,7 +276,7 @@ export const createVotingLiveNotification = async (eventId: string) => {
         logger.info(`🗳️ Sent ${notifications.length} voting live notifications for event ${eventId}`);
         return notifications;
     } catch (error) {
-        logger.error('Failed to create voting live notifications:', error);
+        logger.error(error, 'Failed to create voting live notifications:');
         return [];
     }
 };
@@ -335,7 +335,7 @@ export const createBrandPostNotification = async (brandId: string, eventId: stri
         logger.info(`📢 Sent ${notifications.length} brand post notifications for event ${eventId}`);
         return notifications;
     } catch (error) {
-        logger.error('Failed to create brand post notifications:', error);
+        logger.error(error, 'Failed to create brand post notifications:');
         return [];
     }
 };
@@ -393,7 +393,7 @@ export const createBrandSubscriptionNotification = async (brandId: string, subsc
         logger.info(`🎉 New subscriber notification sent to brand owner for ${brand.name}`);
         return notification;
     } catch (error) {
-        logger.error('Failed to create brand subscription notification:', error);
+        logger.error(error, 'Failed to create brand subscription notification:');
         return null;
     }
 };
@@ -470,7 +470,7 @@ export const createSubmissionVoteNotification = async (submissionId: string, vot
         logger.info(`🗳️ Submission vote notification sent to user ${submission.userId}`);
         return notification;
     } catch (error) {
-        logger.error('Failed to create submission vote notification:', error);
+        logger.error(error, 'Failed to create submission vote notification:');
         return null;
     }
 };
@@ -528,7 +528,7 @@ export const createEventPhaseChangeNotification = async (eventId: string, oldSta
         logger.info(`🔄 Phase change notification sent to brand owner for event ${event.title} (${newStatus})`);
         return notification;
     } catch (error) {
-        logger.error('Failed to create event phase change notification:', error);
+        logger.error(error, 'Failed to create event phase change notification:');
         return null;
     }
 };
@@ -570,7 +570,7 @@ export const createEventSubmissionNotification = async (eventId: string) => {
         logger.info(`📸 Submission notification sent to brand owner for event ${event.title}`);
         return notification;
     } catch (error) {
-        logger.error('Failed to create event submission notification:', error);
+        logger.error(error, 'Failed to create event submission notification:');
         return null;
     }
 };
@@ -612,50 +612,8 @@ export const createEventVoteNotification = async (eventId: string) => {
         logger.info(`🗳️ Valid vote notification sent to brand owner for event ${event.title}`);
         return notification;
     } catch (error) {
-        logger.error('Failed to create event vote notification:', error);
+        logger.error(error, 'Failed to create event vote notification:');
         return null;
-    }
-};
-export const calculateLoginStreak = async (userId: string): Promise<number> => {
-    try {
-        // Get last 30 sessions ordered by creation date
-        const sessions = await prisma.userSession.findMany({
-            where: { userId },
-            orderBy: { createdAt: 'desc' },
-            take: 30,
-            select: { createdAt: true },
-        });
-
-        if (sessions.length === 0) {
-            return 0;
-        }
-
-        let streak = 1;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        // Check consecutive days
-        for (let i = 0; i < sessions.length - 1; i++) {
-            const currentDate = new Date(sessions[i].createdAt);
-            currentDate.setHours(0, 0, 0, 0);
-
-            const nextDate = new Date(sessions[i + 1].createdAt);
-            nextDate.setHours(0, 0, 0, 0);
-
-            const diffDays = Math.floor((currentDate.getTime() - nextDate.getTime()) / (1000 * 60 * 60 * 24));
-
-            if (diffDays === 1) {
-                streak++;
-            } else if (diffDays > 1) {
-                break; // Streak broken
-            }
-            // If diffDays === 0, same day, continue checking
-        }
-
-        return streak;
-    } catch (error) {
-        logger.error('Failed to calculate login streak:', error);
-        return 0;
     }
 };
 
@@ -692,7 +650,7 @@ export const createXpMilestoneNotification = async (
             },
         });
     } catch (error) {
-        logger.error('Failed to create XP milestone notification:', error);
+        logger.error(error, 'Failed to create XP milestone notification:');
         return null;
     }
 };
@@ -777,7 +735,7 @@ export const createEventCancellationNotification = async (
         logger.info(`📢 Cancellation notifications sent to ${subscriberIds.length} subscribers for event ${event.title}`);
 
     } catch (error) {
-        logger.error('Failed to create event cancellation notification:', error);
+        logger.error(error, 'Failed to create event cancellation notification:');
     }
 };
 
@@ -800,7 +758,6 @@ export const NotificationService = {
     createEventSubmissionNotification,
     createEventPhaseChangeNotification,
     createSubmissionVoteNotification,
-    calculateLoginStreak,
     createXpMilestoneNotification,
     createEventCancellationNotification,
     createNotification,

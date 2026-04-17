@@ -1,5 +1,5 @@
 import { prisma } from '../lib/prisma.js';
-import { Proposal, ProposalType } from '@prisma/client';
+import { Proposal } from '@prisma/client';
 import {
   CreateProposalRequest,
   UpdateProposalRequest,

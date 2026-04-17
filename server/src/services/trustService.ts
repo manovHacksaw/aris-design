@@ -99,7 +99,7 @@ export class TrustService {
 
       logger.info(`✅ [TrustService] Updated trust scores for ${updates.length} users in event ${eventId}`);
     } catch (error) {
-      logger.error(`[TrustService] Failed to update trust scores for event ${eventId}:`, error);
+      logger.error(error, `[TrustService] Failed to update trust scores for event ${eventId}:`);
     }
   }
 }
