@@ -1,6 +1,6 @@
 import logger from '../../lib/logger.js';
 import { prisma } from '../../lib/prisma.js';
-import { XpService } from '../xpService.js';
+import { XpService } from '../xp/xpService.js';
 
 /**
  * UserReferralService handles user-to-user referral links and associated XP rewards.

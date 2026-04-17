@@ -1,7 +1,7 @@
 import logger from '../lib/logger';
 import { prisma } from '../lib/prisma.js';
 import { MilestoneCategory, XpTransactionType, Prisma } from '@prisma/client';
-import { XpService } from './xpService.js';
+import { XpService } from './xp/xpService.js';
 import { ReferralStats, ProcessReferralResult, ClaimedMilestone } from '../types/xp.js';
 
 export class ReferralService {

@@ -68,7 +68,7 @@ export class RewardsClaimService {
     }
 
     const BlockchainService = (await import('../../lib/blockchain.js')).BlockchainService;
-    const NotificationService = (await import('../notificationService.js')).NotificationService;
+    const NotificationService = (await import('../social/notificationService.js')).NotificationService;
 
     for (const [eventId, data] of perEventMap) {
       try {

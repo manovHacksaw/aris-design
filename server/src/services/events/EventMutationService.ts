@@ -17,10 +17,10 @@ import {
   TimestampData,
   ValidationResult,
 } from '../../types/event.js';
-import { NotificationService } from '../notificationService.js';
+import { NotificationService } from '../social/notificationService.js';
 import { getIPFSUrl } from '../ipfsService.js';
-import { MilestoneService } from '../milestoneService.js';
-import { BrandXpService } from '../brandXpService.js';
+import { MilestoneService } from '../xp/milestoneService.js';
+import { BrandXpService } from '../brands/brandXpService.js';
 
 import { TrustService } from '../trustService.js';
 

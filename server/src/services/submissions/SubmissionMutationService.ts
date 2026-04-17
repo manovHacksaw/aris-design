@@ -1,11 +1,11 @@
 import logger from '../../lib/logger.js';
 import { prisma } from '../../lib/prisma.js';
-import { NotificationService } from '../notificationService.js';
+import { NotificationService } from '../social/notificationService.js';
 import { NotFoundError, ForbiddenError, ValidationError } from '../../utils/errors.js';
 import { MilestoneCategory } from '@prisma/client';
 import { CreateSubmissionRequest, UpdateSubmissionRequest } from '../../types/submission.js';
 import { EventStatus } from '../../types/event.js';
-import { XpService } from '../xpService.js';
+import { XpService } from '../xp/xpService.js';
 import { enforceEventDemographics } from '../../utils/eventUtils.js';
 import { SubmissionUtils } from './SubmissionUtils.js';
 
