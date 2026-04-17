@@ -38,8 +38,6 @@ const CHART_COLORS = {
     blue: "#60B6FF",
     gray: "#6B7280",
 };
-const tickStyle = { fill: "rgba(255,255,255,0.3)", fontSize: 10, fontWeight: 700 };
-const gridStyle = { stroke: "rgba(255,255,255,0.05)", strokeDasharray: "0" };
 
 function ChartTooltip({ active, payload, label }: TooltipProps<any, any> & { payload?: any[]; label?: any }) {
     if (!active || !payload?.length) return null;
@@ -86,7 +84,7 @@ function BigCountdown({ targetDate }: { targetDate: string | Date }) {
         <div className="flex items-baseline gap-4">
             {units.map(({ v, l }) => (
                 <div key={l} className="flex items-baseline gap-1">
-                    <span className="text-4xl md:text-5xl font-black text-white tabular-nums leading-none">{String(v).padStart(2, "0")}</span>
+                    <span className="text-4xl md:text-5xl font-black text-foreground tabular-nums leading-none">{String(v).padStart(2, "0")}</span>
                     <span className="text-sm font-black text-foreground/40 uppercase">{l}</span>
                 </div>
             ))}
@@ -106,25 +104,25 @@ function ParticipantAvatars({ event, totalCount }: { event: Event; totalCount: n
     return (
         <div className="flex -space-x-2">
             {brandLogo && (
-                <div className="relative w-6 h-6 rounded-full border-2 border-background ring-1 ring-white/10 overflow-hidden shrink-0 z-10">
+                <div className="relative w-6 h-6 rounded-full border-2 border-background ring-1 ring-foreground/10 overflow-hidden shrink-0 z-10">
                     <img src={brandLogo} alt="brand" className="w-full h-full object-cover" />
                 </div>
             )}
             {shown.map((p: any, i: number) => (
                 <div
                     key={p.id}
-                    className="relative w-6 h-6 rounded-full border-2 border-background ring-1 ring-white/10 overflow-hidden shrink-0"
+                    className="relative w-6 h-6 rounded-full border-2 border-background ring-1 ring-foreground/10 overflow-hidden shrink-0"
                     style={{ zIndex: MAX - i }}
                 >
                     {p.avatarUrl ? (
                         <img src={p.avatarUrl} alt="participant" className="w-full h-full object-cover" />
                     ) : (
-                        <div className="w-full h-full bg-white/10 flex items-center justify-center text-[8px] font-black text-foreground/50">?</div>
+                        <div className="w-full h-full bg-foreground/10 flex items-center justify-center text-[8px] font-black text-foreground/50">?</div>
                     )}
                 </div>
             ))}
             {overflow > 0 && (
-                <div className="w-6 h-6 rounded-full border-2 border-background bg-white/10 flex items-center justify-center text-[8px] font-black text-foreground/60 shrink-0" style={{ zIndex: 0 }}>
+                <div className="w-6 h-6 rounded-full border-2 border-background bg-foreground/10 flex items-center justify-center text-[8px] font-black text-foreground/60 shrink-0" style={{ zIndex: 0 }}>
                     +{overflow}
                 </div>
             )}
@@ -506,7 +504,7 @@ function ParticipantCard({ sub, rank, showVotes, showThumb, isList = false, vote
             {/* Submission thumbnail — only shown when completed */}
             {showThumb && (
                 <div className={cn(
-                    "bg-white/4 overflow-hidden shrink-0",
+                    "bg-foreground/[0.04] overflow-hidden shrink-0",
                     isList ? "w-10 h-7 rounded-md" : "aspect-4/3 w-full"
                 )}>
                     {thumb ? (
@@ -822,7 +820,7 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                                         <span className="text-[11px] font-black text-white/90">{event.brand?.name}</span>
                                     </div>
                                     {event.category && (
-                                        <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-surface border border-surface-border-strong text-white/50">
+                                        <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-black/30 backdrop-blur-sm border border-white/20 text-white/80">
                                             {event.category}
                                         </span>
                                     )}
@@ -933,10 +931,10 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                                 </div>
                                 {activeTab === "participants" && (
                                     <div className="flex border border-border/40 rounded-lg overflow-hidden mb-3">
-                                        <button onClick={() => setGridView(true)} className={cn("p-1.5 transition-colors", gridView ? "bg-white/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}>
+                                        <button onClick={() => setGridView(true)} className={cn("p-1.5 transition-colors", gridView ? "bg-foreground/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}>
                                             <LayoutGrid className="w-3.5 h-3.5" />
                                         </button>
-                                        <button onClick={() => setGridView(false)} className={cn("p-1.5 transition-colors", !gridView ? "bg-white/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}>
+                                        <button onClick={() => setGridView(false)} className={cn("p-1.5 transition-colors", !gridView ? "bg-foreground/10 text-foreground" : "text-foreground/30 hover:text-foreground/60")}>
                                             <List className="w-3.5 h-3.5" />
                                         </button>
                                     </div>
@@ -1059,7 +1057,7 @@ export default function BrandEventDetailPage({ params }: { params: Promise<{ id:
                                                             <CartesianGrid {...gridStyle} vertical={false} />
                                                             <XAxis dataKey="age" tick={tickStyle} axisLine={false} tickLine={false} />
                                                             <YAxis tick={tickStyle} axisLine={false} tickLine={false} />
-                                                            <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+                                                            <Tooltip content={<ChartTooltip />} cursor={{ fill: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)" }} />
                                                             <Bar dataKey="male" name="Male" fill={CHART_COLORS.blue} radius={[3, 3, 0, 0]} maxBarSize={14} />
                                                             <Bar dataKey="female" name="Female" fill={CHART_COLORS.pink} radius={[3, 3, 0, 0]} maxBarSize={14} />
                                                         </BarChart>

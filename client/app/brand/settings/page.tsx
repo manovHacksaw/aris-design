@@ -332,7 +332,7 @@ export default function BrandSettingsPage() {
                   {user?.walletAddress && (
                     <button
                       onClick={copyWallet}
-                      className="flex items-center gap-1.5 px-2.5 py-1 bg-surface border border-surface-border hover:border-white/[0.2] rounded-full transition-colors group"
+                      className="flex items-center gap-1.5 px-2.5 py-1 bg-surface border border-surface-border hover:border-surface-border-strong rounded-full transition-colors group"
                     >
                       <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                       <span className="text-[10px] font-black text-foreground/40 font-mono group-hover:text-foreground/70 transition-colors">
@@ -360,7 +360,7 @@ export default function BrandSettingsPage() {
               <div className="flex items-center gap-3 ml-auto">
                 <button
                   onClick={() => setIsEditing((v) => !v)}
-                  className="flex items-center gap-2 px-4 py-2 bg-surface border border-surface-border-strong hover:bg-surface-hover hover:border-white/[0.2] rounded-xl text-[11px] font-black text-foreground/60 hover:text-foreground uppercase tracking-widest transition-all"
+                  className="flex items-center gap-2 px-4 py-2 bg-surface border border-surface-border-strong hover:bg-surface-hover hover:border-surface-border-strong rounded-xl text-[11px] font-black text-foreground/60 hover:text-foreground uppercase tracking-widest transition-all"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                   Edit Profile
@@ -393,7 +393,7 @@ export default function BrandSettingsPage() {
                   className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
                 >
                   <div
-                    className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0d0d0f] border border-surface-border rounded-[28px] p-6 md:p-8 space-y-6 pointer-events-auto shadow-2xl"
+                    className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-card border border-surface-border rounded-[28px] p-6 md:p-8 space-y-6 pointer-events-auto shadow-2xl"
                     onClick={(e) => e.stopPropagation()}
                   >
                 <div className="flex items-center justify-between">
@@ -414,7 +414,7 @@ export default function BrandSettingsPage() {
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploadingLogo}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-surface border border-surface-border-strong hover:bg-surface-hover hover:border-white/[0.2] rounded-xl text-[10px] font-black text-foreground/60 hover:text-foreground uppercase tracking-widest transition-all disabled:opacity-40"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-surface border border-surface-border-strong hover:bg-surface-hover hover:border-surface-border-strong rounded-xl text-[10px] font-black text-foreground/60 hover:text-foreground uppercase tracking-widest transition-all disabled:opacity-40"
                   >
                     {isUploadingLogo ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />}
                     {isUploadingLogo ? "Uploading…" : "Change Logo"}
@@ -497,7 +497,7 @@ export default function BrandSettingsPage() {
                             "px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer",
                             selected
                               ? "bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20"
-                              : "bg-surface border border-surface-border text-foreground/40 hover:bg-surface-hover hover:border-white/[0.12] hover:text-foreground"
+                              : "bg-surface border border-surface-border text-foreground/40 hover:bg-surface-hover hover:border-surface-border-strong hover:text-foreground"
                           )}
                         >
                           {cat}
@@ -547,7 +547,7 @@ export default function BrandSettingsPage() {
                   <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex items-center gap-2 bg-white hover:bg-white/90 text-black px-7 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
+                    className="flex items-center gap-2 bg-foreground hover:bg-foreground/90 text-background px-7 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
                   >
                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <Check className="w-4 h-4 text-green-600" /> : null}
                     {saved ? "Saved!" : "Save Changes"}
@@ -572,7 +572,7 @@ export default function BrandSettingsPage() {
             </div>
 
             <div className="bg-surface border border-surface-border hover:bg-surface hover:border-surface-border-strong rounded-[20px] px-5 py-4 transition-all">
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-lime-400">Events</p>
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-primary">Events</p>
               <p className="font-display text-4xl text-foreground uppercase tracking-tight leading-none">{brandData?.eventsCreated ?? "—"}</p>
               <p className="text-[10px] font-black text-foreground/30 mt-1 uppercase tracking-wide">Created</p>
             </div>
@@ -621,7 +621,7 @@ export default function BrandSettingsPage() {
             )}
 
             {/* Categories + Tokens Minted — same layout as user panel stat counters */}
-            <div className="pt-4 border-t border-white/4">
+            <div className="pt-4 border-t border-surface-border">
               {/* Categories pills */}
               {categories.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-5">
@@ -644,7 +644,7 @@ export default function BrandSettingsPage() {
                   </p>
                   <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.15em] mt-1">Categories</p>
                 </div>
-                <div className="w-px h-8 bg-white/6" />
+                <div className="w-px h-8 bg-foreground/[0.08]" />
                 <div>
                   <p className="font-display text-3xl text-foreground uppercase tracking-tight leading-none">
                     {tokensMinted !== null ? `$${tokensMinted.toLocaleString(undefined, { maximumFractionDigits: 1 })}` : "—"}
@@ -668,7 +668,7 @@ export default function BrandSettingsPage() {
                     className={cn(
                       "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
                       showcaseTab === tab
-                        ? "bg-white text-black"
+                        ? "bg-foreground text-background"
                         : "text-foreground/40 hover:text-foreground/70"
                     )}
                   >

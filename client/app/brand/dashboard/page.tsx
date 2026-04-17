@@ -21,6 +21,7 @@ import {
     LineChart, Line, PieChart, Pie, Cell,
     TooltipProps
 } from "recharts";
+import { useTheme } from "next-themes";
 
 // ─── Status Maps ──────────────────────────────────────────────────────────────
 
@@ -96,8 +97,6 @@ function formatPool(n?: number) {
 // ─── Chart theme ──────────────────────────────────────────────────────────────
 
 const CC = { cyan: "#06b6d4", blue: "#3B82F6", violet: "#8B5CF6", gray: "#6B7280", emerald: "#10b981", amber: "#f59e0b" };
-const TICK = { fill: "rgba(255,255,255,0.3)", fontSize: 12, fontWeight: 700 as const };
-const GRID = { stroke: "rgba(255,255,255,0.05)", strokeDasharray: "0" };
 const AGE_LABELS: Record<string, string> = {
     "24_under": "≤24", "25_34": "25-34", "35_44": "35-44",
     "45_54": "45-54", "55_64": "55-64", "65_plus": "65+"
@@ -422,7 +421,7 @@ function OverviewListView({ events }: { events: Event[] }) {
                                 key={opt.value}
                                 onClick={() => { onChange(opt.value); setOpen(false); }}
                                 className={cn(
-                                    "w-full text-left px-3 py-2 text-xs font-bold transition-colors hover:bg-white/5",
+                                    "w-full text-left px-3 py-2 text-xs font-bold transition-colors hover:bg-foreground/5",
                                     value === opt.value ? "text-primary" : "text-foreground/70"
                                 )}
                             >
@@ -594,6 +593,13 @@ type StatsFilterDomain = string;
 type StatsFilterTime = "7d" | "30d" | "90d" | "all";
 
 function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: BrandAnalytics | null; loading: boolean }) {
+    const { resolvedTheme } = useTheme();
+    const isDark = resolvedTheme === "dark";
+    const TICK = { fill: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.45)", fontSize: 12, fontWeight: 700 as const };
+    const GRID = { stroke: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.07)", strokeDasharray: "0" };
+    const cursorLine = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+    const cursorFill = isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)";
+
     const [domainFilter, setDomainFilter] = useState<StatsFilterDomain>("all");
     const [eventFilter, setEventFilter] = useState<string>("all");
     const [timeFilter, setTimeFilter] = useState<StatsFilterTime>("all");
@@ -758,7 +764,7 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                                     <CartesianGrid {...GRID} />
                                     <XAxis dataKey="name" tick={TICK} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                                     <YAxis tick={TICK} axisLine={false} tickLine={false} />
-                                    <Tooltip content={<ChartTooltip />} cursor={{ stroke: "rgba(255,255,255,0.06)", strokeWidth: 1 }} />
+                                    <Tooltip content={<ChartTooltip />} cursor={{ stroke: cursorLine, strokeWidth: 1 }} />
                                     <Area type="monotone" dataKey="views" name="Views" stroke={CC.blue} strokeWidth={2} fill="url(#gViews)" dot={{ fill: CC.blue, r: 3, strokeWidth: 0 }} />
                                     <Area type="monotone" dataKey="votes" name="Votes" stroke={CC.cyan} strokeWidth={2} fill="url(#gVotes)" dot={{ fill: CC.cyan, r: 3, strokeWidth: 0 }} />
                                     <Area type="monotone" dataKey="posts" name="Posts" stroke={CC.emerald} strokeWidth={2} fill="url(#gPosts)" dot={{ fill: CC.emerald, r: 3, strokeWidth: 0 }} />
@@ -783,7 +789,7 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                                     <CartesianGrid {...GRID} vertical={false} />
                                     <XAxis dataKey="age" tick={TICK} axisLine={false} tickLine={false} />
                                     <YAxis tick={TICK} axisLine={false} tickLine={false} />
-                                    <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
+                                    <Tooltip content={<ChartTooltip />} cursor={{ fill: cursorFill }} />
                                     <Bar dataKey="male" name="Male" fill={CC.cyan} radius={[3, 3, 0, 0]} maxBarSize={20} />
                                     <Bar dataKey="female" name="Female" fill={CC.blue} radius={[3, 3, 0, 0]} maxBarSize={20} />
                                     <Bar dataKey="others" name="Others" fill={CC.gray} radius={[3, 3, 0, 0]} maxBarSize={20} />
@@ -816,7 +822,7 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                                     <CartesianGrid {...GRID} />
                                     <XAxis dataKey="name" tick={TICK} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                                     <YAxis tick={TICK} axisLine={false} tickLine={false} domain={[0, 100]} />
-                                    <Tooltip content={<ChartTooltip />} cursor={{ stroke: "rgba(255,255,255,0.06)", strokeWidth: 1 }} />
+                                    <Tooltip content={<ChartTooltip />} cursor={{ stroke: cursorLine, strokeWidth: 1 }} />
                                     <Line type="monotone" dataKey="margin" name="Winning Margin" stroke={CC.emerald} strokeWidth={2} dot={{ fill: CC.emerald, r: 3, strokeWidth: 0 }} />
                                     <Line type="monotone" dataKey="entropy" name="Norm. Entropy ×100" stroke={CC.amber} strokeWidth={2} strokeDasharray="4 3" dot={{ fill: CC.amber, r: 3, strokeWidth: 0 }} />
                                     <Line type="monotone" dataKey="alignment" name="Hist. Alignment" stroke={CC.violet} strokeWidth={2} dot={{ fill: CC.violet, r: 3, strokeWidth: 0 }} />
@@ -948,7 +954,7 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                                             <span className="text-xs font-bold text-foreground/40 truncate w-20 shrink-0">
                                                 {e.title.length > 14 ? e.title.slice(0, 13) + "…" : e.title}
                                             </span>
-                                            <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                            <div className="flex-1 h-1.5 bg-foreground/5 rounded-full overflow-hidden">
                                                 <div className="h-full rounded-full bg-blue-500/60" style={{ width: `${(v / maxV) * 100}%` }} />
                                             </div>
                                             <span className="text-xs font-black text-foreground w-8 text-right">{v.toLocaleString()}</span>
@@ -992,7 +998,7 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                                             {rows.slice(0, 4).map((r, i) => (
                                                 <div key={i} className="flex items-center gap-2">
                                                     <span className="text-xs font-bold text-foreground/40 truncate w-20 shrink-0">{r.title}</span>
-                                                    <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                                    <div className="flex-1 h-1.5 bg-foreground/5 rounded-full overflow-hidden">
                                                         <div className="h-full rounded-full bg-cyan-500/60" style={{ width: `${(r.secs / maxSecs) * 100}%` }} />
                                                     </div>
                                                     <span className="text-xs font-black text-foreground w-10 text-right">{fmt(r.secs)}</span>
@@ -1040,7 +1046,7 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                                 <CartesianGrid {...GRID} />
                                 <XAxis dataKey="name" tick={TICK} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                                 <YAxis tick={TICK} axisLine={false} tickLine={false} />
-                                <Tooltip content={<ChartTooltip />} cursor={{ stroke: "rgba(255,255,255,0.06)", strokeWidth: 1 }} />
+                                <Tooltip content={<ChartTooltip />} cursor={{ stroke: cursorLine, strokeWidth: 1 }} />
                                 <Line type="monotone" dataKey="participants" name="New Participants" stroke={CC.blue} strokeWidth={2} strokeDasharray="4 3" dot={{ fill: CC.blue, r: 3, strokeWidth: 0 }} />
                                 <Line type="monotone" dataKey="cumulative" name="Cumulative Reach" stroke={CC.cyan} strokeWidth={2.5} dot={{ fill: CC.cyan, r: 4, strokeWidth: 0 }} />
                             </LineChart>
@@ -1063,7 +1069,7 @@ function DCSGaugeSmall({ score }: { score: number }) {
         <div className="flex flex-col items-center gap-1 shrink-0">
             <div className="relative w-[80px] h-[80px]">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 72 72">
-                    <circle cx="36" cy="36" r="30" strokeWidth="6" fill="transparent" stroke="rgba(255,255,255,0.07)" />
+                    <circle cx="36" cy="36" r="30" strokeWidth="6" fill="transparent" style={{ stroke: "var(--color-surface-border-strong)" }} />
                     <motion.circle
                         cx="36" cy="36" r="30" strokeWidth="6" strokeLinecap="round"
                         fill="transparent" stroke={color}

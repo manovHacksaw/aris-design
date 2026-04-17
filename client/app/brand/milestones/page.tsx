@@ -189,19 +189,19 @@ export default function MilestonesPage() {
                     </div>
 
                     {/* Card 2: Tokens Minted */}
-                    <div onClick={() => setProgressModalOpen(true)} className="bg-surface border border-surface-border rounded-[28px] p-4 sm:p-8 flex flex-col justify-center min-h-[140px] sm:min-h-[160px] hover:bg-surface hover:border-white/[0.1] transition-all cursor-pointer">
+                    <div onClick={() => setProgressModalOpen(true)} className="bg-surface border border-surface-border rounded-[28px] p-4 sm:p-8 flex flex-col justify-center min-h-[140px] sm:min-h-[160px] hover:bg-surface hover:border-surface-border-strong transition-all cursor-pointer">
                         <h2 className="font-display text-[2rem] sm:text-[3rem] lg:text-[4rem] text-foreground tracking-tight leading-none mb-1 sm:mb-2">${data.usdcDistributed.toLocaleString(undefined, { maximumFractionDigits: 1 })}</h2>
                         <p className="text-[9px] sm:text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em]">Tokens Minted</p>
                     </div>
 
                     {/* Card 3: Events Created */}
-                    <div onClick={() => setProgressModalOpen(true)} className="bg-surface border border-surface-border rounded-[28px] p-4 sm:p-8 flex flex-col justify-center min-h-[140px] sm:min-h-[160px] hover:bg-surface hover:border-white/[0.1] transition-all cursor-pointer">
+                    <div onClick={() => setProgressModalOpen(true)} className="bg-surface border border-surface-border rounded-[28px] p-4 sm:p-8 flex flex-col justify-center min-h-[140px] sm:min-h-[160px] hover:bg-surface hover:border-surface-border-strong transition-all cursor-pointer">
                         <h2 className="font-display text-[2.5rem] sm:text-[3rem] lg:text-[4rem] text-foreground tracking-tight leading-none mb-1 sm:mb-2">{data.eventsCreated.toLocaleString()}</h2>
                         <p className="text-[9px] sm:text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em]">Events Created</p>
                     </div>
 
                     {/* Card 4: Participants */}
-                    <div onClick={() => setProgressModalOpen(true)} className="bg-surface border border-surface-border rounded-[28px] p-4 sm:p-8 flex flex-col justify-center min-h-[140px] sm:min-h-[160px] hover:bg-surface hover:border-white/[0.1] transition-all cursor-pointer">
+                    <div onClick={() => setProgressModalOpen(true)} className="bg-surface border border-surface-border rounded-[28px] p-4 sm:p-8 flex flex-col justify-center min-h-[140px] sm:min-h-[160px] hover:bg-surface hover:border-surface-border-strong transition-all cursor-pointer">
                         <h2 className="font-display text-[2.5rem] sm:text-[3rem] lg:text-[4rem] text-foreground tracking-tight leading-none mb-1 sm:mb-2">{data.uniqueParticipants.toLocaleString()}</h2>
                         <p className="text-[9px] sm:text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em]">Participants</p>
                     </div>
@@ -210,7 +210,7 @@ export default function MilestonesPage() {
                 {/* Top Right: Overall Brand Level & Timeline */}
                 <div
                     onClick={() => setTiersModalOpen(true)}
-                    className="lg:col-span-4 bg-surface border border-surface-border rounded-[32px] p-5 lg:p-6 flex flex-col relative min-h-[300px] cursor-pointer hover:border-white/[0.12] hover:bg-surface transition-all group"
+                    className="lg:col-span-4 bg-surface border border-surface-border rounded-[32px] p-5 lg:p-6 flex flex-col relative min-h-[300px] cursor-pointer hover:border-surface-border-strong hover:bg-surface transition-all group"
                 >
                     <div className="flex items-center justify-between gap-2 mb-2 relative z-10 w-full pr-1">
                         <h3 className="font-display text-2xl text-foreground uppercase tracking-tight truncate group-hover:text-lime-400 transition-colors">

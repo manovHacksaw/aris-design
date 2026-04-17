@@ -643,7 +643,7 @@ export default function BrandWalletPage() {
                         onClick={() => setActiveTab("wallet")}
                         className={cn(
                             "px-5 py-2 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all",
-                            activeTab === "wallet" ? "bg-white text-black" : "text-foreground/30 hover:text-foreground/60"
+                            activeTab === "wallet" ? "bg-foreground text-background" : "text-foreground/30 hover:text-foreground/60"
                         )}
                     >
                         Overview
@@ -652,7 +652,7 @@ export default function BrandWalletPage() {
                         onClick={() => setActiveTab("refunds")}
                         className={cn(
                             "px-5 py-2 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2",
-                            activeTab === "refunds" ? "bg-white text-black" : "text-foreground/30 hover:text-foreground/60"
+                            activeTab === "refunds" ? "bg-foreground text-background" : "text-foreground/30 hover:text-foreground/60"
                         )}
                     >
                         Refunds
@@ -758,7 +758,7 @@ export default function BrandWalletPage() {
                                                 </button>
                                                 <button
                                                     onClick={() => setActionTab("withdraw")}
-                                                    className="px-4 py-2 bg-white hover:bg-white/90 text-black rounded-xl text-sm font-black transition-all flex items-center gap-2"
+                                                    className="px-4 py-2 bg-foreground hover:bg-foreground/90 text-background rounded-xl text-sm font-black transition-all flex items-center gap-2"
                                                 >
                                                     <ArrowUpRight className="w-4 h-4" />
                                                     Withdraw
@@ -877,7 +877,7 @@ export default function BrandWalletPage() {
                                         onClick={() => setActionTab("withdraw")}
                                         className={cn(
                                             "py-2 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all",
-                                            actionTab === "withdraw" ? "bg-white text-black" : "text-foreground/30 hover:text-foreground/60"
+                                            actionTab === "withdraw" ? "bg-foreground text-background" : "text-foreground/30 hover:text-foreground/60"
                                         )}
                                     >
                                         Withdraw
@@ -886,7 +886,7 @@ export default function BrandWalletPage() {
                                         onClick={() => setActionTab("deposit")}
                                         className={cn(
                                             "py-2 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all",
-                                            actionTab === "deposit" ? "bg-white text-black" : "text-foreground/30 hover:text-foreground/60"
+                                            actionTab === "deposit" ? "bg-foreground text-background" : "text-foreground/30 hover:text-foreground/60"
                                         )}
                                     >
                                         Deposit
@@ -983,7 +983,7 @@ export default function BrandWalletPage() {
                                                                 <Copy className="w-4 h-4 text-foreground/20 group-hover/copy:text-foreground/50 transition-colors" />
                                                             )}
                                                         </div>
-                                                        <p className="text-[9px] font-mono text-white/15 break-all px-1">{address}</p>
+                                                        <p className="text-[9px] font-mono text-foreground/20 break-all px-1">{address}</p>
                                                     </div>
 
                                                     <div className="flex items-center justify-between text-[9px] font-black text-foreground/30 bg-surface py-2 px-3 rounded-xl border border-surface-border uppercase tracking-widest">
@@ -1003,8 +1003,8 @@ export default function BrandWalletPage() {
                                                 </>
                                             ) : (
                                                 <div className="flex flex-col items-center justify-center py-10 text-center space-y-2">
-                                                    <Wallet className="w-8 h-8 text-white/15" />
-                                                    <p className="text-[10px] font-black text-white/25 uppercase tracking-widest">Wallet not connected</p>
+                                                    <Wallet className="w-8 h-8 text-foreground/20" />
+                                                    <p className="text-[10px] font-black text-foreground/30 uppercase tracking-widest">Wallet not connected</p>
                                                 </div>
                                             )}
                                         </div>
@@ -1132,7 +1132,7 @@ export default function BrandWalletPage() {
                                     <button
                                         onClick={loadOnChainBalance}
                                         disabled={balanceLoading}
-                                        className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-surface border border-surface-border hover:bg-surface-hover hover:border-white/[0.12] text-[11px] font-black uppercase tracking-widest text-foreground/40 hover:text-foreground transition-all disabled:opacity-40"
+                                        className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-surface border border-surface-border hover:bg-surface-hover hover:border-surface-border-strong text-[11px] font-black uppercase tracking-widest text-foreground/40 hover:text-foreground transition-all disabled:opacity-40"
                                     >
                                         <RefreshCw className={cn("w-3.5 h-3.5", balanceLoading && "animate-spin")} />
                                         Refresh

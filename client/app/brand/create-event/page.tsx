@@ -1829,7 +1829,7 @@ export default function CreateEventPage() {
                                         {`${filledProposals.length} Options`}
                                     </span>
                                     <div className="flex border border-border/40 rounded-lg overflow-hidden">
-                                        <button className="p-1.5 bg-white/10 text-foreground">
+                                        <button className="p-1.5 bg-foreground/10 text-foreground">
                                             <LayoutGrid className="w-3.5 h-3.5" />
                                         </button>
                                         <button className="p-1.5 text-foreground/30">
