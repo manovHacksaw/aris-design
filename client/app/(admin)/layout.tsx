@@ -11,7 +11,7 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { usePrivy } from "@privy-io/react-auth";
-import { apiRequest, ApiError } from "@/services/api";
+import { ApiError } from "@/services/api";
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
@@ -43,9 +43,11 @@ const NAV = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { ready, authenticated, logout: privyLogout } = usePrivy();
+  const { ready, authenticated, logout: privyLogout, getAccessToken } = usePrivy();
   const [checking, setChecking] = useState(true);
   const [allowed, setAllowed] = useState(false);
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
   useEffect(() => {
     if (!ready) return;
@@ -55,17 +57,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       return;
     }
 
-    // Verify admin access by probing a protected admin endpoint.
-    // The backend checks req.user.email against ALLOWED_ADMIN_EMAILS.
-    apiRequest("/admin/stats")
-      .then(() => {
+    // Get token directly from Privy — bypasses the UserContext token getter
+    // which may not be initialised yet when this layout first renders.
+    getAccessToken().then(async (token) => {
+      if (!token) { router.replace("/explore"); return; }
+      try {
+        const res = await fetch(`${API_URL}/admin/stats`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) { router.replace("/explore"); return; }
         setAllowed(true);
         setChecking(false);
-      })
-      .catch((err: ApiError) => {
-        // 401 = not logged in, 403 = logged in but not an admin
+      } catch {
         router.replace("/explore");
-      });
+      }
+    });
   }, [ready, authenticated]);
 
   const logout = async () => {

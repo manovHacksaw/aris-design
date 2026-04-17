@@ -15,17 +15,18 @@ import {
     Loader2,
 } from 'lucide-react';
 import { usePrivy } from "@privy-io/react-auth";
-import { apiRequest } from "@/services/api";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
-    const { ready, authenticated, logout: privyLogout } = usePrivy();
+    const { ready, authenticated, logout: privyLogout, getAccessToken } = usePrivy();
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [checking, setChecking] = useState(true);
     const [allowed, setAllowed] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
     useEffect(() => {
         if (!ready) return;
@@ -35,9 +36,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             return;
         }
 
-        apiRequest("/admin/stats")
-            .then(() => { setAllowed(true); setChecking(false); })
-            .catch(() => { router.replace("/explore"); });
+        getAccessToken().then(async (token) => {
+            if (!token) { router.replace("/explore"); return; }
+            try {
+                const res = await fetch(`${API_URL}/admin/stats`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (!res.ok) { router.replace("/explore"); return; }
+                setAllowed(true);
+                setChecking(false);
+            } catch {
+                router.replace("/explore");
+            }
+        });
     }, [ready, authenticated]);
 
     const handleLogout = async () => {

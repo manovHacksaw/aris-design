@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from './authMiddleware';
-import { ALLOWED_ADMIN_EMAILS, ADMIN_KEY } from '../config/admin';
+import { getAllowedAdminEmails, getAdminKey } from '../config/admin';
 
 export const authenticateAdmin = (
   req: Request,
@@ -8,19 +8,20 @@ export const authenticateAdmin = (
   next: NextFunction
 ): void => {
   // Fallback: static admin key via header (emergency access)
-  if (ADMIN_KEY && req.headers['x-admin-key'] === ADMIN_KEY) {
+  if (getAdminKey() && req.headers['x-admin-key'] === getAdminKey()) {
     next();
     return;
   }
 
   const user = (req as AuthenticatedRequest).user;
+  const allowedEmails = getAllowedAdminEmails();
 
   if (!user?.email) {
     res.status(403).json({ error: 'Forbidden', message: 'Admin access required' });
     return;
   }
 
-  if (!ALLOWED_ADMIN_EMAILS.has(user.email.toLowerCase())) {
+  if (!allowedEmails.has(user.email.toLowerCase())) {
     res.status(403).json({ error: 'Forbidden', message: 'Admin access required' });
     return;
   }
