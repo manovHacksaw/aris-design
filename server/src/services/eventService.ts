@@ -1586,6 +1586,13 @@ export class EventService {
       return null;
     }
 
+    // Idempotency guard: only transition if the event is still in a transitionable state.
+    // Prevents double-firing when multiple server instances run the interval simultaneously.
+    const transitionableStatuses = [EventStatus.SCHEDULED, EventStatus.POSTING, EventStatus.VOTING];
+    if (!transitionableStatuses.includes(event.status as EventStatusType)) {
+      return null;
+    }
+
     const now = new Date();
     let newStatus: EventStatusType | null = null;
 

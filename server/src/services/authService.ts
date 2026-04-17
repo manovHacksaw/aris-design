@@ -1,11 +1,8 @@
 import { prisma } from '../lib/prisma';
-import { generateToken } from '../utils/jwt';
 import { AuthResponse } from '../types/auth';
 import { NotificationService } from './notificationService';
 import { LoginStreakService } from './loginStreakService';
 
-// Session expiration time (7 days)
-const SESSION_EXPIRATION_MS = 7 * 24 * 60 * 60 * 1000;
 
 /** Generate a unique username from a base string (email prefix, name, or fallback) */
 async function generateUniqueUsername(base: string): Promise<string> {
@@ -167,17 +164,6 @@ export class AuthService {
             });
         }
 
-        // Create session
-        const session = await prisma.userSession.create({
-            data: {
-                userId: user.id,
-                deviceInfo: deviceInfo || null,
-                ip: ip || null,
-                expiredAt: new Date(Date.now() + SESSION_EXPIRATION_MS),
-                isActive: true,
-            },
-        });
-
         // Send notifications and streak updates (async, don't block)
         (async () => {
             try {
@@ -198,16 +184,8 @@ export class AuthService {
             }
         })();
 
-        const token = generateToken({
-            userId: user.id,
-            address: user.walletAddress ?? '',
-            email: user.email,
-            sessionId: session.id,
-        });
-
         return {
             success: true,
-            token,
             user: {
                 id: user.id,
                 email: user.email,

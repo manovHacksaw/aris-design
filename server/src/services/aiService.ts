@@ -9,7 +9,7 @@ dotenv.config();
 
 export class AiService {
     private static genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-    private static PINATA_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiJhM2UzYzQ3OC01YzlhLTRhYzItODBhZS0yODE3NmQyZGRiOTIiLCJlbWFpbCI6Im1hbm9iZW5kcmEubWFuZGFsQGFyaXN0aHJvdHRsZS5vcmciLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGluX3BvbGljeSI6eyJyZWdpb25zIjpbeyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJGUkExIn0seyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJOWUMxIn1dLCJ2ZXJzaW9uIjoxfSwibWZhX2VuYWJsZWQiOmZhbHNlLCJzdGF0dXMiOiJBQ1RJVkUifSwiYXV0aGVudGljYXRpb25UeXBlIjoic2NvcGVkS2V5Iiwic2NvcGVkS2V5S2V5IjoiM2E3NWU4ZWFjMzBmYzQ3YzJlNGYiLCJzY29wZWRLZXlTZWNyZXQiOiI5ZDFkODk0M2YzMWE0MGIxMWMyNTkzNDhhZGNlNDJjZDkxZTI1NWEzYTQyNDU3YWIxYTFlODhlOGEwYzdlZGJlIiwiZXhwIjoxNzk2OTY3MjI3fQ.9-oN0bUHi4KZpKauJ5nDXThv_oVIt-UvZKkbOjc8JuE';
+    private static PINATA_JWT = process.env.PINATA_JWT || '';
 
     /**
      * Generate an image prompt using Gemini

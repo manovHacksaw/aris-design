@@ -164,7 +164,6 @@ export const getEventParticipants = async (req: AuthenticatedRequest, res: Respo
                         displayName: true,
                         username: true,
                         avatarUrl: true,
-                        profilePicCid: true,
                     },
                 },
             },
