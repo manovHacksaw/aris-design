@@ -138,6 +138,7 @@ export interface ClaimDetails {
 export interface UserClaimableRewards {
   eventId: string;
   eventTitle: string;
+  onChainEventId?: string | null;
   claims: ClaimDetails[];
   totalClaimableUsdc: number;
   brandName?: string | null;

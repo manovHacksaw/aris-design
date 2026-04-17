@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 /**
  * Trust Score Service
  *
@@ -28,7 +29,7 @@ export class TrustService {
       });
 
       if (!event) {
-        console.error(`[TrustService] Event not found: ${eventId}`);
+        logger.error(`[TrustService] Event not found: ${eventId}`);
         return;
       }
 
@@ -50,7 +51,7 @@ export class TrustService {
       }
 
       if (!winningContentId) {
-        console.warn(`[TrustService] No winner found for event ${eventId}, skipping trust update`);
+        logger.warn(`[TrustService] No winner found for event ${eventId}, skipping trust update`);
         return;
       }
 
@@ -96,9 +97,9 @@ export class TrustService {
 
       await prisma.$transaction(updates);
 
-      console.log(`✅ [TrustService] Updated trust scores for ${updates.length} users in event ${eventId}`);
+      logger.info(`✅ [TrustService] Updated trust scores for ${updates.length} users in event ${eventId}`);
     } catch (error) {
-      console.error(`[TrustService] Failed to update trust scores for event ${eventId}:`, error);
+      logger.error(error, `[TrustService] Failed to update trust scores for event ${eventId}:`);
     }
   }
 }

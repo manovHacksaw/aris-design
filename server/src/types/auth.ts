@@ -35,6 +35,18 @@ export interface AuthResponse {
     phoneNumber?: string | null;
     phoneVerified: boolean;
     role?: string;
+    ownedBrands?: {
+      id: string;
+      name: string;
+      logoCid?: string | null;
+      tagline?: string | null;
+      description?: string | null;
+      categories?: string[];
+      isActive: boolean;
+      isVerified: boolean;
+      socialLinks?: unknown;
+      createdAt?: Date;
+    }[];
   };
   message?: string;
 }

@@ -1,8 +1,10 @@
+import logger from './lib/logger';
 import dotenv from 'dotenv';
 import http from 'http';
 import { createApp } from './app';
 import { checkDatabaseConnection, disconnectDatabase } from './utils/dbConnection';
 import { setupSocket, closeSocket } from './socket';
+import { EventLifecycleService } from './services/events/EventLifecycleService.js';
 
 // Load environment variables
 dotenv.config();
@@ -14,15 +16,15 @@ const PORT = process.env.PORT || 5000;
  */
 async function startServer(): Promise<void> {
     // Check database connection before starting server
-    console.log('🔍 Checking database connection...');
+    logger.info('🔍 Checking database connection...');
     const isConnected = await checkDatabaseConnection();
 
     if (!isConnected) {
-        console.error('❌ Database connection failed. Server will not start.');
+        logger.error('❌ Database connection failed. Server will not start.');
         process.exit(1);
     }
 
-    console.log('✅ Database connection established');
+    logger.info('✅ Database connection established');
 
     // Create Express app
     const app = createApp();
@@ -35,14 +37,13 @@ async function startServer(): Promise<void> {
 
     // Start server
     const server = httpServer.listen(PORT, () => {
-        console.log(`🚀 Server running on http://localhost:${PORT}`);
-        console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+        logger.info(`🚀 Server running on http://localhost:${PORT}`);
+        logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
     });
 
     // Start background task for event transitions
     const transitionInterval = setInterval(async () => {
         try {
-            const { EventService } = await import('./services/eventService');
             const { prisma } = await import('./lib/prisma');
 
             const now = new Date();
@@ -61,26 +62,26 @@ async function startServer(): Promise<void> {
             });
 
             if (eventsToTransition.length > 0) {
-                console.log(`🔄 Auto-transitioning ${eventsToTransition.length} events...`);
+                logger.info(`🔄 Auto-transitioning ${eventsToTransition.length} events...`);
                 for (const event of eventsToTransition) {
-                    await EventService.autoTransitionEvent(event.id);
+                    await EventLifecycleService.autoTransitionEvent(event.id);
                 }
             }
         } catch (error) {
-            console.error('Error in background transition task:', error);
+            logger.error({ err: error }, 'Error in background transition task:');
         }
     }, 60000); // Run every minute
 
     // Graceful shutdown handlers
     const gracefulShutdown = async (signal: string): Promise<void> => {
-        console.log(`${signal} signal received: closing HTTP server`);
+        logger.info(`${signal} signal received: closing HTTP server`);
         clearInterval(transitionInterval);
 
         // Close Socket.io connections
         await closeSocket();
 
         server.close(async () => {
-            console.log('HTTP server closed');
+            logger.info('HTTP server closed');
             await disconnectDatabase();
             process.exit(0);
         });
@@ -91,14 +92,15 @@ async function startServer(): Promise<void> {
 
     // Handle unhandled promise rejections
     process.on('unhandledRejection', async (err: Error) => {
-        console.error('Unhandled Promise Rejection:', err);
+        logger.error({ err: err }, 'Unhandled Promise Rejection:');
         await disconnectDatabase();
         process.exit(1);
     });
 
     // Handle uncaught exceptions
     process.on('uncaughtException', async (err: Error) => {
-        console.error('Uncaught Exception:', err);
+        console.error('CRITICAL UNCAUGHT EXCEPTION:', err);
+        logger.error({ err: err }, 'Uncaught Exception:');
         await disconnectDatabase();
         process.exit(1);
     });
@@ -106,7 +108,7 @@ async function startServer(): Promise<void> {
 
 // Start the server
 startServer().catch(async (error) => {
-    console.error('Failed to start server:', error);
+    logger.error({ err: error }, 'Failed to start server:');
     await disconnectDatabase();
     process.exit(1);
 });

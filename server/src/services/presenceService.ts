@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
                                                                                                                                                                                                                                                                                     /**
  * Presence Service
  * 
@@ -29,7 +30,7 @@ export const addUser = (eventId: string, userId: string): void => {
     const users = eventPresence.get(eventId)!;
     users.add(userId);
 
-    console.log(`👁️  User ${userId} is now viewing event ${eventId} (${users.size} active)`);
+    logger.info(`👁️  User ${userId} is now viewing event ${eventId} (${users.size} active)`);
 };
 
 /**
@@ -49,9 +50,9 @@ export const removeUser = (eventId: string, userId: string): void => {
     // Clean up empty sets to prevent memory leaks
     if (users.size === 0) {
         eventPresence.delete(eventId);
-        console.log(`🧹 Event ${eventId} presence cleared (no active users)`);
+        logger.info(`🧹 Event ${eventId} presence cleared (no active users)`);
     } else {
-        console.log(`👋 User ${userId} left event ${eventId} (${users.size} remaining)`);
+        logger.info(`👋 User ${userId} left event ${eventId} (${users.size} remaining)`);
     }
 };
 
@@ -77,7 +78,7 @@ export const removeUserFromAll = (userId: string): void => {
     }
 
     if (removedCount > 0) {
-        console.log(`🔌 User ${userId} disconnected, removed from ${removedCount} event(s)`);
+        logger.info(`🔌 User ${userId} disconnected, removed from ${removedCount} event(s)`);
     }
 };
 
@@ -152,7 +153,7 @@ export const getUserEvents = (userId: string): string[] => {
 export const clearAll = (): void => {
     const eventCount = eventPresence.size;
     eventPresence.clear();
-    console.log(`🧹 Cleared presence data for ${eventCount} event(s)`);
+    logger.info(`🧹 Cleared presence data for ${eventCount} event(s)`);
 };
 
 /**

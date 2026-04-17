@@ -1,0 +1,224 @@
+import logger from '../../lib/logger';
+import { prisma } from '../../lib/prisma';
+import { AuthResponse } from '../../types/auth';
+import { NotificationService } from '../social/notificationService';
+import { LoginStreakService } from '../users/loginStreakService';
+
+
+/** Generate a unique username from a base string (email prefix, name, or fallback) */
+async function generateUniqueUsername(base: string): Promise<string> {
+    // Sanitise: lowercase, replace spaces/dots/hyphens with _, strip everything else
+    const cleaned = base
+        .toLowerCase()
+        .replace(/[@.+\-\s]/g, '_')
+        .replace(/[^a-z0-9_]/g, '')
+        .replace(/_+/g, '_')
+        .replace(/^_|_$/g, '')
+        .slice(0, 20) || 'user';
+
+    // Try the clean base first, then append random suffix until unique
+    let candidate = cleaned;
+    let attempts = 0;
+    while (attempts < 10) {
+        const existing = await prisma.user.findUnique({ where: { username: candidate }, select: { id: true } });
+        if (!existing) return candidate;
+        candidate = `${cleaned}_${Math.floor(1000 + Math.random() * 9000)}`;
+        attempts++;
+    }
+    // Last resort: full random
+    return `user_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+export class AuthService {
+
+    /**
+     * Authenticate user via Privy token (no signature required)
+     */
+    static async privyLogin(
+        verifiedClaims: { userId: string },
+        walletAddress?: string,
+        email?: string,
+        _deviceInfo?: string,
+        _ip?: string,
+        avatarUrl?: string,
+        eoaAddress?: string
+    ): Promise<AuthResponse> {
+        const targetWalletAddress = walletAddress?.toLowerCase();
+        const targetEoaAddress = eoaAddress?.toLowerCase();
+        const privyId = verifiedClaims.userId;
+
+        // 1. Find user by Privy ID first (most robust)
+        let user = await prisma.user.findUnique({
+            where: { privyId },
+            include: { ownedBrands: true }
+        });
+
+        // 2. Fallback to Email if provided
+        if (!user && email) {
+            user = await prisma.user.findUnique({
+                where: { email: email.toLowerCase() },
+                include: { ownedBrands: true }
+            });
+
+            // If found by email, link the privyId for future logins
+            if (user) {
+                logger.info(`Linking Privy ID ${privyId} to existing user ${user.email}`);
+                user = await prisma.user.update({
+                    where: { id: user.id },
+                    data: { privyId },
+                    include: { ownedBrands: true },
+                });
+            }
+        }
+
+        // 3. Fallback to Wallet Address
+        if (!user && targetWalletAddress) {
+            user = await prisma.user.findUnique({
+                where: { walletAddress: targetWalletAddress },
+                include: { ownedBrands: true }
+            });
+
+            // If found by wallet but they have a DIFFERENT privyId or email, 
+            // then this wallet belongs to someone else. 
+            // We should NOT blindly log them in as the brand owner.
+            if (user && user.privyId && user.privyId !== privyId) {
+                logger.warn(`Wallet ${targetWalletAddress} is already linked to Privy ID ${user.privyId}. This login is for ${privyId}.`);
+                user = null; // Force creation of a NEW user for this Privy account
+            } else if (user) {
+                // Same wallet, link the privyId if missing
+                logger.info(`Linking Privy ID ${privyId} to existing user via wallet ${targetWalletAddress}`);
+                user = await prisma.user.update({
+                    where: { id: user.id },
+                    data: { privyId },
+                    include: { ownedBrands: true },
+                });
+            }
+        }
+
+        if (!user) {
+            // Create new user
+            const isVerificationEnabled = process.env.ENABLE_VERIFICATION === 'true';
+            // Don't use walletAddress if it equals eoaAddress — that means the smart wallet
+            // wasn't ready yet and the client sent the embedded EOA as the smart account.
+            const walletIsSmartAccount = targetWalletAddress && targetWalletAddress !== targetEoaAddress;
+            if (targetWalletAddress && !walletIsSmartAccount) {
+                logger.warn(`⚠️ AuthService: walletAddress ${targetWalletAddress} equals eoaAddress on new user — storing null for walletAddress until smart account is available.`);
+            }
+            // If the wallet is already taken, this new user gets NO wallet link initially (or a placeholder)
+            // to avoid unique constraint violations. They can link a wallet later if it's freed.
+            let creationWallet = walletIsSmartAccount ? targetWalletAddress : undefined;
+            if (targetWalletAddress) {
+                const existingWalletUser = await prisma.user.findUnique({ where: { walletAddress: targetWalletAddress } });
+                if (existingWalletUser) {
+                    logger.warn(`Wallet ${targetWalletAddress} is already in use. Creating user without wallet link.`);
+                    creationWallet = undefined;
+                }
+            }
+
+            const placeholderAddress = creationWallet || `privy:${privyId}`;
+            const emailBase = email ? email.split('@')[0] : 'user';
+            const username = await generateUniqueUsername(emailBase);
+
+            user = await prisma.user.create({
+                data: {
+                    privyId,
+                    email: email?.toLowerCase() || `${placeholderAddress}@wallet.local`,
+                    username,
+                    displayName: email ? email.split('@')[0] : undefined,
+                    avatarUrl: avatarUrl || null,
+                    walletAddress: creationWallet || null,
+                    eoaAddress: targetEoaAddress || null,
+                    lastLoginAt: new Date(),
+                    emailVerified: !isVerificationEnabled,
+                    phoneVerified: !isVerificationEnabled,
+                },
+                include: { ownedBrands: true },
+            });
+
+            // Generate referral code for new user (async, don't block)
+            (async () => {
+                try {
+                    const { ReferralService } = await import('../referralService');
+                    await ReferralService.generateReferralCode(user!.id);
+                } catch (error) {
+                    logger.error({ err: error }, 'Failed to generate referral code:');
+                }
+            })();
+        } else {
+            // Only treat walletAddress as a smart account if it differs from eoaAddress.
+            // If they're the same the client sent the embedded EOA wallet instead of the
+            // smart account (smart wallet not ready yet) — don't overwrite a previously
+            // saved smart account address with an EOA.
+            const isSmartAccount = targetWalletAddress && targetWalletAddress !== targetEoaAddress;
+            if (targetWalletAddress && !isSmartAccount) {
+                logger.warn(`⚠️ AuthService: walletAddress ${targetWalletAddress} equals eoaAddress — skipping walletAddress update for user ${user.id} to avoid overwriting smart account.`);
+            }
+
+            // Update last login, sync wallet addresses, and backfill avatarUrl
+            user = await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    lastLoginAt: new Date(),
+                    ...(isSmartAccount ? { walletAddress: targetWalletAddress } : {}),
+                    ...(targetEoaAddress ? { eoaAddress: targetEoaAddress } : {}),
+                    ...(avatarUrl && !user.avatarUrl ? { avatarUrl } : {}),
+                },
+                include: { ownedBrands: true }
+            });
+        }
+
+        if (!user) {
+            throw new Error('Failed to resolve authenticated user');
+        }
+
+        const authenticatedUser = user;
+
+        // Send notifications and streak updates (async, don't block)
+        (async () => {
+            try {
+                await NotificationService.createWelcomeNotification(authenticatedUser.id);
+                const streakResult = await LoginStreakService.recordDailyLogin(authenticatedUser.id);
+                if (streakResult.currentStreak >= 2) {
+                    await NotificationService.createStreakNotification(authenticatedUser.id, streakResult.currentStreak);
+                }
+                for (const milestone of streakResult.newMilestonesClaimed) {
+                    try {
+                        await NotificationService.createXpMilestoneNotification(authenticatedUser.id, milestone);
+                    } catch (err) {
+                        logger.error({ err: err }, 'Failed to send XP milestone notification:');
+                    }
+                }
+            } catch (error) {
+                logger.error({ err: error }, 'Failed to create login notifications:');
+            }
+        })();
+
+        return {
+            success: true,
+            user: {
+                id: authenticatedUser.id,
+                email: authenticatedUser.email,
+                username: authenticatedUser.username,
+                displayName: authenticatedUser.displayName,
+                avatarUrl: authenticatedUser.avatarUrl,
+                bio: authenticatedUser.bio,
+                walletAddress: authenticatedUser.walletAddress,
+                isOnboarded: authenticatedUser.isOnboarded,
+                xp: authenticatedUser.xp,
+                level: authenticatedUser.level,
+                preferredBrands: authenticatedUser.preferredBrands,
+                preferredCategories: authenticatedUser.preferredCategories,
+                socialLinks: authenticatedUser.socialLinks,
+                emailVerified: authenticatedUser.emailVerified,
+                phoneNumber: authenticatedUser.phoneNumber,
+                phoneVerified: authenticatedUser.phoneVerified,
+                lastLoginAt: authenticatedUser.lastLoginAt,
+                createdAt: authenticatedUser.createdAt,
+                updatedAt: authenticatedUser.updatedAt,
+                role: authenticatedUser.role,
+                ownedBrands: authenticatedUser.ownedBrands,
+            },
+        };
+    }
+
+}

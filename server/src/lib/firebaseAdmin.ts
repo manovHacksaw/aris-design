@@ -1,3 +1,4 @@
+import logger from './logger';
 import admin from 'firebase-admin';
 
 if (!admin.apps.length) {
@@ -14,9 +15,9 @@ if (!admin.apps.length) {
                     privateKey: privateKey,
                 }),
             });
-            console.log('Firebase Admin initialized successfully');
+            logger.info('Firebase Admin initialized successfully');
         } else {
-            console.warn('⚠️ Firebase Admin skipped: Missing credentials. Using REST API fallback.');
+            logger.warn('⚠️ Firebase Admin skipped: Missing credentials. Using REST API fallback.');
         }
     } catch (error) {
         // Firebase Admin initialization failed, using REST API fallback
