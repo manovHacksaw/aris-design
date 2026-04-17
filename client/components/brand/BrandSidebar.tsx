@@ -122,7 +122,7 @@ export default function BrandSidebar() {
                                 />
                                 {item.badge !== undefined && item.badge > 0 ? (
                                     <span className={cn(
-                                        "absolute top-2.5 flex items-center justify-center rounded-full bg-primary text-white text-[9px] font-black pointer-events-none",
+                                        "absolute top-2.5 flex items-center justify-center rounded-full bg-primary text-[#111111] text-[9px] font-black pointer-events-none",
                                         showExpanded ? "right-3 min-w-[18px] h-[18px] px-1" : "right-2 w-2 h-2"
                                     )}>
                                         {showExpanded ? (item.badge > 99 ? "99+" : item.badge) : ""}

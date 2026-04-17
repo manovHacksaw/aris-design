@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import {
-    ChevronLeft, ChevronRight, Info, Rocket, Sparkles, Loader2, Plus, Minus,
+    ChevronLeft, ChevronRight, ChevronDown, Info, Rocket, Sparkles, Loader2, Plus, Minus,
     Users, Trophy, Clock, ThumbsUp, Wallet, AlertCircle, RefreshCw,
     Upload, Pencil, X, LayoutGrid, List, Tag, Vote, PlusCircle, ShieldCheck, ImageIcon, Save,
 } from "lucide-react";
@@ -18,7 +18,8 @@ import { readBrandRefundBalance } from "@/lib/blockchain/contracts";
 import { useWallet } from "@/context/WalletContext";
 import { useUser } from "@/context/UserContext";
 import { BrandImageGeneratorModal } from "@/components/create/BrandImageGeneratorModal";
-import { getBrandEvents, createEvent, updateEvent } from "@/services/event.service";
+import { createPortal } from "react-dom";
+import { getBrandEvents, createEvent, updateEvent, deleteEvent } from "@/services/event.service";
 import type { Event } from "@/services/event.service";
 import { uploadToPinata } from "@/lib/pinata-upload";
 import EventDraftPanel from "@/components/brand/createEvent/EventDraftPanel";
@@ -80,6 +81,8 @@ interface FormData {
     ageRestriction: string;
     genderRestriction: string;
     intendedCategories: string[];
+    minAge: string;
+    maxAge: string;
 
     // fields required by LaunchFormData but set to defaults
     tagline: string;
@@ -111,9 +114,9 @@ function InfoTooltip({ text }: { text: string }) {
 
 function Label({ children, optional }: { children: React.ReactNode; optional?: boolean }) {
     return (
-        <label className="block text-sm font-semibold text-foreground mb-1.5">
+        <label className="flex items-center text-[10px] font-black uppercase tracking-widest text-foreground/50 mb-2">
             {children}
-            {optional && <span className="ml-1.5 text-xs font-normal text-muted-foreground">(optional)</span>}
+            {optional && <span className="ml-1.5 text-[9px] font-bold text-muted-foreground">(optional)</span>}
         </label>
     );
 }
@@ -122,8 +125,8 @@ function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputEleme
     return (
         <input
             className={cn(
-                "w-full bg-secondary/40 border border-border rounded-xl px-4 py-3 text-sm text-foreground",
-                "placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all",
+                "w-full bg-secondary/30 border border-border/50 rounded-[14px] sm:rounded-[16px] px-3.5 py-2.5 sm:px-4 sm:py-3.5 text-xs sm:text-sm text-foreground",
+                "placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all focus:bg-background",
                 className
             )}
             {...props}
@@ -135,8 +138,8 @@ function Textarea({ className, ...props }: React.TextareaHTMLAttributes<HTMLText
     return (
         <textarea
             className={cn(
-                "w-full bg-secondary/40 border border-border rounded-xl px-4 py-3 text-sm text-foreground",
-                "placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all resize-none",
+                "w-full bg-secondary/30 border border-border/50 rounded-[14px] sm:rounded-[16px] px-3.5 py-2.5 sm:px-4 sm:py-3.5 text-xs sm:text-sm text-foreground",
+                "placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all resize-none focus:bg-background",
                 className
             )}
             {...props}
@@ -169,6 +172,13 @@ export default function CreateEventPage() {
     const scrollContainerRef = useRef<HTMLDivElement | null>(null);
     const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
     const [aiSuggestionsPool, setAiSuggestionsPool] = useState<string[]>([]);
+    const [hardFiltersExpanded, setHardFiltersExpanded] = useState(false);
+    const [softFiltersExpanded, setSoftFiltersExpanded] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // ── Landing / Draft state ──────────────────────────────────────────────────
     const [viewMode, setViewMode] = useState<"landing" | "form">("landing");
@@ -193,6 +203,8 @@ export default function CreateEventPage() {
         ageRestriction: "",
         genderRestriction: "All",
         intendedCategories: [],
+        minAge: "",
+        maxAge: "",
         tagline: "",
         startImmediately: true,
         startDate: "",
@@ -250,6 +262,11 @@ export default function CreateEventPage() {
             ageRestriction: (event as any).ageRestriction ? String((event as any).ageRestriction) : "",
             genderRestriction: (event as any).genderRestriction ?? "All",
             intendedCategories: (event as any).intendedCategories ?? [],
+            proposals: event.proposals?.map(p => ({
+                title: p.title,
+                order: p.order,
+                mediaPreview: p.imageUrl || (p.imageCid ? `https://gateway.pinata.cloud/ipfs/${p.imageCid}` : undefined)
+            })) || [{ title: "", order: 0 }, { title: "", order: 1 }],
         });
         // If event has an imageUrl set banner preview
         if (event.imageUrl) {
@@ -278,6 +295,23 @@ export default function CreateEventPage() {
                 imageUrl = bannerPreview;
             }
 
+            // Upload proposal images
+            const uploadedProposals = await Promise.all(
+                form.proposals.map(async (p, i) => {
+                    let pImageUrl = p.mediaPreview;
+                    if (p.media instanceof File) {
+                        const res = await uploadToPinata(p.media);
+                        pImageUrl = res.imageUrl;
+                    }
+                    return {
+                        title: p.title || `Option ${i + 1}`,
+                        imageUrl: pImageUrl,
+                        order: p.order ?? i,
+                        type: pImageUrl ? 'IMAGE' as const : 'TEXT' as const
+                    };
+                })
+            );
+
             const payload = {
                 title: form.title,
                 description: form.description || undefined,
@@ -299,11 +333,12 @@ export default function CreateEventPage() {
                 endTime: new Date(Date.now() + 86400000 * 2).toISOString(),
                 status: "draft" as const,
                 imageUrl,
+                proposals: uploadedProposals,
             };
 
             if (currentDraftId) {
                 await updateEvent(currentDraftId, payload as any);
-                setDrafts((prev) => prev.map((d) => d.id === currentDraftId ? { ...d, ...payload } as Event : d));
+                setDrafts((prev) => prev.map((d) => d.id === currentDraftId ? { ...d, ...payload } as any : d));
                 toast.success("Draft updated");
             } else {
                 const created = await createEvent(payload as any);
@@ -320,8 +355,14 @@ export default function CreateEventPage() {
     }, [form, currentDraftId]);
 
     // ── Delete a draft ────────────────────────────────────────────────────────
-    const handleDeleteDraft = useCallback((id: string) => {
-        setDrafts((prev) => prev.filter((d) => d.id !== id));
+    const handleDeleteDraft = useCallback(async (id: string) => {
+        try {
+            await deleteEvent(id);
+            setDrafts((prev) => prev.filter((d) => d.id !== id));
+            toast.success("Draft deleted");
+        } catch (error: any) {
+            toast.error(error?.message || "Failed to delete draft");
+        }
     }, []);
 
     // ── Derived reward values ──────────────────────────────────────────────────
@@ -510,28 +551,28 @@ export default function CreateEventPage() {
         switch (stepId) {
             case "type":
                 return (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
                         {(["vote", "post"] as const).map((t) => (
                             <button
                                 key={t}
                                 onClick={() => { set({ type: t }); setTimeout(goNext, 300); }}
                                 className={cn(
-                                    "p-6 rounded-2xl border-2 text-left transition-all hover:-translate-y-1 hover:shadow-lg",
+                                    "p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-2 text-left transition-all hover:-translate-y-1 hover:shadow-lg flex flex-col justify-start",
                                     form.type === t
-                                        ? "border-primary bg-primary/10"
-                                        : "border-border bg-secondary/40 hover:border-primary/50"
+                                        ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
+                                        : "border-border/60 bg-secondary/20 hover:border-primary/30"
                                 )}
                             >
-                                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center mb-3", t === "vote" ? "bg-lime-400/10" : "bg-orange-500/10")}>
-                                    {t === "vote" ? <ThumbsUp className="w-5 h-5 text-lime-400" /> : <Upload className="w-5 h-5 text-orange-400" />}
+                                <div className={cn("w-8 h-8 sm:w-10 sm:h-10 rounded-[10px] sm:rounded-[12px] flex items-center justify-center mb-2 sm:mb-3 shrink-0", t === "vote" ? "bg-lime-400/10" : "bg-orange-500/10")}>
+                                    {t === "vote" ? <ThumbsUp className="w-4 h-4 sm:w-5 sm:h-5 text-lime-400" /> : <Upload className="w-4 h-4 sm:w-5 sm:h-5 text-orange-400" />}
                                 </div>
-                                <p className="font-black text-xl text-foreground capitalize mb-2">
+                                <p className="font-black text-sm sm:text-xl text-foreground capitalize mb-1 sm:mb-2 leading-tight">
                                     {t === "post" ? "Post Campaign" : "Vote Campaign"}
                                 </p>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-[10px] sm:text-sm text-muted-foreground leading-snug">
                                     {t === "post"
-                                        ? "Creators submit content · Audience votes for the best"
-                                        : "Audience votes between fixed options you define"}
+                                        ? "Creators submit content · Audience votes"
+                                        : "Audience votes between fixed options"}
                                 </p>
                             </button>
                         ))}
@@ -540,7 +581,7 @@ export default function CreateEventPage() {
 
             case "basics":
                 return (
-                    <div className="space-y-5">
+                    <div className="space-y-4 sm:space-y-5">
                         <div>
                             <Label>Event Name</Label>
                             <Input
@@ -570,7 +611,7 @@ export default function CreateEventPage() {
                                 const isCustom = form.domain !== "" && !EVENT_DOMAINS.slice(0, -1).includes(form.domain);
                                 return (
                                     <>
-                                        <div className="flex flex-wrap gap-2">
+                                        <div className="flex gap-2 overflow-x-auto pb-3 -mx-2 px-2 no-scrollbar">
                                             {EVENT_DOMAINS.map((d) => {
                                                 const active = d === "Other" ? isCustom || form.domain === "Other" : form.domain === d;
                                                 return (
@@ -578,10 +619,10 @@ export default function CreateEventPage() {
                                                         key={d}
                                                         onClick={() => set({ domain: d })}
                                                         className={cn(
-                                                            "px-4 py-2 rounded-full text-sm font-semibold border transition-all",
+                                                            "shrink-0 px-4 py-2 rounded-xl text-xs font-semibold border transition-all",
                                                             active
-                                                                ? "border-primary bg-primary/10 text-primary"
-                                                                : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                                                                ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20 scale-105"
+                                                                : "bg-background border-border/60 text-muted-foreground hover:border-primary/40 hover:bg-secondary/40 hover:text-foreground"
                                                         )}
                                                     >
                                                         {d}
@@ -604,7 +645,7 @@ export default function CreateEventPage() {
                             })()}
                         </div>
 
-                        <div className="space-y-3">
+                        <div className="space-y-2.5 sm:space-y-3">
                             <Label>Schedule</Label>
 
                             {/* Start Immediately toggle */}
@@ -793,17 +834,17 @@ export default function CreateEventPage() {
                             {/* Gender */}
                             <div>
                                 <Label>Gender</Label>
-                                <div className="flex gap-2 flex-wrap">
+                                <div className="flex gap-2 pb-1">
                                     {GENDERS.map((g) => (
                                         <button
                                             key={g}
                                             type="button"
                                             onClick={() => set({ preferredGender: g })}
                                             className={cn(
-                                                "px-4 py-2 rounded-full text-sm font-semibold border transition-all",
+                                                "shrink-0 px-4 py-2 rounded-xl text-xs font-semibold border transition-all",
                                                 form.preferredGender === g
-                                                    ? "border-primary bg-primary/10 text-primary"
-                                                    : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                                                    ? "bg-primary text-primary-foreground border-primary shadow-sm scale-105"
+                                                    : "bg-background border-border/60 text-muted-foreground hover:border-primary/40 hover:bg-secondary/40 hover:text-foreground"
                                             )}
                                         >
                                             {g === "All" ? "All Genders" : g === "M" ? "Male" : "Female"}
@@ -815,29 +856,64 @@ export default function CreateEventPage() {
                             {/* Age Group */}
                             <div>
                                 <Label>Age Group</Label>
-                                <div className="flex gap-2 flex-wrap">
+                                <div className="flex gap-2 overflow-x-auto pb-3 -mx-2 px-2 no-scrollbar mb-2">
                                     {AGE_GROUPS.map((a) => (
                                         <button
                                             key={a}
                                             type="button"
-                                            onClick={() => set({ ageGroup: a })}
+                                            onClick={() => set({ ageGroup: a, minAge: "", maxAge: "" })}
                                             className={cn(
-                                                "px-4 py-2 rounded-full text-sm font-semibold border transition-all",
-                                                form.ageGroup === a
-                                                    ? "border-primary bg-primary/10 text-primary"
-                                                    : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                                                "shrink-0 px-4 py-2 rounded-xl text-xs font-semibold border transition-all",
+                                                form.ageGroup === a && !form.minAge && !form.maxAge
+                                                    ? "bg-primary text-primary-foreground border-primary shadow-sm scale-105"
+                                                    : "bg-background border-border/60 text-muted-foreground hover:border-primary/40 hover:bg-secondary/40 hover:text-foreground"
                                             )}
                                         >
                                             {a}
                                         </button>
                                     ))}
                                 </div>
+
+                                <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-background/50 border border-border/30">
+                                    <div className="space-y-1.5">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">Min Age</span>
+                                        <Input
+                                            type="number"
+                                            placeholder="From"
+                                            value={form.minAge}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                set({ 
+                                                    minAge: val, 
+                                                    ageGroup: (val || form.maxAge) ? `${val || 0}-${form.maxAge || "99"}` : "All Ages"
+                                                });
+                                            }}
+                                            className="h-9 bg-card"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block ml-1">Max Age</span>
+                                        <Input
+                                            type="number"
+                                            placeholder="To"
+                                            value={form.maxAge}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                set({ 
+                                                    maxAge: val, 
+                                                    ageGroup: (form.minAge || val) ? `${form.minAge || 0}-${val || "99"}` : "All Ages"
+                                                });
+                                            }}
+                                            className="h-9 bg-card"
+                                        />
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Region */}
                             <div>
                                 <Label>Region (India)</Label>
-                                <div className="flex gap-2 flex-wrap">
+                                <div className="flex gap-2 overflow-x-auto pb-3 -mx-2 px-2 no-scrollbar">
                                     {REGIONS.map((r) => {
                                         const active = form.regions.includes(r);
                                         return (
@@ -852,10 +928,10 @@ export default function CreateEventPage() {
                                                     })
                                                 }
                                                 className={cn(
-                                                    "px-4 py-2 rounded-full text-sm font-semibold border transition-all",
+                                                    "shrink-0 px-4 py-2 rounded-xl text-xs font-semibold border transition-all",
                                                     active
-                                                        ? "border-primary bg-primary/10 text-primary"
-                                                        : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                                                        ? "bg-primary text-primary-foreground border-primary shadow-sm scale-105"
+                                                        : "bg-background border-border/60 text-muted-foreground hover:border-primary/40 hover:bg-secondary/40 hover:text-foreground"
                                                 )}
                                             >
                                                 {REGION_LABELS[r]}
@@ -870,101 +946,134 @@ export default function CreateEventPage() {
 
                             {/* --- New Hard Filters --- */}
                             <div className="pt-4 border-t border-border/50">
-                                <div className="flex items-center gap-2 mb-4">
+                                <button 
+                                    type="button"
+                                    onClick={() => setHardFiltersExpanded(!hardFiltersExpanded)}
+                                    className="flex items-center gap-2 mb-4 w-full group"
+                                >
                                     <ShieldCheck className="w-4 h-4 text-orange-400" />
-                                    <span className="text-sm font-black text-orange-400">Strict Enforcement (Hard Filters)</span>
+                                    <span className="text-sm font-black text-orange-400 group-hover:underline">Strict Enforcement (Hard Filters)</span>
                                     <InfoTooltip text="Strictly blocks users who don't meet these requirements. Use for 18+ or gender-locked content." />
-                                </div>
+                                    <ChevronDown className={cn("w-4 h-4 text-orange-400 ml-auto transition-transform duration-300", hardFiltersExpanded && "rotate-180")} />
+                                </button>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div>
-                                        <Label optional>Minimum Age</Label>
-                                        <Input
-                                            type="number"
-                                            placeholder="e.g. 18"
-                                            value={form.ageRestriction}
-                                            onChange={(e) => set({ ageRestriction: e.target.value })}
-                                        />
-                                        <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-1">
-                                            <AlertCircle className="w-3 h-3" />
-                                            Users below this age won't see or enter the event.
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <Label optional>Strict Gender Lock</Label>
-                                        <div className="flex gap-2">
-                                            {["All", "M", "F"].map((g) => (
-                                                <button
-                                                    key={g}
-                                                    type="button"
-                                                    onClick={() => set({ genderRestriction: g })}
-                                                    className={cn(
-                                                        "px-4 py-2 rounded-xl text-xs font-bold border transition-all flex-1",
-                                                        form.genderRestriction === g
-                                                            ? "border-orange-400 bg-orange-400/10 text-orange-400"
-                                                            : "border-border text-muted-foreground hover:border-orange-400/50"
-                                                    )}
-                                                >
-                                                    {g === "All" ? "None" : g === "M" ? "Male" : "Female"}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
+                                <AnimatePresence>
+                                    {hardFiltersExpanded && (
+                                        <motion.div 
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            transition={{ duration: 0.3, ease: "easeInOut" }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-4">
+                                                <div>
+                                                    <Label optional>Minimum Age</Label>
+                                                    <Input
+                                                        type="number"
+                                                        placeholder="e.g. 18"
+                                                        value={form.ageRestriction}
+                                                        onChange={(e) => set({ ageRestriction: e.target.value })}
+                                                    />
+                                                    <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-1">
+                                                        <AlertCircle className="w-3 h-3" />
+                                                        Users below this age won't see or enter the event.
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <Label optional>Strict Gender Lock</Label>
+                                                    <div className="flex gap-2">
+                                                        {["All", "M", "F"].map((g) => (
+                                                            <button
+                                                                key={g}
+                                                                type="button"
+                                                                onClick={() => set({ genderRestriction: g })}
+                                                                className={cn(
+                                                                    "px-4 py-2 rounded-xl text-xs font-bold border transition-all flex-1",
+                                                                    form.genderRestriction === g
+                                                                        ? "border-orange-400 bg-orange-400/10 text-orange-400"
+                                                                        : "border-border text-muted-foreground hover:border-orange-400/50"
+                                                                )}
+                                                            >
+                                                                {g === "All" ? "None" : g === "M" ? "Male" : "Female"}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
 
                             {/* --- Interest Targeting (Soft Filter) --- */}
                             <div className="pt-4 border-t border-border/50">
-                                <div className="flex items-center gap-2 mb-4">
+                                <button 
+                                    type="button"
+                                    onClick={() => setSoftFiltersExpanded(!softFiltersExpanded)}
+                                    className="flex items-center gap-2 mb-4 w-full group"
+                                >
                                     <Sparkles className="w-4 h-4 text-blue-400" />
-                                    <span className="text-sm font-black text-blue-400">Personalization Interests (Soft Filter)</span>
+                                    <span className="text-sm font-black text-blue-400 group-hover:underline">Personalization Interests (Soft Filter)</span>
                                     <InfoTooltip text="Boosts your event's ranking for users with these interests in their personalized feed." />
-                                </div>
+                                    <ChevronDown className={cn("w-4 h-4 text-blue-400 ml-auto transition-transform duration-300", softFiltersExpanded && "rotate-180")} />
+                                </button>
 
-                                <div>
-                                    <Label optional>Target Interests</Label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {EVENT_DOMAINS.filter(d => d !== "Other").map((d) => {
-                                            const active = form.intendedCategories.includes(d);
-                                            return (
-                                                <button
-                                                    key={d}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        const next = active
-                                                            ? form.intendedCategories.filter(c => c !== d)
-                                                            : [...form.intendedCategories, d];
-                                                        set({ intendedCategories: next });
-                                                    }}
-                                                    className={cn(
-                                                        "px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all",
-                                                        active
-                                                            ? "border-blue-400 bg-blue-400/10 text-blue-400"
-                                                            : "border-border text-muted-foreground hover:border-blue-400/50 hover:text-foreground"
-                                                    )}
-                                                >
-                                                    {d}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
+                                <AnimatePresence>
+                                    {softFiltersExpanded && (
+                                        <motion.div 
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            transition={{ duration: 0.3, ease: "easeInOut" }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className="pb-4">
+                                                <Label optional>Target Interests</Label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {EVENT_DOMAINS.filter(d => d !== "Other").map((d) => {
+                                                        const active = form.intendedCategories.includes(d);
+                                                        return (
+                                                            <button
+                                                                key={d}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const next = active
+                                                                        ? form.intendedCategories.filter(c => c !== d)
+                                                                        : [...form.intendedCategories, d];
+                                                                    set({ intendedCategories: next });
+                                                                }}
+                                                                className={cn(
+                                                                    "px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all",
+                                                                    active
+                                                                        ? "border-blue-400 bg-blue-400/10 text-blue-400"
+                                                                        : "border-border text-muted-foreground hover:border-blue-400/50 hover:text-foreground"
+                                                                )}
+                                                            >
+                                                                {d}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
                         </div>
 
-                        {/* Banner upload */}
                         <div>
-                            <label className="flex items-center text-sm font-semibold text-foreground mb-1.5">
+                            <Label>
                                 Event Banner
                                 <InfoTooltip text="This image appears as the event banner visible to participants. Recommended: 16:9 ratio, JPEG or PNG, max 5 MB." />
-                            </label>
+                            </Label>
 
                             {bannerPreview ? (
-                                <div className="relative w-full rounded-2xl overflow-hidden border border-border group" style={{ aspectRatio: "16/9" }}>
+                                <div className="relative w-full rounded-2xl overflow-hidden border border-border group bg-black/40" style={{ aspectRatio: "16/9" }}>
                                     <img
                                         src={bannerPreview}
                                         alt="Banner preview"
-                                        className="w-full h-full object-cover cursor-zoom-in"
+                                        className="w-full h-full object-contain cursor-zoom-in"
                                         onClick={() => setLightboxSrc(bannerPreview)}
                                     />
                                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
@@ -1037,9 +1146,9 @@ export default function CreateEventPage() {
                         </div>
 
                         {/* Banner AI generator modal — new N-prompt flow */}
-                        {bannerGeneratorOpen && (
-                            <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                                <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl bg-card border border-border shadow-2xl">
+                        {bannerGeneratorOpen && typeof window !== 'undefined' && mounted && createPortal(
+                            <div className="fixed inset-0 z-[300] flex items-start sm:items-center justify-center p-3 sm:p-4 pt-12 sm:pt-0 bg-black/60 backdrop-blur-sm">
+                                <div className="relative w-full max-w-lg sm:max-w-2xl max-h-[75vh] sm:max-h-[88vh] overflow-y-auto rounded-3xl bg-card border border-border shadow-2xl">
                                     <AiBannerPanel
                                         title={form.title}
                                         description={form.description}
@@ -1057,17 +1166,18 @@ export default function CreateEventPage() {
                                         onClose={() => setBannerGeneratorOpen(false)}
                                     />
                                 </div>
-                            </div>
+                            </div>,
+                            document.body
                         )}
 
                         {/* Sample images — post events only */}
                         {isPost && (
                             <div>
-                                <label className="flex items-center text-sm font-semibold text-foreground mb-3">
+                                <Label>
                                     Sample Images
                                     <InfoTooltip text="Upload reference images to show creators what kind of content you're looking for. At least 1 required." />
-                                    <span className="ml-1.5 text-xs font-normal text-red-400">*required</span>
-                                </label>
+                                    <span className="ml-1.5 text-[9px] font-bold text-red-400 uppercase">*required</span>
+                                </Label>
 
                                 {/* Card grid — filled cards + 1 empty slot, max 4 */}
                                 <div className="grid grid-cols-2 gap-3">
@@ -1138,23 +1248,21 @@ export default function CreateEventPage() {
                                                                     Drag & drop<br />or click to upload
                                                                 </span>
                                                             </div>
-                                                            <div className="flex items-center gap-2">
+                                                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center w-full sm:w-auto gap-1.5 sm:gap-2 mt-1 sm:mt-0 px-2 sm:px-0">
                                                                 <button
                                                                     type="button"
                                                                     onClick={(e) => { e.stopPropagation(); setAiGeneratorSampleIdx(i); }}
-                                                                    className="flex items-center gap-1.5 px-3 py-2 bg-primary/15 hover:bg-primary/25 border border-primary/30 text-primary rounded-lg text-xs font-semibold transition-all"
+                                                                    className="flex items-center justify-center gap-1.5 px-2 py-2 sm:px-3 sm:py-2 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-lg text-[10px] sm:text-xs font-bold transition-all"
                                                                 >
-                                                                    <Sparkles className="w-3.5 h-3.5" />
-                                                                    Generate
+                                                                    <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Generate
                                                                 </button>
-                                                                <span className="text-xs text-muted-foreground/40">or</span>
+                                                                <span className="hidden sm:inline text-[9px] sm:text-xs text-muted-foreground/40 font-bold uppercase tracking-wider">or</span>
                                                                 <button
                                                                     type="button"
                                                                     onClick={(e) => { e.stopPropagation(); sampleFileRefs.current[i]?.click(); }}
-                                                                    className="flex items-center gap-1.5 px-3 py-2 bg-secondary border border-border rounded-lg text-xs font-semibold cursor-pointer hover:bg-secondary/70 transition-all"
+                                                                    className="flex items-center justify-center gap-1.5 px-2 py-2 sm:px-3 sm:py-2 bg-secondary/50 border border-border rounded-lg text-[10px] sm:text-xs font-bold cursor-pointer hover:bg-secondary/80 transition-all"
                                                                 >
-                                                                    <Upload className="w-3.5 h-3.5" />
-                                                                    Upload
+                                                                    <Upload className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Upload
                                                                 </button>
                                                             </div>
                                                             <input
@@ -1182,20 +1290,19 @@ export default function CreateEventPage() {
                                         );
                                     })}
                                 </div>
-                                <p className="text-xs text-muted-foreground/50 mt-2">JPEG, PNG · Max 5 MB each · 1–4 images required</p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground/50 mt-2">JPEG, PNG · Max 5 MB each · 1–4 images required</p>
 
                                 {/* AI generator modal for sample images */}
-                                {aiGeneratorSampleIdx !== null && (
-                                    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                                {aiGeneratorSampleIdx !== null && typeof window !== 'undefined' && mounted && createPortal(
+                                    <div className="fixed inset-0 z-[300] flex items-start sm:items-center justify-center p-3 sm:p-4 pt-12 sm:pt-0 bg-black/60 backdrop-blur-sm">
                                         <AiVotingOptionPanel
                                             eventTitle={form.title}
                                             eventDescription={form.description}
                                             decisionDomain={form.domain}
+                                            contentTitle={`Sample Image ${aiGeneratorSampleIdx + 1}`}
                                             brandName={user?.ownedBrands?.[0]?.name}
                                             brandBio={user?.ownedBrands?.[0]?.description}
                                             onApply={(file, preview) => {
-                                                const updated = [...samplePreviews];
-                                                const updatedFiles = [...form.sampleImages];
                                                 if (updated[aiGeneratorSampleIdx]) URL.revokeObjectURL(updated[aiGeneratorSampleIdx]);
                                                 updated[aiGeneratorSampleIdx] = preview;
                                                 updatedFiles[aiGeneratorSampleIdx] = file;
@@ -1214,14 +1321,14 @@ export default function CreateEventPage() {
 
             case "rewards":
                 return (
-                    <div className="space-y-6">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div className="space-y-4 sm:space-y-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                             {/* Max Participants */}
                             <div>
-                                <label className="flex items-center text-sm font-semibold text-foreground mb-1.5">
+                                <Label>
                                     Max Voters
                                     <InfoTooltip text="The maximum number of people who can participate. All pool sizes are calculated from this number. Min 10 · Max 100,000." />
-                                </label>
+                                </Label>
                                 <Input
                                     type="number" min={10} max={100000} placeholder="e.g. 500"
                                     value={form.maxParticipants}
@@ -1464,7 +1571,7 @@ export default function CreateEventPage() {
                         )}
 
                         {/* Options card grid */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto pr-1 pb-1">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 max-h-[60vh] overflow-y-auto pr-1 pb-1">
                             {form.proposals.map((p, idx) => (
                                 <div key={idx} className="flex flex-col gap-2">
                                     {/* Image card */}
@@ -1508,7 +1615,7 @@ export default function CreateEventPage() {
                                                 <img
                                                     src={p.mediaPreview}
                                                     alt={`Option ${idx + 1}`}
-                                                    className="w-full h-full object-cover cursor-zoom-in"
+                                                    className="w-full h-full object-contain cursor-zoom-in bg-black/40"
                                                     onClick={() => setLightboxSrc(p.mediaPreview!)}
                                                 />
                                                 {/* Replace overlay */}
@@ -1530,23 +1637,21 @@ export default function CreateEventPage() {
                                                         Drag & drop<br />or click to upload
                                                     </span>
                                                 </div>
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center w-full sm:w-auto gap-1.5 sm:gap-2 mt-1 sm:mt-0 px-2 sm:px-0">
                                                     <button
                                                         type="button"
                                                         onClick={(e) => { e.stopPropagation(); setAiGeneratorProposalIdx(idx); }}
-                                                        className="flex items-center gap-1.5 px-3 py-2 bg-primary/15 hover:bg-primary/25 border border-primary/30 text-primary rounded-lg text-xs font-semibold transition-all"
+                                                        className="flex items-center justify-center gap-1.5 px-2 py-2 sm:px-3 sm:py-2 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-lg text-[10px] sm:text-xs font-bold transition-all"
                                                     >
-                                                        <Sparkles className="w-3.5 h-3.5" />
-                                                        Generate
+                                                        <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Generate
                                                     </button>
-                                                    <span className="text-xs text-muted-foreground/40">or</span>
+                                                    <span className="hidden sm:inline text-[9px] sm:text-xs text-muted-foreground/40 font-bold uppercase tracking-wider">or</span>
                                                     <button
                                                         type="button"
                                                         onClick={(e) => { e.stopPropagation(); proposalFileRefs.current[idx]?.click(); }}
-                                                        className="flex items-center gap-1.5 px-3 py-2 bg-secondary border border-border rounded-lg text-xs font-semibold cursor-pointer hover:bg-secondary/70 transition-all"
+                                                        className="flex items-center justify-center gap-1.5 px-2 py-2 sm:px-3 sm:py-2 bg-secondary/50 border border-border rounded-lg text-[10px] sm:text-xs font-bold cursor-pointer hover:bg-secondary/80 transition-all"
                                                     >
-                                                        <Upload className="w-3.5 h-3.5" />
-                                                        Upload
+                                                        <Upload className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Upload
                                                     </button>
                                                 </div>
                                                 <input
@@ -1570,7 +1675,7 @@ export default function CreateEventPage() {
                                         value={p.title}
                                         rows={2}
                                         onChange={(e) => updateProposal(idx, e.target.value)}
-                                        className="w-full resize-none rounded-xl border border-border bg-secondary/20 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                                        className="w-full resize-none rounded-xl border border-border/50 bg-secondary/30 px-3 py-2 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all focus:bg-background"
                                     />
                                 </div>
                             ))}
@@ -1583,8 +1688,8 @@ export default function CreateEventPage() {
                         )}
 
                         {/* AI Voting Option Image Generator */}
-                        {aiGeneratorProposalIdx !== null && (
-                            <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                        {aiGeneratorProposalIdx !== null && typeof window !== 'undefined' && mounted && createPortal(
+                            <div className="fixed inset-0 z-[300] flex items-start sm:items-center justify-center p-3 sm:p-4 pt-12 sm:pt-0 bg-black/60 backdrop-blur-sm">
                                 <AiVotingOptionPanel
                                     eventTitle={form.title}
                                     eventDescription={form.description}
@@ -1600,7 +1705,8 @@ export default function CreateEventPage() {
                                     }}
                                     onClose={() => setAiGeneratorProposalIdx(null)}
                                 />
-                            </div>
+                            </div>,
+                            document.body
                         )}
                     </div>
                 );
@@ -1631,14 +1737,14 @@ export default function CreateEventPage() {
         const goTo = (idx: number) => { setDirection(-1); setCurrentStep(idx); };
 
         return (
-            <div className="min-h-screen w-full bg-background font-sans">
+            <div className="min-h-screen w-full bg-background font-sans overflow-x-hidden">
                 {/* ── Page body — exact copy of events/[id]/page layout ── */}
-                <main className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 pb-24 pt-2">
+                <main className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 pb-24 pt-2 text-left">
                     {/* ── Breadcrumb — mirrors events/[id]/page ── */}
                     <div className="flex items-center gap-1.5 mb-4 px-0">
-                        <button onClick={goBack} className="text-xs text-foreground/40 hover:text-foreground transition-colors">Back</button>
-                        <ChevronRight className="w-3 h-3 text-foreground/20" />
-                        <span className="text-xs text-foreground/60 font-medium truncate max-w-[260px]">
+                        <button onClick={goBack} className="text-xs text-foreground/40 hover:text-foreground transition-colors shrink-0">Back</button>
+                        <ChevronRight className="w-3 h-3 text-foreground/20 shrink-0" />
+                        <span className="text-xs text-foreground/60 font-medium truncate max-w-[120px] sm:max-w-[260px]">
                             {form.title || "Untitled Event"}
                         </span>
                         <div className="ml-auto">
@@ -1646,16 +1752,16 @@ export default function CreateEventPage() {
                         </div>
                     </div>
 
-                    <div className="flex flex-col lg:flex-row gap-6 items-start">
+                    <div className="flex flex-col lg:flex-row gap-6 items-start w-full">
                         {/* ── Left column ── */}
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 w-full">
                             {/* Banner — click to edit basics */}
                             <div
                                 onClick={() => goTo(basicsIdx)}
-                                className="relative rounded-[24px] overflow-hidden h-[220px] md:h-[260px] mb-5 border border-white/[0.05] cursor-pointer group"
+                                className="relative rounded-[24px] overflow-hidden aspect-[16/9] mb-5 border border-white/[0.05] bg-black/40 cursor-pointer group"
                             >
                                 {bannerPreview
-                                    ? <img src={bannerPreview} alt="Banner" className="absolute inset-0 w-full h-full object-cover" />
+                                    ? <img src={bannerPreview} alt="Banner" className="absolute inset-0 w-full h-full object-contain" />
                                     : <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-accent/10" />
                                 }
                                 <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-black/10" />
@@ -1677,11 +1783,11 @@ export default function CreateEventPage() {
                                         {form.title && (
                                             <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mb-0.5">{user?.username ?? "Your Brand"}</p>
                                         )}
-                                        <h1 className="font-display text-3xl md:text-[2.6rem] text-white leading-tight mb-1">
+                                        <h1 className="font-display text-2xl sm:text-3xl md:text-[2.6rem] text-white leading-tight mb-1 sm:mb-2">
                                             {form.title || "Untitled Event"}
                                         </h1>
                                         {form.description && (
-                                            <p className="text-xs text-white/60 font-medium leading-relaxed line-clamp-2 max-w-[420px] mb-4">
+                                            <p className="text-[10px] sm:text-xs text-white/60 font-medium leading-relaxed line-clamp-2 max-w-[420px] mb-3 sm:mb-4">
                                                 {form.description}
                                             </p>
                                         )}
@@ -1719,11 +1825,11 @@ export default function CreateEventPage() {
                                                 <Upload className="w-4 h-4 text-orange-400" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h2 className="text-sm font-black text-foreground">Submit Your Entry</h2>
-                                                <p className="text-[10px] text-foreground/40 font-medium">Upload or generate an image to compete for the reward pool</p>
+                                                <h2 className="text-sm font-black text-foreground truncate">Submit Your Entry</h2>
+                                                <p className="text-[10px] text-foreground/40 font-medium truncate sm:whitespace-normal">Upload or generate an image to compete for the reward pool</p>
                                             </div>
                                             {/* Mode toggle — static preview */}
-                                            <div className="flex items-center bg-foreground/5 border border-border/40 rounded-xl p-0.5 shrink-0">
+                                            <div className="hidden sm:flex items-center bg-foreground/5 border border-border/40 rounded-[10px] p-0.5 shrink-0">
                                                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500 text-white text-[10px] font-black uppercase tracking-wider">
                                                     <Upload className="w-3 h-3" /> Upload
                                                 </div>
@@ -1754,8 +1860,8 @@ export default function CreateEventPage() {
                                                 Add a caption to describe your entry… (optional)
                                             </div>
                                             {/* Submit CTA */}
-                                            <button disabled className="w-full py-4 bg-orange-500/30 text-white rounded-[14px] text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2.5 cursor-not-allowed">
-                                                <Upload className="w-4 h-4" /> Submit Entry
+                                            <button disabled className="w-full py-3.5 sm:py-4 bg-orange-500/30 text-white rounded-[14px] text-xs sm:text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2 sm:gap-2.5 cursor-not-allowed">
+                                                <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Submit Entry
                                             </button>
                                         </div>
                                     </div>
@@ -1788,8 +1894,8 @@ export default function CreateEventPage() {
                                                     "One submission per participant — make it count.",
                                                     "No offensive or copyrighted content.",
                                                 ].map((rule, i) => (
-                                                    <li key={i} className="flex gap-3 text-sm text-foreground/60 leading-relaxed">
-                                                        <span className="w-5 h-5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 font-black text-[9px] flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                                                    <li key={i} className="flex gap-2 sm:gap-3 text-[11px] sm:text-sm text-foreground/60 leading-relaxed">
+                                                        <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 font-black text-[8px] sm:text-[9px] flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
                                                         {rule}
                                                     </li>
                                                 ))}
@@ -1812,11 +1918,11 @@ export default function CreateEventPage() {
                             ) : (
                             <>
                             {/* Tab bar — vote events only */}
-                            <div className="flex items-center justify-between mb-5 border-b border-border/40 pb-3">
-                                <div className="flex items-center gap-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-5 border-b border-border/40 pb-3 gap-3 sm:gap-0">
+                                <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1 sm:pb-0 -mx-2 px-2 sm:mx-0 sm:px-0 w-full sm:w-auto">
                                     {(["trending", "latest", "top"] as const).map((tab) => (
                                         <button key={tab} className={cn(
-                                            "relative px-4 py-2 text-xs font-black uppercase tracking-[0.15em] transition-all",
+                                            "relative px-3 py-1.5 sm:px-4 sm:py-2 text-[10px] sm:text-xs font-black uppercase tracking-[0.15em] transition-all whitespace-nowrap shrink-0",
                                             tab === "trending" ? "text-foreground" : "text-foreground/30"
                                         )}>
                                             {tab}
@@ -1824,11 +1930,11 @@ export default function CreateEventPage() {
                                         </button>
                                     ))}
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-foreground/30">
+                                <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-foreground/30 shrink-0">
                                         {`${filledProposals.length} Options`}
                                     </span>
-                                    <div className="flex border border-border/40 rounded-lg overflow-hidden">
+                                    <div className="flex border border-border/40 rounded-lg overflow-hidden shrink-0">
                                         <button className="p-1.5 bg-white/10 text-foreground">
                                             <LayoutGrid className="w-3.5 h-3.5" />
                                         </button>
@@ -1852,29 +1958,29 @@ export default function CreateEventPage() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
                                         {filledProposals.map((p, i) => (
-                                            <div key={i} className="relative rounded-[20px] bg-white/[0.03] border border-white/[0.06] overflow-hidden group/card hover:border-lime-400/20 transition-colors">
+                                            <div key={i} className="relative rounded-[16px] sm:rounded-[20px] bg-white/[0.03] border border-white/[0.06] overflow-hidden group/card hover:border-lime-400/20 transition-colors">
                                                 {p.mediaPreview ? (
-                                                    <div className="relative w-full aspect-[4/3] overflow-hidden">
-                                                        <img src={p.mediaPreview} alt={p.title} className="w-full h-full object-cover" />
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                                    <div className="relative w-full aspect-[4/3] overflow-hidden bg-black/40">
+                                                        <img src={p.mediaPreview} alt={p.title} className="w-full h-full object-contain" />
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
                                                     </div>
                                                 ) : (
                                                     <div className="w-full aspect-[4/3] bg-lime-400/5 flex items-center justify-center border-b border-white/[0.04]">
-                                                        <span className="text-4xl font-black text-lime-400/20">{i + 1}</span>
+                                                        <span className="text-3xl sm:text-4xl font-black text-lime-400/20">{i + 1}</span>
                                                     </div>
                                                 )}
-                                                <div className="p-4">
-                                                    <p className="text-sm font-bold text-foreground mb-3 truncate">{p.title}</p>
-                                                    <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden mb-2">
+                                                <div className="p-3 sm:p-4">
+                                                    <p className="text-[11px] sm:text-sm font-bold text-foreground mb-2 sm:mb-3 truncate">{p.title}</p>
+                                                    <div className="h-1 sm:h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden mb-2">
                                                         <div className="h-full rounded-full bg-gradient-to-r from-lime-400/60 to-lime-400/30" style={{ width: "0%" }} />
                                                     </div>
                                                     <div className="flex items-center justify-between">
-                                                        <p className="text-[10px] text-foreground/30 font-medium">0 votes</p>
-                                                        <div className="px-3 py-1.5 bg-lime-400/10 border border-lime-400/20 rounded-full flex items-center gap-1 opacity-60">
-                                                            <ThumbsUp className="w-3 h-3 text-lime-400" />
-                                                            <span className="text-[10px] font-black text-lime-400">Vote</span>
+                                                        <p className="text-[9px] sm:text-[10px] text-foreground/30 font-medium">0 votes</p>
+                                                        <div className="px-2 py-1 sm:px-3 sm:py-1.5 bg-lime-400/10 border border-lime-400/20 rounded-full flex items-center gap-1 opacity-60">
+                                                            <ThumbsUp className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-lime-400" />
+                                                            <span className="text-[8px] sm:text-[10px] font-black text-lime-400">Vote</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1914,8 +2020,8 @@ export default function CreateEventPage() {
                                             "Click the vote button on your favourite entry.",
                                             "You can only cast one vote — choose wisely!",
                                         ].map((rule, i) => (
-                                            <li key={i} className="flex gap-3 text-sm text-foreground/60 leading-relaxed">
-                                                <span className="w-5 h-5 rounded-full font-black text-[9px] flex items-center justify-center shrink-0 mt-0.5 bg-lime-400/10 text-lime-400">{i + 1}</span>
+                                            <li key={i} className="flex gap-2 sm:gap-3 text-[11px] sm:text-sm text-foreground/60 leading-relaxed">
+                                                <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full font-black text-[8px] sm:text-[9px] flex items-center justify-center shrink-0 mt-0.5 bg-lime-400/10 text-lime-400">{i + 1}</span>
                                                 {rule}
                                             </li>
                                         ))}
@@ -1939,8 +2045,8 @@ export default function CreateEventPage() {
                         </div>
 
                         {/* ── Right sidebar — mirrors EventSidebar ── */}
-                        <div className="lg:w-[300px] shrink-0">
-                        <div className="sticky top-6 space-y-4">
+                        <div className="w-full lg:w-[300px] shrink-0 mt-6 lg:mt-0">
+                        <div className="lg:sticky lg:top-6 space-y-4">
                             {/* Event info card */}
                             <div
                                 onClick={() => goTo(basicsIdx)}
@@ -2024,9 +2130,9 @@ export default function CreateEventPage() {
                                     <span className="text-[9px] bg-[#A78BFA]/10 text-[#A78BFA] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border border-[#A78BFA]/20">Guaranteed</span>
                                 </div>
                                 {effectiveTop > 0 && (
-                                    <div className="bg-[#A78BFA]/5 border border-[#A78BFA]/15 rounded-[14px] p-4 mb-3">
+                                    <div className="bg-[#A78BFA]/5 border border-[#A78BFA]/15 rounded-[14px] p-3 sm:p-4 mb-3">
                                         <p className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1">Grand-Prize Winner</p>
-                                        <p className="text-2xl font-black text-foreground">${effectiveTop.toLocaleString()}</p>
+                                        <p className="text-xl sm:text-2xl font-black text-foreground">${effectiveTop.toLocaleString()}</p>
                                         <p className="text-[10px] text-foreground/40 font-medium">USDC</p>
                                     </div>
                                 )}
@@ -2098,10 +2204,10 @@ export default function CreateEventPage() {
                 </main>
 
                 {/* ── Bottom action bar ── */}
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3">
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 sm:gap-3 w-full max-w-[calc(100%-2rem)] sm:max-w-fit justify-center px-4 sm:px-0">
                     <button
                         onClick={goBack}
-                        className="flex items-center gap-2 px-6 py-3.5 rounded-2xl border-2 border-border text-sm font-bold hover:bg-secondary hover:border-accent/40 hover:text-accent transition-all group"
+                        className="flex items-center justify-center gap-1.5 sm:gap-2 flex-1 sm:flex-none px-4 py-3 sm:px-6 sm:py-3.5 rounded-2xl border-2 border-border text-xs sm:text-sm font-bold hover:bg-white hover:border-white hover:text-black transition-all group"
                     >
                         <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" /> Back
                     </button>
@@ -2113,7 +2219,7 @@ export default function CreateEventPage() {
                             }
                             setConfirmOpen(true);
                         }}
-                        className="flex items-center gap-2 px-10 py-3.5 bg-primary text-primary-foreground rounded-2xl text-sm font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30 hover:bg-accent group"
+                        className="flex items-center justify-center gap-1.5 sm:gap-2 flex-1 sm:flex-none px-4 py-3 sm:px-10 sm:py-3.5 bg-primary text-primary-foreground rounded-2xl text-xs sm:text-sm font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30 hover:bg-accent group"
                     >
                         Launch <Rocket className="w-4 h-4 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 ml-1" />
                     </button>
@@ -2321,7 +2427,7 @@ export default function CreateEventPage() {
             <div
                 ref={scrollContainerRef}
                 className={cn(
-                    "flex-1 flex flex-col items-center justify-start px-3 sm:px-4 md:px-6 lg:px-8 pt-24 md:pt-32 pb-32 md:pb-40 w-full mx-auto z-10 overflow-y-auto no-scrollbar",
+                    "flex-1 flex flex-col items-center justify-start px-3 sm:px-4 md:px-6 lg:px-8 pt-24 md:pt-32 pb-32 md:pb-40 w-full mx-auto z-10 overflow-y-auto overflow-x-hidden no-scrollbar",
                     isLastStep ? "max-w-[1400px]" : "max-w-3xl"
                 )}
             >
@@ -2347,7 +2453,7 @@ export default function CreateEventPage() {
                                         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-45 w-3 h-3 bg-card border-t border-l border-border" />
                                     </div>
                                 </div>
-                                <h2 className="text-5xl sm:text-6xl font-display uppercase mb-8 text-foreground tracking-tighter leading-none px-3">
+                                <h2 className="text-2xl sm:text-4xl md:text-5xl font-display uppercase mb-3 sm:mb-8 text-foreground tracking-tighter leading-none px-2 sm:px-3 text-balance">
                                     {visibleSteps[currentStep]?.title}
                                 </h2>
                             </>
@@ -2362,25 +2468,26 @@ export default function CreateEventPage() {
             </div>
 
             {/* Bottom Bar */}
-            <div className="absolute bottom-0 left-0 right-0 px-4 pb-6 pt-8 sm:px-6 sm:pb-8 sm:pt-10 flex justify-between items-center z-20 bg-gradient-to-t from-background via-background/95 to-transparent pointer-events-none">
+            <div className="absolute bottom-0 left-0 right-0 px-3 pb-4 pt-6 sm:px-6 sm:pb-8 sm:pt-10 flex flex-wrap justify-between items-center gap-y-3 z-20 bg-gradient-to-t from-background via-background/95 to-transparent pointer-events-none">
                 {currentStep > 0 ? (
-                    <button onClick={goBack} className="pointer-events-auto flex items-center gap-2 px-6 py-3.5 rounded-2xl border-2 border-border text-sm font-bold hover:bg-secondary hover:border-accent/40 hover:text-accent transition-all group">
+                    <button onClick={goBack} className="pointer-events-auto flex items-center gap-1.5 sm:gap-2 px-4 py-2.5 sm:px-6 sm:py-3.5 rounded-2xl border-2 border-border text-xs sm:text-sm font-bold hover:bg-white hover:border-white hover:text-black transition-all group shrink-0">
                         <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" /> Back
                     </button>
                 ) : <div />}
 
                 {!isLastStep ? (
-                    <div className="pointer-events-auto flex items-center gap-3">
+                    <div className="pointer-events-auto flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
                         <button
                             onClick={handleSaveDraft}
                             disabled={savingDraft}
-                            className="flex items-center gap-2 px-5 py-3.5 rounded-2xl border border-border text-sm font-bold text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all disabled:opacity-50"
+                            className="flex items-center gap-1.5 sm:gap-2 px-3 py-2.5 sm:px-5 sm:py-3.5 rounded-2xl border border-border text-xs sm:text-sm font-bold text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all disabled:opacity-50"
                         >
-                            {savingDraft ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                            Save Draft
+                            {savingDraft ? <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" /> : <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                            <span className="hidden sm:inline">Save Draft</span>
+                            <span className="sm:hidden">Save</span>
                         </button>
-                        <button onClick={goNext} className="flex items-center gap-2 px-8 py-3.5 bg-foreground text-background rounded-2xl text-sm font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl hover:bg-accent hover:text-white group">
-                            Continue <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                        <button onClick={goNext} className="flex items-center gap-1.5 sm:gap-2 px-5 py-2.5 sm:px-8 sm:py-3.5 bg-foreground text-background rounded-2xl text-xs sm:text-sm font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl hover:bg-accent hover:text-white group">
+                            Continue <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:translate-x-1" />
                         </button>
                     </div>
                 ) : (
@@ -2392,9 +2499,9 @@ export default function CreateEventPage() {
                             }
                             setConfirmOpen(true);
                         }}
-                        className="pointer-events-auto flex items-center gap-2 px-8 py-3.5 bg-primary text-primary-foreground rounded-2xl text-sm font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30 hover:bg-accent group"
+                        className="pointer-events-auto flex items-center gap-1.5 sm:gap-2 px-5 py-2.5 sm:px-8 sm:py-3.5 bg-primary text-primary-foreground rounded-2xl text-xs sm:text-sm font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30 hover:bg-accent group shrink-0 ml-auto"
                     >
-                        Launch <Rocket className="w-4 h-4 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 ml-1" />
+                        Launch <Rocket className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 ml-1" />
                     </button>
                 )}
             </div>

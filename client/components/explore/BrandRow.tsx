@@ -17,6 +17,7 @@ type BrandEvent = Event & {
 
 interface BrandRowProps {
     brand: {
+        id?: string;
         name: string;
         tagline?: string;
         logoUrl?: string;

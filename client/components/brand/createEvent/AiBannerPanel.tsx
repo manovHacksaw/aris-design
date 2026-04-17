@@ -63,18 +63,18 @@ function Stepper({
     <div className="flex items-center gap-3">
       <button
         onClick={() => onChange(Math.max(min, value - 1))}
-        className="w-9 h-9 rounded-xl border border-border text-muted-foreground hover:border-primary/40 hover:text-foreground flex items-center justify-center font-black transition-all"
+        className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-border/60 text-muted-foreground hover:border-primary/40 hover:text-primary flex items-center justify-center font-black transition-all bg-secondary/20"
       >
         −
       </button>
-      <span className="text-base font-black text-foreground w-6 text-center">{value}</span>
+      <span className="text-[14px] sm:text-base font-black text-foreground w-6 text-center">{value}</span>
       <button
         onClick={() => onChange(Math.min(max, value + 1))}
-        className="w-9 h-9 rounded-xl border border-border text-muted-foreground hover:border-primary/40 hover:text-foreground flex items-center justify-center font-black transition-all"
+        className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-border/60 text-muted-foreground hover:border-primary/40 hover:text-primary flex items-center justify-center font-black transition-all bg-secondary/20"
       >
         +
       </button>
-      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">{label}</span>
     </div>
   );
 }
@@ -290,14 +290,13 @@ export default function AiBannerPanel({
   };
 
   // ── Shared header ─────────────────────────────────────────────────────────
-
   const header = (
-    <div className="flex items-center justify-between px-6 py-4 border-b border-border/40">
-      <div className="flex items-center gap-3">
-        <ImageIcon className="w-5 h-5 text-primary shrink-0" />
+    <div className="flex items-center justify-between px-4 py-2.5 sm:px-6 sm:py-4 border-b border-border/40">
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0" />
         <div>
-          <p className="font-black text-foreground text-sm">Banner Studio</p>
-          <p className="text-xs text-muted-foreground">AI-crafted 16:9 banner — no text rendered</p>
+          <p className="font-black text-foreground text-[10px] sm:text-sm uppercase tracking-tight">Banner Studio</p>
+          <p className="hidden sm:block text-xs text-muted-foreground">AI-crafted 16:9 banner — no text rendered</p>
         </div>
       </div>
       {onClose && (
@@ -312,6 +311,7 @@ export default function AiBannerPanel({
   );
 
   // ── Locked state ──────────────────────────────────────────────────────────
+
 
   if (!isFormReady) {
     const missing: string[] = [];
@@ -343,9 +343,9 @@ export default function AiBannerPanel({
   return (
     <div className="flex flex-col">
       {header}
-      <div className="px-6 py-6 flex flex-col gap-5">
+      <div className="px-4 py-4 sm:px-6 sm:py-6 flex flex-col gap-3.5 sm:gap-5">
       {/* Context preview — shows what was pulled from the form */}
-      <div className="bg-muted/30 border border-border/40 rounded-2xl px-4 py-3 flex flex-col gap-1">
+      <div className="bg-muted/30 border border-border/40 rounded-xl px-3 py-2 sm:px-4 sm:py-3 flex flex-col gap-0.5 sm:gap-1">
         <p className="text-[9px] font-black uppercase tracking-wider text-muted-foreground/60 mb-0.5">Pulled from your form</p>
         <p className="text-xs font-black text-foreground truncate">{title}</p>
         {decisionDomain && (
@@ -362,21 +362,21 @@ export default function AiBannerPanel({
               type="text"
               value={theme}
               onChange={(e) => setTheme(e.target.value)}
-              placeholder="e.g. Dark moody, vibrant neon, pastel minimalist…"
-              className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary/50 transition-colors"
+              placeholder="e.g. Dark moody, vibrant neon..."
+              className="w-full bg-secondary/30 border border-border rounded-xl px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 transition-colors"
             />
           </div>
 
           {/* Target Market override */}
           <div>
-            <FieldLabel>Target Market <span className="normal-case font-normal text-muted-foreground">(optional override)</span></FieldLabel>
-            <div className="flex flex-wrap gap-1.5">
+            <FieldLabel>Target Market <span className="normal-case font-normal text-muted-foreground/50 ml-1">(optional override)</span></FieldLabel>
+            <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-2 px-2 no-scrollbar">
               {TARGET_MARKETS.map((m) => (
                 <button
                   key={m}
                   onClick={() => setTargetMarket(targetMarket === m ? "" : m)}
                   className={cn(
-                    "px-3 py-1 rounded-full text-xs font-medium border transition-all",
+                    "shrink-0 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider border transition-all",
                     targetMarket === m
                       ? "bg-primary text-primary-foreground border-primary"
                       : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"

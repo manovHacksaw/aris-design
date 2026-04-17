@@ -87,7 +87,9 @@ export default function BrandSettingsPage() {
     ]).then(([brandRes, milestonesRes, eventsRes]) => {
       if (brandRes.status === "fulfilled") setBrandData(brandRes.value);
       if (milestonesRes.status === "fulfilled") setTokensMinted(milestonesRes.value.usdcDistributed);
-      if (eventsRes.status === "fulfilled") setBrandEvents(eventsRes.value);
+      if (eventsRes.status === "fulfilled") {
+        setBrandEvents(eventsRes.value.filter((ev) => ev.status !== "draft"));
+      }
     });
   }, [user]);
 
@@ -573,7 +575,7 @@ export default function BrandSettingsPage() {
 
             <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
               <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-lime-400">Events</p>
-              <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">{brandData?.eventsCreated ?? "—"}</p>
+              <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">{brandData ? brandEvents.length : "—"}</p>
               <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Created</p>
             </div>
 

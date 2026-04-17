@@ -157,7 +157,7 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
         domain === "ALL"
             ? allData
             : allData.filter((item) => {
-                if (Array.isArray(item.categories)) return item.categories.some((c: string) => c.toUpperCase() === domain);
+                if ("categories" in item && Array.isArray(item.categories)) return item.categories.some((c: string) => c.toUpperCase() === domain);
                 if ("category" in item && typeof item.category === "string") return item.category.toUpperCase() === domain;
                 if ("domain" in item && typeof item.domain === "string") return item.domain.toUpperCase() === domain;
                 return false;
@@ -339,8 +339,8 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                                     )}
                                     <div className="min-w-0">
                                         <p className="text-[13px] font-semibold text-foreground/85 truncate leading-tight">{item.name}</p>
-                                        {item.categories?.length > 0 ? (
-                                            <p className="text-[10px] text-foreground/40 truncate leading-tight">{item.categories.slice(0, 2).join(" · ")}</p>
+                                        {(item.categories?.length ?? 0) > 0 ? (
+                                            <p className="text-[10px] text-foreground/40 truncate leading-tight">{item.categories!.slice(0, 2).join(" · ")}</p>
                                         ) : item.bio ? (
                                             <p className="text-[10px] text-foreground/40 truncate leading-tight">{item.bio}</p>
                                         ) : null}
@@ -404,7 +404,7 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                             </div>
                             <span className="text-[12px] font-black text-lime-500 text-right tabular-nums">
                                 {item.prizePool || item.leaderboardPool
-                                    ? `$${(item.prizePool || item.leaderboardPool).toLocaleString()}`
+                                    ? `$${(item.prizePool ?? item.leaderboardPool ?? 0).toLocaleString()}`
                                     : "—"}
                             </span>
                             <span className="text-[12px] text-foreground/40 text-right tabular-nums hidden sm:block">

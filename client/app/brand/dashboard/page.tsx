@@ -858,8 +858,8 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                 </div>
             </div>
 
-            {/* ── Row 2: Clicks Breakdown + Profile Visits + Avg Engagement ── */}
-            <div className="grid md:grid-cols-3 gap-4">
+            {/* ── Row 2: Clicks Breakdown + Profile Visits ── */}
+            <div className="grid md:grid-cols-2 gap-4">
 
                 {/* Clicks Breakdown Pie */}
                 <div className="bg-card border border-border/60 rounded-[20px] overflow-hidden">
@@ -960,58 +960,14 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                     )}
                 </div>
 
-                {/* Average Engagement Time */}
-                <div className="bg-card border border-border/60 rounded-[20px] p-5 flex flex-col gap-3">
-                    <div>
-                        <h3 className="font-bold text-base">Avg Engagement Time</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">Estimated time users spend per event</p>
-                    </div>
-                    {!hasData ? (
-                        <p className="text-sm text-muted-foreground flex-1 flex items-center">Not available</p>
-                    ) : (
-                        <>
-                            {(() => {
-                                // Estimate: votes + posts as proxy for engagement depth
-                                const rows = filteredEvents.map(e => {
-                                    const votes = e.eventAnalytics?.totalVotes ?? e._count?.votes ?? 0;
-                                    const posts = e._count?.submissions ?? e.eventAnalytics?.totalSubmissions ?? 0;
-                                    // ~15s per vote action, ~45s per post action as engagement proxy
-                                    const secs = votes * 15 + posts * 45;
-                                    return { title: e.title.length > 14 ? e.title.slice(0, 13) + "…" : e.title, secs };
-                                });
-                                const avgSecs = rows.length ? rows.reduce((s, r) => s + r.secs, 0) / rows.length : 0;
-                                const fmt = (s: number) => s >= 60 ? `${Math.floor(s / 60)}m ${Math.round(s % 60)}s` : `${Math.round(s)}s`;
-                                const maxSecs = Math.max(...rows.map(r => r.secs), 1);
-                                return (
-                                    <>
-                                        <div className="flex items-end gap-2">
-                                            <span className="text-[2.2rem] font-black leading-none text-foreground">{fmt(avgSecs)}</span>
-                                            <span className="text-xs font-bold text-muted-foreground mb-1">avg / event</span>
-                                        </div>
-                                        <div className="space-y-1.5 border-t border-border/40 pt-3">
-                                            {rows.slice(0, 4).map((r, i) => (
-                                                <div key={i} className="flex items-center gap-2">
-                                                    <span className="text-xs font-bold text-muted-foreground truncate w-20 shrink-0">{r.title}</span>
-                                                    <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                                        <div className="h-full rounded-full bg-cyan-500/60" style={{ width: `${(r.secs / maxSecs) * 100}%` }} />
-                                                    </div>
-                                                    <span className="text-xs font-black text-foreground w-10 text-right">{fmt(r.secs)}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </>
-                                );
-                            })()}
-                        </>
-                    )}
-                </div>
+
             </div>
 
-            {/* ── Row 3: Time vs Follower Growth ── */}
+            {/* ── Row 3: Time vs Subscriber Growth ── */}
             <div className="bg-card border border-border/60 rounded-[20px] overflow-hidden">
                 <div className="px-5 py-4 border-b border-border/40">
-                    <h3 className="font-bold text-base">Time vs Follower Growth</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">Cumulative unique participants over events (proxy for audience growth)</p>
+                    <h3 className="font-bold text-base">Time vs Subscriber Growth</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">Cumulative new subscribers over events (proxy for audience growth)</p>
                 </div>
                 <div className="px-2 py-3 h-[220px]">
                     {filteredSummaries.length === 0 ? (
@@ -1022,10 +978,12 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                                 data={(() => {
                                     let cumulative = 0;
                                     return filteredSummaries.map(s => {
-                                        cumulative += s.uniqueParticipants;
+                                        // TODO: replace 0 with actual new followers data if available from backend
+                                        const actualSubscribers = (s as any).newSubscribers ?? (s as any).newFollowers ?? 0;
+                                        cumulative += actualSubscribers;
                                         return {
                                             name: s.title.length > 12 ? s.title.slice(0, 11) + "…" : s.title,
-                                            participants: s.uniqueParticipants,
+                                            subscribers: actualSubscribers,
                                             cumulative,
                                         };
                                     });
@@ -1041,7 +999,7 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                                 <XAxis dataKey="name" tick={TICK} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                                 <YAxis tick={TICK} axisLine={false} tickLine={false} />
                                 <Tooltip content={<ChartTooltip />} cursor={{ stroke: "rgba(255,255,255,0.06)", strokeWidth: 1 }} />
-                                <Line type="monotone" dataKey="participants" name="New Participants" stroke={CC.blue} strokeWidth={2} strokeDasharray="4 3" dot={{ fill: CC.blue, r: 3, strokeWidth: 0 }} />
+                                <Line type="monotone" dataKey="subscribers" name="New Subscribers" stroke={CC.blue} strokeWidth={2} strokeDasharray="4 3" dot={{ fill: CC.blue, r: 3, strokeWidth: 0 }} />
                                 <Line type="monotone" dataKey="cumulative" name="Cumulative Reach" stroke={CC.cyan} strokeWidth={2.5} dot={{ fill: CC.cyan, r: 4, strokeWidth: 0 }} />
                             </LineChart>
                         </ResponsiveContainer>
@@ -1337,7 +1295,9 @@ export default function BrandDashboard() {
     useEffect(() => {
         Promise.allSettled([getBrandEvents(), getCurrentBrand(), getBrandAnalyticsOverview()])
             .then(([evtsRes, brandRes, analyticsRes]) => {
-                if (evtsRes.status === "fulfilled") setEvents(evtsRes.value);
+                if (evtsRes.status === "fulfilled") {
+                    setEvents(evtsRes.value.filter((e) => e.status !== "draft"));
+                }
                 if (brandRes.status === "fulfilled") setBrand(brandRes.value);
                 if (analyticsRes.status === "fulfilled") setAnalytics(analyticsRes.value);
             })

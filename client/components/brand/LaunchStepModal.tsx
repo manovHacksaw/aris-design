@@ -36,6 +36,8 @@ export interface LaunchFormData {
   regions?: string[];
   preferredGender?: string;
   ageGroup?: string;
+  minAge?: string;
+  maxAge?: string;
   contentType: string[];
   maxParticipants: string;
   baseReward: string;

@@ -1087,6 +1087,34 @@ export class EventService {
       updateData.intendedCategories = data.intendedCategories;
     }
 
+    if (!lockedFields.includes('proposals') && data.proposals !== undefined) {
+      if (event.eventType === 'post_and_vote' && data.proposals.length > 0) {
+        throw new Error('Proposals are only allowed for VOTE_ONLY events');
+      }
+      
+      const willBeScheduled = !event.status || event.status === 'SCHEDULED' || event.status === 'ACTIVE'; // active or scheduled needs proposals for vote_only
+      if (willBeScheduled && event.eventType === 'vote_only' && data.proposals.length < 2) {
+         throw new Error('Vote only events must have at least 2 proposals');
+      }
+
+      if (event.eventType === 'vote_only' && data.proposals.length > 10) {
+        throw new Error('Vote only events can have at most 10 proposals');
+      }
+
+      // Recreate proposals
+      updateData.proposals = {
+        deleteMany: {},
+        create: data.proposals.map((p, idx) => ({
+          type: p.type as any,
+          title: p.title,
+          content: p.content || null,
+          imageCid: p.imageCid || null,
+          imageUrl: p.imageUrl || null,
+          order: p.order ?? idx,
+        })),
+      };
+    }
+
     // Handle timestamp updates
     const timestampUpdates: any = {};
     let hasTimestampUpdates = false;

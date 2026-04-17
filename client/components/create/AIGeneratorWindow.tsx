@@ -43,6 +43,7 @@ interface GeneratedImage {
   data: string;
   mimeType: string;
   objectUrl: string;
+  file?: File;
 }
 
 interface AIGeneratorWindowProps {
@@ -374,10 +375,11 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
       const base64 = reader.result as string;
       const data = base64.split(",")[1];
       const objectUrl = URL.createObjectURL(file);
-      setGeneratedImage({ 
-        data: data, 
-        mimeType: file.type, 
-        objectUrl: objectUrl 
+      setGeneratedImage({
+        data: data,
+        mimeType: file.type,
+        objectUrl: objectUrl,
+        file: file,
       });
       setCurrentPrompt("Uploaded image");
       setStep("preview");

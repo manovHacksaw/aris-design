@@ -96,7 +96,7 @@ function TopEventsHero({ events }: { events: Event[] }) {
     if (!events || events.length === 0) return null;
 
     const event = events[currentIndex];
-    const displayImage = event.image || event.imageUrl || (event.imageCid ? `${PINATA_GW}/${event.imageCid}` : "");
+    const displayImage = event.imageUrl || (event.imageCid ? `${PINATA_GW}/${event.imageCid}` : "");
 
     return (
         <div className="relative w-full h-[450px] md:h-[480px] rounded-2xl overflow-hidden mb-0 group bg-[#0a0a0c] border border-white/5 shadow-2xl">
