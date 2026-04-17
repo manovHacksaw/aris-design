@@ -144,27 +144,23 @@ export class EventLifecycleService {
    * Transition event to completed status with rankings
    */
   static async transitionToCompleted(eventId: string): Promise<Event> {
-    // Compute rankings first
-    await EventRankingService.computeRankings(eventId);
-
-    // Update status to completed
-    const completedEvent = await prisma.event.update({
-      where: { id: eventId },
-      data: { status: EventStatus.COMPLETED },
+    // Rankings and status update are atomic: if either fails, both roll back.
+    const completedEvent = await prisma.$transaction(async (tx) => {
+      await EventRankingService.computeRankings(eventId, tx);
+      return tx.event.update({
+        where: { id: eventId },
+        data: { status: EventStatus.COMPLETED },
+      });
     });
 
-    // Update trust scores for all voters (async, don't block completion)
     TrustService.updateTrustScores(eventId).catch((error) => {
       logger.error({ err: error }, 'Failed to update trust scores:');
     });
 
-    // Process event completion milestones (async, don't block completion)
-    // This checks TOP_VOTES, TOP_3_CONTENT, and VOTES_RECEIVED milestones
     MilestoneService.processEventCompletion(eventId).catch((error) => {
       logger.error({ err: error }, 'Failed to process event completion milestones:');
     });
 
-    // Recalculate brand level after event completion (async, don't block completion)
     BrandXpService.recalculateBrandLevel(
       completedEvent.brandId,
       'event_completion',
@@ -173,10 +169,8 @@ export class EventLifecycleService {
       logger.error({ err: error }, 'Failed to recalculate brand level:');
     });
 
-    // Process USDC rewards (async, don't block completion)
-    // Creates claim records for all eligible participants
     RewardsDistributionService.processEventRewards(eventId).catch((error) => {
-      logger.error(`🚨 REWARDS FAILED for event ${eventId}: ${error.message}`, error);
+      logger.error({ err: error }, `REWARDS FAILED for event ${eventId}:`);
     });
 
     return completedEvent;

@@ -263,7 +263,7 @@ export class RewardsDistributionService {
 
       // ==================== ON-CHAIN DISTRIBUTION ====================
       const BlockchainService = (await import('../../lib/blockchain.js')).BlockchainService;
-      const NotificationService = (await import('../notificationService.js')).NotificationService;
+      const NotificationService = (await import('../social/notificationService.js')).NotificationService;
 
       const usersBatch: string[] = [];
       const amountsBatch: bigint[] = [];
