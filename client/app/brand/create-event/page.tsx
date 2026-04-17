@@ -1303,6 +1303,8 @@ export default function CreateEventPage() {
                                             brandName={user?.ownedBrands?.[0]?.name}
                                             brandBio={user?.ownedBrands?.[0]?.description}
                                             onApply={(file, preview) => {
+                                                const updated = [...samplePreviews];
+                                                const updatedFiles = [...form.sampleImages];
                                                 if (updated[aiGeneratorSampleIdx]) URL.revokeObjectURL(updated[aiGeneratorSampleIdx]);
                                                 updated[aiGeneratorSampleIdx] = preview;
                                                 updatedFiles[aiGeneratorSampleIdx] = file;
@@ -1312,7 +1314,8 @@ export default function CreateEventPage() {
                                             }}
                                             onClose={() => setAiGeneratorSampleIdx(null)}
                                         />
-                                    </div>
+                                    </div>,
+                                    document.body
                                 )}
                             </div>
                         )}

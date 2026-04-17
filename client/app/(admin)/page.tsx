@@ -86,13 +86,12 @@ const STAT_CARDS = (s: AdminStats) => [
 ];
 
 export default function AdminDashboardPage() {
-  const { credentials } = useAdminAuth();
+  useAdminAuth();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const fetchStats = async () => {
-    if (!credentials) return;
     setLoading(true);
     setError("");
     try {
@@ -105,7 +104,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  useEffect(() => { fetchStats(); }, [credentials]);
+  useEffect(() => { fetchStats(); }, []);
 
   return (
     <div className="min-h-screen">
