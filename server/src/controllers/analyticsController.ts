@@ -52,6 +52,7 @@ export const trackClick = async (req: Request, res: Response) => {
 
 export const getEventAnalytics = async (req: Request, res: Response) => {
   try {
+    if (!await requireEventOwner(req.params.id, req.user?.id, res)) return;
     const analytics = await AnalyticsService.getEventAnalytics(req.params.id);
     res.status(200).json(analytics);
   } catch (e: any) {
@@ -129,6 +130,7 @@ export const getBrandTimeseries = async (req: Request, res: Response) => {
 
 export const getEventClicksBreakdown = async (req: Request, res: Response) => {
   try {
+    if (!await requireEventOwner(req.params.id, req.user?.id, res)) return;
     const breakdown = await AnalyticsService.getEventClicksBreakdown(req.params.id);
     res.status(200).json(breakdown);
   } catch (e: any) {
