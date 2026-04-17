@@ -1,3 +1,4 @@
+import logger from './lib/logger';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -27,7 +28,7 @@ export const createApp = () => {
     app.use(express.urlencoded({ extended: true }));
 
     // API Routes
-    console.log('Mounting API routes at /api');
+    logger.info('Mounting API routes at /api');
     app.use('/api', routes);
 
     // Error handling middleware (must be last)

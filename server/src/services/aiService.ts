@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from 'dotenv';
 import axios from 'axios';
@@ -23,7 +24,7 @@ export class AiService {
             const response = await result.response;
             return response.text().trim();
         } catch (error) {
-            console.error('Error generating image prompt:', error);
+            logger.error('Error generating image prompt:', error);
             throw new Error('Failed to generate image prompt');
         }
     }
@@ -33,7 +34,7 @@ export class AiService {
      */
     static async generateImage(prompt: string): Promise<{ base64: string, buffer: Buffer }> {
         try {
-            console.log('Generating image for prompt:', prompt);
+            logger.info('Generating image for prompt:', prompt);
             const model = this.genAI.getGenerativeModel({ model: "imagen-3.0-generate-001" });
             const result = await model.generateContent(prompt);
             const response = await result.response;
@@ -49,7 +50,7 @@ export class AiService {
 
             throw new Error('No image data returned from model. Ensure your API Key has Imagen 3 access enabled.');
         } catch (error: any) {
-            console.error('Error generating image:', error);
+            logger.error('Error generating image:', error);
             if (error.message?.includes('403') || error.message?.includes('not found')) {
                 throw new Error('Imagen 3 access is not enabled for this API Key. Please enable it in Google AI Studio.');
             }
@@ -76,7 +77,7 @@ export class AiService {
 
             return response.data.IpfsHash;
         } catch (error: any) {
-            console.error('Pinata upload error:', error.response?.data || error.message);
+            logger.error('Pinata upload error:', error.response?.data || error.message);
             throw new Error('Failed to upload generated image to IPFS');
         }
     }
@@ -93,7 +94,7 @@ export class AiService {
             const response = await result.response;
             return response.text().trim().replace(/^["']|["']$/g, '');
         } catch (error) {
-            console.error('Error generating tagline:', error);
+            logger.error('Error generating tagline:', error);
             throw new Error('Failed to generate tagline');
         }
     }
@@ -191,7 +192,7 @@ Format: [{"title":"...","description":"...","estimated_duration":"...","hypothes
             const jsonStr = jsonMatch ? jsonMatch[0] : text;
             return JSON.parse(jsonStr);
         } catch (error) {
-            console.error('Error generating event details:', error);
+            logger.error('Error generating event details:', error);
             throw new Error('Failed to generate event details');
         }
     }
@@ -258,7 +259,7 @@ Example: ["prompt 1", "prompt 2"]`;
             }
             return parsed;
         } catch (error) {
-            console.error('Error generating banner prompts:', error);
+            logger.error('Error generating banner prompts:', error);
             throw new Error('Failed to generate banner prompts');
         }
     }
@@ -327,7 +328,7 @@ STRICT IMAGE RULES (embed in every prompt):
             }
             return parsed;
         } catch (error) {
-            console.error('Error generating voting option prompts:', error);
+            logger.error('Error generating voting option prompts:', error);
             throw new Error('Failed to generate voting option prompts');
         }
     }
@@ -351,7 +352,7 @@ STRICT IMAGE RULES (embed in every prompt):
 
             return JSON.parse(jsonStr);
         } catch (error) {
-            console.error('Error generating proposals:', error);
+            logger.error('Error generating proposals:', error);
             throw new Error('Failed to generate proposals');
         }
     }
@@ -440,10 +441,10 @@ STRICT IMAGE RULES (embed in every prompt):
                 data: { aiSummary: summary },
             });
 
-            console.log(`✨ [AiService] Generated rich event summary for ${eventId}`);
+            logger.info(`✨ [AiService] Generated rich event summary for ${eventId}`);
             return summary;
         } catch (error) {
-            console.error(`[AiService] Failed to generate event summary for ${eventId}:`, error);
+            logger.error(`[AiService] Failed to generate event summary for ${eventId}:`, error);
             return null;
         }
     }
@@ -666,7 +667,7 @@ OUTPUT STRICT JSON:
             const actionsJsonMatch = actionsText.match(/\{[\s\S]*\}/);
             const actions = actionsJsonMatch ? JSON.parse(actionsJsonMatch[0]) : { raw: actionsText };
 
-            console.log(`✨ [AiService] Generated full insights pipeline for event ${eventId}`);
+            logger.info(`✨ [AiService] Generated full insights pipeline for event ${eventId}`);
 
             return {
                 event: {
@@ -700,7 +701,7 @@ OUTPUT STRICT JSON:
                 },
             };
         } catch (error) {
-            console.error(`[AiService] Failed to generate event insights for ${eventId}:`, error);
+            logger.error(`[AiService] Failed to generate event insights for ${eventId}:`, error);
             throw error;
         }
     }
@@ -783,10 +784,10 @@ OUTPUT STRICT JSON:
                 data: { aiSummary: summary },
             });
 
-            console.log(`✨ [AiService] Generated rich brand summary for ${brandId}`);
+            logger.info(`✨ [AiService] Generated rich brand summary for ${brandId}`);
             return summary;
         } catch (error) {
-            console.error(`[AiService] Failed to generate brand summary for ${brandId}:`, error);
+            logger.error(`[AiService] Failed to generate brand summary for ${brandId}:`, error);
             return null;
         }
     }

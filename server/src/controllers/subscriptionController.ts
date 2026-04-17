@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Request, Response } from 'express';
 import { SubscriptionService } from '../services/subscriptionService';
 
@@ -29,7 +30,7 @@ export const subscribeToBrand = async (req: Request, res: Response): Promise<voi
 
         res.json(result);
     } catch (error: any) {
-        console.error('Error in subscribeToBrand:', error);
+        logger.error('Error in subscribeToBrand:', error);
         res.status(500).json({
             success: false,
             error: error.message || 'Failed to subscribe to brand'
@@ -65,7 +66,7 @@ export const unsubscribeFromBrand = async (req: Request, res: Response): Promise
 
         res.json(result);
     } catch (error: any) {
-        console.error('Error in unsubscribeFromBrand:', error);
+        logger.error('Error in unsubscribeFromBrand:', error);
         res.status(500).json({
             success: false,
             error: error.message || 'Failed to unsubscribe from brand'
@@ -104,7 +105,7 @@ export const getSubscriptionStatus = async (req: Request, res: Response): Promis
             isSubscribed
         });
     } catch (error: any) {
-        console.error('Error in getSubscriptionStatus:', error);
+        logger.error('Error in getSubscriptionStatus:', error);
         res.status(500).json({
             success: false,
             error: error.message || 'Failed to check subscription status'
@@ -132,7 +133,7 @@ export const getMySubscriptions = async (req: Request, res: Response): Promise<v
             subscriptions
         });
     } catch (error: any) {
-        console.error('Error in getMySubscriptions:', error);
+        logger.error('Error in getMySubscriptions:', error);
         res.status(500).json({
             success: false,
             error: error.message || 'Failed to fetch subscriptions'
@@ -183,7 +184,7 @@ export const getBrandSubscribers = async (req: Request, res: Response): Promise<
             subscribers
         });
     } catch (error: any) {
-        console.error('Error in getBrandSubscribers:', error);
+        logger.error('Error in getBrandSubscribers:', error);
         res.status(500).json({
             success: false,
             error: error.message || 'Failed to fetch subscribers'
@@ -211,7 +212,7 @@ export const getSubscriberCount = async (req: Request, res: Response): Promise<v
             count
         });
     } catch (error: any) {
-        console.error('Error in getSubscriberCount:', error);
+        logger.error('Error in getSubscriberCount:', error);
         res.status(500).json({
             success: false,
             error: error.message || 'Failed to get subscriber count'

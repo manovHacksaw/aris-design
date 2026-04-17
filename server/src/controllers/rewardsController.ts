@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Request, Response } from 'express';
 import { RewardsService } from '../services/rewardsService.js';
 import { prisma } from '../lib/prisma.js';
@@ -40,7 +41,7 @@ export class RewardsController {
         data: pool,
       });
     } catch (error: any) {
-      console.error('Error getting pool:', error);
+      logger.error('Error getting pool:', error);
       res.status(500).json({
         success: false,
         error: error.message || 'Failed to get pool',
@@ -92,7 +93,7 @@ export class RewardsController {
         data: pool,
       });
     } catch (error: any) {
-      console.error('Error cancelling pool:', error);
+      logger.error('Error cancelling pool:', error);
       res.status(400).json({
         success: false,
         error: error.message || 'Failed to cancel pool',
@@ -143,7 +144,7 @@ export class RewardsController {
         },
       });
     } catch (error: any) {
-      console.error('Error calculating requirements:', error);
+      logger.error('Error calculating requirements:', error);
       res.status(400).json({
         success: false,
         error: error.message || 'Failed to calculate requirements',
@@ -174,7 +175,7 @@ export class RewardsController {
         data: claims,
       });
     } catch (error: any) {
-      console.error('Error getting claims:', error);
+      logger.error('Error getting claims:', error);
       res.status(500).json({
         success: false,
         error: error.message || 'Failed to get claims',
@@ -220,7 +221,7 @@ export class RewardsController {
         data: claim,
       });
     } catch (error: any) {
-      console.error('Error confirming claim:', error);
+      logger.error('Error confirming claim:', error);
       res.status(500).json({
         success: false,
         error: error.message || 'Failed to confirm claim',
@@ -255,7 +256,7 @@ export class RewardsController {
         data: result,
       });
     } catch (error: any) {
-      console.error('Error confirming all claims:', error);
+      logger.error('Error confirming all claims:', error);
       res.status(500).json({
         success: false,
         error: error.message || 'Failed to confirm claims',
@@ -284,7 +285,7 @@ export class RewardsController {
         data: result,
       });
     } catch (error: any) {
-      console.error('Error syncing claims:', error);
+      logger.error('Error syncing claims:', error);
       res.status(500).json({
         success: false,
         error: error.message || 'Failed to sync claims',
@@ -330,7 +331,7 @@ export class RewardsController {
         events,
       });
     } catch (error: any) {
-      console.error('Error getting my rewards:', error);
+      logger.error('Error getting my rewards:', error);
       res.status(500).json({
         success: false,
         error: error.message || 'Failed to get rewards',
@@ -414,7 +415,7 @@ export class RewardsController {
         data: claim,
       });
     } catch (error: any) {
-      console.error('Error claiming reward:', error);
+      logger.error('Error claiming reward:', error);
       res.status(500).json({
         success: false,
         error: error.message || 'Failed to claim reward',
@@ -449,7 +450,7 @@ export class RewardsController {
         },
       });
     } catch (error: any) {
-      console.error('Error getting claimable rewards:', error);
+      logger.error('Error getting claimable rewards:', error);
       res.status(500).json({
         success: false,
         error: error.message || 'Failed to get claimable rewards',
@@ -478,7 +479,7 @@ export class RewardsController {
         data: history,
       });
     } catch (error: any) {
-      console.error('Error getting claim history:', error);
+      logger.error('Error getting claim history:', error);
       res.status(500).json({
         success: false,
         error: error.message || 'Failed to get claim history',
@@ -548,7 +549,7 @@ export class RewardsController {
 
       res.json({ success: true, data: result });
     } catch (error: any) {
-      console.error('Error claiming pending rewards:', error);
+      logger.error('Error claiming pending rewards:', error);
       res.status(500).json({ success: false, error: error.message || 'Failed to claim pending rewards' });
     }
   }
@@ -591,7 +592,7 @@ export class RewardsController {
         },
       });
     } catch (error: any) {
-      console.error('Error getting brand refunds:', error);
+      logger.error('Error getting brand refunds:', error);
       res.status(500).json({
         success: false,
         error: error.message || 'Failed to get refund data',
@@ -691,7 +692,7 @@ export class RewardsController {
         }
       });
     } catch (error: any) {
-      console.error('Error getting brand claimable rewards:', error);
+      logger.error('Error getting brand claimable rewards:', error);
       res.status(500).json({
         success: false,
         error: error.message || 'Failed to get claimable rewards',
@@ -737,7 +738,7 @@ export class RewardsController {
 
       res.json(result);
     } catch (error: any) {
-      console.error('Error preparing refund claim:', error);
+      logger.error('Error preparing refund claim:', error);
       res.status(500).json({
         success: false,
         error: error.message || 'Failed to prepare refund',

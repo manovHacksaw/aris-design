@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Request, Response } from 'express';
 import { AiService } from '../services/aiService';
 
@@ -21,7 +22,7 @@ export const generateBannerPrompts = async (req: Request, res: Response): Promis
 
         return res.json({ success: true, prompts });
     } catch (error: any) {
-        console.error('Error in AI generateBannerPrompts:', error);
+        logger.error('Error in AI generateBannerPrompts:', error);
         return res.status(500).json({ success: false, error: 'Banner prompt generation failed', message: error.message });
     }
 };
@@ -45,7 +46,7 @@ export const generateVotingOptionPrompts = async (req: Request, res: Response): 
 
         return res.json({ success: true, prompts });
     } catch (error: any) {
-        console.error('Error in AI generateVotingOptionPrompts:', error);
+        logger.error('Error in AI generateVotingOptionPrompts:', error);
         return res.status(500).json({ success: false, error: 'Voting option prompt generation failed', message: error.message });
     }
 };
@@ -87,7 +88,7 @@ export const generateImage = async (req: Request, res: Response): Promise<Respon
                 message: 'Image generated and uploaded successfully.'
             });
         } catch (genError: any) {
-            console.warn('Image generation failed, returning refined prompt only:', genError.message);
+            logger.warn('Image generation failed, returning refined prompt only:', genError.message);
             return res.json({
                 success: true,
                 refinedPrompt,
@@ -96,7 +97,7 @@ export const generateImage = async (req: Request, res: Response): Promise<Respon
             });
         }
     } catch (error: any) {
-        console.error('Error in AI generateImage:', error);
+        logger.error('Error in AI generateImage:', error);
         return res.status(500).json({
             success: false,
             error: 'AI Generation failed',
@@ -149,7 +150,7 @@ export const generateTagline = async (req: Request, res: Response): Promise<Resp
             tagline
         });
     } catch (error: any) {
-        console.error('Error in AI generateTagline:', error);
+        logger.error('Error in AI generateTagline:', error);
         return res.status(500).json({
             success: false,
             error: 'AI Tagline Generation failed',
@@ -186,7 +187,7 @@ export const generateEventDetails = async (req: Request, res: Response): Promise
             suggestions,
         });
     } catch (error: any) {
-        console.error('Error in AI generateEventDetails:', error);
+        logger.error('Error in AI generateEventDetails:', error);
         return res.status(500).json({
             success: false,
             error: 'AI Event Details Generation failed',
@@ -213,7 +214,7 @@ export const generateProposals = async (req: Request, res: Response): Promise<Re
             proposals
         });
     } catch (error: any) {
-        console.error('Error in AI generateProposals:', error);
+        logger.error('Error in AI generateProposals:', error);
         return res.status(500).json({
             success: false,
             error: 'AI Proposal Generation failed',

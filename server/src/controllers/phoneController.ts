@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Response } from 'express';
 import { PhoneService } from '../services/phoneService';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';
@@ -19,7 +20,7 @@ export const checkPhoneAvailability = async (req: AuthenticatedRequest, res: Res
     const available = await PhoneService.checkAvailability(phoneNumber, userId);
     res.json({ available });
   } catch (error: any) {
-    console.error('Error checking phone availability:', error);
+    logger.error('Error checking phone availability:', error);
     res.status(500).json({
       error: 'Failed to check phone availability',
     });
@@ -41,7 +42,7 @@ export const verifyFirebasePhone = async (req: AuthenticatedRequest, res: Respon
 
   if (!isVerificationEnabled) {
     // Auto-verify phone when verification is disabled
-    console.log('⚠️ Phone verification disabled - auto-verifying phone');
+    logger.info('⚠️ Phone verification disabled - auto-verifying phone');
     const { phoneNumber } = req.body; // Accept phone directly instead of idToken
     const userId = req.user!.id;
 
@@ -93,7 +94,7 @@ export const verifyFirebasePhone = async (req: AuthenticatedRequest, res: Respon
       },
     });
   } catch (error: any) {
-    console.error('Error verifying Firebase token:', error);
+    logger.error('Error verifying Firebase token:', error);
     res.status(error.message.includes('already registered') ? 400 : 500).json({
       error: error.message || 'Failed to verify phone number',
     });

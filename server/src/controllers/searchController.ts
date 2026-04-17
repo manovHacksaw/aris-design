@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { UserRole } from '@prisma/client';
@@ -88,7 +89,7 @@ export const searchUsers = async (req: AuthenticatedRequest, res: Response): Pro
             count: users.length,
         });
     } catch (error) {
-        console.error('Error searching users:', error);
+        logger.error('Error searching users:', error);
         res.status(500).json({
             success: false,
             error: 'Failed to search users',
@@ -160,7 +161,7 @@ export const searchBrands = async (req: AuthenticatedRequest, res: Response): Pr
             count: brands.length,
         });
     } catch (error) {
-        console.error('Error searching brands:', error);
+        logger.error('Error searching brands:', error);
         res.status(500).json({
             success: false,
             error: 'Failed to search brands',
@@ -229,7 +230,7 @@ export const searchEvents = async (req: AuthenticatedRequest, res: Response): Pr
             count: events.length,
         });
     } catch (error) {
-        console.error('Error searching events:', error);
+        logger.error('Error searching events:', error);
         res.status(500).json({
             success: false,
             error: 'Failed to search events',
@@ -372,7 +373,7 @@ export const searchAll = async (req: AuthenticatedRequest, res: Response): Promi
             },
         });
     } catch (error) {
-        console.error('Error searching:', error);
+        logger.error('Error searching:', error);
         res.status(500).json({
             success: false,
             error: 'Failed to search',
@@ -431,7 +432,7 @@ export const getUserByUsername = async (req: AuthenticatedRequest, res: Response
             user,
         });
     } catch (error) {
-        console.error('Error fetching user by username:', error);
+        logger.error('Error fetching user by username:', error);
         res.status(500).json({
             success: false,
             error: 'Failed to fetch user',
@@ -494,7 +495,7 @@ export const getBrandByIdentifier = async (req: AuthenticatedRequest, res: Respo
             brand: addBrandLogoUrls(brand),
         });
     } catch (error) {
-        console.error('Error fetching brand:', error);
+        logger.error('Error fetching brand:', error);
         res.status(500).json({
             success: false,
             error: 'Failed to fetch brand',

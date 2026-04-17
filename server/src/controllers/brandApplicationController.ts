@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Request, Response } from 'express';
 import { BrandApplicationService } from '../services/brandApplicationService';
 import { ApplicationStatus } from '@prisma/client';
@@ -85,7 +86,7 @@ export const submitApplication = async (req: Request, res: Response): Promise<vo
       },
     });
   } catch (error: any) {
-    console.error('Error submitting brand application:', error);
+    logger.error('Error submitting brand application:', error);
 
     // Handle known errors
     if (error.message.includes('already')) {
@@ -142,7 +143,7 @@ export const getApplication = async (req: Request, res: Response): Promise<void>
 
     res.json(application);
   } catch (error) {
-    console.error('Error fetching application:', error);
+    logger.error('Error fetching application:', error);
     res.status(500).json({ error: 'Failed to fetch application' });
   }
 };
@@ -177,7 +178,7 @@ export const getApplications = async (req: Request, res: Response): Promise<void
       applications,
     });
   } catch (error) {
-    console.error('Error fetching applications:', error);
+    logger.error('Error fetching applications:', error);
     res.status(500).json({ error: 'Failed to fetch applications' });
   }
 };
@@ -208,7 +209,7 @@ export const approveApplication = async (req: Request, res: Response): Promise<v
       application,
     });
   } catch (error: any) {
-    console.error('Error approving application:', error);
+    logger.error('Error approving application:', error);
 
     if (error.message === 'Application not found') {
       res.status(404).json({ error: error.message });
@@ -255,7 +256,7 @@ export const rejectApplication = async (req: Request, res: Response): Promise<vo
       application,
     });
   } catch (error: any) {
-    console.error('Error rejecting application:', error);
+    logger.error('Error rejecting application:', error);
 
     if (error.message === 'Application not found') {
       res.status(404).json({ error: error.message });
@@ -300,7 +301,7 @@ export const getApplicationByEmail = async (req: Request, res: Response): Promis
       rejectionReason: application.rejectionReason,
     });
   } catch (error) {
-    console.error('Error fetching application by email:', error);
+    logger.error('Error fetching application by email:', error);
     res.status(500).json({ error: 'Failed to fetch application' });
   }
 };

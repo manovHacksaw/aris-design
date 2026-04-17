@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Response } from 'express';
 import { SubmissionService } from '../services/submissionService.js';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware.js';
@@ -25,7 +26,7 @@ export const createSubmission = async (req: AuthenticatedRequest, res: Response)
             submission,
         });
     } catch (error: any) {
-        console.error('Error in createSubmission:', error);
+        logger.error('Error in createSubmission:', error);
         res.status(400).json({
             success: false,
             error: error.message,
@@ -55,7 +56,7 @@ export const updateSubmission = async (req: AuthenticatedRequest, res: Response)
             submission,
         });
     } catch (error: any) {
-        console.error('Error in updateSubmission:', error);
+        logger.error('Error in updateSubmission:', error);
         res.status(error.message.includes('Forbidden') ? 403 : 400).json({
             success: false,
             error: error.message,
@@ -83,7 +84,7 @@ export const deleteSubmission = async (req: AuthenticatedRequest, res: Response)
             message: 'Submission deleted successfully',
         });
     } catch (error: any) {
-        console.error('Error in deleteSubmission:', error);
+        logger.error('Error in deleteSubmission:', error);
         res.status(error.message.includes('Forbidden') ? 403 : 400).json({
             success: false,
             error: error.message,
@@ -107,7 +108,7 @@ export const getSubmissionsByEvent = async (req: AuthenticatedRequest, res: Resp
             submissions,
         });
     } catch (error: any) {
-        console.error('Error in getSubmissionsByEvent:', error);
+        logger.error('Error in getSubmissionsByEvent:', error);
         res.status(400).json({
             success: false,
             error: error.message,
@@ -136,7 +137,7 @@ export const getUserSubmission = async (req: AuthenticatedRequest, res: Response
             submission,
         });
     } catch (error: any) {
-        console.error('Error in getUserSubmission:', error);
+        logger.error('Error in getUserSubmission:', error);
         res.status(500).json({
             success: false,
             error: 'Internal server error',
@@ -164,7 +165,7 @@ export const checkIfUserHasSubmitted = async (req: AuthenticatedRequest, res: Re
             hasSubmitted: !!submission,
         });
     } catch (error: any) {
-        console.error('Error in checkIfUserHasSubmitted:', error);
+        logger.error('Error in checkIfUserHasSubmitted:', error);
         res.status(500).json({
             success: false,
             error: 'Internal server error',
@@ -188,7 +189,7 @@ export const getSubmissionsByUser = async (req: AuthenticatedRequest, res: Respo
             submissions,
         });
     } catch (error: any) {
-        console.error('Error in getSubmissionsByUser:', error);
+        logger.error('Error in getSubmissionsByUser:', error);
         res.status(400).json({
             success: false,
             error: error.message,

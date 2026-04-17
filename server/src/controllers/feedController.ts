@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Request, Response } from "express";
 import { HomeService } from "../services/homeService.ts";
 
@@ -14,7 +15,7 @@ export async function getHomeEvents(req: Request, res: Response) {
     const feed = await HomeService.getHomeFeed(userId);
     res.json({ success: true, data: feed });
   } catch (error) {
-    console.error("Error fetching home event feed:", error);
+    logger.error("Error fetching home event feed:", error);
     res.status(500).json({ success: false, message: "Failed to fetch home event feed" });
   }
 }
@@ -32,7 +33,7 @@ export async function getHomeContent(req: Request, res: Response) {
     const content = await HomeService.getHomeContent(userId);
     res.json({ success: true, data: content });
   } catch (error) {
-    console.error("Error fetching home content feed:", error);
+    logger.error("Error fetching home content feed:", error);
     res.status(500).json({ success: false, message: "Failed to fetch home content feed" });
   }
 }

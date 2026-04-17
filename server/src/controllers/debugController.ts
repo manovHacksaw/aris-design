@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';
 import { prisma } from '../lib/prisma';
@@ -80,7 +81,7 @@ export const checkVotingState = async (req: AuthenticatedRequest, res: Response)
             },
         });
     } catch (error: any) {
-        console.error('Error in checkVotingState:', error);
+        logger.error('Error in checkVotingState:', error);
         res.status(500).json({
             success: false,
             error: error.message,
@@ -180,7 +181,7 @@ export const getPendingRewardUsers = async (_req: AuthenticatedRequest, res: Res
             users: Array.from(byUser.values()),
         });
     } catch (error: any) {
-        console.error('Error in getPendingRewardUsers:', error);
+        logger.error('Error in getPendingRewardUsers:', error);
         res.status(500).json({
             success: false,
             error: error.message,

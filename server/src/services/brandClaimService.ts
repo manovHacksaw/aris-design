@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { prisma } from '../lib/prisma';
 import { ApplicationStatus, UserRole } from '@prisma/client';
 import { randomUUID } from 'crypto';
@@ -57,7 +58,7 @@ export class BrandClaimService {
         applicationId: applicationId,
       };
     } catch (error: any) {
-      console.error('Error in generateClaimToken:', error);
+      logger.error('Error in generateClaimToken:', error);
       // Re-throw with more context
       if (error.code === 'P2002') {
         const field = error.meta?.target?.[0] || 'field';
@@ -125,7 +126,7 @@ export class BrandClaimService {
     const walletAddress = data.walletAddress.toLowerCase();
 
     // Validate inputs
-    console.log('claimBrand called with:', { claimToken, email, walletAddress, displayName });
+    logger.info('claimBrand called with:', { claimToken, email, walletAddress, displayName });
 
     if (!claimToken || !email || !walletAddress) {
       throw new ValidationError('Claim token, email, and wallet address are required');
@@ -178,7 +179,7 @@ export class BrandClaimService {
       });
 
       if (user) {
-        console.log(`Found existing user by wallet: ${user.id}`);
+        logger.info(`Found existing user by wallet: ${user.id}`);
 
         // User exists with this wallet. We will upgrade this user.
         // If they provided a different email in the form, we might want to update it,
@@ -194,7 +195,7 @@ export class BrandClaimService {
               data: { email: email.toLowerCase() }
             });
           } else {
-            console.warn(`User wanted to use email ${email} but it is taken by another user. Keeping ${user.email}`);
+            logger.warn(`User wanted to use email ${email} but it is taken by another user. Keeping ${user.email}`);
             // We proceed with the existing user and their existing email
           }
         }
@@ -205,11 +206,11 @@ export class BrandClaimService {
         });
 
         if (user) {
-          console.log(`Found existing user by email: ${user.id}`);
+          logger.info(`Found existing user by email: ${user.id}`);
           // User exists by email. If they have a different wallet, we update it to the new one.
           // This allows migrating from EOA to Smart Account.
           if (user.walletAddress && user.walletAddress.toLowerCase() !== walletAddress) {
-            console.log(`Migrating user ${user.id} wallet from ${user.walletAddress} to ${walletAddress}`);
+            logger.info(`Migrating user ${user.id} wallet from ${user.walletAddress} to ${walletAddress}`);
             user = await tx.user.update({
               where: { id: user.id },
               data: { walletAddress: walletAddress }
@@ -217,7 +218,7 @@ export class BrandClaimService {
           }
         } else {
           // 3. Create NEW User
-          console.log(`Creating new user for brand claim`);
+          logger.info(`Creating new user for brand claim`);
           user = await tx.user.create({
             data: {
               email: email.toLowerCase(),
@@ -249,7 +250,7 @@ export class BrandClaimService {
 
       if (existingOwnedBrand) {
         if (!existingOwnedBrand.isActive) {
-          console.log(`User ${user.id} owns inactive brand ${existingOwnedBrand.id}, allowing reclaim/update`);
+          logger.info(`User ${user.id} owns inactive brand ${existingOwnedBrand.id}, allowing reclaim/update`);
         } else {
           // If they are claiming the SAME brand again (e.g. retry), that's fine.
           // But if they are claiming a DIFFERENT brand, we might block or allow multiple?

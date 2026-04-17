@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { prisma } from '../lib/prisma.js';
 import { MilestoneCategory, XpTransactionType, Prisma } from '@prisma/client';
 import { XpService } from './xpService.js';
@@ -169,7 +170,7 @@ export class ReferralService {
         totalReferrals
       );
     } catch (error) {
-      console.error('Failed to check referral milestones:', error);
+      logger.error('Failed to check referral milestones:', error);
       // Don't fail the referral for milestone errors
     }
 

@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { prisma } from '../lib/prisma.js';
 import { LoginStreakService } from './loginStreakService.js';
 import { XpService } from './xpService.js';
@@ -259,7 +260,7 @@ export class UserService {
                                 description: 'Welcome to Aris!',
                             });
                         } catch (e) {
-                            console.warn('[updateProfile] Welcome XP grant failed:', e);
+                            logger.warn('[updateProfile] Welcome XP grant failed:', e);
                         }
                     });
                 }
@@ -314,7 +315,7 @@ export class UserService {
      */
     static async getUserStats(userId: string) {
         try {
-            console.log(`[UserService.getUserStats] Fetching stats for user: ${userId}`);
+            logger.info(`[UserService.getUserStats] Fetching stats for user: ${userId}`);
 
             // 1. Fetch user to verify existence and get denormalized counters
             const user = await prisma.user.findUnique({
@@ -330,13 +331,13 @@ export class UserService {
             });
 
             if (!user) {
-                console.error(`[UserService.getUserStats] User not found: ${userId}`);
+                logger.error(`[UserService.getUserStats] User not found: ${userId}`);
                 throw new Error('User not found');
             }
 
             // Update login streak in background
             LoginStreakService.recordDailyLogin(userId).catch((err) => {
-                console.error('[UserService.getUserStats] Streak update failed:', err);
+                logger.error('[UserService.getUserStats] Streak update failed:', err);
             });
 
             // 2. Aggregate all metrics in parallel
@@ -348,14 +349,14 @@ export class UserService {
                 take: 3,
                 select: { id: true, eventId: true }
             });
-            console.log(`[UserService.getUserStats] Sample submissions for ${userId}:`, JSON.stringify(sampleSubmissions));
+            logger.info(`[UserService.getUserStats] Sample submissions for ${userId}:`, JSON.stringify(sampleSubmissions));
 
             const sampleVotes = await prisma.vote.findMany({
                 where: { userId },
                 take: 3,
                 select: { id: true, eventId: true }
             });
-            console.log(`[UserService.getUserStats] Sample votes for ${userId}:`, JSON.stringify(sampleVotes));
+            logger.info(`[UserService.getUserStats] Sample votes for ${userId}:`, JSON.stringify(sampleVotes));
 
             const [
                 followersCount,
@@ -446,7 +447,7 @@ export class UserService {
             
             // Log if there's a significant mismatch with denormalized fields (for debugging)
             if (submissionsCount !== user.totalSubmissions || votesCastCount !== user.totalVotes) {
-                console.warn(`[UserService.getUserStats] Counter mismatch for ${userId}: ` + 
+                logger.warn(`[UserService.getUserStats] Counter mismatch for ${userId}: ` + 
                     `Submissions Query: ${submissionsCount} vs Cache: ${user.totalSubmissions}, ` +
                     `Votes Query: ${votesCastCount} vs Cache: ${user.totalVotes}`);
             }
@@ -465,11 +466,11 @@ export class UserService {
                 topRankedEvents,
             };
 
-            console.log(`[UserService.getUserStats] Resulting Stats:`, JSON.stringify(stats, null, 2));
+            logger.info(`[UserService.getUserStats] Resulting Stats:`, JSON.stringify(stats, null, 2));
 
             return stats;
         } catch (error) {
-            console.error('[UserService.getUserStats] Critical error:', error);
+            logger.error('[UserService.getUserStats] Critical error:', error);
             throw error;
         }
     }
@@ -592,7 +593,7 @@ export class UserService {
             data: { walletAddress: walletAddress.toLowerCase() },
         });
 
-        console.log(`[UserService] Updated wallet address for user ${userId}: ${walletAddress}`);
+        logger.info(`[UserService] Updated wallet address for user ${userId}: ${walletAddress}`);
         return user;
     }
 
@@ -681,7 +682,7 @@ export class UserService {
                 description: 'Joined with a referral code',
             });
         } catch (e) {
-            console.warn('[applyReferral] Referred-user XP grant failed:', e);
+            logger.warn('[applyReferral] Referred-user XP grant failed:', e);
         }
 
         return { success: true };

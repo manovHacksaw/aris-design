@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 /**
  * Notification Service
  * 
@@ -53,9 +54,9 @@ const createAndEmitNotification = async (data: NotificationData) => {
             socket.emit('personal-notification', notification);
         });
 
-        console.log(`📬 Notification sent to user ${data.userId}: ${data.type}`);
+        logger.info(`📬 Notification sent to user ${data.userId}: ${data.type}`);
     } catch (error) {
-        console.error('Failed to emit notification via socket:', error);
+        logger.error('Failed to emit notification via socket:', error);
         // Don't throw - notification is still saved in DB
     }
 
@@ -96,7 +97,7 @@ export const createWelcomeNotification = async (userId: string) => {
             },
         });
     } catch (error) {
-        console.error('Failed to create welcome notification:', error);
+        logger.error('Failed to create welcome notification:', error);
         return null;
     }
 };
@@ -155,7 +156,7 @@ export const createStreakNotification = async (userId: string, streakCount: numb
             },
         });
     } catch (error) {
-        console.error('Failed to create streak notification:', error);
+        logger.error('Failed to create streak notification:', error);
         return null;
     }
 };
@@ -176,7 +177,7 @@ export const createEventResultNotification = async (eventId: string) => {
         });
 
         if (!event) {
-            console.error('Event not found for result notification:', eventId);
+            logger.error('Event not found for result notification:', eventId);
             return;
         }
 
@@ -218,10 +219,10 @@ export const createEventResultNotification = async (eventId: string) => {
             )
         );
 
-        console.log(`📊 Sent ${notifications.length} event result notifications for event ${eventId}`);
+        logger.info(`📊 Sent ${notifications.length} event result notifications for event ${eventId}`);
         return notifications;
     } catch (error) {
-        console.error('Failed to create event result notifications:', error);
+        logger.error('Failed to create event result notifications:', error);
         return [];
     }
 };
@@ -242,7 +243,7 @@ export const createVotingLiveNotification = async (eventId: string) => {
         });
 
         if (!event) {
-            console.error('Event not found for voting live notification:', eventId);
+            logger.error('Event not found for voting live notification:', eventId);
             return;
         }
 
@@ -272,10 +273,10 @@ export const createVotingLiveNotification = async (eventId: string) => {
             )
         );
 
-        console.log(`🗳️ Sent ${notifications.length} voting live notifications for event ${eventId}`);
+        logger.info(`🗳️ Sent ${notifications.length} voting live notifications for event ${eventId}`);
         return notifications;
     } catch (error) {
-        console.error('Failed to create voting live notifications:', error);
+        logger.error('Failed to create voting live notifications:', error);
         return [];
     }
 };
@@ -296,7 +297,7 @@ export const createBrandPostNotification = async (brandId: string, eventId: stri
         });
 
         if (!event) {
-            console.error('Event not found for brand post notification:', eventId);
+            logger.error('Event not found for brand post notification:', eventId);
             return;
         }
 
@@ -331,10 +332,10 @@ export const createBrandPostNotification = async (brandId: string, eventId: stri
             )
         );
 
-        console.log(`📢 Sent ${notifications.length} brand post notifications for event ${eventId}`);
+        logger.info(`📢 Sent ${notifications.length} brand post notifications for event ${eventId}`);
         return notifications;
     } catch (error) {
-        console.error('Failed to create brand post notifications:', error);
+        logger.error('Failed to create brand post notifications:', error);
         return [];
     }
 };
@@ -363,12 +364,12 @@ export const createBrandSubscriptionNotification = async (brandId: string, subsc
         ]);
 
         if (!brand || !brand.ownerId) {
-            console.error('Brand not found or has no owner:', brandId);
+            logger.error('Brand not found or has no owner:', brandId);
             return;
         }
 
         if (!subscriber) {
-            console.error('Subscriber user not found:', subscriberUserId);
+            logger.error('Subscriber user not found:', subscriberUserId);
             return;
         }
 
@@ -389,10 +390,10 @@ export const createBrandSubscriptionNotification = async (brandId: string, subsc
             },
         });
 
-        console.log(`🎉 New subscriber notification sent to brand owner for ${brand.name}`);
+        logger.info(`🎉 New subscriber notification sent to brand owner for ${brand.name}`);
         return notification;
     } catch (error) {
-        console.error('Failed to create brand subscription notification:', error);
+        logger.error('Failed to create brand subscription notification:', error);
         return null;
     }
 };
@@ -442,7 +443,7 @@ export const createSubmissionVoteNotification = async (submissionId: string, vot
         });
 
         if (!submission || !submission.user) {
-            console.error('Submission or submission owner not found for vote notification:', submissionId);
+            logger.error('Submission or submission owner not found for vote notification:', submissionId);
             return;
         }
 
@@ -466,10 +467,10 @@ export const createSubmissionVoteNotification = async (submissionId: string, vot
             },
         });
 
-        console.log(`🗳️ Submission vote notification sent to user ${submission.userId}`);
+        logger.info(`🗳️ Submission vote notification sent to user ${submission.userId}`);
         return notification;
     } catch (error) {
-        console.error('Failed to create submission vote notification:', error);
+        logger.error('Failed to create submission vote notification:', error);
         return null;
     }
 };
@@ -490,7 +491,7 @@ export const createEventPhaseChangeNotification = async (eventId: string, oldSta
         });
 
         if (!event || !event.brand || !event.brand.ownerId) {
-            console.error('Event or brand owner not found for phase change notification:', eventId);
+            logger.error('Event or brand owner not found for phase change notification:', eventId);
             return;
         }
 
@@ -524,10 +525,10 @@ export const createEventPhaseChangeNotification = async (eventId: string, oldSta
             },
         });
 
-        console.log(`🔄 Phase change notification sent to brand owner for event ${event.title} (${newStatus})`);
+        logger.info(`🔄 Phase change notification sent to brand owner for event ${event.title} (${newStatus})`);
         return notification;
     } catch (error) {
-        console.error('Failed to create event phase change notification:', error);
+        logger.error('Failed to create event phase change notification:', error);
         return null;
     }
 };
@@ -548,7 +549,7 @@ export const createEventSubmissionNotification = async (eventId: string) => {
         });
 
         if (!event || !event.brand || !event.brand.ownerId) {
-            console.error('Event or brand owner not found for submission notification:', eventId);
+            logger.error('Event or brand owner not found for submission notification:', eventId);
             return;
         }
 
@@ -566,10 +567,10 @@ export const createEventSubmissionNotification = async (eventId: string) => {
             },
         });
 
-        console.log(`📸 Submission notification sent to brand owner for event ${event.title}`);
+        logger.info(`📸 Submission notification sent to brand owner for event ${event.title}`);
         return notification;
     } catch (error) {
-        console.error('Failed to create event submission notification:', error);
+        logger.error('Failed to create event submission notification:', error);
         return null;
     }
 };
@@ -590,7 +591,7 @@ export const createEventVoteNotification = async (eventId: string) => {
         });
 
         if (!event || !event.brand || !event.brand.ownerId) {
-            console.error('Event or brand owner not found for vote notification:', eventId);
+            logger.error('Event or brand owner not found for vote notification:', eventId);
             return;
         }
 
@@ -608,10 +609,10 @@ export const createEventVoteNotification = async (eventId: string) => {
             },
         });
 
-        console.log(`🗳️ Valid vote notification sent to brand owner for event ${event.title}`);
+        logger.info(`🗳️ Valid vote notification sent to brand owner for event ${event.title}`);
         return notification;
     } catch (error) {
-        console.error('Failed to create event vote notification:', error);
+        logger.error('Failed to create event vote notification:', error);
         return null;
     }
 };
@@ -653,7 +654,7 @@ export const calculateLoginStreak = async (userId: string): Promise<number> => {
 
         return streak;
     } catch (error) {
-        console.error('Failed to calculate login streak:', error);
+        logger.error('Failed to calculate login streak:', error);
         return 0;
     }
 };
@@ -691,7 +692,7 @@ export const createXpMilestoneNotification = async (
             },
         });
     } catch (error) {
-        console.error('Failed to create XP milestone notification:', error);
+        logger.error('Failed to create XP milestone notification:', error);
         return null;
     }
 };
@@ -725,7 +726,7 @@ export const createEventCancellationNotification = async (
         });
 
         if (!event || !event.brand) {
-            console.error('Event or brand not found for cancellation notification:', eventId);
+            logger.error('Event or brand not found for cancellation notification:', eventId);
             return;
         }
 
@@ -748,7 +749,7 @@ export const createEventCancellationNotification = async (
                     refundPending: true,
                 },
             });
-            console.log(`📢 Cancellation notification sent to brand owner for event ${event.title}`);
+            logger.info(`📢 Cancellation notification sent to brand owner for event ${event.title}`);
         }
 
         // 2. Notify all subscribers
@@ -773,10 +774,10 @@ export const createEventCancellationNotification = async (
             });
         }
 
-        console.log(`📢 Cancellation notifications sent to ${subscriberIds.length} subscribers for event ${event.title}`);
+        logger.info(`📢 Cancellation notifications sent to ${subscriberIds.length} subscribers for event ${event.title}`);
 
     } catch (error) {
-        console.error('Failed to create event cancellation notification:', error);
+        logger.error('Failed to create event cancellation notification:', error);
     }
 };
 

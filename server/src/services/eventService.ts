@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { prisma } from '../lib/prisma.js';
 import { Event, EventType } from '@prisma/client';
 import { NotFoundError, ForbiddenError, ValidationError } from '../utils/errors.js';
@@ -453,7 +454,7 @@ export class EventService {
         try {
           await NotificationService.createBrandPostNotification(brandId, event.id);
         } catch (error) {
-          console.error('Failed to send brand post notification:', error);
+          logger.error('Failed to send brand post notification:', error);
         }
       })();
     }
@@ -1413,13 +1414,13 @@ export class EventService {
 
     // Update trust scores for all voters (async, don't block completion)
     TrustService.updateTrustScores(eventId).catch((error) => {
-      console.error('Failed to update trust scores:', error);
+      logger.error('Failed to update trust scores:', error);
     });
 
     // Process event completion milestones (async, don't block completion)
     // This checks TOP_VOTES, TOP_3_CONTENT, and VOTES_RECEIVED milestones
     MilestoneService.processEventCompletion(eventId).catch((error) => {
-      console.error('Failed to process event completion milestones:', error);
+      logger.error('Failed to process event completion milestones:', error);
     });
 
     // Recalculate brand level after event completion (async, don't block completion)
@@ -1428,13 +1429,13 @@ export class EventService {
       'event_completion',
       eventId
     ).catch((error) => {
-      console.error('Failed to recalculate brand level:', error);
+      logger.error('Failed to recalculate brand level:', error);
     });
 
     // Process USDC rewards (async, don't block completion)
     // Creates claim records for all eligible participants
     RewardsService.processEventRewards(eventId).catch((error) => {
-      console.error(`🚨 REWARDS FAILED for event ${eventId}: ${error.message}`, error);
+      logger.error(`🚨 REWARDS FAILED for event ${eventId}: ${error.message}`, error);
     });
 
     return completedEvent;
@@ -1553,7 +1554,7 @@ export class EventService {
 
     // CRITICAL: Prevent auto-transition for unverified events
     if (event.blockchainStatus !== 'ACTIVE') {
-      console.log(`⚠️ AutoTransition: Skipping ${eventId} - blockchainStatus is ${event.blockchainStatus}`);
+      logger.info(`⚠️ AutoTransition: Skipping ${eventId} - blockchainStatus is ${event.blockchainStatus}`);
       return null;
     }
 
@@ -1617,7 +1618,7 @@ export class EventService {
               EventStatus.COMPLETED
             );
           } catch (error) {
-            console.error('Failed to send event completion notifications:', error);
+            logger.error('Failed to send event completion notifications:', error);
           }
         })();
 
@@ -1637,15 +1638,15 @@ export class EventService {
         try {
           const { BlockchainService } = await import('../lib/blockchain.js');
 
-          console.log(`🔄 AutoTransition: Cancelling event ${eventId} on-chain for refund...`);
+          logger.info(`🔄 AutoTransition: Cancelling event ${eventId} on-chain for refund...`);
           const txHash = await BlockchainService.cancelEventOnChain(eventId);
-          console.log(`✅ AutoTransition: Event cancelled on-chain. TxHash: ${txHash}`);
+          logger.info(`✅ AutoTransition: Event cancelled on-chain. TxHash: ${txHash}`);
 
           // Update pool status in database
           await RewardsService.cancelPool(eventId);
 
         } catch (error: any) {
-          console.error(`❌ AutoTransition: Failed to cancel event on-chain:`, error);
+          logger.error(`❌ AutoTransition: Failed to cancel event on-chain:`, error);
           // Continue with DB update even if blockchain call fails
           // The brand can manually trigger refund later
         }
@@ -1661,7 +1662,7 @@ export class EventService {
           try {
             await NotificationService.createEventCancellationNotification(eventId, 'INSUFFICIENT_POSTS');
           } catch (error) {
-            console.error('Failed to send cancellation notifications:', error);
+            logger.error('Failed to send cancellation notifications:', error);
           }
         })();
 
@@ -1679,7 +1680,7 @@ export class EventService {
           try {
             await NotificationService.createVotingLiveNotification(eventId);
           } catch (error) {
-            console.error('Failed to send voting live notification:', error);
+            logger.error('Failed to send voting live notification:', error);
           }
         })();
       }
@@ -1690,7 +1691,7 @@ export class EventService {
           try {
             await NotificationService.createBrandPostNotification(event.brandId, eventId);
           } catch (error) {
-            console.error('Failed to send brand post notification on transition:', error);
+            logger.error('Failed to send brand post notification on transition:', error);
           }
         })();
       }
@@ -1700,7 +1701,7 @@ export class EventService {
         try {
           await NotificationService.createEventPhaseChangeNotification(eventId, event.status, newStatus!);
         } catch (error) {
-          console.error('Failed to send phase change notification:', error);
+          logger.error('Failed to send phase change notification:', error);
         }
       })();
 
@@ -1771,7 +1772,7 @@ export class EventService {
           try {
             await NotificationService.createBrandPostNotification(brandId, eventId);
           } catch (error) {
-            console.error('Failed to send brand post notification (blockchain confirmed):', error);
+            logger.error('Failed to send brand post notification (blockchain confirmed):', error);
           }
         })();
 
@@ -1781,7 +1782,7 @@ export class EventService {
             try {
               await NotificationService.createVotingLiveNotification(eventId);
             } catch (error) {
-              console.error('Failed to send voting live notification (blockchain confirmed):', error);
+              logger.error('Failed to send voting live notification (blockchain confirmed):', error);
             }
           })();
         }

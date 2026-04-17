@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { UserRole } from '@prisma/client';
@@ -98,7 +99,7 @@ export const getCurrentBrand = async (req: Request, res: Response): Promise<void
             } : null
         }));
     } catch (error) {
-        console.error('Error fetching current brand:', error);
+        logger.error('Error fetching current brand:', error);
         res.status(500).json({
             success: false,
             error: 'Failed to fetch brand details',
@@ -274,7 +275,7 @@ export const upsertBrandProfile = async (req: Request, res: Response): Promise<v
             brand,
         });
     } catch (error: any) {
-        console.error('Error upserting brand profile:', error);
+        logger.error('Error upserting brand profile:', error);
 
         // Handle unique constraint violations
         if (error.code === 'P2002') {
@@ -386,7 +387,7 @@ export const getBrandMilestones = async (req: Request, res: Response): Promise<v
             milestones
         });
     } catch (error) {
-        console.error('Error fetching brand milestones:', error);
+        logger.error('Error fetching brand milestones:', error);
         res.status(500).json({
             success: false,
             error: 'Failed to fetch brand milestones'
@@ -482,7 +483,7 @@ export const getPublicBrandProfile = async (req: Request, res: Response): Promis
 
         res.json(result);
     } catch (error) {
-        console.error('Error fetching public brand profile:', error);
+        logger.error('Error fetching public brand profile:', error);
         res.status(500).json({
             success: false,
             error: 'Failed to fetch brand profile'

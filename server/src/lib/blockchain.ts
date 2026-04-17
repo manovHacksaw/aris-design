@@ -1,3 +1,4 @@
+import logger from './logger';
 import { ethers } from 'ethers';
 
 /**
@@ -224,9 +225,9 @@ export class BlockchainService {
         const eventIdBytes32 = eventIdToBytes32(eventId) as `0x${string}`;
         const vaultAddress = this.getVaultAddress();
 
-        console.log(`🔗 Blockchain: Distributing rewards for event ${eventId}`);
-        console.log(`   - Users: ${users.length}`);
-        console.log(`   - Total Participants: ${actualParticipants}`);
+        logger.info(`🔗 Blockchain: Distributing rewards for event ${eventId}`);
+        logger.info(`   - Users: ${users.length}`);
+        logger.info(`   - Total Participants: ${actualParticipants}`);
 
         try {
             const { smartAccountClient, publicClient } = await this.getSmartAccountClient();
@@ -238,7 +239,7 @@ export class BlockchainService {
                 args: [eventIdBytes32, users as `0x${string}`[], amounts, BigInt(actualParticipants)],
             });
 
-            console.log(`✅ Blockchain: Distribution UserOp sent: ${hash}`);
+            logger.info(`✅ Blockchain: Distribution UserOp sent: ${hash}`);
 
             const receipt = await publicClient.waitForTransactionReceipt({ hash, timeout: 120_000 });
 
@@ -246,11 +247,11 @@ export class BlockchainService {
                 throw new Error('Transaction reverted on-chain');
             }
 
-            console.log(`✅ Blockchain: Confirmed in block ${receipt.blockNumber}`);
+            logger.info(`✅ Blockchain: Confirmed in block ${receipt.blockNumber}`);
             return hash;
 
         } catch (error: any) {
-            console.error('❌ Blockchain: Distribution Failed:', error);
+            logger.error('❌ Blockchain: Distribution Failed:', error);
             throw new Error(`On-chain distribution failed: ${error.message || error}`);
         }
     }
@@ -262,7 +263,7 @@ export class BlockchainService {
         const eventIdBytes32 = eventIdToBytes32(eventId) as `0x${string}`;
         const vaultAddress = this.getVaultAddress();
 
-        console.log(`🔗 Blockchain: Cancelling event ${eventId}`);
+        logger.info(`🔗 Blockchain: Cancelling event ${eventId}`);
 
         try {
             const { smartAccountClient, publicClient } = await this.getSmartAccountClient();
@@ -274,7 +275,7 @@ export class BlockchainService {
                 args: [eventIdBytes32],
             });
 
-            console.log(`✅ Blockchain: Cancel Event UserOp sent: ${hash}`);
+            logger.info(`✅ Blockchain: Cancel Event UserOp sent: ${hash}`);
 
             const receipt = await publicClient.waitForTransactionReceipt({ hash, timeout: 120_000 });
 
@@ -282,11 +283,11 @@ export class BlockchainService {
                 throw new Error('Transaction reverted on-chain');
             }
 
-            console.log(`✅ Blockchain: Event cancelled in block ${receipt.blockNumber}`);
+            logger.info(`✅ Blockchain: Event cancelled in block ${receipt.blockNumber}`);
             return hash;
 
         } catch (error: any) {
-            console.error('❌ Blockchain: Cancel Event Failed:', error);
+            logger.error('❌ Blockchain: Cancel Event Failed:', error);
             throw new Error(`On-chain cancellation failed: ${error.message || error}`);
         }
     }
@@ -308,7 +309,7 @@ export class BlockchainService {
 
             return Number(balance) / 1_000_000;
         } catch (error: any) {
-            console.error('❌ Blockchain: Failed to fetch brand refund balance:', error);
+            logger.error('❌ Blockchain: Failed to fetch brand refund balance:', error);
             return 0;
         }
     }

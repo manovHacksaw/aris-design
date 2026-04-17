@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Request, Response } from 'express';
 import { BrandClaimService } from '../services/brandClaimService';
 
@@ -77,7 +78,7 @@ export const approveBrandAndGenerateToken = async (req: Request, res: Response):
       },
     });
   } catch (error: any) {
-    console.error('Error approving brand:', error);
+    logger.error('Error approving brand:', error);
 
     if (error.message.includes('not found')) {
       res.status(404).json({
@@ -175,7 +176,7 @@ export const getClaimEmailTemplate = async (req: Request, res: Response): Promis
       },
     });
   } catch (error: any) {
-    console.error('Error getting email template:', error);
+    logger.error('Error getting email template:', error);
 
     res.status(500).json({
       success: false,

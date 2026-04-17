@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Router } from 'express';
 import userRoutes from './userRoutes';
 import authRoutes from './authRoutes';
@@ -99,12 +100,12 @@ router.use('/drafts', draftRoutes);
 router.use('/feed', feedRoutes);
 
 // Admin routes
-console.log('Mounting admin routes at /admin');
+logger.info('Mounting admin routes at /admin');
 router.use('/admin', adminRoutes);
 
 // Debug routes (only in development)
 if (process.env.NODE_ENV === 'development') {
-  console.log('Mounting debug routes at /debug (development only)');
+  logger.info('Mounting debug routes at /debug (development only)');
   router.use('/debug', debugRoutes);
 }
 

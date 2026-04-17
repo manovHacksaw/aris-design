@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware.js';
 import { BrandXpService } from '../services/brandXpService.js';
@@ -50,7 +51,7 @@ export const getBrandLevelStatus = async (
 
     res.status(200).json(response);
   } catch (error: unknown) {
-    console.error('Error in getBrandLevelStatus:', error);
+    logger.error('Error in getBrandLevelStatus:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to get brand level status',
@@ -88,7 +89,7 @@ export const getBrandDiscount = async (
 
     res.status(200).json(response);
   } catch (error: unknown) {
-    console.error('Error in getBrandDiscount:', error);
+    logger.error('Error in getBrandDiscount:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to get brand discount',
@@ -139,7 +140,7 @@ export const getBrandLevelHistory = async (
 
     res.status(200).json(response);
   } catch (error: unknown) {
-    console.error('Error in getBrandLevelHistory:', error);
+    logger.error('Error in getBrandLevelHistory:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to get brand level history',
@@ -177,7 +178,7 @@ export const recalculateBrandLevel = async (
 
     res.status(200).json(response);
   } catch (error: unknown) {
-    console.error('Error in recalculateBrandLevel:', error);
+    logger.error('Error in recalculateBrandLevel:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to recalculate brand level',
@@ -201,7 +202,7 @@ export const getLevelThresholds = async (
       thresholds,
     });
   } catch (error: unknown) {
-    console.error('Error in getLevelThresholds:', error);
+    logger.error('Error in getLevelThresholds:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to get level thresholds',

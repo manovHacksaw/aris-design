@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware.js';
 import { XpService } from '../services/xpService.js';
@@ -47,7 +48,7 @@ export const loginPing = async (
 
     res.status(200).json(response);
   } catch (error: unknown) {
-    console.error('Error in loginPing:', error);
+    logger.error('Error in loginPing:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to record login',
@@ -79,7 +80,7 @@ export const getXpStatus = async (
 
     res.status(200).json(response);
   } catch (error: unknown) {
-    console.error('Error in getXpStatus:', error);
+    logger.error('Error in getXpStatus:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to get XP status',
@@ -111,7 +112,7 @@ export const getMilestoneProgress = async (
 
     res.status(200).json(response);
   } catch (error: unknown) {
-    console.error('Error in getMilestoneProgress:', error);
+    logger.error('Error in getMilestoneProgress:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to get milestone progress',
@@ -144,7 +145,7 @@ export const getReferralInfo = async (
 
     res.status(200).json(response);
   } catch (error: unknown) {
-    console.error('Error in getReferralInfo:', error);
+    logger.error('Error in getReferralInfo:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to get referral info',
@@ -176,7 +177,7 @@ export const generateReferralCode = async (
 
     res.status(200).json(response);
   } catch (error: unknown) {
-    console.error('Error in generateReferralCode:', error);
+    logger.error('Error in generateReferralCode:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to generate referral code',
@@ -206,7 +207,7 @@ export const getRewardMultiplier = async (
       multiplier,
     });
   } catch (error: unknown) {
-    console.error('Error in getRewardMultiplier:', error);
+    logger.error('Error in getRewardMultiplier:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to get reward multiplier',
@@ -261,7 +262,7 @@ export const getXpTransactions = async (
       },
     });
   } catch (error: unknown) {
-    console.error('Error in getXpTransactions:', error);
+    logger.error('Error in getXpTransactions:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to get XP transactions',

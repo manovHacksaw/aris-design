@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 
@@ -28,7 +29,7 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
             totalEvents
         });
     } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
+        logger.error('Error fetching dashboard stats:', error);
         res.status(500).json({ error: 'Failed to fetch dashboard stats' });
     }
 };
@@ -73,7 +74,7 @@ export const getUserSessions = async (req: Request, res: Response) => {
             }
         });
     } catch (error) {
-        console.error('Error fetching user sessions:', error);
+        logger.error('Error fetching user sessions:', error);
         res.status(500).json({ error: 'Failed to fetch user sessions' });
     }
 };
@@ -122,7 +123,7 @@ export const getUserActivities = async (req: Request, res: Response) => {
             }
         });
     } catch (error) {
-        console.error('Error fetching user activities:', error);
+        logger.error('Error fetching user activities:', error);
         res.status(500).json({ error: 'Failed to fetch user activities' });
     }
 };

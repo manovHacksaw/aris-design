@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { prisma } from '../lib/prisma.js';
 import { ClaimType, ClaimStatus, WalletStatus, RewardsPoolStatus, EventType as PrismaEventType } from '@prisma/client';
 import {
@@ -186,7 +187,7 @@ export class RewardsService {
 
       if (pool.status !== RewardsPoolStatus.ACTIVE) {
         // If already completed, check if we need to re-sync
-        console.log(`ℹ️ RewardsService: Pool for event ${eventId} is already ${pool.status}. Processing anyway to ensure DB sync.`);
+        logger.info(`ℹ️ RewardsService: Pool for event ${eventId} is already ${pool.status}. Processing anyway to ensure DB sync.`);
       }
 
       // Get event with votes and submissions
@@ -421,7 +422,7 @@ export class RewardsService {
       const notificationQueue: any[] = [];
       const validClaims: any[] = [];
 
-      console.log(`🔍 RewardsService: Processing ${claimsToCreate.length} potential claims for event ${eventId}`);
+      logger.info(`🔍 RewardsService: Processing ${claimsToCreate.length} potential claims for event ${eventId}`);
 
       // Separate claims: smart accounts go on-chain + CREDITED, everyone else gets PENDING in DB only
       const pendingClaims: any[] = []; // EOA_PENDING or NO_WALLET
@@ -441,7 +442,7 @@ export class RewardsService {
           });
         } else {
           pendingClaims.push(claim);
-          console.log(`⏳ RewardsService: Queuing PENDING reward for user ${claim.userId} (walletStatus=${claim.walletStatus})`);
+          logger.info(`⏳ RewardsService: Queuing PENDING reward for user ${claim.userId} (walletStatus=${claim.walletStatus})`);
 
           const isEoa = claim.walletStatus === WalletStatus.EOA_PENDING;
           notificationQueue.push({
@@ -455,7 +456,7 @@ export class RewardsService {
         }
       }
 
-      console.log(`📊 RewardsService: ${validClaims.length} smart-account claims, ${pendingClaims.length} pending claims (out of ${claimsToCreate.length} total)`);
+      logger.info(`📊 RewardsService: ${validClaims.length} smart-account claims, ${pendingClaims.length} pending claims (out of ${claimsToCreate.length} total)`);
 
       // 1. On-Chain Distribution (smart account recipients only)
       if (usersBatch.length > 0) {
@@ -486,11 +487,11 @@ export class RewardsService {
           });
 
           if (poolData && Number(poolData[1]) === 1) { // 1 = Completed
-            console.log(`ℹ️ RewardsService: Event ${eventId} already COMPLETED on-chain. Syncing database records...`);
+            logger.info(`ℹ️ RewardsService: Event ${eventId} already COMPLETED on-chain. Syncing database records...`);
             skipOnChain = true;
           }
         } catch (e) {
-          console.warn("⚠️ RewardsService: Failed to check on-chain status, proceeding with distribution:", e);
+          logger.warn("⚠️ RewardsService: Failed to check on-chain status, proceeding with distribution:", e);
         }
 
         if (!skipOnChain) {
@@ -503,7 +504,7 @@ export class RewardsService {
           }
           const finalUsers = Array.from(aggregatedRewards.keys());
           const finalAmounts = Array.from(aggregatedRewards.values());
-          console.log(`📊 RewardsService: Aggregated ${usersBatch.length} claims into ${finalUsers.length} unique on-chain recipients`);
+          logger.info(`📊 RewardsService: Aggregated ${usersBatch.length} claims into ${finalUsers.length} unique on-chain recipients`);
 
           try {
             const txHash = await BlockchainService.distributeRewardsBatch(
@@ -512,19 +513,19 @@ export class RewardsService {
               finalAmounts,
               uniqueVoters.size
             );
-            console.log(`✅ RewardsService: On-chain distribution successful: ${txHash}`);
+            logger.info(`✅ RewardsService: On-chain distribution successful: ${txHash}`);
             result.transactionHash = txHash;
           } catch (error: any) {
-            console.error('❌ RewardsService: Blockchain distribution failed:', error);
+            logger.error('❌ RewardsService: Blockchain distribution failed:', error);
             const msg = error.message ?? '';
             // Known recoverable on-chain states — proceed with DB writes
             const isEventNotActive  = msg.includes('0x0f0c1bc8') || msg.includes('EventNotActive');
             const isPoolNotFound    = msg.includes('0x5add5543'); // contract: no on-chain pool for this event
             if (isEventNotActive) {
-              console.log(`ℹ️ RewardsService: Event already completed on-chain. Proceeding with DB sync.`);
+              logger.info(`ℹ️ RewardsService: Event already completed on-chain. Proceeding with DB sync.`);
               result.transactionHash = '0x_ALREADY_COMPLETED';
             } else if (isPoolNotFound) {
-              console.log(`ℹ️ RewardsService: No on-chain pool found (0x5add5543). Saving all claims as PENDING — DB-only mode.`);
+              logger.info(`ℹ️ RewardsService: No on-chain pool found (0x5add5543). Saving all claims as PENDING — DB-only mode.`);
               // Move validClaims → pendingClaims so they're saved as PENDING (walletStatus unchanged)
               pendingClaims.push(...validClaims);
               validClaims.length = 0;
@@ -538,7 +539,7 @@ export class RewardsService {
 
       // 2. Database Updates (Synchronous Transaction)
       result.totalRewards = claimsToCreate.reduce((sum, claim) => sum + claim.finalAmount, 0);
-      console.log(`💾 RewardsService: Saving ${validClaims.length} CREDITED + ${pendingClaims.length} PENDING claims (Total: ${result.totalRewards} USDC)`);
+      logger.info(`💾 RewardsService: Saving ${validClaims.length} CREDITED + ${pendingClaims.length} PENDING claims (Total: ${result.totalRewards} USDC)`);
 
       await prisma.$transaction(
         async (tx) => {
@@ -551,10 +552,10 @@ export class RewardsService {
                 create: { ...dbClaim, status: ClaimStatus.CREDITED, walletStatus: WalletStatus.SMART_ACCOUNT, claimedAt: new Date(), transactionHash: result.transactionHash } as any,
                 update: { status: ClaimStatus.CREDITED, walletStatus: WalletStatus.SMART_ACCOUNT, claimedAt: new Date(), transactionHash: result.transactionHash } as any,
               });
-              console.log(`✅ RewardsService: CREDITED claim saved: ${saved.id}`);
+              logger.info(`✅ RewardsService: CREDITED claim saved: ${saved.id}`);
               result.claimsCreated++;
             } catch (error: any) {
-              console.error(`❌ RewardsService: Failed to save CREDITED claim for ${claim.userId}:`, error.message);
+              logger.error(`❌ RewardsService: Failed to save CREDITED claim for ${claim.userId}:`, error.message);
             }
           }
 
@@ -567,10 +568,10 @@ export class RewardsService {
                 create: { ...dbClaim, status: ClaimStatus.PENDING } as any,
                 update: { status: ClaimStatus.PENDING, walletStatus: dbClaim.walletStatus } as any,
               });
-              console.log(`✅ RewardsService: PENDING claim saved: ${saved.id}`);
+              logger.info(`✅ RewardsService: PENDING claim saved: ${saved.id}`);
               result.claimsCreated++;
             } catch (error: any) {
-              console.error(`❌ RewardsService: Failed to save PENDING claim for ${claim.userId}:`, error.message);
+              logger.error(`❌ RewardsService: Failed to save PENDING claim for ${claim.userId}:`, error.message);
             }
           }
 
@@ -595,14 +596,14 @@ export class RewardsService {
                 }
               });
             } catch (error: any) {
-              console.error(`❌ RewardsService: Failed to increment earnings for ${claim.userId}:`, error);
+              logger.error(`❌ RewardsService: Failed to increment earnings for ${claim.userId}:`, error);
             }
           }
         },
         { timeout: 60000, maxWait: 10000 }
       );
 
-      console.log(`✅ RewardsService: Database sync complete. ${result.claimsCreated} claims saved.`);
+      logger.info(`✅ RewardsService: Database sync complete. ${result.claimsCreated} claims saved.`);
 
       // 3. Notifications (Post-DB success)
       for (const notif of notificationQueue) {
@@ -615,13 +616,13 @@ export class RewardsService {
             metadata: { eventId: event.id }
           });
         } catch (e) {
-          console.error(`⚠️ RewardsService: Failed to send notification to user ${notif.userId}:`, e);
+          logger.error(`⚠️ RewardsService: Failed to send notification to user ${notif.userId}:`, e);
         }
       }
 
       result.success = true;
     } catch (error: any) {
-      console.error("❌ RewardsService: Process Event Rewards Failed:", error);
+      logger.error("❌ RewardsService: Process Event Rewards Failed:", error);
       result.errors.push(`Processing failed: ${error.message}`);
     }
 
@@ -689,7 +690,7 @@ export class RewardsService {
 
     for (const [eventId, data] of perEventMap) {
       try {
-        console.log(`🔗 RewardsService.claimPendingRewards: Distributing ${data.totalUsdc.toFixed(2)} USDC for event ${eventId} to ${user.walletAddress}`);
+        logger.info(`🔗 RewardsService.claimPendingRewards: Distributing ${data.totalUsdc.toFixed(2)} USDC for event ${eventId} to ${user.walletAddress}`);
         const txHash = await BlockchainService.distributeRewardsBatch(eventId, [user.walletAddress!], [data.totalWei], 1);
 
         // Update all claims for this event to CREDITED
@@ -713,7 +714,7 @@ export class RewardsService {
           metadata: { eventId },
         });
       } catch (error: any) {
-        console.error(`❌ RewardsService.claimPendingRewards: Failed for event ${eventId}:`, error.message);
+        logger.error(`❌ RewardsService.claimPendingRewards: Failed for event ${eventId}:`, error.message);
         result.errors.push(`Event ${eventId}: ${error.message}`);
       }
     }
@@ -1029,7 +1030,7 @@ export class RewardsService {
     const totalAmount = claims.reduce((sum, c) => sum + c.finalAmount, 0);
     const claimIds = claims.map(c => c.id);
 
-    console.log(`📝 RewardsService: Confirming ${claims.length} claims for user ${userId} with txHash ${transactionHash}`);
+    logger.info(`📝 RewardsService: Confirming ${claims.length} claims for user ${userId} with txHash ${transactionHash}`);
 
     await prisma.$transaction([
       // Update all CREDITED claims to CLAIMED
@@ -1060,7 +1061,7 @@ export class RewardsService {
       }),
     ]);
 
-    console.log(`✅ RewardsService: Confirmed ${claims.length} claims totaling ${totalAmount} USDC`);
+    logger.info(`✅ RewardsService: Confirmed ${claims.length} claims totaling ${totalAmount} USDC`);
 
     return { claimsUpdated: claims.length, totalAmount };
   }
@@ -1085,7 +1086,7 @@ export class RewardsService {
 
     const claimIds = claims.map(c => c.id);
 
-    console.log(`🔄 RewardsService: Syncing ${claims.length} claims for user ${userId} (on-chain already claimed)`);
+    logger.info(`🔄 RewardsService: Syncing ${claims.length} claims for user ${userId} (on-chain already claimed)`);
 
     await prisma.rewardClaim.updateMany({
       where: {
@@ -1148,7 +1149,7 @@ export class RewardsService {
         const { BlockchainService } = await import('../lib/blockchain.js');
         onChainBalance = await BlockchainService.getBrandRefundBalance(brand.walletAddress);
       } catch (e) {
-        console.warn('Failed to fetch on-chain refund balance:', e);
+        logger.warn('Failed to fetch on-chain refund balance:', e);
       }
     }
 

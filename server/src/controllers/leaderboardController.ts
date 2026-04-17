@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Request, Response } from "express";
 import {
   getBrandLeaderboard,
@@ -16,7 +17,7 @@ export async function getBrands(req: Request, res: Response) {
     const leaderboard = await getBrandLeaderboard(period);
     res.json({ success: true, data: leaderboard, total: leaderboard.length });
   } catch (error) {
-    console.error("Error fetching brand leaderboard:", error);
+    logger.error("Error fetching brand leaderboard:", error);
     res.status(500).json({ success: false, message: "Failed to fetch brand leaderboard" });
   }
 }
@@ -27,7 +28,7 @@ export async function getUsers(req: Request, res: Response) {
     const leaderboard = await getUserLeaderboard(period);
     res.json({ success: true, data: leaderboard, total: leaderboard.length });
   } catch (error) {
-    console.error("Error fetching user leaderboard:", error);
+    logger.error("Error fetching user leaderboard:", error);
     res.status(500).json({ success: false, message: "Failed to fetch user leaderboard" });
   }
 }
@@ -38,7 +39,7 @@ export async function getEvents(req: Request, res: Response) {
     const leaderboard = await getEventLeaderboard(period);
     res.json({ success: true, data: leaderboard, total: leaderboard.length });
   } catch (error) {
-    console.error("Error fetching event leaderboard:", error);
+    logger.error("Error fetching event leaderboard:", error);
     res.status(500).json({ success: false, message: "Failed to fetch event leaderboard" });
   }
 }
@@ -56,7 +57,7 @@ export async function getContent(req: Request, res: Response) {
       total: leaderboard.length,
     });
   } catch (error) {
-    console.error("Error fetching content leaderboard:", error);
+    logger.error("Error fetching content leaderboard:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch content leaderboard",

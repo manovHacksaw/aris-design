@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { prisma } from '../lib/prisma';
 
 /**
@@ -11,7 +12,7 @@ export async function checkDatabaseConnection(): Promise<boolean> {
     await prisma.$queryRaw`SELECT 1`;
     return true;
   } catch (error) {
-    console.error('Database connection failed:', error);
+    logger.error('Database connection failed:', error);
     return false;
   }
 }
@@ -23,7 +24,7 @@ export async function disconnectDatabase(): Promise<void> {
   try {
     await prisma.$disconnect();
   } catch (error) {
-    console.error('Error disconnecting from database:', error);
+    logger.error('Error disconnecting from database:', error);
   }
 }
 

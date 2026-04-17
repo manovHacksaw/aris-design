@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Request, Response } from 'express';
 import { PrivyClient } from '@privy-io/server-auth';
 import { AuthService } from '../services/authService';
@@ -27,7 +28,7 @@ export const privyLogin = async (req: Request, res: Response): Promise<void> => 
     const result = await AuthService.privyLogin(verifiedClaims, walletAddress, email, deviceInfo, ip, avatarUrl, eoaAddress);
     res.json(result);
   } catch (error: any) {
-    console.error('Error during Privy authentication:', error);
+    logger.error('Error during Privy authentication:', error);
     const status = error.message?.includes('Invalid') || error.message?.includes('expired') ? 401 : 500;
     res.status(status).json({ error: error.message || 'Authentication failed' });
   }
@@ -48,7 +49,7 @@ export const logout = async (req: AuthenticatedRequest, res: Response): Promise<
     await AuthService.logout(req.user.sessionId);
     res.json({ success: true, message: 'Logged out successfully' });
   } catch (error: any) {
-    console.error('Error during logout:', error);
+    logger.error('Error during logout:', error);
     res.status(500).json({ error: 'Logout failed' });
   }
 };

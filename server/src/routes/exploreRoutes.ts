@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Router, Request, Response } from 'express';
 import { ExploreService } from '../services/exploreService.js';
 import { authenticateOptional } from '../middlewares/authMiddleware.js';
@@ -21,7 +22,7 @@ router.get('/events', authenticateOptional, async (req: Request, res: Response) 
         const eventsData = await ExploreService.getExploreEvents((req as any).user?.id, options);
         return res.status(200).json(eventsData);
     } catch (error: any) {
-        console.error('Failed to get explore events:', error);
+        logger.error('Failed to get explore events:', error);
         return res.status(500).json({ error: error.message || 'Failed to get explore events' });
     }
 });
@@ -35,7 +36,7 @@ router.get('/brands', async (_req: Request, res: Response) => {
         const brandsData = await ExploreService.getExploreBrands();
         return res.status(200).json(brandsData);
     } catch (error: any) {
-        console.error('Failed to get explore brands:', error);
+        logger.error('Failed to get explore brands:', error);
         return res.status(500).json({ error: error.message || 'Failed to get explore brands' });
     }
 });
@@ -49,7 +50,7 @@ router.get('/creators', async (_req: Request, res: Response) => {
         const creatorsData = await ExploreService.getExploreCreators();
         return res.status(200).json(creatorsData);
     } catch (error: any) {
-        console.error('Failed to get explore creators:', error);
+        logger.error('Failed to get explore creators:', error);
         return res.status(500).json({ error: error.message || 'Failed to get explore creators' });
     }
 });
@@ -63,7 +64,7 @@ router.get('/content', authenticateOptional, async (req: Request, res: Response)
         const contentData = await ExploreService.getExploreContent((req as any).user?.id);
         return res.status(200).json(contentData);
     } catch (error: any) {
-        console.error('Failed to get explore content:', error);
+        logger.error('Failed to get explore content:', error);
         return res.status(500).json({ error: error.message || 'Failed to get explore content' });
     }
 });

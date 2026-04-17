@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { prisma } from '../lib/prisma.js';
 import { enforceEventDemographics } from '../utils/eventUtils.js';
 
@@ -318,7 +319,7 @@ export const ExploreService = {
 
             return { trending, domains, closed: closedWithAvatars, allRanked: scoredEventsWithAvatars };
         } catch (error) {
-            console.error('Failed to get explore events:', error);
+            logger.error('Failed to get explore events:', error);
             throw error;
         }
     },
@@ -351,7 +352,7 @@ export const ExploreService = {
 
             return rankedBrands.slice(0, 20);
         } catch (error) {
-            console.error('Failed to get explore brands:', error);
+            logger.error('Failed to get explore brands:', error);
             throw error;
         }
     },
@@ -386,7 +387,7 @@ export const ExploreService = {
 
             return rankedCreators.slice(0, 20); // Return top 20 creators
         } catch (error) {
-            console.error('Failed to get explore creators:', error);
+            logger.error('Failed to get explore creators:', error);
             throw error;
         }
     },
@@ -434,7 +435,7 @@ export const ExploreService = {
 
             return filteredContent;
         } catch (error) {
-            console.error('Failed to get explore content:', error);
+            logger.error('Failed to get explore content:', error);
             throw error;
         }
     }

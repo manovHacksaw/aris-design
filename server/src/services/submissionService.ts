@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { prisma } from '../lib/prisma.js';
 import { NotificationService } from './notificationService.js';
 import { NotFoundError, ForbiddenError, ValidationError } from '../utils/errors.js';
@@ -160,7 +161,7 @@ export class SubmissionService {
     try {
       await NotificationService.createEventSubmissionNotification(eventId);
     } catch (error) {
-      console.error('Failed to send submission notification:', error);
+      logger.error('Failed to send submission notification:', error);
       // Don't fail the submission if notification fails
     }
 
@@ -170,7 +171,7 @@ export class SubmissionService {
         const totalPosts = await prisma.submission.count({ where: { userId } });
         await XpService.checkAndClaimMilestones(userId, MilestoneCategory.POSTS_CREATED, totalPosts);
       } catch (error) {
-        console.error('Failed to check post milestones:', error);
+        logger.error('Failed to check post milestones:', error);
       }
     })();
 

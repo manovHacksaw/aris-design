@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { prisma } from '../lib/prisma';
 import { generateOTP, hashOTP, verifyOTPHash } from '../utils/otpService';
 
@@ -38,7 +39,7 @@ async function getTransporter() {
     requireTLS: smtpPort === 587,
   } as any);
 
-  console.log(`📧 SMTP transporter created for ${smtpHost}:${smtpPort}`);
+  logger.info(`📧 SMTP transporter created for ${smtpHost}:${smtpPort}`);
   return transporter;
 }
 
@@ -72,7 +73,7 @@ async function sendEmailOTP(email: string, code: string): Promise<void> {
 
   try {
     const info = await emailTransporter.sendMail(mailOptions);
-    console.log(`✅ Email verification code sent to ${email} (Message ID: ${info.messageId})`);
+    logger.info(`✅ Email verification code sent to ${email} (Message ID: ${info.messageId})`);
   } catch (error: any) {
     let errorMessage = error.message || 'Unknown error';
     const errorCode = error.code;

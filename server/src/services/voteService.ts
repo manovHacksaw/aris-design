@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { prisma } from '../lib/prisma.js';
 import { NotificationService } from './notificationService.js';
 import { Vote, MilestoneCategory } from '@prisma/client';
@@ -185,7 +186,7 @@ export class VoteService {
                 const currentVoters = await tx.vote.count({
                     where: { eventId }
                 });
-                console.log(`DEBUG: Auto-close check. currentVoters=${currentVoters}, capacity=${event.capacity}, shouldClose=${currentVoters >= event.capacity}`);
+                logger.info(`DEBUG: Auto-close check. currentVoters=${currentVoters}, capacity=${event.capacity}, shouldClose=${currentVoters >= event.capacity}`);
 
                 if (currentVoters >= event.capacity) {
                     shouldClose = true;
@@ -203,7 +204,7 @@ export class VoteService {
             await NotificationService.createEventVoteNotification(eventId);
             await NotificationService.createSubmissionVoteNotification(submissionId, userId);
         } catch (error) {
-            console.error('Failed to send vote notifications:', error);
+            logger.error('Failed to send vote notifications:', error);
             // Don't fail the vote if notification fails
         }
 
@@ -213,15 +214,15 @@ export class VoteService {
                 const totalVotes = await prisma.vote.count({ where: { userId } });
                 await XpService.checkAndClaimMilestones(userId, MilestoneCategory.VOTES_CAST, totalVotes);
             } catch (error) {
-                console.error('Failed to check vote milestones:', error);
+                logger.error('Failed to check vote milestones:', error);
             }
         })();
 
         // Trigger event completion logic if auto-closed (handles rewards and rankings)
         if (shouldClose) {
-            console.log(`🎯 Capacity reached for event ${eventId}. Triggering auto-completion...`);
+            logger.info(`🎯 Capacity reached for event ${eventId}. Triggering auto-completion...`);
             EventService.transitionToCompleted(eventId).catch(err =>
-                console.error(`❌ Failed to process auto-completion for event ${eventId}:`, err)
+                logger.error(`❌ Failed to process auto-completion for event ${eventId}:`, err)
             );
         }
 
@@ -406,7 +407,7 @@ export class VoteService {
         // Trigger event completion logic if auto-closed
         if (result.shouldClose) {
             EventService.transitionToCompleted(eventId).catch(err =>
-                console.error(`Failed to process auto-completion for event ${eventId}:`, err)
+                logger.error(`Failed to process auto-completion for event ${eventId}:`, err)
             );
         }
 
@@ -417,7 +418,7 @@ export class VoteService {
             try {
                 await NotificationService.createEventVoteNotification(eventId);
             } catch (error) {
-                console.error('Failed to send vote notification:', error);
+                logger.error('Failed to send vote notification:', error);
                 // Don't fail the vote if notification fails
             }
 
@@ -427,7 +428,7 @@ export class VoteService {
                     const totalVotes = await prisma.vote.count({ where: { userId } });
                     await XpService.checkAndClaimMilestones(userId, MilestoneCategory.VOTES_CAST, totalVotes);
                 } catch (error) {
-                    console.error('Failed to check vote milestones:', error);
+                    logger.error('Failed to check vote milestones:', error);
                 }
             })();
         }
@@ -477,7 +478,7 @@ export class VoteService {
      */
     static async getVotedContentByUser(userId: string, requestingUserId?: string): Promise<any[]> {
         const isOwner = requestingUserId === userId;
-        console.log(`[VoteService] getVotedContentByUser: userId=${userId}, requestingUserId=${requestingUserId}, isOwner=${isOwner}`);
+        logger.info(`[VoteService] getVotedContentByUser: userId=${userId}, requestingUserId=${requestingUserId}, isOwner=${isOwner}`);
 
         const votes = await prisma.vote.findMany({
             where: {

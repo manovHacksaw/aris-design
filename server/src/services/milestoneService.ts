@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { prisma } from '../lib/prisma.js';
 import { MilestoneCategory } from '@prisma/client';
 import { XpService } from './xpService.js';
@@ -194,7 +195,7 @@ export class MilestoneService {
     });
 
     if (!event) {
-      console.error(`Event ${eventId} not found for milestone processing`);
+      logger.error(`Event ${eventId} not found for milestone processing`);
       return;
     }
 
@@ -262,7 +263,7 @@ export class MilestoneService {
           totalTopVotes
         );
       } catch (error) {
-        console.error(`Failed to check TOP_VOTES milestone for user ${voterId}:`, error);
+        logger.error(`Failed to check TOP_VOTES milestone for user ${voterId}:`, error);
       }
     }
 
@@ -281,7 +282,7 @@ export class MilestoneService {
           totalTop3
         );
       } catch (error) {
-        console.error(`Failed to check TOP_3_CONTENT milestone for user ${creatorId}:`, error);
+        logger.error(`Failed to check TOP_3_CONTENT milestone for user ${creatorId}:`, error);
       }
     }
 
@@ -298,11 +299,11 @@ export class MilestoneService {
           totalVotesReceived
         );
       } catch (error) {
-        console.error(`Failed to check VOTES_RECEIVED milestone for user ${creatorId}:`, error);
+        logger.error(`Failed to check VOTES_RECEIVED milestone for user ${creatorId}:`, error);
       }
     }
 
-    console.log(
+    logger.info(
       `Processed event completion milestones for ${usersToProcess.size} users in event ${eventId}`
     );
   }
@@ -355,11 +356,11 @@ export class MilestoneService {
           totalTopVotes
         );
       } catch (error) {
-        console.error(`Failed to check TOP_VOTES milestone for user ${voterId}:`, error);
+        logger.error(`Failed to check TOP_VOTES milestone for user ${voterId}:`, error);
       }
     }
 
-    console.log(
+    logger.info(
       `Processed event completion milestones for ${votersOnTop3.size} voters in vote-only event ${eventId}`
     );
   }
@@ -390,7 +391,7 @@ export class MilestoneService {
         );
         allClaimed.push(...claimed);
       } catch (error) {
-        console.error(`Failed to check ${category} milestones for user ${userId}:`, error);
+        logger.error(`Failed to check ${category} milestones for user ${userId}:`, error);
       }
     }
 

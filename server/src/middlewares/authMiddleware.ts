@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../lib/prisma';
 import { PrivyClient } from '@privy-io/server-auth';
@@ -82,7 +83,7 @@ export const authenticateJWT = async (
 
     next();
   } catch (error) {
-    console.error('Privy authentication error:', error);
+    logger.error('Privy authentication error:', error);
     res.status(500).json({ error: 'Authentication failed' });
   }
 };
@@ -137,7 +138,7 @@ export const authenticateOptional = async (
 
     next();
   } catch (error) {
-    console.error('Optional Privy auth error:', error);
+    logger.error('Optional Privy auth error:', error);
     next();
   }
 };
@@ -163,7 +164,7 @@ export const requireEmailVerification = async (
 
   if (!isVerificationEnabled) {
     // Bypass verification check when disabled
-    console.log('⚠️ Email verification middleware bypassed - verification disabled');
+    logger.info('⚠️ Email verification middleware bypassed - verification disabled');
     next();
     return;
   }
@@ -199,7 +200,7 @@ export const requireEmailVerification = async (
 
     next();
   } catch (error) {
-    console.error('Email verification check error:', error);
+    logger.error('Email verification check error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

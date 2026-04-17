@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { prisma } from '../lib/prisma.js';
 import { MilestoneCategory } from '@prisma/client';
 import { XpService } from './xpService.js';
@@ -56,7 +57,7 @@ export class LoginStreakService {
       try {
         newMilestonesClaimed = await XpService.checkAndClaimMilestones(userId, MilestoneCategory.LOGIN_STREAK, 1);
       } catch (error) {
-        console.error('Failed to check login streak milestones:', error);
+        logger.error('Failed to check login streak milestones:', error);
       }
       return { ...streakData, newMilestonesClaimed };
     }
@@ -97,7 +98,7 @@ export class LoginStreakService {
           streakData.currentStreak
         );
       } catch (error) {
-        console.error('Failed to check login streak milestones:', error);
+        logger.error('Failed to check login streak milestones:', error);
         // Don't fail the login for milestone errors
       }
     }
@@ -274,7 +275,7 @@ export class LoginStreakService {
           currentStreak
         );
       } catch (error) {
-        console.error('Failed to check login streak milestones during backfill:', error);
+        logger.error('Failed to check login streak milestones during backfill:', error);
       }
     }
 

@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Response } from 'express';
 import { VoteService } from '../services/voteService.js';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware.js';
@@ -30,7 +31,7 @@ export const voteForSubmission = async (req: AuthenticatedRequest, res: Response
             vote,
         });
     } catch (error: any) {
-        console.error('Error in voteForSubmission:', error);
+        logger.error('Error in voteForSubmission:', error);
         res.status(400).json({
             success: false,
             error: error.message,
@@ -66,7 +67,7 @@ export const voteForProposals = async (req: AuthenticatedRequest, res: Response)
             votes,
         });
     } catch (error: any) {
-        console.error('Error in voteForProposals:', error);
+        logger.error('Error in voteForProposals:', error);
         res.status(400).json({
             success: false,
             error: error.message,
@@ -94,7 +95,7 @@ export const getUserVotesForEvent = async (req: AuthenticatedRequest, res: Respo
             votes,
         });
     } catch (error: any) {
-        console.error('Error in getUserVotesForEvent:', error);
+        logger.error('Error in getUserVotesForEvent:', error);
         res.status(500).json({
             success: false,
             error: 'Internal server error',
@@ -137,7 +138,7 @@ export const getVoterBreakdown = async (req: AuthenticatedRequest, res: Response
 
         return res.status(200).json({ success: true, breakdown });
     } catch (error: any) {
-        console.error('Error in getVoterBreakdown:', error);
+        logger.error('Error in getVoterBreakdown:', error);
         return res.status(500).json({ success: false, error: 'Internal server error' });
     }
 };
@@ -171,7 +172,7 @@ export const getEventParticipants = async (req: AuthenticatedRequest, res: Respo
 
         return res.status(200).json({ success: true, participants: votes.map((v) => v.user) });
     } catch (error: any) {
-        console.error('Error in getEventParticipants:', error);
+        logger.error('Error in getEventParticipants:', error);
         return res.status(500).json({ success: false, error: 'Internal server error' });
     }
 };
@@ -196,7 +197,7 @@ export const checkIfUserHasVoted = async (req: AuthenticatedRequest, res: Respon
             hasVoted,
         });
     } catch (error: any) {
-        console.error('Error in checkIfUserHasVoted:', error);
+        logger.error('Error in checkIfUserHasVoted:', error);
         res.status(500).json({
             success: false,
             error: 'Internal server error',

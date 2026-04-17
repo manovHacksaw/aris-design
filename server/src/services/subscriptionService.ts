@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { prisma } from '../lib/prisma';
 import { NotificationService } from './notificationService';
 
@@ -45,13 +46,13 @@ export class SubscriptionService {
             // Send notification to brand owner (non-blocking)
             NotificationService.createBrandSubscriptionNotification(brandId, userId)
                 .catch(error => {
-                    console.error('Failed to send brand subscription notification:', error);
+                    logger.error('Failed to send brand subscription notification:', error);
                     // Don't throw - subscription was successful even if notification fails
                 });
 
             return { success: true, message: 'Successfully subscribed to brand' };
         } catch (error) {
-            console.error('Error subscribing to brand:', error);
+            logger.error('Error subscribing to brand:', error);
             throw new Error('Failed to subscribe to brand');
         }
     }
@@ -84,7 +85,7 @@ export class SubscriptionService {
 
             return { success: true, message: 'Successfully unsubscribed from brand' };
         } catch (error) {
-            console.error('Error unsubscribing from brand:', error);
+            logger.error('Error unsubscribing from brand:', error);
             throw new Error('Failed to unsubscribe from brand');
         }
     }
@@ -105,7 +106,7 @@ export class SubscriptionService {
 
             return !!subscription;
         } catch (error) {
-            console.error('Error checking subscription status:', error);
+            logger.error('Error checking subscription status:', error);
             return false;
         }
     }
@@ -143,7 +144,7 @@ export class SubscriptionService {
                 subscribedAt: sub.subscribedAt
             }));
         } catch (error) {
-            console.error('Error fetching user subscriptions:', error);
+            logger.error('Error fetching user subscriptions:', error);
             throw new Error('Failed to fetch subscriptions');
         }
     }
@@ -175,7 +176,7 @@ export class SubscriptionService {
                 subscribedAt: sub.subscribedAt
             }));
         } catch (error) {
-            console.error('Error fetching brand subscribers:', error);
+            logger.error('Error fetching brand subscribers:', error);
             throw new Error('Failed to fetch subscribers');
         }
     }
@@ -191,7 +192,7 @@ export class SubscriptionService {
 
             return count;
         } catch (error) {
-            console.error('Error getting subscriber count:', error);
+            logger.error('Error getting subscriber count:', error);
             return 0;
         }
     }

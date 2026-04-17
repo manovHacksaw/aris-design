@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Request, Response } from 'express';
 import { UserService } from '../services/userService';
 import { VoteService } from '../services/voteService';
@@ -14,7 +15,7 @@ export const searchUsers = async (req: Request, res: Response): Promise<void> =>
     const results = await UserService.searchUsers(q, take);
     res.json({ results });
   } catch (error) {
-    console.error('Error searching users:', error);
+    logger.error('Error searching users:', error);
     res.status(500).json({ error: 'Search failed' });
   }
 };
@@ -27,7 +28,7 @@ export const getUsers = async (_req: Request, res: Response): Promise<void> => {
     const users = await UserService.getUsers();
     res.json(users);
   } catch (error) {
-    console.error('Error fetching users:', error);
+    logger.error('Error fetching users:', error);
     res.status(500).json({ error: 'Failed to fetch users' });
   }
 };
@@ -47,7 +48,7 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 
     res.json(user);
   } catch (error) {
-    console.error('Error fetching user:', error);
+    logger.error('Error fetching user:', error);
     res.status(500).json({ error: 'Failed to fetch user' });
   }
 };
@@ -67,7 +68,7 @@ export const getUserByUsername = async (req: Request, res: Response): Promise<vo
 
     res.json(user);
   } catch (error) {
-    console.error('Error fetching user by username:', error);
+    logger.error('Error fetching user by username:', error);
     res.status(500).json({ error: 'Failed to fetch user' });
   }
 };
@@ -106,7 +107,7 @@ export const upsertUser = async (req: Request, res: Response): Promise<void> => 
       },
     });
   } catch (error: any) {
-    console.error('Error upserting user:', error);
+    logger.error('Error upserting user:', error);
 
     if (error.code === 'P2002') {
       res.status(409).json({ error: 'User already exists' });
@@ -163,7 +164,7 @@ export const getCurrentUser = async (req: AuthenticatedRequest, res: Response): 
       currentStreak: (user as any).loginStreak?.currentStreak || 0,
     });
   } catch (error) {
-    console.error('Error fetching current user:', error);
+    logger.error('Error fetching current user:', error);
     res.status(500).json({ error: 'Failed to fetch user' });
   }
 };
@@ -183,7 +184,7 @@ export const checkUsernameAvailability = async (req: Request, res: Response): Pr
     const available = await UserService.checkUsernameAvailability(username);
     res.json({ available });
   } catch (error: any) {
-    console.error('Error checking username:', error);
+    logger.error('Error checking username:', error);
     res.status(400).json({ error: error.message || 'Failed to check username availability' });
   }
 };
@@ -234,7 +235,7 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response): P
       },
     });
   } catch (error: any) {
-    console.error('Error updating profile:', error);
+    logger.error('Error updating profile:', error);
 
     // Handle Prisma unique constraint violations
     if (error.code === 'P2002') {
@@ -267,7 +268,7 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response): P
 export const getUserStats = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      console.error('[getUserStats Controller] Unauthorized request - no user');
+      logger.error('[getUserStats Controller] Unauthorized request - no user');
       res.status(401).json({
         success: false,
         error: 'Unauthorized - Please log in'
@@ -275,11 +276,11 @@ export const getUserStats = async (req: AuthenticatedRequest, res: Response): Pr
       return;
     }
 
-    console.log(`[getUserStats Controller] Fetching stats for user: ${req.user.id}`);
+    logger.info(`[getUserStats Controller] Fetching stats for user: ${req.user.id}`);
 
     const stats = await UserService.getUserStats(req.user.id);
 
-    console.log(`[getUserStats Controller] Successfully fetched stats for user: ${req.user.id}`);
+    logger.info(`[getUserStats Controller] Successfully fetched stats for user: ${req.user.id}`);
 
     // Disable caching for dynamic stats data
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
@@ -291,9 +292,9 @@ export const getUserStats = async (req: AuthenticatedRequest, res: Response): Pr
       stats,
     });
   } catch (error: any) {
-    console.error('[getUserStats Controller] Error:', error);
-    console.error('[getUserStats Controller] Error message:', error.message);
-    console.error('[getUserStats Controller] Error stack:', error.stack);
+    logger.error('[getUserStats Controller] Error:', error);
+    logger.error('[getUserStats Controller] Error message:', error.message);
+    logger.error('[getUserStats Controller] Error stack:', error.stack);
 
     // Provide more specific error messages
     if (error.message === 'User not found') {
@@ -332,7 +333,7 @@ export const getUserStatsById = async (req: Request, res: Response): Promise<voi
       stats,
     });
   } catch (error: any) {
-    console.error('Error in getUserStatsById:', error);
+    logger.error('Error in getUserStatsById:', error);
 
     if (error.message === 'User not found') {
       res.status(404).json({ success: false, error: 'User not found' });
@@ -379,7 +380,7 @@ export const getFollowers = async (req: Request, res: Response): Promise<void> =
       followers,
     });
   } catch (error: any) {
-    console.error('Error in getFollowers:', error);
+    logger.error('Error in getFollowers:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to fetch followers'
@@ -417,7 +418,7 @@ export const getFollowing = async (req: Request, res: Response): Promise<void> =
       following,
     });
   } catch (error: any) {
-    console.error('Error in getFollowing:', error);
+    logger.error('Error in getFollowing:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to fetch following'
@@ -452,7 +453,7 @@ export const followUser = async (req: AuthenticatedRequest, res: Response): Prom
 
     res.json(result);
   } catch (error: any) {
-    console.error('Error in followUser:', error);
+    logger.error('Error in followUser:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to follow user'
@@ -487,7 +488,7 @@ export const unfollowUser = async (req: AuthenticatedRequest, res: Response): Pr
 
     res.json(result);
   } catch (error: any) {
-    console.error('Error in unfollowUser:', error);
+    logger.error('Error in unfollowUser:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to unfollow user'
@@ -529,7 +530,7 @@ export const updateWalletAddress = async (req: AuthenticatedRequest, res: Respon
       },
     });
   } catch (error: any) {
-    console.error('Error updating wallet address:', error);
+    logger.error('Error updating wallet address:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to update wallet address',
@@ -560,7 +561,7 @@ export const saveOnboardingAnalytics = async (req: AuthenticatedRequest, res: Re
 
     res.json({ success: true });
   } catch (error: any) {
-    console.error('Error saving onboarding analytics:', error);
+    logger.error('Error saving onboarding analytics:', error);
     res.status(500).json({ success: false, error: error.message || 'Failed to save analytics' });
   }
 };
@@ -593,7 +594,7 @@ export const getUserVotedContent = async (req: AuthenticatedRequest, res: Respon
     const content = await VoteService.getVotedContentByUser(userId, requestingUserId);
     res.json({ success: true, content });
   } catch (error: any) {
-    console.error('Error in getUserVotedContent:', error);
+    logger.error('Error in getUserVotedContent:', error);
     res.status(500).json({ success: false, error: error.message || 'Failed to fetch voted content' });
   }
 };

@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 /**
  * Analytics Service
  * 
@@ -71,9 +72,9 @@ export const trackEventView = async (eventId: string, userId: string | null): Pr
             },
         });
 
-        console.log(`👁️ Event view tracked: ${eventId} by ${userId ? `user ${userId}` : 'anonymous'} (first: ${isFirstView})`);
+        logger.info(`👁️ Event view tracked: ${eventId} by ${userId ? `user ${userId}` : 'anonymous'} (first: ${isFirstView})`);
     } catch (error) {
-        console.error('Failed to track event view:', error);
+        logger.error('Failed to track event view:', error);
         // Don't throw - analytics shouldn't break the app
     }
 };
@@ -116,7 +117,7 @@ export const getEventAnalytics = async (eventId: string) => {
             updatedAt: analytics.updatedAt,
         };
     } catch (error) {
-        console.error('Failed to get event analytics:', error);
+        logger.error('Failed to get event analytics:', error);
         throw error;
     }
 };
@@ -140,7 +141,7 @@ export const trackVote = async (eventId: string): Promise<void> => {
             },
         });
     } catch (error) {
-        console.error('Failed to track vote:', error);
+        logger.error('Failed to track vote:', error);
     }
 };
 
@@ -163,7 +164,7 @@ export const trackSubmission = async (eventId: string): Promise<void> => {
             },
         });
     } catch (error) {
-        console.error('Failed to track submission:', error);
+        logger.error('Failed to track submission:', error);
     }
 };
 
@@ -199,9 +200,9 @@ export const trackShare = async (eventId: string, userId: string | null): Promis
             },
         });
 
-        console.log(`🔗 Share tracked: ${eventId} by ${userId || 'anonymous'}`);
+        logger.info(`🔗 Share tracked: ${eventId} by ${userId || 'anonymous'}`);
     } catch (error) {
-        console.error('Failed to track share:', error);
+        logger.error('Failed to track share:', error);
     }
 };
 
@@ -238,9 +239,9 @@ export const trackClick = async (eventId: string, userId: string | null, target:
             },
         });
 
-        console.log(`👆 Click tracked: ${eventId} target=${target} by ${userId || 'anonymous'}`);
+        logger.info(`👆 Click tracked: ${eventId} target=${target} by ${userId || 'anonymous'}`);
     } catch (error) {
-        console.error('Failed to track click:', error);
+        logger.error('Failed to track click:', error);
     }
 };
 
@@ -276,7 +277,7 @@ export const getBulkEventAnalytics = async (eventIds: string[]) => {
             };
         });
     } catch (error) {
-        console.error('Failed to get bulk event analytics:', error);
+        logger.error('Failed to get bulk event analytics:', error);
         throw error;
     }
 };
@@ -317,7 +318,7 @@ export const getTopEventsByViews = async (limit: number = 10) => {
             totalSubmissions: analytics.totalSubmissions,
         }));
     } catch (error) {
-        console.error('Failed to get top events by views:', error);
+        logger.error('Failed to get top events by views:', error);
         throw error;
     }
 };
@@ -540,7 +541,7 @@ export const getDetailedEventAnalytics = async (eventId: string) => {
             aiSummary: (analytics as any)?.aiSummary || null,
         };
     } catch (error) {
-        console.error('Failed to get detailed event analytics:', error);
+        logger.error('Failed to get detailed event analytics:', error);
         throw error;
     }
 };
@@ -733,7 +734,7 @@ export const getBrandAnalytics = async (brandId: string) => {
             eventsSummary,
         };
     } catch (error) {
-        console.error('Failed to get brand analytics:', error);
+        logger.error('Failed to get brand analytics:', error);
         throw error;
     }
 };
@@ -763,7 +764,7 @@ export const getBrandStats = async (ownerId: string) => {
             totalUsdcSpent: brand.totalUsdcGiven || 0,
         };
     } catch (error) {
-        console.error('Failed to get brand stats:', error);
+        logger.error('Failed to get brand stats:', error);
         throw error;
     }
 };
@@ -825,7 +826,7 @@ export const getBrandTimeseries = async (brandId: string, metric: string, from?:
 
         return timeseries;
     } catch (error) {
-        console.error('Failed to get brand timeseries:', error);
+        logger.error('Failed to get brand timeseries:', error);
         throw error;
     }
 };
@@ -852,7 +853,7 @@ export const getEventClicksBreakdown = async (eventId: string) => {
 
         return breakdown;
     } catch (error) {
-        console.error('Failed to get event clicks breakdown:', error);
+        logger.error('Failed to get event clicks breakdown:', error);
         throw error;
     }
 };
@@ -885,7 +886,7 @@ export const getBrandClicksBreakdown = async (brandId: string) => {
 
         return breakdown;
     } catch (error) {
-        console.error('Failed to get brand clicks breakdown:', error);
+        logger.error('Failed to get brand clicks breakdown:', error);
         throw error;
     }
 };
@@ -902,7 +903,7 @@ export const trackBrandView = async (brandId: string) => {
             },
         });
     } catch (error) {
-        console.error('Failed to track brand view:', error);
+        logger.error('Failed to track brand view:', error);
     }
 };
 
@@ -917,7 +918,7 @@ export const getBrandViews = async (brandId: string) => {
         });
         return { profileViews: brand?.profileViews || 0 };
     } catch (error) {
-        console.error('Failed to get brand views:', error);
+        logger.error('Failed to get brand views:', error);
         throw error;
     }
 };
@@ -973,7 +974,7 @@ export const getFollowerGrowth = async (brandId: string, from?: string, to?: str
 
         return result;
     } catch (error) {
-        console.error('Failed to get follower growth:', error);
+        logger.error('Failed to get follower growth:', error);
         throw error;
     }
 };

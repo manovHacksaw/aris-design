@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Response } from 'express';
 import { ProposalService } from '../services/proposalService.js';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware.js';
@@ -36,7 +37,7 @@ export const createProposal = async (req: AuthenticatedRequest, res: Response): 
             proposal,
         });
     } catch (error: any) {
-        console.error('Error in createProposal:', error);
+        logger.error('Error in createProposal:', error);
         res.status(error.message.includes('Forbidden') ? 403 : 400).json({
             success: false,
             error: error.message,
@@ -69,7 +70,7 @@ export const updateProposal = async (req: AuthenticatedRequest, res: Response): 
             proposal,
         });
     } catch (error: any) {
-        console.error('Error in updateProposal:', error);
+        logger.error('Error in updateProposal:', error);
         res.status(error.message.includes('Forbidden') ? 403 : 400).json({
             success: false,
             error: error.message,
@@ -100,7 +101,7 @@ export const deleteProposal = async (req: AuthenticatedRequest, res: Response): 
             message: 'Proposal deleted successfully',
         });
     } catch (error: any) {
-        console.error('Error in deleteProposal:', error);
+        logger.error('Error in deleteProposal:', error);
         res.status(error.message.includes('Forbidden') ? 403 : 400).json({
             success: false,
             error: error.message,
@@ -122,7 +123,7 @@ export const getProposalsByEvent = async (req: AuthenticatedRequest, res: Respon
             proposals,
         });
     } catch (error: any) {
-        console.error('Error in getProposalsByEvent:', error);
+        logger.error('Error in getProposalsByEvent:', error);
         res.status(500).json({
             success: false,
             error: 'Internal server error',

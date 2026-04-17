@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { prisma } from '../lib/prisma';
 import { AuthResponse } from '../types/auth';
 import { NotificationService } from './notificationService';
@@ -61,7 +62,7 @@ export class AuthService {
 
             // If found by email, link the privyId for future logins
             if (user) {
-                console.log(`Linking Privy ID ${privyId} to existing user ${user.email}`);
+                logger.info(`Linking Privy ID ${privyId} to existing user ${user.email}`);
                 user = await prisma.user.update({
                     where: { id: user.id },
                     data: { privyId },
@@ -81,11 +82,11 @@ export class AuthService {
             // then this wallet belongs to someone else. 
             // We should NOT blindly log them in as the brand owner.
             if (user && user.privyId && user.privyId !== privyId) {
-                console.warn(`Wallet ${targetWalletAddress} is already linked to Privy ID ${user.privyId}. This login is for ${privyId}.`);
+                logger.warn(`Wallet ${targetWalletAddress} is already linked to Privy ID ${user.privyId}. This login is for ${privyId}.`);
                 user = null; // Force creation of a NEW user for this Privy account
             } else if (user) {
                 // Same wallet, link the privyId if missing
-                console.log(`Linking Privy ID ${privyId} to existing user via wallet ${targetWalletAddress}`);
+                logger.info(`Linking Privy ID ${privyId} to existing user via wallet ${targetWalletAddress}`);
                 user = await prisma.user.update({
                     where: { id: user.id },
                     data: { privyId },
@@ -100,7 +101,7 @@ export class AuthService {
             // wasn't ready yet and the client sent the embedded EOA as the smart account.
             const walletIsSmartAccount = targetWalletAddress && targetWalletAddress !== targetEoaAddress;
             if (targetWalletAddress && !walletIsSmartAccount) {
-                console.warn(`⚠️ AuthService: walletAddress ${targetWalletAddress} equals eoaAddress on new user — storing null for walletAddress until smart account is available.`);
+                logger.warn(`⚠️ AuthService: walletAddress ${targetWalletAddress} equals eoaAddress on new user — storing null for walletAddress until smart account is available.`);
             }
             // If the wallet is already taken, this new user gets NO wallet link initially (or a placeholder)
             // to avoid unique constraint violations. They can link a wallet later if it's freed.
@@ -108,7 +109,7 @@ export class AuthService {
             if (targetWalletAddress) {
                 const existingWalletUser = await prisma.user.findUnique({ where: { walletAddress: targetWalletAddress } });
                 if (existingWalletUser) {
-                    console.warn(`Wallet ${targetWalletAddress} is already in use. Creating user without wallet link.`);
+                    logger.warn(`Wallet ${targetWalletAddress} is already in use. Creating user without wallet link.`);
                     creationWallet = undefined;
                 }
             }
@@ -138,7 +139,7 @@ export class AuthService {
                     const { ReferralService } = await import('./referralService');
                     await ReferralService.generateReferralCode(user!.id);
                 } catch (error) {
-                    console.error('Failed to generate referral code:', error);
+                    logger.error('Failed to generate referral code:', error);
                 }
             })();
         } else {
@@ -148,7 +149,7 @@ export class AuthService {
             // saved smart account address with an EOA.
             const isSmartAccount = targetWalletAddress && targetWalletAddress !== targetEoaAddress;
             if (targetWalletAddress && !isSmartAccount) {
-                console.warn(`⚠️ AuthService: walletAddress ${targetWalletAddress} equals eoaAddress — skipping walletAddress update for user ${user.id} to avoid overwriting smart account.`);
+                logger.warn(`⚠️ AuthService: walletAddress ${targetWalletAddress} equals eoaAddress — skipping walletAddress update for user ${user.id} to avoid overwriting smart account.`);
             }
 
             // Update last login, sync wallet addresses, and backfill avatarUrl
@@ -176,11 +177,11 @@ export class AuthService {
                     try {
                         await NotificationService.createXpMilestoneNotification(user!.id, milestone);
                     } catch (err) {
-                        console.error('Failed to send XP milestone notification:', err);
+                        logger.error('Failed to send XP milestone notification:', err);
                     }
                 }
             } catch (error) {
-                console.error('Failed to create login notifications:', error);
+                logger.error('Failed to create login notifications:', error);
             }
         })();
 

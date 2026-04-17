@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Server as HTTPServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import { PrivyClient } from '@privy-io/server-auth';
@@ -79,7 +80,7 @@ const authenticateSocket = async (socket: AuthenticatedSocket, next: (err?: Erro
 
         next();
     } catch (error) {
-        console.error('Socket authentication error:', error);
+        logger.error('Socket authentication error:', error);
         next(new Error('Authentication failed'));
     }
 };
@@ -89,7 +90,7 @@ const authenticateSocket = async (socket: AuthenticatedSocket, next: (err?: Erro
  */
 const handleConnection = (socket: AuthenticatedSocket) => {
     const userId = socket.data.user?.id;
-    console.log(`✅ Socket connected: ${socket.id} (User: ${userId})`);
+    logger.info(`✅ Socket connected: ${socket.id} (User: ${userId})`);
 
     // Handle join-event: User joins an event room
     socket.on('join-event', (eventId: string) => {
@@ -103,7 +104,7 @@ const handleConnection = (socket: AuthenticatedSocket) => {
 
         // Track view in analytics (unique check handled inside)
         AnalyticsService.trackEventView(eventId, userId).catch(err => {
-            console.error('Failed to track event view from socket:', err);
+            logger.error('Failed to track event view from socket:', err);
         });
 
         // Notify all users in the room (including the joiner)
@@ -151,7 +152,7 @@ const handleConnection = (socket: AuthenticatedSocket) => {
     socket.on('disconnect', () => {
         if (!userId) return;
 
-        console.log(`❌ Socket disconnected: ${socket.id} (User: ${userId})`);
+        logger.info(`❌ Socket disconnected: ${socket.id} (User: ${userId})`);
 
         // Get all events the user was viewing before removing them
         const userEvents = PresenceService.getUserEvents(userId);
@@ -179,7 +180,7 @@ const handleConnection = (socket: AuthenticatedSocket) => {
 
     // Handle errors
     socket.on('error', (error) => {
-        console.error(`Socket error for ${socket.id}:`, error);
+        logger.error(`Socket error for ${socket.id}:`, error);
     });
 };
 
@@ -211,7 +212,7 @@ export const setupSocket = (httpServer: HTTPServer): Server => {
     // Handle connections
     io.on('connection', handleConnection);
 
-    console.log('🔌 Socket.io initialized');
+    logger.info('🔌 Socket.io initialized');
 
     return io;
 };
@@ -226,9 +227,9 @@ export const closeSocket = (): Promise<void> => {
             return;
         }
 
-        console.log('Closing Socket.io connections...');
+        logger.info('Closing Socket.io connections...');
         io.close(() => {
-            console.log('Socket.io connections closed');
+            logger.info('Socket.io connections closed');
             io = null;
             resolve();
         });
@@ -243,12 +244,12 @@ export const closeSocket = (): Promise<void> => {
  */
 export const broadcastToEvent = (eventId: string, event: string, data: any) => {
     if (!io) {
-        console.warn('Socket.io not initialized, cannot broadcast');
+        logger.warn('Socket.io not initialized, cannot broadcast');
         return;
     }
 
     io.to(`event:${eventId}`).emit(event, data);
-    console.log(`📡 Broadcast to event:${eventId} - ${event}`);
+    logger.info(`📡 Broadcast to event:${eventId} - ${event}`);
 };
 
 /**
@@ -258,13 +259,13 @@ export const broadcastToEvent = (eventId: string, event: string, data: any) => {
  */
 export const broadcastToAll = (event: string, data: any) => {
     if (!io) {
-        console.warn('Socket.io not initialized, cannot broadcast');
+        logger.warn('Socket.io not initialized, cannot broadcast');
         return;
     }
 
 
     io.emit(event, data);
-    console.log(`📡 Broadcast to all - ${event}`);
+    logger.info(`📡 Broadcast to all - ${event}`);
 };
 
 /**

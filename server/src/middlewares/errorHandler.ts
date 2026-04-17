@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/errors';
 
@@ -18,7 +19,7 @@ export const errorHandler = (
     return;
   }
 
-  console.error(err);
+  logger.error(err);
   res.status(500).json({
     error: 'Something went wrong',
     ...(process.env.NODE_ENV === 'development' && { message: err.message }),

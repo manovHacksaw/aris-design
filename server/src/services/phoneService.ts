@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { prisma } from '../lib/prisma';
 import { firebaseAdmin } from '../lib/firebaseAdmin';
 
@@ -24,7 +25,7 @@ export class PhoneService {
 
         const apiKey = process.env.FIREBASE_API_KEY;
         if (!apiKey) {
-            console.warn("FIREBASE_API_KEY not found in server env, trying to use Admin SDK...");
+            logger.warn("FIREBASE_API_KEY not found in server env, trying to use Admin SDK...");
             const decodedToken = await firebaseAdmin.auth().verifyIdToken(idToken);
             phoneNumber = decodedToken.phone_number;
         } else {

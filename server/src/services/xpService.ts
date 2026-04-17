@@ -1,3 +1,4 @@
+import logger from '../lib/logger';
 import { prisma } from '../lib/prisma.js';
 import { MilestoneCategory, XpTransactionType, Prisma } from '@prisma/client';
 import {
@@ -319,7 +320,7 @@ export class XpService {
           category,
           threshold: milestone.threshold,
           xpAwarded: milestone.xp,
-        }).catch(err => console.error('Failed to send milestone notification:', err));
+        }).catch(err => logger.error('Failed to send milestone notification:', err));
       } catch (error: unknown) {
         // P2002 = unique constraint violation (already claimed by concurrent request)
         if (
@@ -330,7 +331,7 @@ export class XpService {
           continue;
         }
         // Log other errors but don't fail the entire operation
-        console.error(
+        logger.error(
           `Failed to claim milestone ${category}:${milestone.threshold}:`,
           error
         );
