@@ -10,6 +10,7 @@ export class BrandApplicationService {
       contactPersonName, contactRole, phoneNumber, telegramHandle, socialLinks,
       gstNumber, panNumber, platformUsageReason, agreementAuthorized, agreementAccurate, documents,
     } = data;
+    const normalizedContactEmail = contactEmail.toLowerCase();
 
     if (!brandName || !contactEmail || !categories || categories.length === 0) {
       throw new ValidationError('Brand name, contact email, and at least one category are required');
@@ -23,7 +24,10 @@ export class BrandApplicationService {
       throw new ValidationError('All 4 required documents must be uploaded (GST Certificate, Incorporation Letter, PAN Card, Trade License)');
     }
 
-    const existingApplication = await prisma.brandApplication.findUnique({ where: { contactEmail } });
+    const existingApplication = await prisma.brandApplication.findFirst({
+      where: { contactEmail: normalizedContactEmail },
+      orderBy: { submittedAt: 'desc' },
+    });
 
     if (existingApplication) {
       if (existingApplication.status === ApplicationStatus.PENDING) {
@@ -39,7 +43,8 @@ export class BrandApplicationService {
 
     return prisma.brandApplication.create({
       data: {
-        brandName, companyName, tagline, description, categories, contactEmail,
+        brandName, companyName, tagline, description, categories,
+        contactEmail: normalizedContactEmail,
         contactPersonName, contactRole, phoneNumber, telegramHandle,
         socialLinks: socialLinks ? JSON.parse(JSON.stringify(socialLinks)) : undefined,
         gstNumber, panNumber, platformUsageReason, agreementAuthorized, agreementAccurate,
@@ -97,6 +102,9 @@ export class BrandApplicationService {
   }
 
   static async getApplicationByEmail(email: string) {
-    return prisma.brandApplication.findUnique({ where: { contactEmail: email } });
+    return prisma.brandApplication.findFirst({
+      where: { contactEmail: email.toLowerCase() },
+      orderBy: { submittedAt: 'desc' },
+    });
   }
 }

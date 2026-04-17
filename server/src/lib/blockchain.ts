@@ -109,7 +109,7 @@ export const REWARD_CONSTANTS = {
 
 // ==================== BACKEND SIGNER LOGIC (GASLESS via Pimlico) ====================
 
-import { http, createPublicClient, encodeFunctionData, defineChain } from 'viem';
+import { http, createPublicClient, defineChain } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { createSmartAccountClient } from 'permissionless';
 import { toSimpleSmartAccount } from 'permissionless/accounts';

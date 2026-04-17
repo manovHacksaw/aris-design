@@ -3,7 +3,6 @@ import { prisma } from '../../lib/prisma.js';
 import { MilestoneCategory, XpTransactionType, Prisma } from '@prisma/client';
 import {
   MilestoneConfig,
-  LevelConfig,
   XpStatus,
   FullXpStatus,
   ClaimedMilestone,
@@ -11,90 +10,22 @@ import {
   GrantXpParams,
   XpTransactionSummary,
   ReferralStats,
+  MilestoneCounts,
+  MilestoneProgress,
 } from '../../types/xp.js';
 import { NotificationService } from '../social/notificationService.js';
+import {
+  MILESTONE_CONFIGS,
+  USER_LEVEL_THRESHOLDS,
+  REFERRAL_BASE_XP,
+} from '../../config/xpConfig.js';
 
 export class XpService {
-  // ==================== MILESTONE CONFIGURATIONS ====================
+  // ==================== CONFIGURATIONS (Internal) ====================
 
-  static readonly MILESTONES: Record<MilestoneCategory, MilestoneConfig[]> = {
-    VOTES_CAST: [
-      { threshold: 10, xp: 10 },
-      { threshold: 25, xp: 20 },
-      { threshold: 75, xp: 50 },
-      { threshold: 200, xp: 100 },
-      { threshold: 500, xp: 250 },
-      { threshold: 1000, xp: 500 },
-      { threshold: 2000, xp: 1000 },
-    ],
-    TOP_VOTES: [
-      { threshold: 3, xp: 10 },
-      { threshold: 10, xp: 20 },
-      { threshold: 25, xp: 50 },
-      { threshold: 50, xp: 100 },
-      { threshold: 100, xp: 250 },
-      { threshold: 200, xp: 500 },
-      { threshold: 300, xp: 1000 },
-    ],
-    LOGIN_STREAK: [
-      { threshold: 3, xp: 10 },
-      { threshold: 7, xp: 20 },
-      { threshold: 15, xp: 50 },
-      { threshold: 30, xp: 100 },
-      { threshold: 60, xp: 250 },
-      { threshold: 100, xp: 500 },
-      { threshold: 250, xp: 1000 },
-    ],
-    POSTS_CREATED: [
-      { threshold: 5, xp: 10 },
-      { threshold: 10, xp: 20 },
-      { threshold: 15, xp: 50 },
-      { threshold: 50, xp: 100 },
-      { threshold: 100, xp: 250 },
-      { threshold: 250, xp: 500 },
-      { threshold: 500, xp: 1000 },
-    ],
-    VOTES_RECEIVED: [
-      { threshold: 100, xp: 10 },
-      { threshold: 200, xp: 20 },
-      { threshold: 500, xp: 50 },
-      { threshold: 1000, xp: 100 },
-      { threshold: 2500, xp: 250 },
-      { threshold: 5000, xp: 500 },
-      { threshold: 10000, xp: 1000 },
-    ],
-    TOP_3_CONTENT: [
-      { threshold: 2, xp: 10 },
-      { threshold: 5, xp: 20 },
-      { threshold: 10, xp: 50 },
-      { threshold: 20, xp: 100 },
-      { threshold: 40, xp: 250 },
-      { threshold: 75, xp: 500 },
-      { threshold: 100, xp: 1000 },
-    ],
-    REFERRAL: [
-      { threshold: 5, xp: 10 },
-      { threshold: 50, xp: 20 },
-      { threshold: 125, xp: 50 },
-      { threshold: 250, xp: 100 },
-      { threshold: 500, xp: 250 },
-      { threshold: 1250, xp: 500 },
-      { threshold: 2500, xp: 1000 },
-    ],
-  };
-
-  static readonly REFERRAL_BASE_XP = 5;
-
-  static readonly LEVEL_THRESHOLDS: LevelConfig[] = [
-    { level: 1, xpRequired: 0, multiplier: 1.0 },
-    { level: 2, xpRequired: 100, multiplier: 1.2 },
-    { level: 3, xpRequired: 500, multiplier: 1.5 },
-    { level: 4, xpRequired: 1000, multiplier: 2.0 },
-    { level: 5, xpRequired: 2500, multiplier: 2.5 },
-    { level: 6, xpRequired: 5000, multiplier: 3.0 },
-    { level: 7, xpRequired: 10000, multiplier: 3.5 },
-    { level: 8, xpRequired: 15000, multiplier: 4.0 },
-  ];
+  static readonly MILESTONES = MILESTONE_CONFIGS;
+  static readonly LEVEL_THRESHOLDS = USER_LEVEL_THRESHOLDS;
+  static readonly REFERRAL_BASE_XP = REFERRAL_BASE_XP;
 
   // ==================== LEVEL CALCULATION ====================
 
@@ -102,7 +33,6 @@ export class XpService {
    * Calculate user level and multiplier from XP
    */
   static calculateLevel(xp: number): { level: number; multiplier: number } {
-    // Find the highest level the user qualifies for
     let result = { level: 1, multiplier: 1.0 };
 
     for (const config of this.LEVEL_THRESHOLDS) {
@@ -125,7 +55,6 @@ export class XpService {
     );
 
     if (!nextLevelConfig) {
-      // Already at max level
       return 0;
     }
 
@@ -147,7 +76,6 @@ export class XpService {
     );
 
     if (!nextLevelConfig || !currentLevelConfig) {
-      // Max level reached
       return { current: currentXp, required: currentXp, percentage: 100 };
     }
 
@@ -166,7 +94,6 @@ export class XpService {
 
   /**
    * Grant XP to a user with transaction logging
-   * This is the core method for all XP grants - always use this to modify XP
    */
   static async grantXp(params: GrantXpParams): Promise<XpGrantResult> {
     const { userId, amount, type, category, threshold, description, metadata } =
@@ -188,7 +115,6 @@ export class XpService {
     }
 
     return prisma.$transaction(async (tx) => {
-      // Get current user XP
       const user = await tx.user.findUnique({
         where: { id: userId },
         select: { xp: true, level: true },
@@ -200,14 +126,9 @@ export class XpService {
 
       const previousXp = user.xp;
       const previousLevel = user.level;
-
-      // Calculate new XP (ensure it doesn't go negative)
       const newXp = Math.max(0, user.xp + amount);
-
-      // Calculate new level
       const { level: newLevel } = this.calculateLevel(newXp);
 
-      // Create transaction record (audit trail)
       await tx.xpTransaction.create({
         data: {
           userId,
@@ -221,7 +142,6 @@ export class XpService {
         },
       });
 
-      // Update user XP and level
       await tx.user.update({
         where: { id: userId },
         data: { xp: newXp, level: newLevel },
@@ -251,23 +171,19 @@ export class XpService {
     const milestones = this.MILESTONES[category];
     const claimedMilestones: ClaimedMilestone[] = [];
 
-    // Get already claimed milestones for this user+category
     const alreadyClaimed = await prisma.xpMilestoneClaimed.findMany({
       where: { userId, category },
       select: { threshold: true },
     });
     const claimedThresholds = new Set(alreadyClaimed.map((m) => m.threshold));
 
-    // Find all eligible milestones (currentCount >= threshold AND not already claimed)
     const eligibleMilestones = milestones.filter(
       (m) => currentCount >= m.threshold && !claimedThresholds.has(m.threshold)
     );
 
-    // Claim each eligible milestone
     for (const milestone of eligibleMilestones) {
       try {
         await prisma.$transaction(async (tx) => {
-          // Try to create claim record (unique constraint prevents duplicates)
           await tx.xpMilestoneClaimed.create({
             data: {
               userId,
@@ -277,7 +193,6 @@ export class XpService {
             },
           });
 
-          // Get current user XP
           const user = await tx.user.findUnique({
             where: { id: userId },
             select: { xp: true },
@@ -288,7 +203,6 @@ export class XpService {
           const newXp = user.xp + milestone.xp;
           const { level: newLevel } = this.calculateLevel(newXp);
 
-          // Create XP transaction
           await tx.xpTransaction.create({
             data: {
               userId,
@@ -301,7 +215,6 @@ export class XpService {
             },
           });
 
-          // Update user
           await tx.user.update({
             where: { id: userId },
             data: { xp: newXp, level: newLevel },
@@ -315,24 +228,20 @@ export class XpService {
           claimedAt: new Date(),
         });
 
-        // Send notification (non-blocking)
         NotificationService.createXpMilestoneNotification(userId, {
           category,
           threshold: milestone.threshold,
           xpAwarded: milestone.xp,
-        }).catch(err => logger.error(err, 'Failed to send milestone notification:'));
+        }).catch(err => logger.error({ err }, 'Failed to send milestone notification:'));
       } catch (error: unknown) {
-        // P2002 = unique constraint violation (already claimed by concurrent request)
         if (
           error instanceof Prisma.PrismaClientKnownRequestError &&
           error.code === 'P2002'
         ) {
-          // Silently skip - milestone was claimed by concurrent request
           continue;
         }
-        // Log other errors but don't fail the entire operation
         logger.error(
-            error,
+            { err: error },
             `Failed to claim milestone ${category}:${milestone.threshold}:`
         );
       }
@@ -352,7 +261,6 @@ export class XpService {
     const milestones = this.MILESTONES[category];
     const claimedSet = new Set(claimedThresholds);
 
-    // Find the first unclaimed milestone that hasn't been reached
     for (const milestone of milestones) {
       if (!claimedSet.has(milestone.threshold) && currentCount < milestone.threshold) {
         return milestone;
@@ -360,6 +268,286 @@ export class XpService {
     }
 
     return null;
+  }
+
+  // ==================== ABSORBED MILESTONE SERVICE LOGIC ====================
+
+  /**
+   * Get all milestone-related counts for a user
+   */
+  static async getUserMilestoneCounts(userId: string): Promise<MilestoneCounts> {
+    const [
+      votesCast,
+      topVotesCount,
+      loginStreak,
+      postsCreated,
+      votesReceived,
+      top3Count,
+      referralCount,
+    ] = await Promise.all([
+      prisma.vote.count({ where: { userId } }),
+      this.countTopVotes(userId),
+      prisma.userLoginStreak
+        .findUnique({ where: { userId } })
+        .then((s) => s?.currentStreak ?? 0),
+      prisma.submission.count({ where: { userId } }),
+      this.countVotesReceived(userId),
+      this.countTop3Finishes(userId),
+      prisma.referral.count({ where: { referrerId: userId } }),
+    ]);
+
+    return {
+      votesCast,
+      topVotes: topVotesCount,
+      loginStreak,
+      postsCreated,
+      votesReceived,
+      top3Content: top3Count,
+      referralCount,
+    };
+  }
+
+  private static async countTopVotes(userId: string): Promise<number> {
+    const submissionTopVotes = await prisma.vote.count({
+      where: {
+        userId,
+        submission: { finalRank: { in: [1, 2, 3] } },
+      },
+    });
+
+    const proposalTopVotes = await prisma.vote.count({
+      where: {
+        userId,
+        proposal: { finalRank: { in: [1, 2, 3] } },
+      },
+    });
+
+    return submissionTopVotes + proposalTopVotes;
+  }
+
+  private static async countVotesReceived(userId: string): Promise<number> {
+    const result = await prisma.submission.aggregate({
+      where: { userId },
+      _sum: { voteCount: true },
+    });
+    return result._sum.voteCount ?? 0;
+  }
+
+  private static async countTop3Finishes(userId: string): Promise<number> {
+    return prisma.submission.count({
+      where: {
+        userId,
+        finalRank: { in: [1, 2, 3] },
+      },
+    });
+  }
+
+  /**
+   * Get milestone progress for all categories
+   */
+  static async getMilestoneProgress(
+    userId: string
+  ): Promise<Record<MilestoneCategory, MilestoneProgress>> {
+    const counts = await this.getUserMilestoneCounts(userId);
+    const claimedMilestones = await prisma.xpMilestoneClaimed.findMany({
+      where: { userId },
+      select: { category: true, threshold: true },
+    });
+
+    const claimedByCategory: Record<MilestoneCategory, number[]> = {
+      VOTES_CAST: [],
+      TOP_VOTES: [],
+      LOGIN_STREAK: [],
+      POSTS_CREATED: [],
+      VOTES_RECEIVED: [],
+      TOP_3_CONTENT: [],
+      REFERRAL: [],
+    };
+
+    for (const claim of claimedMilestones) {
+      claimedByCategory[claim.category].push(claim.threshold);
+    }
+
+    const progress: Record<MilestoneCategory, MilestoneProgress> = {} as any;
+
+    const categoryCountMap: Record<MilestoneCategory, number> = {
+      VOTES_CAST: counts.votesCast,
+      TOP_VOTES: counts.topVotes,
+      LOGIN_STREAK: counts.loginStreak,
+      POSTS_CREATED: counts.postsCreated,
+      VOTES_RECEIVED: counts.votesReceived,
+      TOP_3_CONTENT: counts.top3Content,
+      REFERRAL: counts.referralCount,
+    };
+
+    for (const category of Object.values(MilestoneCategory)) {
+      const current = categoryCountMap[category];
+      const claimed = claimedByCategory[category];
+      const next = this.getNextMilestone(category, current, claimed);
+
+      let progressPercent = 0;
+      if (next) {
+        const prevThreshold = Math.max(0, ...claimed.filter((t) => t < next.threshold), 0);
+        const range = next.threshold - prevThreshold;
+        const progressInRange = current - prevThreshold;
+        progressPercent = Math.min(100, Math.floor((progressInRange / range) * 100));
+      } else if (claimed.length === this.MILESTONES[category].length) {
+        progressPercent = 100;
+      }
+
+      progress[category] = {
+        category,
+        current,
+        claimed,
+        next,
+        progress: progressPercent,
+        allTiers: this.MILESTONES[category],
+      };
+    }
+
+    return progress;
+  }
+
+  /**
+   * Process event completion milestones
+   */
+  static async processEventCompletion(eventId: string): Promise<void> {
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: { eventType: true },
+    });
+
+    if (!event) {
+      logger.error(`Event ${eventId} not found for milestone processing`);
+      return;
+    }
+
+    if (event.eventType === 'post_and_vote') {
+      await this.processPostAndVoteEventCompletion(eventId);
+    } else {
+      await this.processVoteOnlyEventCompletion(eventId);
+    }
+  }
+
+  private static async processPostAndVoteEventCompletion(eventId: string): Promise<void> {
+    const submissions = await prisma.submission.findMany({
+      where: { eventId },
+      select: { id: true, userId: true, finalRank: true, voteCount: true },
+    });
+
+    const votes = await prisma.vote.findMany({
+      where: { eventId },
+      select: { userId: true, submissionId: true },
+    });
+
+    const submissionRanks = new Map<string, number | null>();
+    for (const sub of submissions) submissionRanks.set(sub.id, sub.finalRank);
+
+    const usersToProcess = new Set<string>();
+
+    // 1. TOP_VOTES
+    const votersOnTop3 = new Set<string>();
+    for (const vote of votes) {
+      if (vote.submissionId) {
+        const rank = submissionRanks.get(vote.submissionId);
+        if (rank && rank <= 3) votersOnTop3.add(vote.userId);
+      }
+    }
+
+    for (const voterId of votersOnTop3) {
+      usersToProcess.add(voterId);
+      try {
+        const totalTopVotes = await this.countTopVotes(voterId);
+        await this.checkAndClaimMilestones(voterId, MilestoneCategory.TOP_VOTES, totalTopVotes);
+      } catch (error) {
+        logger.error({ err: error }, `Failed to check TOP_VOTES milestone for user ${voterId}`);
+      }
+    }
+
+    // 2. TOP_3_CONTENT
+    const top3Creators = submissions.filter((s) => s.finalRank && s.finalRank <= 3).map((s) => s.userId);
+    for (const creatorId of top3Creators) {
+      usersToProcess.add(creatorId);
+      try {
+        const totalTop3 = await this.countTop3Finishes(creatorId);
+        await this.checkAndClaimMilestones(creatorId, MilestoneCategory.TOP_3_CONTENT, totalTop3);
+      } catch (error) {
+        logger.error({ err: error }, `Failed to check TOP_3_CONTENT milestone for user ${creatorId}`);
+      }
+    }
+
+    // 3. VOTES_RECEIVED
+    const allCreators = new Set(submissions.map((s) => s.userId));
+    for (const creatorId of allCreators) {
+      usersToProcess.add(creatorId);
+      try {
+        const totalVotesReceived = await this.countVotesReceived(creatorId);
+        await this.checkAndClaimMilestones(creatorId, MilestoneCategory.VOTES_RECEIVED, totalVotesReceived);
+      } catch (error) {
+        logger.error({ err: error }, `Failed to check VOTES_RECEIVED milestone for user ${creatorId}`);
+      }
+    }
+  }
+
+  private static async processVoteOnlyEventCompletion(eventId: string): Promise<void> {
+    const proposals = await prisma.proposal.findMany({
+      where: { eventId },
+      select: { id: true, finalRank: true },
+    });
+
+    const votes = await prisma.vote.findMany({
+      where: { eventId },
+      select: { userId: true, proposalId: true },
+    });
+
+    const proposalRanks = new Map<string, number | null>();
+    for (const prop of proposals) proposalRanks.set(prop.id, prop.finalRank);
+
+    const votersOnTop3 = new Set<string>();
+    for (const vote of votes) {
+      if (vote.proposalId) {
+        const rank = proposalRanks.get(vote.proposalId);
+        if (rank && rank <= 3) votersOnTop3.add(vote.userId);
+      }
+    }
+
+    for (const voterId of votersOnTop3) {
+      try {
+        const totalTopVotes = await this.countTopVotes(voterId);
+        await this.checkAndClaimMilestones(voterId, MilestoneCategory.TOP_VOTES, totalTopVotes);
+      } catch (error) {
+        logger.error({ err: error }, `Failed to check TOP_VOTES milestone for user ${voterId}`);
+      }
+    }
+  }
+
+  /**
+   * Check all milestone categories for a user
+   */
+  static async checkAllMilestones(userId: string): Promise<ClaimedMilestone[]> {
+    const counts = await this.getUserMilestoneCounts(userId);
+    const allClaimed: ClaimedMilestone[] = [];
+
+    const categoryCountMap: Record<MilestoneCategory, number> = {
+      VOTES_CAST: counts.votesCast,
+      TOP_VOTES: counts.topVotes,
+      LOGIN_STREAK: counts.loginStreak,
+      POSTS_CREATED: counts.postsCreated,
+      VOTES_RECEIVED: counts.votesReceived,
+      TOP_3_CONTENT: counts.top3Content,
+      REFERRAL: counts.referralCount,
+    };
+
+    for (const category of Object.values(MilestoneCategory)) {
+      try {
+        const claimed = await this.checkAndClaimMilestones(userId, category, categoryCountMap[category]);
+        allClaimed.push(...claimed);
+      } catch (error) {
+        logger.error({ err: error }, `Failed to check ${category} milestones for user ${userId}`);
+      }
+    }
+
+    return allClaimed;
   }
 
   // ==================== USER STATUS OPERATIONS ====================
@@ -496,7 +684,6 @@ export class XpService {
       }),
     ]);
 
-    // Also count milestone XP from referrals
     const milestoneClaims = await prisma.xpMilestoneClaimed.findMany({
       where: {
         userId,
@@ -519,7 +706,6 @@ export class XpService {
 
   /**
    * Recalculate user level from their current XP
-   * Useful for fixing any inconsistencies
    */
   static async recalculateUserLevel(userId: string): Promise<void> {
     const user = await prisma.user.findUnique({

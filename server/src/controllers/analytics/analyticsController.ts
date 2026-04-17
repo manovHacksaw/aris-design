@@ -21,7 +21,7 @@ async function requireBrand(userId: string | undefined, res: Response) {
   return brand;
 }
 
-export const trackEventView = async (req: Request, res: Response) => {
+export const trackEventView = async (req: Request, res: Response): Promise<void> => {
   try {
     await AnalyticsTrackingService.trackEventView(req.params.id, req.user?.id ?? null);
     res.status(200).json({ success: true });
@@ -30,7 +30,7 @@ export const trackEventView = async (req: Request, res: Response) => {
   }
 };
 
-export const trackShare = async (req: Request, res: Response) => {
+export const trackShare = async (req: Request, res: Response): Promise<void> => {
   try {
     await AnalyticsTrackingService.trackShare(req.params.id, req.user?.id ?? null);
     res.status(200).json({ success: true });
@@ -39,11 +39,12 @@ export const trackShare = async (req: Request, res: Response) => {
   }
 };
 
-export const trackClick = async (req: Request, res: Response) => {
+export const trackClick = async (req: Request, res: Response): Promise<void> => {
   try {
     const { target } = req.body;
     if (!target || typeof target !== 'string') {
-      return res.status(400).json({ error: 'target is required' });
+      res.status(400).json({ error: 'target is required' });
+      return;
     }
     await AnalyticsTrackingService.trackClick(req.params.id, req.user?.id ?? null, target);
     res.status(200).json({ success: true });
@@ -52,7 +53,7 @@ export const trackClick = async (req: Request, res: Response) => {
   }
 };
 
-export const getEventAnalytics = async (req: Request, res: Response) => {
+export const getEventAnalytics = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!await requireEventOwner(req.params.id, req.user?.id, res)) return;
     const analytics = await AnalyticsQueryService.getEventAnalytics(req.params.id);
@@ -62,7 +63,7 @@ export const getEventAnalytics = async (req: Request, res: Response) => {
   }
 };
 
-export const getDetailedEventAnalytics = async (req: Request, res: Response) => {
+export const getDetailedEventAnalytics = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!await requireEventOwner(req.params.id, req.user?.id, res)) return;
     const analytics = await AnalyticsQueryService.getDetailedEventAnalytics(req.params.id);
@@ -72,7 +73,7 @@ export const getDetailedEventAnalytics = async (req: Request, res: Response) => 
   }
 };
 
-export const getBrandOverview = async (req: Request, res: Response) => {
+export const getBrandOverview = async (req: Request, res: Response): Promise<void> => {
   try {
     const brand = await requireBrand(req.user?.id, res);
     if (!brand) return;
@@ -83,31 +84,49 @@ export const getBrandOverview = async (req: Request, res: Response) => {
   }
 };
 
-export const generateEventSummary = async (req: Request, res: Response) => {
+export const generateEventSummary = async (req: Request, res: Response): Promise<void> => {
   try {
     const eventId = req.params.id;
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       select: { status: true, brand: { select: { ownerId: true } } },
     });
-    if (!event) return res.status(404).json({ error: 'Event not found' });
-    if (event.brand.ownerId !== req.user?.id) return res.status(403).json({ error: 'Unauthorized' });
-    if (event.status !== 'completed') return res.status(400).json({ error: 'Event must be completed' });
+    if (!event) {
+      res.status(404).json({ error: 'Event not found' });
+      return;
+    }
+    if (event.brand.ownerId !== req.user?.id) {
+      res.status(403).json({ error: 'Unauthorized' });
+      return;
+    }
+    if (event.status !== 'completed') {
+      res.status(400).json({ error: 'Event must be completed' });
+      return;
+    }
 
     const existing = await prisma.eventAnalytics.findUnique({ where: { eventId }, select: { aiSummary: true } });
-    if (existing?.aiSummary) return res.status(200).json({ aiSummary: existing.aiSummary });
+    if (existing?.aiSummary) {
+      res.status(200).json({ aiSummary: existing.aiSummary });
+      return;
+    }
 
     const summary = await AiReportService.generateEventSummary(eventId);
-    if (!summary) return res.status(500).json({ error: 'Failed to generate summary' });
+    if (!summary) {
+      res.status(500).json({ error: 'Failed to generate summary' });
+      return;
+    }
     res.status(200).json({ aiSummary: summary });
   } catch (e: any) {
     res.status(500).json({ error: e.message || 'Failed to generate summary' });
   }
 };
 
-export const getBrandStats = async (req: Request, res: Response) => {
+export const getBrandStats = async (req: Request, res: Response): Promise<void> => {
   try {
-    if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
+    if (!req.user?.id) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
     const stats = await AnalyticsBrandService.getBrandStats(req.user.id);
     res.status(200).json(stats);
   } catch (e: any) {
@@ -115,11 +134,12 @@ export const getBrandStats = async (req: Request, res: Response) => {
   }
 };
 
-export const getBrandTimeseries = async (req: Request, res: Response) => {
+export const getBrandTimeseries = async (req: Request, res: Response): Promise<void> => {
   try {
     const { metric, from, to } = req.query;
     if (!metric || typeof metric !== 'string') {
-      return res.status(400).json({ error: 'metric query param is required' });
+      res.status(400).json({ error: 'metric query param is required' });
+      return;
     }
     const brand = await requireBrand(req.user?.id, res);
     if (!brand) return;
@@ -130,7 +150,7 @@ export const getBrandTimeseries = async (req: Request, res: Response) => {
   }
 };
 
-export const getEventClicksBreakdown = async (req: Request, res: Response) => {
+export const getEventClicksBreakdown = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!await requireEventOwner(req.params.id, req.user?.id, res)) return;
     const breakdown = await AnalyticsQueryService.getEventClicksBreakdown(req.params.id);
@@ -140,7 +160,7 @@ export const getEventClicksBreakdown = async (req: Request, res: Response) => {
   }
 };
 
-export const getBrandClicksBreakdown = async (req: Request, res: Response) => {
+export const getBrandClicksBreakdown = async (req: Request, res: Response): Promise<void> => {
   try {
     const brand = await requireBrand(req.user?.id, res);
     if (!brand) return;
@@ -151,7 +171,7 @@ export const getBrandClicksBreakdown = async (req: Request, res: Response) => {
   }
 };
 
-export const trackBrandView = async (req: Request, res: Response) => {
+export const trackBrandView = async (req: Request, res: Response): Promise<void> => {
   try {
     await AnalyticsBrandService.trackBrandView(req.params.id);
     res.status(200).json({ success: true });
@@ -160,7 +180,7 @@ export const trackBrandView = async (req: Request, res: Response) => {
   }
 };
 
-export const getBrandViews = async (req: Request, res: Response) => {
+export const getBrandViews = async (req: Request, res: Response): Promise<void> => {
   try {
     const views = await AnalyticsBrandService.getBrandViews(req.params.id);
     res.status(200).json(views);
@@ -169,7 +189,7 @@ export const getBrandViews = async (req: Request, res: Response) => {
   }
 };
 
-export const getBrandFollowerGrowth = async (req: Request, res: Response) => {
+export const getBrandFollowerGrowth = async (req: Request, res: Response): Promise<void> => {
   try {
     const { from, to, granularity } = req.query;
     const brand = await requireBrand(req.user?.id, res);
@@ -181,16 +201,25 @@ export const getBrandFollowerGrowth = async (req: Request, res: Response) => {
   }
 };
 
-export const generateEventInsights = async (req: Request, res: Response) => {
+export const generateEventInsights = async (req: Request, res: Response): Promise<void> => {
   try {
     const eventId = req.params.id;
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       select: { status: true, brand: { select: { ownerId: true } } },
     });
-    if (!event) return res.status(404).json({ error: 'Event not found' });
-    if (event.brand.ownerId !== req.user?.id) return res.status(403).json({ error: 'Unauthorized' });
-    if (event.status !== 'completed') return res.status(400).json({ error: 'Event must be completed to generate insights' });
+    if (!event) {
+      res.status(404).json({ error: 'Event not found' });
+      return;
+    }
+    if (event.brand.ownerId !== req.user?.id) {
+      res.status(403).json({ error: 'Unauthorized' });
+      return;
+    }
+    if (event.status !== 'completed') {
+      res.status(400).json({ error: 'Event must be completed to generate insights' });
+      return;
+    }
 
     const insights = await AiReportService.generateEventInsights(eventId);
     res.status(200).json(insights);
@@ -199,12 +228,15 @@ export const generateEventInsights = async (req: Request, res: Response) => {
   }
 };
 
-export const generateBrandSummary = async (req: Request, res: Response) => {
+export const generateBrandSummary = async (req: Request, res: Response): Promise<void> => {
   try {
     const brand = await requireBrand(req.user?.id, res);
     if (!brand) return;
     const summary = await AiReportService.generateBrandSummary(brand.id);
-    if (!summary) return res.status(500).json({ error: 'Failed to generate brand summary' });
+    if (!summary) {
+      res.status(500).json({ error: 'Failed to generate brand summary' });
+      return;
+    }
     res.status(200).json({ aiSummary: summary });
   } catch (e: any) {
     res.status(500).json({ error: e.message || 'Failed to generate brand summary' });

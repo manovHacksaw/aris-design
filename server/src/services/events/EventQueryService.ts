@@ -1,28 +1,11 @@
-import { EventValidationService } from './EventValidationService.js';
-
-import { EventLifecycleService } from './EventLifecycleService.js';
-import { EventRankingService } from './EventRankingService.js';
-import logger from '../../lib/logger';
 import { prisma } from '../../lib/prisma.js';
-import { Event, EventType } from '@prisma/client';
-import { NotFoundError, ForbiddenError, ValidationError } from '../../utils/errors.js';
+import { Event } from '@prisma/client';
 import {
-  CreateEventRequest,
-  UpdateEventRequest,
   EventFilters,
   EventStatus,
-  EventStatusType,
-  VALID_TRANSITIONS,
-  LOCKED_FIELDS_MAP,
-  TimestampData,
-  ValidationResult,
 } from '../../types/event.js';
-import { NotificationService } from '../notificationService.js';
 import { getIPFSUrl } from '../ipfsService.js';
-import { MilestoneService } from '../milestoneService.js';
-import { BrandXpService } from '../brandXpService.js';
 
-import { TrustService } from '../trustService.js';
 
 export class EventQueryService {
 

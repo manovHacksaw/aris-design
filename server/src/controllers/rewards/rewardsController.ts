@@ -1,7 +1,7 @@
 import logger from '../../lib/logger';
 import { Request, Response } from 'express';
 import { prisma } from '../../lib/prisma.js';
-import { ClaimType, RewardsPoolStatus } from '@prisma/client';
+import { ClaimType } from '@prisma/client';
 import { EventType, REWARDS_CONSTANTS } from '../../types/rewards.js';
 import { RewardsPoolService } from '../../services/rewards/RewardsPoolService.js';
 import { RewardsClaimService } from '../../services/rewards/RewardsClaimService.js';
@@ -320,7 +320,7 @@ export class RewardsController {
       const events = rewards.map(r => ({
         eventId: r.eventId,
         title: r.eventTitle,
-        onChainEventId: r.onChainEventId,
+        onChainEventId: r.onChainEventId ?? null,
         claimableAmount: r.totalClaimableUsdc.toFixed(2),
         alreadyClaimed: false,
         claimStatus: r.claims.length > 0 ? 'CLAIMABLE' : 'NO_REWARDS',
@@ -672,7 +672,7 @@ export class RewardsController {
           return {
             eventId: event.id,
             eventTitle: event.title,
-            onChainEventId: pool.onChainEventId,
+            onChainEventId: event.onChainEventId,
             poolStatus: pool.status,
             claims,
             totalClaimable,

@@ -1,27 +1,18 @@
-import { EventValidationService } from './EventValidationService.js';import { RewardsPoolService } from '../rewards/RewardsPoolService.js';
+import { EventValidationService } from './EventValidationService.js';
+import { RewardsPoolService } from '../rewards/RewardsPoolService.js';
 import { RewardsDistributionService } from '../rewards/RewardsDistributionService.js';
-
-import { EventQueryService } from './EventQueryService.js';
-
 import { EventRankingService } from './EventRankingService.js';
 import logger from '../../lib/logger';
 import { prisma } from '../../lib/prisma.js';
-import { Event, EventType } from '@prisma/client';
+import { Event } from '@prisma/client';
 import { NotFoundError, ForbiddenError, ValidationError } from '../../utils/errors.js';
 import {
-  CreateEventRequest,
-  UpdateEventRequest,
-  EventFilters,
   EventStatus,
   EventStatusType,
-  VALID_TRANSITIONS,
-  LOCKED_FIELDS_MAP,
-  TimestampData,
-  ValidationResult,
 } from '../../types/event.js';
 import { NotificationService } from '../social/notificationService.js';
-import { getIPFSUrl } from '../ipfsService.js';
-import { MilestoneService } from '../xp/milestoneService.js';
+
+import { XpService } from '../xp/xpService.js';
 import { BrandXpService } from '../brands/brandXpService.js';
 
 import { TrustService } from '../trustService.js';
@@ -46,21 +37,21 @@ export class EventLifecycleService {
 
     // 3. Validate transition
     if (!EventValidationService.isValidStatusTransition(event.status, newStatus)) {
-      throw new Error(
+      throw new ValidationError(
         `Invalid status transition: ${event.status} -> ${newStatus}`
       );
     }
 
     // 4. Event type compatibility check
     if (newStatus === EventStatus.POSTING && event.eventType === 'vote_only') {
-      throw new Error('Cannot transition vote_only event to posting phase');
+      throw new ValidationError('Cannot transition vote_only event to posting phase');
     }
 
     // 5. Validate timestamps for transition
     const now = new Date();
 
     if (newStatus === EventStatus.VOTING && event.postingEnd && now < event.postingEnd) {
-      throw new Error('Cannot transition to voting before posting period ends');
+      throw new ValidationError('Cannot transition to voting before posting period ends');
     }
 
     // 6. Update status
@@ -109,7 +100,7 @@ export class EventLifecycleService {
         throw new ValidationError('Post and vote events must have a leaderboard pool before publishing');
       }
       if (!event.samples || event.samples.length === 0) {
-        throw new Error('Post and vote events must have at least one sample image before publishing');
+        throw new ValidationError('Post and vote events must have at least one sample image before publishing');
       }
     }
 
@@ -117,17 +108,17 @@ export class EventLifecycleService {
     // Each proposal is ONE voting option now (no more MCQ with multiple choices)
     if (event.eventType === 'vote_only') {
       if (!event.proposals || event.proposals.length < 2) {
-        throw new Error('Vote only events must have at least 2 proposals before publishing');
+        throw new ValidationError('Vote only events must have at least 2 proposals before publishing');
       }
     }
 
     // 7. Validate timestamps one more time
     const now = new Date();
     if (event.startTime <= new Date(now.getTime() - 60000)) {
-      throw new Error('Start time must be in the future');
+      throw new ValidationError('Start time must be in the future');
     }
     if (event.endTime <= event.startTime) {
-      throw new Error('End time must be after start time');
+      throw new ValidationError('End time must be after start time');
     }
 
     // 8. Publish (transition to SCHEDULED)
@@ -157,7 +148,7 @@ export class EventLifecycleService {
       logger.error({ err: error }, 'Failed to update trust scores:');
     });
 
-    MilestoneService.processEventCompletion(eventId).catch((error) => {
+    XpService.processEventCompletion(eventId).catch((error) => {
       logger.error({ err: error }, 'Failed to process event completion milestones:');
     });
 
@@ -191,38 +182,38 @@ export class EventLifecycleService {
     });
 
     if (!event) {
-      throw new Error('Event not found');
+      throw new NotFoundError('Event not found');
     }
 
     if (event.isDeleted) {
-      throw new Error('Event not found');
+      throw new NotFoundError('Event not found');
     }
 
     // Ownership check
     if (event.brandId !== brandId) {
-      throw new Error('Forbidden: You do not own this event');
+      throw new ForbiddenError('Forbidden: You do not own this event');
     }
 
     // Cannot cancel completed events
     if (event.status === EventStatus.COMPLETED) {
-      throw new Error('Cannot cancel a completed event');
+      throw new ValidationError('Cannot cancel a completed event');
     }
 
     // Already cancelled
     if (event.status === EventStatus.CANCELLED) {
-      throw new Error('Event is already cancelled');
+      throw new ValidationError('Event is already cancelled');
     }
 
     // Cancellation rules by event type
     if (event.eventType === 'vote_only') {
       // Can cancel before voting ends, but not if votes exist
       if (event.status === EventStatus.VOTING && event._count.votes > 0) {
-        throw new Error('Cannot cancel VOTE_ONLY event after votes have been cast');
+        throw new ValidationError('Cannot cancel VOTE_ONLY event after votes have been cast');
       }
     } else {
       // POST_VOTE: can only cancel if no submissions
       if (event._count.submissions > 0) {
-        throw new Error('Cannot cancel POST_VOTE event after submissions exist');
+        throw new ValidationError('Cannot cancel POST_VOTE event after submissions exist');
       }
     }
 
@@ -241,26 +232,26 @@ export class EventLifecycleService {
     const event = await prisma.event.findUnique({ where: { id } });
 
     if (!event) {
-      throw new Error('Event not found');
+      throw new NotFoundError('Event not found');
     }
 
     if (event.isDeleted) {
-      throw new Error('Event not found');
+      throw new NotFoundError('Event not found');
     }
 
     // Ownership check
     if (event.brandId !== brandId) {
-      throw new Error('Forbidden: You do not own this event');
+      throw new ForbiddenError('Forbidden: You do not own this event');
     }
 
     // Only VOTE_ONLY events can be stopped early
     if (event.eventType !== 'vote_only') {
-      throw new Error('Only VOTE_ONLY events can be stopped early');
+      throw new ValidationError('Only VOTE_ONLY events can be stopped early');
     }
 
     // Must be in voting status
     if (event.status !== EventStatus.VOTING) {
-      throw new Error('Event must be in voting status to stop early');
+      throw new ValidationError('Event must be in voting status to stop early');
     }
 
     // Check minimum 24 hours have passed
@@ -269,7 +260,7 @@ export class EventLifecycleService {
 
     if (votingDuration < MIN_VOTING_DURATION) {
       const hoursRemaining = Math.ceil((MIN_VOTING_DURATION - votingDuration) / (60 * 60 * 1000));
-      throw new Error(
+      throw new ValidationError(
         `Event must run for at least 24 hours before stopping early. ${hoursRemaining} hours remaining.`
       );
     }
@@ -298,7 +289,7 @@ export class EventLifecycleService {
 
     // Idempotency guard: only transition if the event is still in a transitionable state.
     // Prevents double-firing when multiple server instances run the interval simultaneously.
-    const transitionableStatuses = [EventStatus.SCHEDULED, EventStatus.POSTING, EventStatus.VOTING];
+    const transitionableStatuses: EventStatusType[] = [EventStatus.SCHEDULED, EventStatus.POSTING, EventStatus.VOTING];
     if (!transitionableStatuses.includes(event.status as EventStatusType)) {
       return null;
     }
@@ -384,7 +375,7 @@ export class EventLifecycleService {
           await RewardsPoolService.cancelPool(eventId);
 
         } catch (error: any) {
-          logger.error(`❌ AutoTransition: Failed to cancel event on-chain:`, error);
+          logger.error({ err: error }, `❌ AutoTransition: Failed to cancel event on-chain:`);
           // Continue with DB update even if blockchain call fails
           // The brand can manually trigger refund later
         }
@@ -461,10 +452,8 @@ export class EventLifecycleService {
   ): Promise<Event> {
     const event = await prisma.event.findUnique({ where: { id: eventId } });
 
-    if (!event) throw new Error('Event not found');
-    if (event.brandId !== brandId) throw new Error('Forbidden');
-
-    // Create Rewards Pool
+    if (!event) throw new NotFoundError('Event not found');
+    if (event.brandId !== brandId) throw new ForbiddenError('Forbidden');
     // Calculate values based on event data
     const maxParticipants = event.capacity || 0;
     const basePoolUsdc = (event.baseReward || 0) * maxParticipants;
@@ -538,12 +527,12 @@ export class EventLifecycleService {
   static async failBlockchainStatus(
     eventId: string,
     brandId: string,
-    reason?: string
+    _reason?: string
   ): Promise<Event> {
     const event = await prisma.event.findUnique({ where: { id: eventId } });
 
-    if (!event) throw new Error('Event not found');
-    if (event.brandId !== brandId) throw new Error('Forbidden');
+    if (!event) throw new NotFoundError('Event not found');
+    if (event.brandId !== brandId) throw new ForbiddenError('Forbidden');
 
     return await prisma.event.update({
       where: { id: eventId },

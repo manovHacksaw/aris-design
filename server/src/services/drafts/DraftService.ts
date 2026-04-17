@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
 import { NotFoundError, ForbiddenError } from '../../utils/errors.js';
 
@@ -19,8 +20,13 @@ export class DraftService {
       metadata?: unknown;
     },
   ) {
+    const metadata =
+      data.metadata === undefined
+        ? undefined
+        : (JSON.parse(JSON.stringify(data.metadata)) as Prisma.InputJsonValue);
+
     return prisma.userDraft.create({
-      data: { userId, ...data },
+      data: { ...data, userId, metadata },
     });
   }
 

@@ -126,7 +126,7 @@ export class BrandClaimService {
     const walletAddress = data.walletAddress.toLowerCase();
 
     // Validate inputs
-    logger.info('claimBrand called with:', { claimToken, email, walletAddress, displayName });
+    logger.info({ claimToken, email, walletAddress, displayName }, 'claimBrand called with');
 
     if (!claimToken || !email || !walletAddress) {
       throw new ValidationError('Claim token, email, and wallet address are required');
@@ -365,4 +365,3 @@ export class BrandClaimService {
     });
   }
 }
-

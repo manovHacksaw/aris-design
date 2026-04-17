@@ -38,8 +38,8 @@ export class AuthService {
         verifiedClaims: { userId: string },
         walletAddress?: string,
         email?: string,
-        deviceInfo?: string,
-        ip?: string,
+        _deviceInfo?: string,
+        _ip?: string,
         avatarUrl?: string,
         eoaAddress?: string
     ): Promise<AuthResponse> {
@@ -90,6 +90,7 @@ export class AuthService {
                 user = await prisma.user.update({
                     where: { id: user.id },
                     data: { privyId },
+                    include: { ownedBrands: true },
                 });
             }
         }
@@ -131,6 +132,7 @@ export class AuthService {
                     emailVerified: !isVerificationEnabled,
                     phoneVerified: !isVerificationEnabled,
                 },
+                include: { ownedBrands: true },
             });
 
             // Generate referral code for new user (async, don't block)
@@ -165,17 +167,23 @@ export class AuthService {
             });
         }
 
+        if (!user) {
+            throw new Error('Failed to resolve authenticated user');
+        }
+
+        const authenticatedUser = user;
+
         // Send notifications and streak updates (async, don't block)
         (async () => {
             try {
-                await NotificationService.createWelcomeNotification(user!.id);
-                const streakResult = await LoginStreakService.recordDailyLogin(user!.id);
+                await NotificationService.createWelcomeNotification(authenticatedUser.id);
+                const streakResult = await LoginStreakService.recordDailyLogin(authenticatedUser.id);
                 if (streakResult.currentStreak >= 2) {
-                    await NotificationService.createStreakNotification(user!.id, streakResult.currentStreak);
+                    await NotificationService.createStreakNotification(authenticatedUser.id, streakResult.currentStreak);
                 }
                 for (const milestone of streakResult.newMilestonesClaimed) {
                     try {
-                        await NotificationService.createXpMilestoneNotification(user!.id, milestone);
+                        await NotificationService.createXpMilestoneNotification(authenticatedUser.id, milestone);
                     } catch (err) {
                         logger.error({ err: err }, 'Failed to send XP milestone notification:');
                     }
@@ -188,27 +196,27 @@ export class AuthService {
         return {
             success: true,
             user: {
-                id: user.id,
-                email: user.email,
-                username: user.username,
-                displayName: user.displayName,
-                avatarUrl: user.avatarUrl,
-                bio: user.bio,
-                walletAddress: user.walletAddress,
-                isOnboarded: user.isOnboarded,
-                xp: user.xp,
-                level: user.level,
-                preferredBrands: user.preferredBrands,
-                preferredCategories: user.preferredCategories,
-                socialLinks: user.socialLinks,
-                emailVerified: user.emailVerified,
-                phoneNumber: user.phoneNumber,
-                phoneVerified: user.phoneVerified,
-                lastLoginAt: user.lastLoginAt,
-                createdAt: user.createdAt,
-                updatedAt: user.updatedAt,
-                role: user.role,
-                ownedBrands: user.ownedBrands || [],
+                id: authenticatedUser.id,
+                email: authenticatedUser.email,
+                username: authenticatedUser.username,
+                displayName: authenticatedUser.displayName,
+                avatarUrl: authenticatedUser.avatarUrl,
+                bio: authenticatedUser.bio,
+                walletAddress: authenticatedUser.walletAddress,
+                isOnboarded: authenticatedUser.isOnboarded,
+                xp: authenticatedUser.xp,
+                level: authenticatedUser.level,
+                preferredBrands: authenticatedUser.preferredBrands,
+                preferredCategories: authenticatedUser.preferredCategories,
+                socialLinks: authenticatedUser.socialLinks,
+                emailVerified: authenticatedUser.emailVerified,
+                phoneNumber: authenticatedUser.phoneNumber,
+                phoneVerified: authenticatedUser.phoneVerified,
+                lastLoginAt: authenticatedUser.lastLoginAt,
+                createdAt: authenticatedUser.createdAt,
+                updatedAt: authenticatedUser.updatedAt,
+                role: authenticatedUser.role,
+                ownedBrands: authenticatedUser.ownedBrands,
             },
         };
     }

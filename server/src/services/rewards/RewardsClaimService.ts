@@ -197,6 +197,7 @@ export class RewardsClaimService {
         byEvent.set(eventId, {
           eventId,
           eventTitle: ev.title,
+          onChainEventId: ev.onChainEventId ?? null,
           claims: [],
           totalClaimableUsdc: 0,
           brandName: ev.brand?.name ?? null,

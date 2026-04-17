@@ -13,17 +13,19 @@ export function arcjetMiddleware(
   aj: ArcjetNode<any>,
   getProps?: (req: Request) => ProtectProps,
 ) {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const props = getProps ? getProps(req) : {};
       const decision = await aj.protect(req as any, props);
 
       if (decision.isDenied()) {
         if (decision.reason.isRateLimit()) {
-          return res.status(429).json({ error: 'Too many requests. Please slow down.' });
+          res.status(429).json({ error: 'Too many requests. Please slow down.' });
+          return;
         }
         // Shield WAF block
-        return res.status(403).json({ error: 'Forbidden' });
+        res.status(403).json({ error: 'Forbidden' });
+        return;
       }
 
       next();

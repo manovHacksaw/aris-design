@@ -177,7 +177,7 @@ export const createEventResultNotification = async (eventId: string) => {
         });
 
         if (!event) {
-            logger.error('Event not found for result notification:', eventId);
+            logger.error({ eventId }, 'Event not found for result notification');
             return;
         }
 
@@ -243,7 +243,7 @@ export const createVotingLiveNotification = async (eventId: string) => {
         });
 
         if (!event) {
-            logger.error('Event not found for voting live notification:', eventId);
+            logger.error({ eventId }, 'Event not found for voting live notification');
             return;
         }
 
@@ -297,7 +297,7 @@ export const createBrandPostNotification = async (brandId: string, eventId: stri
         });
 
         if (!event) {
-            logger.error('Event not found for brand post notification:', eventId);
+            logger.error({ eventId }, 'Event not found for brand post notification');
             return;
         }
 
@@ -364,12 +364,12 @@ export const createBrandSubscriptionNotification = async (brandId: string, subsc
         ]);
 
         if (!brand || !brand.ownerId) {
-            logger.error('Brand not found or has no owner:', brandId);
+            logger.error({ brandId }, 'Brand not found or has no owner');
             return;
         }
 
         if (!subscriber) {
-            logger.error('Subscriber user not found:', subscriberUserId);
+            logger.error({ subscriberUserId }, 'Subscriber user not found');
             return;
         }
 
@@ -443,7 +443,7 @@ export const createSubmissionVoteNotification = async (submissionId: string, vot
         });
 
         if (!submission || !submission.user) {
-            logger.error('Submission or submission owner not found for vote notification:', submissionId);
+            logger.error({ submissionId }, 'Submission or submission owner not found for vote notification');
             return;
         }
 
@@ -491,7 +491,7 @@ export const createEventPhaseChangeNotification = async (eventId: string, oldSta
         });
 
         if (!event || !event.brand || !event.brand.ownerId) {
-            logger.error('Event or brand owner not found for phase change notification:', eventId);
+            logger.error({ eventId }, 'Event or brand owner not found for phase change notification');
             return;
         }
 
@@ -549,7 +549,7 @@ export const createEventSubmissionNotification = async (eventId: string) => {
         });
 
         if (!event || !event.brand || !event.brand.ownerId) {
-            logger.error('Event or brand owner not found for submission notification:', eventId);
+            logger.error({ eventId }, 'Event or brand owner not found for submission notification');
             return;
         }
 
@@ -591,7 +591,7 @@ export const createEventVoteNotification = async (eventId: string) => {
         });
 
         if (!event || !event.brand || !event.brand.ownerId) {
-            logger.error('Event or brand owner not found for vote notification:', eventId);
+            logger.error({ eventId }, 'Event or brand owner not found for vote notification');
             return;
         }
 
@@ -684,7 +684,7 @@ export const createEventCancellationNotification = async (
         });
 
         if (!event || !event.brand) {
-            logger.error('Event or brand not found for cancellation notification:', eventId);
+            logger.error({ eventId }, 'Event or brand not found for cancellation notification');
             return;
         }
 

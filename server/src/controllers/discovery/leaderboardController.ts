@@ -17,7 +17,7 @@ export async function getBrands(req: Request, res: Response) {
     const leaderboard = await getBrandLeaderboard(period);
     res.json({ success: true, data: leaderboard, total: leaderboard.length });
   } catch (error) {
-    logger.error("Error fetching brand leaderboard:", error);
+    logger.error({ err: error }, "Error fetching brand leaderboard:");
     res.status(500).json({ success: false, message: "Failed to fetch brand leaderboard" });
   }
 }
@@ -28,7 +28,7 @@ export async function getUsers(req: Request, res: Response) {
     const leaderboard = await getUserLeaderboard(period);
     res.json({ success: true, data: leaderboard, total: leaderboard.length });
   } catch (error) {
-    logger.error("Error fetching user leaderboard:", error);
+    logger.error({ err: error }, "Error fetching user leaderboard:");
     res.status(500).json({ success: false, message: "Failed to fetch user leaderboard" });
   }
 }
@@ -39,7 +39,7 @@ export async function getEvents(req: Request, res: Response) {
     const leaderboard = await getEventLeaderboard(period);
     res.json({ success: true, data: leaderboard, total: leaderboard.length });
   } catch (error) {
-    logger.error("Error fetching event leaderboard:", error);
+    logger.error({ err: error }, "Error fetching event leaderboard:");
     res.status(500).json({ success: false, message: "Failed to fetch event leaderboard" });
   }
 }
@@ -48,7 +48,7 @@ export async function getEvents(req: Request, res: Response) {
  * Get content leaderboard
  * Ranks submissions by votes received
  */
-export async function getContent(req: Request, res: Response) {
+export async function getContent(_req: Request, res: Response) {
   try {
     const leaderboard = await getContentLeaderboard();
     res.json({
@@ -57,7 +57,7 @@ export async function getContent(req: Request, res: Response) {
       total: leaderboard.length,
     });
   } catch (error) {
-    logger.error("Error fetching content leaderboard:", error);
+    logger.error({ err: error }, "Error fetching content leaderboard:");
     res.status(500).json({
       success: false,
       message: "Failed to fetch content leaderboard",

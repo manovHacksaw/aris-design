@@ -1,5 +1,6 @@
 import logger from '../../lib/logger';
 import { Request, Response } from 'express';
+import { prisma } from '../../lib/prisma.js';
 import { SubscriptionService } from '../../services/social/subscriptionService';
 
 /**
@@ -161,7 +162,6 @@ export const getBrandSubscribers = async (req: Request, res: Response): Promise<
         }
 
         // Verify user owns this brand
-        const { prisma } = await import('../lib/prisma');
         const brand = await prisma.brand.findFirst({
             where: {
                 id: brandId,
