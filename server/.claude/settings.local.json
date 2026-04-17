@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun build *)",
+      "Bash(npx tsc *)",
+      "Bash(bun run *)",
+      "Bash(timeout 25 bunx tsc --noEmit)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(bun add *)",
+      "WebFetch(domain:docs.arcjet.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(node -e \"const aj = require\\('/c/Users/manov/Desktop/code/aris/server/node_modules/@arcjet/node'\\); console.log\\(Object.keys\\(aj\\)\\)\")"
+    ]
+  }
+}

@@ -2,7 +2,6 @@ import logger from './lib/logger';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import morgan from 'morgan';
 import routes from './routes';
 import { errorHandler } from './middlewares/errorHandler';
 import { notFound } from './middlewares/notFound';
@@ -23,7 +22,6 @@ export const createApp = () => {
         ].filter(Boolean),
         credentials: true
     }));
-    app.use(morgan('dev'));
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
 

@@ -3,6 +3,7 @@ import { Response } from 'express';
 import { EmailService } from '../services/emailService';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';
 import { prisma } from '../lib/prisma';
+import { AppError } from '../utils/errors';
 
 /**
  * Send OTP to email
@@ -47,16 +48,9 @@ export const sendOTP = async (req: AuthenticatedRequest, res: Response): Promise
             expiresIn: result.expiresIn,
         });
     } catch (error: any) {
+        if (error instanceof AppError) { res.status(error.status).json({ error: error.message }); return; }
         logger.error('Error sending email OTP:', error);
-
-        if (error.message.includes('wait')) {
-            res.status(429).json({ error: error.message });
-            return;
-        }
-
-        res.status(error.message.includes('already registered') || error.message.includes('Invalid') ? 400 : 500).json({
-            error: error.message || 'Failed to send verification code',
-        });
+        res.status(500).json({ error: 'Failed to send verification code' });
     }
 };
 
@@ -127,9 +121,8 @@ export const verifyOTP = async (req: AuthenticatedRequest, res: Response): Promi
             },
         });
     } catch (error: any) {
+        if (error instanceof AppError) { res.status(error.status).json({ error: error.message }); return; }
         logger.error('Error verifying email OTP:', error);
-        res.status(error.message.includes('expired') || error.message.includes('Invalid') || error.message.includes('already registered') ? 400 : 500).json({
-            error: error.message || 'Failed to verify code',
-        });
+        res.status(500).json({ error: 'Failed to verify code' });
     }
 };

@@ -1,9 +1,12 @@
 import logger from '../lib/logger';
 import { Response } from 'express';
-import { EventService } from '../services/eventService.js';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware.js';
 import { prisma } from '../lib/prisma.js';
 import { AppError } from '../utils/errors.js';
+import { EventMutationService } from '../services/events/EventMutationService.js';
+import { EventQueryService } from '../services/events/EventQueryService.js';
+import { EventLifecycleService } from '../services/events/EventLifecycleService.js';
+import { EventValidationService } from '../services/events/EventValidationService.js';
 import {
   CreateEventRequest,
   UpdateEventRequest,
@@ -45,7 +48,7 @@ export const createEvent = async (req: AuthenticatedRequest, res: Response): Pro
 
     // Create event
     const eventData: CreateEventRequest = req.body;
-    const event = await EventService.createEvent(eventData, brand.id);
+    const event = await EventMutationService.createEvent(eventData, brand.id);
 
     res.status(201).json({
       success: true,
@@ -91,14 +94,14 @@ export const getEvents = async (req: AuthenticatedRequest, res: Response) => {
     // In getEvents controller, we need to know if the user is a brand owner to pass it?
     // The previous implementation of getEvents controller (lines 134-170) did NOT fetch brand or pass userBrandId.
     // It filters: const filters = ...
-    // const { events, total } = await EventService.getEvents(filters);
+    // const { events, total } = await EventQueryService.getEvents(filters);
     // So it was always treated as "public viewer" (no brand owner logic applied for visibility of Scheduled events).
     // If I want to correctly identifying user, I should just pass userId as 3rd arg.
 
     // I need to make sure I don't break the existing call signature until I update the service.
     // userBrandId is optional 2nd arg.
 
-    const { events, total } = await EventService.getEvents(filters, undefined, userId);
+    const { events, total } = await EventQueryService.getEvents(filters, undefined, userId);
 
     const page = filters.page || 1;
     const limit = filters.limit || 20;
@@ -133,7 +136,7 @@ export const getEventById = async (req: AuthenticatedRequest, res: Response): Pr
   try {
     const { id } = req.params;
     const userId = req.user?.id;
-    const event = await EventService.getEventById(id, userId);
+    const event = await EventQueryService.getEventById(id, userId);
 
     if (!event) {
       return res.status(404).json({
@@ -142,7 +145,7 @@ export const getEventById = async (req: AuthenticatedRequest, res: Response): Pr
       });
     }
 
-    const lockedFields = EventService.getLockedFields(event.status);
+    const lockedFields = EventValidationService.getLockedFields(event.status);
 
     res.status(200).json({
       success: true,
@@ -190,7 +193,7 @@ export const getBrandEvents = async (req: AuthenticatedRequest, res: Response): 
 
     // Get events for brand
     const status = req.query.status as string | undefined;
-    const events = await EventService.getEventsByBrand(brand.id, status);
+    const events = await EventQueryService.getEventsByBrand(brand.id, status);
 
     res.status(200).json({
       success: true,
@@ -240,10 +243,10 @@ export const updateEvent = async (req: AuthenticatedRequest, res: Response): Pro
 
     // Update event
     const updateData: UpdateEventRequest = req.body;
-    const event = await EventService.updateEvent(id, brand.id, updateData);
+    const event = await EventMutationService.updateEvent(id, brand.id, updateData);
 
     // Get locked fields for response
-    const lockedFields = (EventService as any).getLockedFields?.(event.status) || [];
+    const lockedFields = EventValidationService.getLockedFields(event.status);
 
     res.status(200).json({
       success: true,
@@ -252,62 +255,14 @@ export const updateEvent = async (req: AuthenticatedRequest, res: Response): Pro
       lockedFields,
     });
   } catch (error: any) {
-    logger.error('Error in updateEvent:', error);
-
-    // Validation errors
-    if (error.message.includes('Validation') || error.message.includes('Invalid')) {
-      return res.status(400).json({
-        success: false,
-        error: 'Validation failed',
-        message: error.message,
-      });
+    if (error instanceof AppError) {
+      return res.status(error.status).json({ success: false, error: error.message });
     }
-
-    // Locked fields error
-    if (error.message.includes('locked fields')) {
-      return res.status(400).json({
-        success: false,
-        error: error.message,
-      });
-    }
-
-    // Ownership error
-    if (error.message.includes('Forbidden') || error.message.includes('do not own')) {
-      return res.status(403).json({
-        success: false,
-        error: error.message,
-      });
-    }
-
-    // Not found
-    if (error.message === 'Event not found') {
-      return res.status(404).json({
-        success: false,
-        error: 'Event not found',
-      });
-    }
-
-    // Prisma errors
     if (error.code === 'P2002') {
-      return res.status(409).json({
-        success: false,
-        error: 'Duplicate entry',
-      });
+      return res.status(409).json({ success: false, error: 'Duplicate entry' });
     }
-
-    if (error.code === 'P2025') {
-      return res.status(404).json({
-        success: false,
-        error: 'Record not found',
-      });
-    }
-
-    // Generic error
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error',
-      message: 'Failed to update event',
-    });
+    logger.error('Error in updateEvent:', error);
+    res.status(500).json({ success: false, error: 'Failed to update event' });
   }
 };
 
@@ -352,7 +307,7 @@ export const updateEventStatus = async (req: AuthenticatedRequest, res: Response
     }
 
     // Update status
-    const event = await EventService.updateEventStatus(id, brand.id, status);
+    const event = await EventMutationService.updateEventStatus(id, brand.id, status);
 
     res.status(200).json({
       success: true,
@@ -360,39 +315,11 @@ export const updateEventStatus = async (req: AuthenticatedRequest, res: Response
       event,
     });
   } catch (error: any) {
+    if (error instanceof AppError) {
+      return res.status(error.status).json({ success: false, error: error.message });
+    }
     logger.error('Error in updateEventStatus:', error);
-
-    // Validation/transition errors
-    if (error.message.includes('Invalid') || error.message.includes('transition') || error.message.includes('Cannot')) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid status transition',
-        message: error.message,
-      });
-    }
-
-    // Ownership error
-    if (error.message.includes('Forbidden') || error.message.includes('do not own')) {
-      return res.status(403).json({
-        success: false,
-        error: error.message,
-      });
-    }
-
-    // Not found
-    if (error.message === 'Event not found') {
-      return res.status(404).json({
-        success: false,
-        error: 'Event not found',
-      });
-    }
-
-    // Generic error
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error',
-      message: 'Failed to update event status',
-    });
+    res.status(500).json({ success: false, error: 'Failed to update event status' });
   }
 };
 
@@ -426,7 +353,7 @@ export const publishEvent = async (req: AuthenticatedRequest, res: Response): Pr
     }
 
     // Publish event
-    const event = await EventService.publishEvent(id, brand.id);
+    const event = await EventLifecycleService.publishEvent(id, brand.id);
 
     res.status(200).json({
       success: true,
@@ -434,35 +361,11 @@ export const publishEvent = async (req: AuthenticatedRequest, res: Response): Pr
       event,
     });
   } catch (error: any) {
+    if (error instanceof AppError) {
+      return res.status(error.status).json({ success: false, error: error.message });
+    }
     logger.error('Error in publishEvent:', error);
-
-    // Validation errors
-    if (error.message.includes('Forbidden')) {
-      return res.status(403).json({
-        success: false,
-        error: error.message,
-      });
-    }
-
-    if (
-      error.message.includes('must have') ||
-      error.message.includes('Only DRAFT') ||
-      error.message.includes('Start time') ||
-      error.message.includes('End time')
-    ) {
-      return res.status(400).json({
-        success: false,
-        error: 'Validation failed',
-        message: error.message,
-      });
-    }
-
-    // Generic error
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error',
-      message: 'Failed to publish event',
-    });
+    res.status(500).json({ success: false, error: 'Failed to publish event' });
   }
 };
 
@@ -498,7 +401,7 @@ export const deleteEvent = async (req: AuthenticatedRequest, res: Response): Pro
     }
 
     // Delete event
-    await EventService.deleteEvent(id, brand.id);
+    await EventMutationService.deleteEvent(id, brand.id);
 
     res.status(200).json({
       success: true,
@@ -559,7 +462,7 @@ export const cancelEvent = async (req: AuthenticatedRequest, res: Response): Pro
       });
     }
 
-    const event = await EventService.cancelEvent(id, brand.id);
+    const event = await EventLifecycleService.cancelEvent(id, brand.id);
 
     res.status(200).json({
       success: true,
@@ -603,7 +506,7 @@ export const stopEventEarly = async (req: AuthenticatedRequest, res: Response): 
       });
     }
 
-    const event = await EventService.stopEventEarly(id, brand.id);
+    const event = await EventLifecycleService.stopEventEarly(id, brand.id);
 
     res.status(200).json({
       success: true,
@@ -634,7 +537,7 @@ export const getEventsVotedByUser = async (req: AuthenticatedRequest, res: Respo
       });
     }
 
-    const events = await EventService.getEventsVotedByUser(userId);
+    const events = await EventQueryService.getEventsVotedByUser(userId);
 
     res.status(200).json({
       success: true,
@@ -688,7 +591,7 @@ export const updateBlockchainStatus = async (req: AuthenticatedRequest, res: Res
       });
     }
 
-    const event = await EventService.updateBlockchainStatus(id, brand.id, txHash, onChainEventId);
+    const event = await EventLifecycleService.updateBlockchainStatus(id, brand.id, txHash, onChainEventId);
 
     res.status(200).json({
       success: true,
@@ -756,7 +659,7 @@ export const failBlockchainStatus = async (req: AuthenticatedRequest, res: Respo
       });
     }
 
-    const event = await EventService.failBlockchainStatus(id, brand.id, reason);
+    const event = await EventLifecycleService.failBlockchainStatus(id, brand.id, reason);
 
     res.status(200).json({
       success: true,

@@ -8,6 +8,6 @@ const router = Router();
 router.get('/voting-state/:eventId', authenticateJWT, checkVotingState);
 
 // Development-only endpoint to inspect users with pending/credited reward claims
-router.get('/rewards-pending', getPendingRewardUsers);
+router.get('/rewards-pending', authenticateJWT, getPendingRewardUsers);
 
 export default router;

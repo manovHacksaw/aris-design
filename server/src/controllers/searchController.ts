@@ -221,8 +221,8 @@ export const searchEvents = async (req: AuthenticatedRequest, res: Response): Pr
         });
 
         // Add IPFS URLs for images
-        const { EventService } = await import('../services/eventService.js');
-        const results = events.map(event => (EventService as any).addImageUrls(event));
+        const { EventQueryService } = await import('../services/events/EventQueryService.js');
+        const results = events.map(event => EventQueryService.addImageUrls(event));
 
         res.json({
             success: true,
@@ -355,8 +355,8 @@ export const searchAll = async (req: AuthenticatedRequest, res: Response): Promi
         });
 
         // Add IPFS URLs for events
-        const { EventService } = await import('../services/eventService.js');
-        const eventResults = events.map(event => (EventService as any).addImageUrls(event));
+        const { EventQueryService } = await import('../services/events/EventQueryService.js');
+        const eventResults = events.map(event => EventQueryService.addImageUrls(event));
 
         res.json({
             success: true,

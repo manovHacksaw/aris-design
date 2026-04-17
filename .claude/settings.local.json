@@ -68,7 +68,9 @@
       "Bash(git remote:*)",
       "Bash(cp /tmp/check_newman.ts /c/Users/manov/Desktop/aris/server/check_newman_temp.ts)",
       "Bash(DATABASE_URL=\"postgresql://postgres.gxyzvkzrltwxfjjcscdg:arisdemo123@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1\" npx tsx check_newman_temp.ts)",
-      "Bash(rm -f check_newman_temp.ts)"
+      "Bash(rm -f check_newman_temp.ts)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(kill 866)"
     ]
   }
 }

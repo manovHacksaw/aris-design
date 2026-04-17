@@ -1,9 +1,11 @@
 import logger from '../lib/logger';
 import { Request, Response } from 'express';
-import { RewardsService } from '../services/rewardsService.js';
 import { prisma } from '../lib/prisma.js';
 import { ClaimType, RewardsPoolStatus } from '@prisma/client';
 import { EventType, REWARDS_CONSTANTS } from '../types/rewards.js';
+import { RewardsPoolService } from '../services/rewards/RewardsPoolService.js';
+import { RewardsClaimService } from '../services/rewards/RewardsClaimService.js';
+import { RewardsRefundService } from '../services/rewards/RewardsRefundService.js';
 
 /**
  * Rewards Controller
@@ -29,7 +31,7 @@ export class RewardsController {
     try {
       const { eventId } = req.params;
 
-      const pool = await RewardsService.getPoolInfo(eventId);
+      const pool = await RewardsPoolService.getPoolInfo(eventId);
 
       if (!pool) {
         res.status(404).json({ success: false, error: 'Pool not found' });
@@ -86,7 +88,7 @@ export class RewardsController {
         return;
       }
 
-      const pool = await RewardsService.cancelPool(eventId);
+      const pool = await RewardsPoolService.cancelPool(eventId);
 
       res.json({
         success: true,
@@ -130,7 +132,7 @@ export class RewardsController {
 
       const eventType = event.eventType === 'post_and_vote' ? EventType.PostAndVote : EventType.VoteOnly;
 
-      const requirements = RewardsService.calculatePoolRequirements({
+      const requirements = RewardsPoolService.calculatePoolRequirements({
         eventType,
         maxParticipants: parseInt(maxParticipants as string),
         topPoolAmount: parseFloat(topPoolAmount as string),
@@ -168,7 +170,7 @@ export class RewardsController {
         return;
       }
 
-      const claims = await RewardsService.getUserClaims(eventId, userId);
+      const claims = await RewardsClaimService.getUserClaims(eventId, userId);
 
       res.json({
         success: true,
@@ -205,7 +207,7 @@ export class RewardsController {
         return;
       }
 
-      const claim = await RewardsService.confirmClaim(
+      const claim = await RewardsClaimService.confirmClaim(
         eventId,
         userId,
         claimType as ClaimType
@@ -249,7 +251,7 @@ export class RewardsController {
         return;
       }
 
-      const result = await RewardsService.confirmAllUserClaims(userId, transactionHash);
+      const result = await RewardsClaimService.confirmAllUserClaims(userId, transactionHash);
 
       res.json({
         success: true,
@@ -278,7 +280,7 @@ export class RewardsController {
         return;
       }
 
-      const result = await RewardsService.syncClaimsWithOnChain(userId);
+      const result = await RewardsClaimService.syncClaimsWithOnChain(userId);
 
       res.json({
         success: true,
@@ -309,7 +311,7 @@ export class RewardsController {
         return;
       }
 
-      const rewards = await RewardsService.getUserClaimableRewards(userId);
+      const rewards = await RewardsClaimService.getUserClaimableRewards(userId);
 
       // Calculate total
       const totalClaimable = rewards.reduce((sum, r) => sum + r.totalClaimableUsdc, 0).toFixed(2);
@@ -360,7 +362,7 @@ export class RewardsController {
 
       // If claimType not specified, claim all pending claims for this event
       if (!claimType) {
-        const claims = await RewardsService.getUserClaims(eventId, userId);
+        const claims = await RewardsClaimService.getUserClaims(eventId, userId);
         const pendingClaims = claims.filter(c => c.status === 'PENDING');
 
         if (pendingClaims.length === 0) {
@@ -371,7 +373,7 @@ export class RewardsController {
         // Claim all pending
         const claimedRewards = [];
         for (const claim of pendingClaims) {
-          const result = await RewardsService.confirmClaim(
+          const result = await RewardsClaimService.confirmClaim(
             eventId,
             userId,
             claim.claimType
@@ -399,7 +401,7 @@ export class RewardsController {
       }
 
       // Claim single reward
-      const claim = await RewardsService.confirmClaim(
+      const claim = await RewardsClaimService.confirmClaim(
         eventId,
         userId,
         claimType as ClaimType
@@ -437,7 +439,7 @@ export class RewardsController {
         return;
       }
 
-      const rewards = await RewardsService.getUserClaimableRewards(userId);
+      const rewards = await RewardsClaimService.getUserClaimableRewards(userId);
 
       // Calculate total
       const totalClaimableUsdc = rewards.reduce((sum, r) => sum + r.totalClaimableUsdc, 0);
@@ -472,7 +474,7 @@ export class RewardsController {
         return;
       }
 
-      const history = await RewardsService.getUserClaimHistory(userId);
+      const history = await RewardsClaimService.getUserClaimHistory(userId);
 
       res.json({
         success: true,
@@ -540,7 +542,7 @@ export class RewardsController {
         return;
       }
 
-      const result = await RewardsService.claimPendingRewards(userId);
+      const result = await RewardsClaimService.claimPendingRewards(userId);
 
       if (!result.success && result.claimsCredited === 0) {
         res.status(400).json({ success: false, error: result.errors[0] ?? 'Failed to claim pending rewards', errors: result.errors });
@@ -579,8 +581,8 @@ export class RewardsController {
         return;
       }
 
-      const refundData = await RewardsService.getBrandRefundableBalance(brand.id);
-      const refundHistory = await RewardsService.getBrandRefundHistory(brand.id);
+      const refundData = await RewardsRefundService.getBrandRefundableBalance(brand.id);
+      const refundHistory = await RewardsRefundService.getBrandRefundHistory(brand.id);
 
       res.json({
         success: true,
@@ -729,7 +731,7 @@ export class RewardsController {
         return;
       }
 
-      const result = await RewardsService.prepareRefundClaim(eventId, brand.id);
+      const result = await RewardsRefundService.prepareRefundClaim(eventId, brand.id);
 
       if (!result.success) {
         res.status(400).json(result);

@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-import { AnalyticsService } from '../services/analyticsService';
+import { AnalyticsTrackingService } from '../services/analytics/AnalyticsTrackingService.js';
+import { AnalyticsQueryService } from '../services/analytics/AnalyticsQueryService.js';
+import { AnalyticsBrandService } from '../services/analytics/AnalyticsBrandService.js';
 import { AiService } from '../services/aiService';
 
 async function requireEventOwner(eventId: string, userId: string | undefined, res: Response): Promise<boolean> {
@@ -21,7 +23,7 @@ async function requireBrand(userId: string | undefined, res: Response) {
 
 export const trackEventView = async (req: Request, res: Response) => {
   try {
-    await AnalyticsService.trackEventView(req.params.id, req.user?.id ?? null);
+    await AnalyticsTrackingService.trackEventView(req.params.id, req.user?.id ?? null);
     res.status(200).json({ success: true });
   } catch (e: any) {
     res.status(500).json({ error: e.message || 'Failed to track event view' });
@@ -30,7 +32,7 @@ export const trackEventView = async (req: Request, res: Response) => {
 
 export const trackShare = async (req: Request, res: Response) => {
   try {
-    await AnalyticsService.trackShare(req.params.id, req.user?.id ?? null);
+    await AnalyticsTrackingService.trackShare(req.params.id, req.user?.id ?? null);
     res.status(200).json({ success: true });
   } catch (e: any) {
     res.status(500).json({ error: e.message || 'Failed to track share' });
@@ -43,7 +45,7 @@ export const trackClick = async (req: Request, res: Response) => {
     if (!target || typeof target !== 'string') {
       return res.status(400).json({ error: 'target is required' });
     }
-    await AnalyticsService.trackClick(req.params.id, req.user?.id ?? null, target);
+    await AnalyticsTrackingService.trackClick(req.params.id, req.user?.id ?? null, target);
     res.status(200).json({ success: true });
   } catch (e: any) {
     res.status(500).json({ error: e.message || 'Failed to track click' });
@@ -53,7 +55,7 @@ export const trackClick = async (req: Request, res: Response) => {
 export const getEventAnalytics = async (req: Request, res: Response) => {
   try {
     if (!await requireEventOwner(req.params.id, req.user?.id, res)) return;
-    const analytics = await AnalyticsService.getEventAnalytics(req.params.id);
+    const analytics = await AnalyticsQueryService.getEventAnalytics(req.params.id);
     res.status(200).json(analytics);
   } catch (e: any) {
     res.status(500).json({ error: e.message || 'Failed to fetch analytics' });
@@ -63,7 +65,7 @@ export const getEventAnalytics = async (req: Request, res: Response) => {
 export const getDetailedEventAnalytics = async (req: Request, res: Response) => {
   try {
     if (!await requireEventOwner(req.params.id, req.user?.id, res)) return;
-    const analytics = await AnalyticsService.getDetailedEventAnalytics(req.params.id);
+    const analytics = await AnalyticsQueryService.getDetailedEventAnalytics(req.params.id);
     res.status(200).json(analytics);
   } catch (e: any) {
     res.status(500).json({ error: e.message || 'Failed to fetch detailed analytics' });
@@ -74,7 +76,7 @@ export const getBrandOverview = async (req: Request, res: Response) => {
   try {
     const brand = await requireBrand(req.user?.id, res);
     if (!brand) return;
-    const analytics = await AnalyticsService.getBrandAnalytics(brand.id);
+    const analytics = await AnalyticsBrandService.getBrandAnalytics(brand.id);
     res.status(200).json(analytics);
   } catch (e: any) {
     res.status(500).json({ error: e.message || 'Failed to fetch brand analytics' });
@@ -106,7 +108,7 @@ export const generateEventSummary = async (req: Request, res: Response) => {
 export const getBrandStats = async (req: Request, res: Response) => {
   try {
     if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
-    const stats = await AnalyticsService.getBrandStats(req.user.id);
+    const stats = await AnalyticsBrandService.getBrandStats(req.user.id);
     res.status(200).json(stats);
   } catch (e: any) {
     res.status(500).json({ error: e.message || 'Failed to fetch brand stats' });
@@ -121,7 +123,7 @@ export const getBrandTimeseries = async (req: Request, res: Response) => {
     }
     const brand = await requireBrand(req.user?.id, res);
     if (!brand) return;
-    const series = await AnalyticsService.getBrandTimeseries(brand.id, metric, from as string, to as string);
+    const series = await AnalyticsBrandService.getBrandTimeseries(brand.id, metric, from as string, to as string);
     res.status(200).json(series);
   } catch (e: any) {
     res.status(500).json({ error: e.message || 'Failed to fetch brand timeseries' });
@@ -131,7 +133,7 @@ export const getBrandTimeseries = async (req: Request, res: Response) => {
 export const getEventClicksBreakdown = async (req: Request, res: Response) => {
   try {
     if (!await requireEventOwner(req.params.id, req.user?.id, res)) return;
-    const breakdown = await AnalyticsService.getEventClicksBreakdown(req.params.id);
+    const breakdown = await AnalyticsQueryService.getEventClicksBreakdown(req.params.id);
     res.status(200).json(breakdown);
   } catch (e: any) {
     res.status(500).json({ error: e.message || 'Failed to fetch event clicks breakdown' });
@@ -142,7 +144,7 @@ export const getBrandClicksBreakdown = async (req: Request, res: Response) => {
   try {
     const brand = await requireBrand(req.user?.id, res);
     if (!brand) return;
-    const breakdown = await AnalyticsService.getBrandClicksBreakdown(brand.id);
+    const breakdown = await AnalyticsBrandService.getBrandClicksBreakdown(brand.id);
     res.status(200).json(breakdown);
   } catch (e: any) {
     res.status(500).json({ error: e.message || 'Failed to fetch brand clicks breakdown' });
@@ -151,7 +153,7 @@ export const getBrandClicksBreakdown = async (req: Request, res: Response) => {
 
 export const trackBrandView = async (req: Request, res: Response) => {
   try {
-    await AnalyticsService.trackBrandView(req.params.id);
+    await AnalyticsBrandService.trackBrandView(req.params.id);
     res.status(200).json({ success: true });
   } catch (e: any) {
     res.status(500).json({ error: e.message || 'Failed to track brand view' });
@@ -160,7 +162,7 @@ export const trackBrandView = async (req: Request, res: Response) => {
 
 export const getBrandViews = async (req: Request, res: Response) => {
   try {
-    const views = await AnalyticsService.getBrandViews(req.params.id);
+    const views = await AnalyticsBrandService.getBrandViews(req.params.id);
     res.status(200).json(views);
   } catch (e: any) {
     res.status(500).json({ error: e.message || 'Failed to fetch brand views' });
@@ -172,7 +174,7 @@ export const getBrandFollowerGrowth = async (req: Request, res: Response) => {
     const { from, to, granularity } = req.query;
     const brand = await requireBrand(req.user?.id, res);
     if (!brand) return;
-    const growth = await AnalyticsService.getFollowerGrowth(brand.id, from as string, to as string, (granularity as string) || 'day');
+    const growth = await AnalyticsBrandService.getFollowerGrowth(brand.id, from as string, to as string, (granularity as string) || 'day');
     res.status(200).json(growth);
   } catch (e: any) {
     res.status(500).json({ error: e.message || 'Failed to fetch follower growth' });

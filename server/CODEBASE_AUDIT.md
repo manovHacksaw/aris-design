@@ -135,10 +135,10 @@ Client
 |--------|------|------|---------|
 | POST | `/brand-application/register` | **None** | `submitApplication` |
 | GET | `/brand-application/status` | **None** | `getApplicationByEmail` |
-| GET | `/brand-application/applications` | **None (TODO)** | `getApplications` |
-| GET | `/brand-application/applications/:id` | **None (TODO)** | `getApplication` |
-| PUT | `/brand-application/applications/:id/approve` | **None (TODO)** | `approveApplication` |
-| PUT | `/brand-application/applications/:id/reject` | **None (TODO)** | `rejectApplication` |
+| GET | `/brand-application/applications` | JWT + Admin | `getApplications` |
+| GET | `/brand-application/applications/:id` | JWT + Admin | `getApplication` |
+| PUT | `/brand-application/applications/:id/approve` | JWT + Admin | `approveApplication` |
+| PUT | `/brand-application/applications/:id/reject` | JWT + Admin | `rejectApplication` |
 | GET | `/brand-claim/claim/:token` | None | `validateClaimToken` |
 | POST | `/brand-claim/claim` | None | `claimBrand` |
 
@@ -294,7 +294,7 @@ Client
 | Method | Path | Auth | Handler |
 |--------|------|------|---------|
 | GET | `/debug/voting-state/:eventId` | JWT | `checkVotingState` |
-| GET | `/debug/rewards-pending` | **None** | `getPendingRewardUsers` |
+| GET | `/debug/rewards-pending` | **JWT (Fixed)** | `getPendingRewardUsers` |
 
 ---
 
@@ -351,8 +351,8 @@ This is acceptable but creates implicit dependency chains that are undocumented.
 
 ## 4. Major Structural Issues
 
-### 4.1 Unauthenticated Admin-Equivalent Routes
-`/api/brand-application/applications` (list, get, approve, reject) have commented-out auth middleware marked `// TODO`. Any anonymous caller can currently approve or reject brand applications.
+### ~~4.1 Unauthenticated Admin-Equivalent Routes~~ [FIXED]
+~~`/api/brand-application/applications` (list, get, approve, reject) have commented-out auth middleware marked `// TODO`. Any anonymous caller can currently approve or reject brand applications.~~
 
 ### 4.2 Fat Route File (`analyticsRoutes.ts`)
 ~350 lines of inline handler logic with direct Prisma calls, brand ownership checks, and Gemini AI service calls. There is no `analyticsController.ts` — the router acts as controller and service simultaneously.
@@ -361,14 +361,14 @@ This is acceptable but creates implicit dependency chains that are undocumented.
 - `adminMiddleware.ts`: `ADMIN_USERNAME = 'admin'` and `ADMIN_PASSWORD = 'admin'` as string literals
 - `aiService.ts` line 12: Full Pinata JWT hardcoded as a string literal (not from `process.env`)
 
-### 4.4 Dead Code — Unused Auth System
-`utils/jwt.ts` + `UserSession` DB table: the custom JWT system was replaced by Privy but never removed. `generateToken()` is called in `authService.ts` and sessions are written to the DB, but `authenticateJWT` reads the Privy token and never checks `UserSession`. The `logout` route marks sessions inactive but auth ignores session state entirely.
+### ~~4.4 Dead Code — Unused Auth System~~ [FIXED]
+~~`utils/jwt.ts` + `UserSession` DB table: the custom JWT system was replaced by Privy but never removed. `generateToken()` is called in `authService.ts` and sessions are written to the DB, but `authenticateJWT` reads the Privy token and never checks `UserSession`. The `logout` route marks sessions inactive but auth ignores session state entirely. Replaced completely by Privy.~~
 
-### 4.5 Dead Code — Duplicate App Factory
-`src/config/app.ts` exports a `createApp()` that is never imported anywhere. The actual app factory is in `src/app.ts`. No functional impact, but dead code.
+### ~~4.5 Dead Code — Duplicate App Factory~~ [FIXED]
+~~`src/config/app.ts` exports a `createApp()` that is never imported anywhere. The actual app factory is in `src/app.ts`. No functional impact, but dead code.~~
 
-### 4.6 Runtime Field Reference Bug
-`voteController.ts` (~line 165) selects `profilePicCid` from the `User` model in a Prisma query. This field does not exist in `schema.prisma` (the correct field is `avatarUrl`). The `getEventParticipants` endpoint will throw a Prisma validation error at runtime.
+### ~~4.6 Runtime Field Reference Bug~~ [FIXED]
+~~`voteController.ts` (~line 165) selects `profilePicCid` from the `User` model in a Prisma query. This field does not exist in `schema.prisma` (the correct field is `avatarUrl`). The `getEventParticipants` endpoint will throw a Prisma validation error at runtime.~~
 
 ### 4.7 In-Memory Presence Service
 `presenceService.ts` uses a `Map<string, Set<string>>` in process memory. Incompatible with horizontal scaling; all presence state is lost on server restart.
@@ -376,14 +376,14 @@ This is acceptable but creates implicit dependency chains that are undocumented.
 ### 4.8 Background Timer in Entry Point
 `server.ts` runs a `setInterval` every 60 seconds to auto-transition event states. No error backoff, no circuit breaker. A failed transition is silently swallowed and can affect all subsequent runs within the same interval.
 
-### 4.9 Repository Pollution
-- `src/controllers/rewardsController.ts.backup` is committed to the repo
-- `src/scripts/` contains ~60 one-off operational scripts including archived test directories
-- 10+ debug `.ts` files at the repository root (`checkUser.ts`, `check-brands.ts`, etc.)
-- `src/examples/` contains unused example code
+### ~~4.9 Repository Pollution~~ [FIXED]
+~~- `src/controllers/rewardsController.ts.backup` is committed to the repo~~
+~~- `src/scripts/` contains ~60 one-off operational scripts including archived test directories~~
+~~- 10+ debug `.ts` files at the repository root (`checkUser.ts`, `check-brands.ts`, etc.)~~
+~~- `src/examples/` contains unused example code~~
 
-### 4.10 Email Service Duplication
-Both `src/services/emailService.ts` and `src/utils/emailService.ts` exist. The service imports from the util. No clear separation of responsibility; the naming is confusing.
+### ~~4.10 Email Service Duplication~~ [FIXED]
+~~Both `src/services/emailService.ts` and `src/utils/emailService.ts` exist. The service imports from the util. No clear separation of responsibility; the naming is confusing.~~
 
 ---
 
@@ -493,8 +493,8 @@ Based strictly on observed code behavior, not desired architecture.
 
 ## 9. Risk Areas for Any Future Refactor
 
-### R1 — Unauthenticated Brand Application Approval (Active Exploit Vector)
-`/brand-application/applications/approve` is live with no auth. Any refactor must fix this, not accidentally preserve it.
+### ~~R1 — Unauthenticated Brand Application Approval (Active Exploit Vector)~~ [FIXED]
+~~`/brand-application/applications/approve` is live with no auth. Any refactor must fix this, not accidentally preserve it.~~
 
 ### R2 — Rewards + Blockchain Coupling
 `rewardsService.ts` directly calls blockchain functions. On-chain state (event cancellation, credit batches) must stay in sync with DB state. Any service boundary changes here risk partial-commit scenarios with no rollback path.
@@ -514,8 +514,28 @@ Removing `UserSession` table and `utils/jwt.ts` requires confirming no external 
 ### R7 — Background Job Idempotency
 The `setInterval` in `server.ts` for event auto-transition is not idempotent. If it fires twice during a graceful restart overlap, an event could be double-transitioned. This must be made idempotent before being moved to any external job system.
 
-### R8 — Prisma Field Bug Must Be Fixed First
-`getEventParticipants` is currently broken at runtime (`profilePicCid` does not exist). Any refactor touching `voteController.ts` must fix this first, or the regression will be incorrectly attributed to the refactor.
+### ~~R8 — Prisma Field Bug Must Be Fixed First~~ [FIXED]
+~~`getEventParticipants` is currently broken at runtime (`profilePicCid` does not exist). Any refactor touching `voteController.ts` must fix this first, or the regression will be incorrectly attributed to the refactor.~~
 
 ### R9 — Scripts Directory Contains Live DB Access
 `src/scripts/` scripts reference production DB connections via environment variables. Running them carelessly during a refactor could mutate production data. They must not remain in `src/`.
+
+---
+
+## Phase 2 Audit: Code Quality, Maintainability, and Scalability
+
+### 1. High-Impact Issues (Must fix soon)
+- **Backend "God Services":** Core foundational files tightly couple pure domain logic with external infrastructure operations (like executing nested Prisma transactions simultaneously with external IPFS HTTP requests). This guarantees transaction locking issues down the line and makes unit testing impossible.
+
+### 2. Medium Issues (Should fix)
+- **Unsafe TypeScript Catch Statements:** The vast majority of backend `try/catch` blocks blindly cast `catch (error: any)`, nullifying TypeScript's safety validation. This risks `undefined` property access crashes across all core API controllers.
+- **Scattered Environment Constraints:** Environment variables (`process.env.VAR_NAME`) are invoked dynamically and deeply piecemeal across 20+ codebase files (e.g., directly inside `authService.ts`), rather than via a singular, strictly-typed and Zod-validated configuration schema parsed reliably at app-boot time.
+- **Simultaneous DB Thrash Loading:** Certain endpoints manually aggregate heavily-nested statistics by triggering heavy `.count()` queries wrapped concurrently inside `Promise.all()` loops that never cap connection limits, risking systemic exhaustion under realistic traffic.
+
+### 3. Low Priority Cleanup
+- **Inconsistent Domain Terminology:** There is overlapping, loose usage of "Proposals" versus "Submissions" conceptually leaking between frontend routing architecture, backend data controllers, and the Prisma database schema.
+
+### 4. Specific File References
+- **`server/src/services/eventService.ts` (~1597 lines)** -> *Why it's a problem:* Combines schema validation logic, locking constraints, huge monolithic database transactions, and unpredictable sequential IPFS fetch data loading.
+- **`server/src/services/rewardsService.ts` (~1120 lines)** -> *Why it's a problem:* Highly bloated service file attempting to handle off-chain database aggregations side-by-side with localized synchronization algorithms for payout state.
+- **`server/src/controllers/authController.ts`** -> *Why it's a problem:* Visually pinpoints the systemic `catch (error: any)` typing hazard alongside ad-hoc substring matching (`error.message?.includes('expired')`), revealing the absence of disciplined `AppError` payload inheritance.

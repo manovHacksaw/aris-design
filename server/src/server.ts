@@ -4,6 +4,7 @@ import http from 'http';
 import { createApp } from './app';
 import { checkDatabaseConnection, disconnectDatabase } from './utils/dbConnection';
 import { setupSocket, closeSocket } from './socket';
+import { EventLifecycleService } from './services/events/EventLifecycleService.js';
 
 // Load environment variables
 dotenv.config();
@@ -43,7 +44,6 @@ async function startServer(): Promise<void> {
     // Start background task for event transitions
     const transitionInterval = setInterval(async () => {
         try {
-            const { EventService } = await import('./services/eventService');
             const { prisma } = await import('./lib/prisma');
 
             const now = new Date();
@@ -64,7 +64,7 @@ async function startServer(): Promise<void> {
             if (eventsToTransition.length > 0) {
                 logger.info(`🔄 Auto-transitioning ${eventsToTransition.length} events...`);
                 for (const event of eventsToTransition) {
-                    await EventService.autoTransitionEvent(event.id);
+                    await EventLifecycleService.autoTransitionEvent(event.id);
                 }
             }
         } catch (error) {
@@ -99,6 +99,7 @@ async function startServer(): Promise<void> {
 
     // Handle uncaught exceptions
     process.on('uncaughtException', async (err: Error) => {
+        console.error('CRITICAL UNCAUGHT EXCEPTION:', err);
         logger.error('Uncaught Exception:', err);
         await disconnectDatabase();
         process.exit(1);

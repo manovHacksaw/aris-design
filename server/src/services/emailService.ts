@@ -1,6 +1,7 @@
 import logger from '../lib/logger';
 import { prisma } from '../lib/prisma';
 import { generateOTP, hashOTP, verifyOTPHash } from '../utils/otpService';
+import { AppError, ValidationError, NotFoundError } from '../utils/errors';
 
 // ─── SMTP transport (lazy init) ───────────────────────────────────────────────
 
@@ -103,7 +104,7 @@ export class EmailService {
         // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            throw new Error('Invalid email format');
+            throw new ValidationError('Invalid email format');
         }
 
         const normalizedEmail = email.toLowerCase().trim();
@@ -117,7 +118,7 @@ export class EmailService {
         });
 
         if (existingUser) {
-            throw new Error('Email is already registered to another account');
+            throw new ValidationError('Email is already registered to another account');
         }
 
         // Check rate limit
@@ -125,7 +126,7 @@ export class EmailService {
         if (user?.emailVerificationExpiry && user.emailVerificationExpiry.getTime() > Date.now() + (OTP_EXPIRATION_MS - RATE_LIMIT_MS)) {
             const waitTime = Math.ceil((user.emailVerificationExpiry.getTime() - (Date.now() + (OTP_EXPIRATION_MS - RATE_LIMIT_MS))) / 1000);
             if (waitTime > 0) {
-                throw new Error(`Please wait ${waitTime} seconds before requesting another code`);
+                throw new AppError(429, `Please wait ${waitTime} seconds before requesting another code`);
             }
         }
 
@@ -155,27 +156,27 @@ export class EmailService {
      */
     static async verifyOTP(email: string, otp: string, userId: string) {
         if (!/^\d{6}$/.test(otp)) {
-            throw new Error('Invalid OTP format. Must be 6 digits');
+            throw new ValidationError('Invalid OTP format. Must be 6 digits');
         }
 
         const normalizedEmail = email.toLowerCase().trim();
         const user = await prisma.user.findUnique({ where: { id: userId } });
 
         if (!user) {
-            throw new Error('User not found');
+            throw new NotFoundError('User not found');
         }
 
         if (!user.emailVerificationCode || !user.emailVerificationExpiry) {
-            throw new Error('No verification code found. Please request a new code');
+            throw new ValidationError('No verification code found. Please request a new code');
         }
 
         if (Date.now() > user.emailVerificationExpiry.getTime()) {
-            throw new Error('Verification code has expired. Please request a new code');
+            throw new ValidationError('Verification code has expired. Please request a new code');
         }
 
         const isValid = verifyOTPHash(otp, user.emailVerificationCode);
         if (!isValid) {
-            throw new Error('Invalid verification code');
+            throw new ValidationError('Invalid verification code');
         }
 
         // Double check availability
@@ -187,7 +188,7 @@ export class EmailService {
         });
 
         if (emailTaken) {
-            throw new Error('Email is already registered to another account');
+            throw new ValidationError('Email is already registered to another account');
         }
 
         // Update user

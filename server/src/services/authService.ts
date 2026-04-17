@@ -213,13 +213,4 @@ export class AuthService {
         };
     }
 
-    /**
-     * Logout user
-     */
-    static async logout(sessionId: string): Promise<void> {
-        await prisma.userSession.update({
-            where: { id: sessionId },
-            data: { isActive: false },
-        });
-    }
 }

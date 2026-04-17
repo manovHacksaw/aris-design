@@ -1,6 +1,10 @@
 import logger from '../lib/logger';
 import { Request, Response } from 'express';
-import { UserService } from '../services/userService';
+import { UserQueryService } from '../services/users/UserQueryService.js';
+import { UserMutationService } from '../services/users/UserMutationService.js';
+import { UserStatsService } from '../services/users/UserStatsService.js';
+import { UserSocialService } from '../services/users/UserSocialService.js';
+import { UserReferralService } from '../services/users/UserReferralService.js';
 import { VoteService } from '../services/voteService';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';
 
@@ -12,7 +16,7 @@ export const searchUsers = async (req: Request, res: Response): Promise<void> =>
   try {
     const q = (req.query.q as string) || "";
     const take = Math.min(Number(req.query.take) || 20, 50);
-    const results = await UserService.searchUsers(q, take);
+    const results = await UserQueryService.searchUsers(q, take);
     res.json({ results });
   } catch (error) {
     logger.error('Error searching users:', error);
@@ -25,7 +29,7 @@ export const searchUsers = async (req: Request, res: Response): Promise<void> =>
  */
 export const getUsers = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const users = await UserService.getUsers();
+    const users = await UserQueryService.getUsers();
     res.json(users);
   } catch (error) {
     logger.error('Error fetching users:', error);
@@ -39,7 +43,7 @@ export const getUsers = async (_req: Request, res: Response): Promise<void> => {
 export const getUserById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const user = await UserService.getUserById(id);
+    const user = await UserQueryService.getUserById(id);
 
     if (!user) {
       res.status(404).json({ error: 'User not found' });
@@ -59,7 +63,7 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 export const getUserByUsername = async (req: Request, res: Response): Promise<void> => {
   try {
     const { username } = req.params;
-    const user = await UserService.getUserByUsername(username);
+    const user = await UserQueryService.getUserByUsername(username);
 
     if (!user) {
       res.status(404).json({ error: 'User not found' });
@@ -79,7 +83,7 @@ export const getUserByUsername = async (req: Request, res: Response): Promise<vo
 export const upsertUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const authReq = req as AuthenticatedRequest;
-    const user = await UserService.upsertUser(req.body, authReq.user?.id);
+    const user = await UserMutationService.upsertUser(req.body, authReq.user?.id);
 
     res.status(200).json({
       success: true,
@@ -130,7 +134,7 @@ export const getCurrentUser = async (req: AuthenticatedRequest, res: Response): 
       return;
     }
 
-    const user = await UserService.getUserById(req.user.id);
+    const user = await UserQueryService.getUserById(req.user.id);
 
     if (!user) {
       res.status(404).json({ error: 'User not found' });
@@ -181,7 +185,7 @@ export const checkUsernameAvailability = async (req: Request, res: Response): Pr
       return;
     }
 
-    const available = await UserService.checkUsernameAvailability(username);
+    const available = await UserQueryService.checkUsernameAvailability(username);
     res.json({ available });
   } catch (error: any) {
     logger.error('Error checking username:', error);
@@ -199,7 +203,7 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response): P
       return;
     }
 
-    const updatedUser = await UserService.updateProfile(req.user.id, req.body);
+    const updatedUser = await UserMutationService.updateProfile(req.user.id, req.body);
 
     res.json({
       success: true,
@@ -278,7 +282,7 @@ export const getUserStats = async (req: AuthenticatedRequest, res: Response): Pr
 
     logger.info(`[getUserStats Controller] Fetching stats for user: ${req.user.id}`);
 
-    const stats = await UserService.getUserStats(req.user.id);
+    const stats = await UserStatsService.getUserStats(req.user.id);
 
     logger.info(`[getUserStats Controller] Successfully fetched stats for user: ${req.user.id}`);
 
@@ -325,7 +329,7 @@ export const getUserStatsById = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    const stats = await UserService.getUserStats(userId);
+    const stats = await UserStatsService.getUserStats(userId);
 
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.json({
@@ -373,7 +377,7 @@ export const getFollowers = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    const followers = await UserService.getFollowers(userId);
+    const followers = await UserSocialService.getFollowers(userId);
 
     res.json({
       success: true,
@@ -411,7 +415,7 @@ export const getFollowing = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    const following = await UserService.getFollowing(userId);
+    const following = await UserSocialService.getFollowing(userId);
 
     res.json({
       success: true,
@@ -444,7 +448,7 @@ export const followUser = async (req: AuthenticatedRequest, res: Response): Prom
       return;
     }
 
-    const result = await UserService.followUser(followerId, followingId);
+    const result = await UserSocialService.followUser(followerId, followingId);
 
     if (!result.success) {
       res.status(400).json(result);
@@ -479,7 +483,7 @@ export const unfollowUser = async (req: AuthenticatedRequest, res: Response): Pr
       return;
     }
 
-    const result = await UserService.unfollowUser(followerId, followingId);
+    const result = await UserSocialService.unfollowUser(followerId, followingId);
 
     if (!result.success) {
       res.status(400).json(result);
@@ -520,7 +524,7 @@ export const updateWalletAddress = async (req: AuthenticatedRequest, res: Respon
       return;
     }
 
-    const updatedUser = await UserService.updateWalletAddress(req.user.id, walletAddress);
+    const updatedUser = await UserMutationService.updateWalletAddress(req.user.id, walletAddress);
 
     res.json({
       success: true,
@@ -550,7 +554,7 @@ export const saveOnboardingAnalytics = async (req: AuthenticatedRequest, res: Re
 
     const { adsSeenDaily, referralSource, joinMotivation, socialPlatforms, rewardPreference, engagementStyle } = req.body;
 
-    await UserService.saveOnboardingAnalytics(req.user.id, {
+    await UserMutationService.saveOnboardingAnalytics(req.user.id, {
       adsSeenDaily,
       referralSource,
       joinMotivation,
@@ -576,7 +580,7 @@ export const validateReferral = async (req: AuthenticatedRequest, res: Response)
     const { code } = req.query;
     if (!code || typeof code !== 'string') { res.status(400).json({ error: 'code is required' }); return; }
 
-    const result = await UserService.validateReferralCode(code.trim().toUpperCase(), req.user.id);
+    const result = await UserReferralService.validateReferralCode(code.trim().toUpperCase(), req.user.id);
     res.json(result);
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Validation failed' });
@@ -615,7 +619,7 @@ export const applyReferral = async (req: AuthenticatedRequest, res: Response): P
       return;
     }
 
-    await UserService.applyReferral(req.user.id, referralCode.trim().toUpperCase());
+    await UserReferralService.applyReferral(req.user.id, referralCode.trim().toUpperCase());
     res.json({ success: true, message: 'Referral applied! Your referrer earned +5 XP.' });
   } catch (error: any) {
     const clientErrors = ['Invalid referral code', 'You cannot use your own referral code', 'You have already used a referral code'];

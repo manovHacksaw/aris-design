@@ -2,6 +2,7 @@ import logger from '../lib/logger';
 import { prisma } from '../lib/prisma.js';
 import { NotificationService } from './notificationService.js';
 import { Vote, MilestoneCategory } from '@prisma/client';
+import { EventLifecycleService } from '../services/events/EventLifecycleService.js';
 import {
     VoteForProposalsRequest,
     VoteForSubmissionRequest,
@@ -9,7 +10,6 @@ import {
 } from '../types/vote.js';
 import { EventStatus } from '../types/event.js';
 import { XpService } from './xpService.js';
-import { EventService } from './eventService.js';
 import { enforceEventDemographics } from '../utils/eventUtils.js';
 import { getIPFSUrl } from './ipfsService.js';
 
@@ -221,7 +221,7 @@ export class VoteService {
         // Trigger event completion logic if auto-closed (handles rewards and rankings)
         if (shouldClose) {
             logger.info(`🎯 Capacity reached for event ${eventId}. Triggering auto-completion...`);
-            EventService.transitionToCompleted(eventId).catch(err =>
+            EventLifecycleService.transitionToCompleted(eventId).catch(err =>
                 logger.error(`❌ Failed to process auto-completion for event ${eventId}:`, err)
             );
         }
@@ -406,7 +406,7 @@ export class VoteService {
 
         // Trigger event completion logic if auto-closed
         if (result.shouldClose) {
-            EventService.transitionToCompleted(eventId).catch(err =>
+            EventLifecycleService.transitionToCompleted(eventId).catch(err =>
                 logger.error(`Failed to process auto-completion for event ${eventId}:`, err)
             );
         }

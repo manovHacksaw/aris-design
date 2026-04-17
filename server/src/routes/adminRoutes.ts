@@ -11,7 +11,6 @@ import {
 } from '../controllers/adminBrandController';
 import {
   getDashboardStats,
-  getUserSessions,
   getUserActivities,
 } from '../controllers/adminDashboardController';
 import { authenticateJWT, AuthenticatedRequest } from '../middlewares/authMiddleware';
@@ -22,7 +21,6 @@ const router = Router();
 router.use(authenticateJWT, authenticateAdmin);
 
 router.get('/stats', getDashboardStats);
-router.get('/sessions', getUserSessions);
 router.get('/activities', getUserActivities);
 
 router.get('/applications', getApplications);

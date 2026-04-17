@@ -4,7 +4,7 @@ import { Server, Socket } from 'socket.io';
 import { PrivyClient } from '@privy-io/server-auth';
 import { prisma } from '../lib/prisma';
 import { PresenceService } from '../services/presenceService';
-import { AnalyticsService } from '../services/analyticsService';
+import { AnalyticsTrackingService } from '../services/analytics/AnalyticsTrackingService.js';
 
 const privy = new PrivyClient(
     process.env.PRIVY_APP_ID || '',
@@ -80,7 +80,7 @@ const authenticateSocket = async (socket: AuthenticatedSocket, next: (err?: Erro
 
         next();
     } catch (error) {
-        logger.error('Socket authentication error:', error);
+        logger.error(error, 'Socket authentication error:');
         next(new Error('Authentication failed'));
     }
 };
@@ -103,7 +103,7 @@ const handleConnection = (socket: AuthenticatedSocket) => {
         const activeCount = PresenceService.getActiveCount(eventId);
 
         // Track view in analytics (unique check handled inside)
-        AnalyticsService.trackEventView(eventId, userId).catch(err => {
+        AnalyticsTrackingService.trackEventView(eventId, userId).catch(err => {
             logger.error('Failed to track event view from socket:', err);
         });
 
@@ -180,7 +180,7 @@ const handleConnection = (socket: AuthenticatedSocket) => {
 
     // Handle errors
     socket.on('error', (error) => {
-        logger.error(`Socket error for ${socket.id}:`, error);
+        logger.error(error, `Socket error for ${socket.id}:`);
     });
 };
 

@@ -35,23 +35,15 @@ export const privyLogin = async (req: Request, res: Response): Promise<void> => 
 };
 
 /**
- * Logout user and invalidate session
+ * Logout user and invalidate session (Client-side token clearing handled by frontend via Privy)
  * POST /api/auth/logout
  */
-export const logout = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+export const logout = async (_req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    if (!req.user?.sessionId) {
-      // If no session, just return success to allow frontend to clear local state
-      res.json({ success: true, message: 'Logged out successfully' });
-      return;
-    }
-
-    await AuthService.logout(req.user.sessionId);
+    // Session states are handled statelessly with Privy on the frontend
     res.json({ success: true, message: 'Logged out successfully' });
   } catch (error: any) {
     logger.error('Error during logout:', error);
     res.status(500).json({ error: 'Logout failed' });
   }
 };
-
-

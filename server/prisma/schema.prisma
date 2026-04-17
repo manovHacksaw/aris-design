@@ -69,7 +69,6 @@ model User {
   tokenActivityLogs   TokenActivityLog[]
   followers           UserFollowers[]      @relation("UserFollowers")
   following           UserFollowers[]      @relation("UserFollowing")
-  sessions            UserSession[]
   loginStreak         UserLoginStreak?
   votes               Vote[]
   xpMilestonesClaimed XpMilestoneClaimed[]
@@ -77,19 +76,6 @@ model User {
   interactions        EventInteraction[]
 
   @@map("users")
-}
-
-model UserSession {
-  id         String   @id @default(uuid())
-  userId     String
-  deviceInfo String?
-  ip         String?
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  expiredAt  DateTime
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("userSessions")
 }
 
 model Brand {

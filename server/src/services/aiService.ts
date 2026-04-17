@@ -4,7 +4,8 @@ import dotenv from 'dotenv';
 import axios from 'axios';
 import FormData from 'form-data';
 import { prisma } from '../lib/prisma.js';
-import { getDetailedEventAnalytics, getEventClicksBreakdown, AnalyticsService } from './analyticsService.js';
+import { AnalyticsQueryService } from './analytics/AnalyticsQueryService.js';
+import { AnalyticsBrandService } from './analytics/AnalyticsBrandService.js';
 
 dotenv.config();
 
@@ -369,7 +370,7 @@ STRICT IMAGE RULES (embed in every prompt):
             });
 
             // 2. Fetch Detailed Analytics
-            const analytics = await getDetailedEventAnalytics(eventId);
+            const analytics = await AnalyticsQueryService.getDetailedEventAnalytics(eventId);
             if (!analytics) return null;
 
             const {
@@ -499,8 +500,8 @@ STRICT IMAGE RULES (embed in every prompt):
 
             // ── Fetch analytics + clicks in parallel ─────────────────────────
             const [analytics, clicks] = await Promise.all([
-                getDetailedEventAnalytics(eventId),
-                getEventClicksBreakdown(eventId),
+                AnalyticsQueryService.getDetailedEventAnalytics(eventId),
+                AnalyticsQueryService.getEventClicksBreakdown(eventId),
             ]);
 
             const dcs = (1 - analytics.normalizedEntropy) * 0.6 + analytics.avgParticipantTrustScore * 0.4;
@@ -718,7 +719,7 @@ OUTPUT STRICT JSON:
             });
 
             // 2. Fetch Brand Analytics
-            const analytics = await AnalyticsService.getBrandAnalytics(brandId);
+            const analytics = await AnalyticsBrandService.getBrandAnalytics(brandId);
             if (!analytics) return null;
 
             const {
@@ -792,3 +793,4 @@ OUTPUT STRICT JSON:
         }
     }
 }
+
