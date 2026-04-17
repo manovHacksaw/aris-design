@@ -746,6 +746,78 @@ export const createNotification = async (data: NotificationData) => {
     return await createAndEmitNotification(data);
 };
 
+const ACTIVE_NOTIFICATION_FILTER = {
+    OR: [
+        { expiresAt: null },
+        { expiresAt: { gt: new Date() } },
+    ],
+};
+
+const BRAND_SELECT = { select: { id: true, name: true, logoCid: true } };
+
+export const getUserNotifications = async (userId: string, limit: number, cursor?: string) => {
+    const where: any = {
+        userId,
+        ...ACTIVE_NOTIFICATION_FILTER,
+        ...(cursor ? { createdAt: { lt: new Date(cursor) } } : {}),
+    };
+
+    const notifications = await prisma.notification.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: limit + 1,
+        include: { brand: BRAND_SELECT },
+    });
+
+    const hasMore = notifications.length > limit;
+    const items = hasMore ? notifications.slice(0, limit) : notifications;
+    const nextCursor = hasMore ? items[items.length - 1].createdAt.toISOString() : undefined;
+
+    let unreadCount: number | undefined;
+    if (!cursor) {
+        unreadCount = await prisma.notification.count({
+            where: { userId, isRead: false, ...ACTIVE_NOTIFICATION_FILTER },
+        });
+    }
+
+    return { notifications: items, nextCursor, unreadCount };
+};
+
+export const getUnreadNotifications = async (userId: string) => {
+    return prisma.notification.findMany({
+        where: { userId, isRead: false, ...ACTIVE_NOTIFICATION_FILTER },
+        orderBy: { createdAt: 'desc' },
+        include: { brand: BRAND_SELECT },
+    });
+};
+
+export const getUnreadCount = async (userId: string) => {
+    return prisma.notification.count({
+        where: { userId, isRead: false, ...ACTIVE_NOTIFICATION_FILTER },
+    });
+};
+
+export const markNotificationAsRead = async (id: string, userId: string) => {
+    const notification = await prisma.notification.findUnique({ where: { id } });
+    if (!notification) throw new Error('NOT_FOUND');
+    if (notification.userId !== userId) throw new Error('FORBIDDEN');
+    return prisma.notification.update({ where: { id }, data: { isRead: true } });
+};
+
+export const markAllNotificationsAsRead = async (userId: string) => {
+    return prisma.notification.updateMany({
+        where: { userId, isRead: false },
+        data: { isRead: true },
+    });
+};
+
+export const deleteUserNotification = async (id: string, userId: string) => {
+    const notification = await prisma.notification.findUnique({ where: { id } });
+    if (!notification) throw new Error('NOT_FOUND');
+    if (notification.userId !== userId) throw new Error('FORBIDDEN');
+    return prisma.notification.delete({ where: { id } });
+};
+
 // Export all functions as a service
 export const NotificationService = {
     createWelcomeNotification,
@@ -761,4 +833,10 @@ export const NotificationService = {
     createXpMilestoneNotification,
     createEventCancellationNotification,
     createNotification,
+    getUserNotifications,
+    getUnreadNotifications,
+    getUnreadCount,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+    deleteUserNotification,
 };
