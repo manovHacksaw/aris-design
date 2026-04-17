@@ -1,18 +1,26 @@
 import { Request, Response, NextFunction } from 'express';
+import { AppError } from '../utils/errors';
 
-/**
- * Error handling middleware
- */
 export const errorHandler = (
   err: Error,
   _req: Request,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ): void => {
-  console.error(err.stack);
+  if (err instanceof AppError) {
+    res.status(err.status).json({ error: err.message });
+    return;
+  }
+
+  // Prisma unique constraint violation
+  if ((err as any).code === 'P2002') {
+    res.status(409).json({ error: 'Duplicate entry' });
+    return;
+  }
+
+  console.error(err);
   res.status(500).json({
-    error: 'Something went wrong!',
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined,
+    error: 'Something went wrong',
+    ...(process.env.NODE_ENV === 'development' && { message: err.message }),
   });
 };
-

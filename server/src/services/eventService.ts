@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma.js';
 import { Event, EventType } from '@prisma/client';
+import { NotFoundError, ForbiddenError, ValidationError } from '../utils/errors.js';
 import {
   CreateEventRequest,
   UpdateEventRequest,
@@ -987,19 +988,9 @@ export class EventService {
     // 1. Fetch current event
     const event = await prisma.event.findUnique({ where: { id } });
 
-    if (!event) {
-      throw new Error('Event not found');
-    }
+    if (!event || (event as any).isDeleted) throw new NotFoundError('Event not found');
 
-    // Check if soft-deleted
-    if ((event as any).isDeleted) {
-      throw new Error('Event not found');
-    }
-
-    // Check ownership
-    if (event.brandId !== brandId) {
-      throw new Error('Forbidden: You do not own this event');
-    }
+    if (event.brandId !== brandId) throw new ForbiddenError('You do not own this event');
 
     // Check locked fields
     const lockedFields = this.getLockedFields(event.status);
@@ -1169,19 +1160,9 @@ export class EventService {
     // 1. Fetch event
     const event = await prisma.event.findUnique({ where: { id } });
 
-    if (!event) {
-      throw new Error('Event not found');
-    }
+    if (!event || (event as any).isDeleted) throw new NotFoundError('Event not found');
 
-    // Check if soft-deleted
-    if ((event as any).isDeleted) {
-      throw new Error('Event not found');
-    }
-
-    // 2. Ownership check
-    if (event.brandId !== brandId) {
-      throw new Error('Forbidden: You do not own this event');
-    }
+    if (event.brandId !== brandId) throw new ForbiddenError('You do not own this event');
 
     // 3. Validate transition
     if (!this.isValidStatusTransition(event.status, newStatus)) {
@@ -1224,37 +1205,27 @@ export class EventService {
       },
     });
 
-    if (!event) {
-      throw new Error('Event not found');
-    }
+    if (!event || (event as any).isDeleted) throw new NotFoundError('Event not found');
 
-    // Check if soft-deleted
-    if ((event as any).isDeleted) {
-      throw new Error('Event not found');
-    }
-
-    // 2. Ownership check
-    if (event.brandId !== brandId) {
-      throw new Error('Forbidden: You do not own this event');
-    }
+    if (event.brandId !== brandId) throw new ForbiddenError('You do not own this event');
 
     // 3. Can only publish DRAFT events
     if (event.status !== EventStatus.DRAFT) {
-      throw new Error('Only DRAFT events can be published');
+      throw new ValidationError('Only DRAFT events can be published');
     }
 
     // 4. Validate event is complete before publishing
     if (!event.title || !event.eventType || !event.startTime || !event.endTime) {
-      throw new Error('Event must have title, type, start time, and end time before publishing');
+      throw new ValidationError('Event must have title, type, start time, and end time before publishing');
     }
 
     // 5. For post_and_vote events, require posting times, leaderboard pool, and samples
     if (event.eventType === 'post_and_vote') {
       if (!event.postingStart || !event.postingEnd) {
-        throw new Error('Post and vote events must have posting start and end times before publishing');
+        throw new ValidationError('Post and vote events must have posting start and end times before publishing');
       }
       if (event.leaderboardPool === null || event.leaderboardPool === undefined) {
-        throw new Error('Post and vote events must have a leaderboard pool before publishing');
+        throw new ValidationError('Post and vote events must have a leaderboard pool before publishing');
       }
       if (!event.samples || event.samples.length === 0) {
         throw new Error('Post and vote events must have at least one sample image before publishing');

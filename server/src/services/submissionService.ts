@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma.js';
 import { NotificationService } from './notificationService.js';
+import { NotFoundError, ForbiddenError, ValidationError } from '../utils/errors.js';
 import { Submission, MilestoneCategory } from '@prisma/client';
 import {
   CreateSubmissionRequest,
@@ -80,50 +81,33 @@ export class SubmissionService {
       },
     });
 
-    if (!event) {
-      throw new Error('Event not found');
-    }
+    if (!event || event.isDeleted) throw new NotFoundError('Event not found');
 
-    if (event.isDeleted) {
-      throw new Error('Event not found');
-    }
-
-    // 2. Only POST_VOTE events allow submissions
     if (event.eventType !== 'post_and_vote') {
-      throw new Error('Submissions are only allowed for POST_VOTE events');
+      throw new ValidationError('Submissions are only allowed for POST_VOTE events');
     }
-
-    // 3. Must be in POSTING status
     if (event.status !== EventStatus.POSTING) {
-      throw new Error('Event is not accepting submissions. Event must be in POSTING phase.');
+      throw new ValidationError('Event is not accepting submissions. Event must be in POSTING phase.');
     }
-
-    // 4. Check if submissions are allowed
     if (!event.allowSubmissions) {
-      throw new Error('Submissions are not allowed for this event');
+      throw new ValidationError('Submissions are not allowed for this event');
     }
-
-    // 5. Brand owners cannot submit to their own events
     if (event.brand.ownerId === userId) {
-      throw new Error('Brand owners cannot submit to their own events');
+      throw new ForbiddenError('Brand owners cannot submit to their own events');
     }
-
-    // 6. One submission per user per event
     if (event.submissions.length > 0) {
-      throw new Error('You have already submitted to this event');
+      throw new ValidationError('You have already submitted to this event');
     }
 
-    // 7. Demographic eligibility check
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { gender: true, dateOfBirth: true, region: true },
     });
-    if (!user) throw new Error('User not found');
+    if (!user) throw new NotFoundError('User not found');
     enforceEventDemographics(event as any, user as any);
 
-    // 8. Require either imageCid or imageUrl
     if (!data.imageCid && !data.imageUrl) {
-      throw new Error('An image is required (imageCid or imageUrl)');
+      throw new ValidationError('An image is required (imageCid or imageUrl)');
     }
     if (data.imageCid) {
       this.validateImageCid(data.imageCid);

@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { EventService } from '../services/eventService.js';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware.js';
 import { prisma } from '../lib/prisma.js';
+import { AppError } from '../utils/errors.js';
 import {
   CreateEventRequest,
   UpdateEventRequest,
@@ -51,77 +52,14 @@ export const createEvent = async (req: AuthenticatedRequest, res: Response): Pro
       event,
     });
   } catch (error: any) {
-    console.error('Error in createEvent:', error);
-
-    // Validation errors
-    if (
-      error.message.includes('Validation') ||
-      error.message.includes('Invalid') ||
-      error.message.includes('required') ||
-      error.message.includes('must be') ||
-      error.message.includes('cannot be') ||
-      error.message.includes('allowed') ||
-      error.message.includes('future') ||
-      error.message.includes('past') ||
-      error.message.includes('must have')
-    ) {
-      return res.status(400).json({
-        success: false,
-        error: 'Validation failed',
-        message: error.message,
-      });
+    if (error instanceof AppError) {
+      return res.status(error.status).json({ success: false, error: error.message });
     }
-
-    // Prisma/Database errors
     if (error.code === 'P2002') {
-      return res.status(409).json({
-        success: false,
-        error: 'Duplicate entry',
-        message: 'An event with this information already exists',
-      });
+      return res.status(409).json({ success: false, error: 'An event with this information already exists' });
     }
-
-    if (error.code === 'P2003') {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid reference',
-        message: 'Referenced data does not exist',
-      });
-    }
-
-    if (error.code === 'P2025') {
-      return res.status(404).json({
-        success: false,
-        error: 'Not found',
-        message: 'The requested resource was not found',
-      });
-    }
-
-    // Database column/schema errors
-    if (error.message && error.message.includes('column') && error.message.includes('does not exist')) {
-      console.error('Database schema error - migration may be needed:', error.message);
-      return res.status(500).json({
-        success: false,
-        error: 'Database configuration error',
-        message: 'The database schema needs to be updated. Please contact support.',
-      });
-    }
-
-    // Generic database errors - don't expose internal details
-    if (error.code && error.code.startsWith('P')) {
-      return res.status(500).json({
-        success: false,
-        error: 'Database error',
-        message: 'A database error occurred. Please try again or contact support.',
-      });
-    }
-
-    // Generic error - don't expose stack traces
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error',
-      message: 'Failed to create event. Please try again.',
-    });
+    console.error('Error in createEvent:', error);
+    res.status(500).json({ success: false, error: 'Failed to create event. Please try again.' });
   }
 };
 

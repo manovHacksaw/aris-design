@@ -1,6 +1,7 @@
 import { prisma } from '../lib/prisma';
 import { ApplicationStatus, UserRole } from '@prisma/client';
 import { randomUUID } from 'crypto';
+import { NotFoundError, ValidationError, ConflictError } from '../utils/errors';
 
 const CLAIM_TOKEN_EXPIRY_DAYS = 7; // Token valid for 7 days
 
@@ -17,9 +18,7 @@ export class BrandClaimService {
         where: { id: applicationId },
       });
 
-      if (!application) {
-        throw new Error('Application not found');
-      }
+      if (!application) throw new NotFoundError('Application not found');
 
       // Auto-approve if pending
       if (application.status === ApplicationStatus.PENDING) {
@@ -36,7 +35,7 @@ export class BrandClaimService {
       }
 
       if (application.status !== ApplicationStatus.APPROVED) {
-        throw new Error(`Application status is ${application.status}, must be APPROVED (or PENDING) to generate token`);
+        throw new ValidationError(`Application status is ${application.status}, must be APPROVED (or PENDING) to generate token`);
       }
 
       // Generate secure claim token
@@ -62,7 +61,7 @@ export class BrandClaimService {
       // Re-throw with more context
       if (error.code === 'P2002') {
         const field = error.meta?.target?.[0] || 'field';
-        throw new Error(`Duplicate ${field}: An application with this ${field} already exists`);
+        throw new ConflictError(`Duplicate ${field}: An application with this ${field} already exists`);
       }
       throw error;
     }
@@ -77,17 +76,17 @@ export class BrandClaimService {
     });
 
     if (!application) {
-      throw new Error('Invalid claim token');
+      throw new ValidationError('Invalid claim token');
     }
 
     // Check if token has expired
     if (application.claimTokenExpiry && new Date() > application.claimTokenExpiry) {
-      throw new Error('Claim token has expired. Please contact support.');
+      throw new ValidationError('Claim token has expired. Please contact support.');
     }
 
     // Check if application is approved
     if (application.status !== ApplicationStatus.APPROVED) {
-      throw new Error('Application is not approved');
+      throw new ValidationError('Application is not approved');
     }
 
     // Check if brand already exists (already claimed)
@@ -96,7 +95,7 @@ export class BrandClaimService {
         where: { id: application.brandId },
       });
       if (brand && brand.ownerId) {
-        throw new Error('This brand has already been claimed');
+        throw new ConflictError('This brand has already been claimed');
       }
     }
 
@@ -129,14 +128,12 @@ export class BrandClaimService {
     console.log('claimBrand called with:', { claimToken, email, walletAddress, displayName });
 
     if (!claimToken || !email || !walletAddress) {
-      console.log('Missing required fields');
-      throw new Error('Claim token, email, and wallet address are required');
+      throw new ValidationError('Claim token, email, and wallet address are required');
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      throw new Error('Invalid email format');
+      throw new ValidationError('Invalid email format');
     }
 
     // Find application by claim token
@@ -145,17 +142,17 @@ export class BrandClaimService {
     });
 
     if (!application) {
-      throw new Error('Invalid claim token');
+      throw new ValidationError('Invalid claim token');
     }
 
     // Check if token has expired
     if (application.claimTokenExpiry && new Date() > application.claimTokenExpiry) {
-      throw new Error('Claim token has expired. Please contact support.');
+      throw new ValidationError('Claim token has expired. Please contact support.');
     }
 
     // Check if application is approved
     if (application.status !== ApplicationStatus.APPROVED) {
-      throw new Error('Application is not approved');
+      throw new ValidationError('Application is not approved');
     }
 
     // Check if brand already exists (already claimed)
@@ -164,7 +161,7 @@ export class BrandClaimService {
         where: { id: application.brandId },
       });
       if (existingBrand && existingBrand.ownerId) {
-        throw new Error('This brand has already been claimed');
+        throw new ConflictError('This brand has already been claimed');
       }
     }
 
@@ -259,7 +256,7 @@ export class BrandClaimService {
           // Requirement says: "One owner = one brand unless manually overridden"
           // We'll check if it's the same brand application
           if (existingOwnedBrand.applicationId !== application.id) {
-            throw new Error('This user account already owns another brand');
+            throw new ConflictError('This user account already owns another brand');
           }
         }
       }
