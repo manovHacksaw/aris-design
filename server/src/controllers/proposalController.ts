@@ -2,7 +2,14 @@ import { Response } from 'express';
 import { ProposalService } from '../services/proposalService.js';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware.js';
 import { prisma } from '../lib/prisma.js';
+
 import { CreateProposalRequest, UpdateProposalRequest } from '../types/proposal.js';
+
+async function getBrandByOwner(userId: string, res: Response) {
+  const brand = await prisma.brand.findFirst({ where: { ownerId: userId }, select: { id: true } });
+  if (!brand) { res.status(404).json({ success: false, error: 'Brand not found' }); return null; }
+  return brand;
+}
 
 /**
  * Create a proposal for an event
@@ -18,10 +25,8 @@ export const createProposal = async (req: AuthenticatedRequest, res: Response): 
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        const brand = await prisma.brand.findFirst({ where: { ownerId: userId } });
-        if (!brand) {
-            return res.status(404).json({ success: false, error: 'Brand not found' });
-        }
+        const brand = await getBrandByOwner(userId, res);
+        if (!brand) return;
 
         const proposal = await ProposalService.createProposal(eventId, brand.id, data);
 
@@ -53,10 +58,8 @@ export const updateProposal = async (req: AuthenticatedRequest, res: Response): 
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        const brand = await prisma.brand.findFirst({ where: { ownerId: userId } });
-        if (!brand) {
-            return res.status(404).json({ success: false, error: 'Brand not found' });
-        }
+        const brand = await getBrandByOwner(userId, res);
+        if (!brand) return;
 
         const proposal = await ProposalService.updateProposal(id, brand.id, data);
 
@@ -87,10 +90,8 @@ export const deleteProposal = async (req: AuthenticatedRequest, res: Response): 
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        const brand = await prisma.brand.findFirst({ where: { ownerId: userId } });
-        if (!brand) {
-            return res.status(404).json({ success: false, error: 'Brand not found' });
-        }
+        const brand = await getBrandByOwner(userId, res);
+        if (!brand) return;
 
         await ProposalService.deleteProposal(id, brand.id);
 
