@@ -11,31 +11,49 @@ import {
     Search,
     Menu,
     X,
-    LogOut
+    LogOut,
+    Loader2,
 } from 'lucide-react';
+import { usePrivy } from "@privy-io/react-auth";
+import { apiRequest } from "@/services/api";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
+    const { ready, authenticated, logout: privyLogout } = usePrivy();
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [checking, setChecking] = useState(true);
+    const [allowed, setAllowed] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
-        const auth = localStorage.getItem('adminAuth');
-        if (!auth && pathname !== '/admin/login') {
-            router.push('/admin/login');
-        } else {
-            setIsAuthenticated(true);
-        }
-    }, [pathname, router]);
+        if (!ready) return;
 
-    if (pathname === '/admin/login') {
-        return <>{children}</>;
+        if (!authenticated) {
+            router.replace("/explore");
+            return;
+        }
+
+        apiRequest("/admin/stats")
+            .then(() => { setAllowed(true); setChecking(false); })
+            .catch(() => { router.replace("/explore"); });
+    }, [ready, authenticated]);
+
+    const handleLogout = async () => {
+        await privyLogout();
+        router.replace("/explore");
+    };
+
+    if (!ready || checking) {
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center">
+                <Loader2 className="w-7 h-7 animate-spin text-white" />
+            </div>
+        );
     }
 
-    if (!isAuthenticated) return null;
+    if (!allowed) return null;
 
     const menuGroups = [
         {
@@ -71,10 +89,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         </div>
                         <h1 className="font-bold text-gray-900 dark:text-white leading-none">Aris Admin</h1>
                     </div>
-                    <button
-                        className="ml-auto lg:hidden"
-                        onClick={() => setIsSidebarOpen(false)}
-                    >
+                    <button className="ml-auto lg:hidden" onClick={() => setIsSidebarOpen(false)}>
                         <X className="w-5 h-5 text-gray-500" />
                     </button>
                 </div>
@@ -131,10 +146,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 {/* Logout */}
                 <div className="p-4">
                     <button
-                        onClick={() => {
-                            localStorage.removeItem('adminAuth');
-                            router.push('/admin/login');
-                        }}
+                        onClick={handleLogout}
                         className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg transition-colors font-medium text-sm"
                     >
                         <LogOut className="w-4 h-4" />
@@ -145,19 +157,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white dark:bg-black">
-                {/* Mobile Header */}
                 <header className="lg:hidden h-16 bg-white dark:bg-black border-b border-gray-200 dark:border-zinc-800 flex items-center px-4">
-                    <button
-                        onClick={() => setIsSidebarOpen(true)}
-                        className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                    >
+                    <button onClick={() => setIsSidebarOpen(true)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
                         <Menu className="w-6 h-6" />
                     </button>
-                    <span className="ml-4 text-lg font-semibold text-gray-900 dark:text-white">
-                        Aris Admin
-                    </span>
+                    <span className="ml-4 text-lg font-semibold text-gray-900 dark:text-white">Aris Admin</span>
                 </header>
-
                 <main className="flex-1 overflow-y-auto">
                     {children}
                 </main>

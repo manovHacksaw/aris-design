@@ -7,41 +7,29 @@ import {
   rejectApplication,
   getApplicationByEmail,
 } from '../controllers/brandApplicationController';
-// import { authenticateToken } from '../middlewares/authMiddleware';
-// TODO: Add admin middleware when implemented
-// import { requireAdmin } from '../middlewares/adminMiddleware';
+import { authenticateJWT, AuthenticatedRequest } from '../middlewares/authMiddleware';
+import { authenticateAdmin } from '../middlewares/adminMiddleware';
 
 const router = Router();
 
-/**
- * Public routes (no authentication required)
- */
-
-// Submit brand application
+// Public — no auth required
 router.post('/register', submitApplication);
-
-// Check application status by email
 router.get('/status', getApplicationByEmail);
 
-/**
- * Admin routes (authentication + admin role required)
- * TODO: Add authentication and admin middleware when implemented
- */
+// Admin only
+router.get('/applications', authenticateJWT, authenticateAdmin, getApplications);
+router.get('/applications/:id', authenticateJWT, authenticateAdmin, getApplication);
 
-// Get all applications (with optional status filter)
-// router.get('/applications', authenticateToken, requireAdmin, getApplications);
-router.get('/applications', getApplications);
+router.put('/applications/:id/approve', authenticateJWT, authenticateAdmin, (req, res) => {
+  const user = (req as AuthenticatedRequest).user;
+  req.body.reviewedBy = user?.email || 'admin';
+  return approveApplication(req, res);
+});
 
-// Get specific application
-// router.get('/applications/:id', authenticateToken, requireAdmin, getApplication);
-router.get('/applications/:id', getApplication);
-
-// Approve application
-// router.put('/applications/:id/approve', authenticateToken, requireAdmin, approveApplication);
-router.put('/applications/:id/approve', approveApplication);
-
-// Reject application
-// router.put('/applications/:id/reject', authenticateToken, requireAdmin, rejectApplication);
-router.put('/applications/:id/reject', rejectApplication);
+router.put('/applications/:id/reject', authenticateJWT, authenticateAdmin, (req, res) => {
+  const user = (req as AuthenticatedRequest).user;
+  req.body.reviewedBy = user?.email || 'admin';
+  return rejectApplication(req, res);
+});
 
 export default router;

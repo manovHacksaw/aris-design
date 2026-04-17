@@ -10,9 +10,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useAdminAuth } from "../layout";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+import { apiRequest } from "@/services/api";
 
 type ApplicationStatus = "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED";
 
@@ -53,7 +51,6 @@ const TABS: { label: string; value: ApplicationStatus | "" }[] = [
 function ApplicationsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { credentials } = useAdminAuth();
 
   const [applications, setApplications] = useState<BrandApplication[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,25 +61,21 @@ function ApplicationsContent() {
   );
 
   const fetchApplications = async (status?: string) => {
-    if (!credentials) return;
     setLoading(true);
     setError("");
     try {
       const qs = status ? `?status=${status}&limit=100` : "?limit=100";
-      const res = await fetch(`${API_URL}/admin/applications${qs}`, {
-        headers: { Authorization: `Basic ${credentials}` },
-      });
-      if (!res.ok) throw new Error("Failed to fetch applications");
-      const data = await res.json();
+      const data = await apiRequest<any>(`/admin/applications${qs}`);
       setApplications(Array.isArray(data) ? data : (data.applications ?? []));
     } catch (err: any) {
+      if (err.status === 401 || err.status === 403) { router.replace("/explore"); return; }
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchApplications(activeTab || undefined); }, [activeTab, credentials]);
+  useEffect(() => { fetchApplications(activeTab || undefined); }, [activeTab]);
 
   const handleTabChange = (tab: ApplicationStatus | "") => {
     setActiveTab(tab);

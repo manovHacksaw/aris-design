@@ -7,15 +7,13 @@ import {
     Download,
     Edit,
     Trash2,
-    ShieldCheck,
-    ArrowRight,
-    LogOut,
     X,
     Users,
     Building2,
     Clock,
     Activity
 } from 'lucide-react';
+import { apiRequest } from "@/services/api";
 
 interface DashboardStats {
     totalUsers: number;
@@ -35,8 +33,6 @@ interface Application {
     logoCid?: string;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-
 export default function AdminDashboard() {
     const router = useRouter();
     const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -44,82 +40,27 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [showStats, setShowStats] = useState(true);
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
-    const [isSessionConfirmed, setIsSessionConfirmed] = useState(false);
-    const [adminName, setAdminName] = useState('Admin');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<string>('ALL');
-
-    useEffect(() => {
-        const auth = localStorage.getItem('adminAuth');
-        if (!auth) {
-            router.push('/admin/login');
-        } else {
-            try {
-                const decoded = atob(auth);
-                const username = decoded.split(':')[0];
-                setAdminName(username.charAt(0).toUpperCase() + username.slice(1));
-            } catch { /* ignore */ }
-        }
-    }, [router]);
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const auth = localStorage.getItem('adminAuth');
-            const headers = { 'Authorization': `Basic ${auth}` };
-            const [statsRes, appsRes] = await Promise.all([
-                fetch(`${API_BASE_URL}/admin/stats`, { headers }),
-                fetch(`${API_BASE_URL}/admin/applications`, { headers })
+            const [statsData, appsData] = await Promise.all([
+                apiRequest<DashboardStats>('/admin/stats'),
+                apiRequest<any>('/admin/applications'),
             ]);
-            if (statsRes.ok) setStats(await statsRes.json());
-            if (appsRes.ok) {
-                const data = await appsRes.json();
-                setApplications(data.applications || []);
-            }
-        } catch (error) {
-            console.error('Failed to fetch data:', error);
+            setStats(statsData);
+            setApplications(appsData.applications || []);
+        } catch (err: any) {
+            if (err.status === 401 || err.status === 403) { router.replace('/explore'); return; }
+            console.error('Failed to fetch admin data:', err);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem('adminAuth');
-        router.push('/admin/login');
-    };
-
-    if (!isSessionConfirmed) {
-        return (
-            <div className="min-h-screen bg-black flex items-center justify-center p-4">
-                <div className="w-full max-w-md bg-zinc-900 rounded-xl border border-zinc-800 p-8 shadow-2xl text-center">
-                    <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <ShieldCheck className="w-8 h-8 text-green-500" />
-                    </div>
-                    <h1 className="text-2xl font-bold text-white mb-2">Session Active</h1>
-                    <p className="text-gray-400 mb-8">
-                        You are currently logged in as{' '}
-                        <span className="text-white font-mono text-sm">{adminName}</span>
-                    </p>
-                    <div className="space-y-3">
-                        <button
-                            onClick={() => { setIsSessionConfirmed(true); fetchData(); }}
-                            className="w-full flex items-center justify-center gap-2 bg-white text-black hover:bg-gray-200 h-12 text-base font-medium rounded-lg transition-colors"
-                        >
-                            Continue with this account
-                            <ArrowRight className="w-4 h-4" />
-                        </button>
-                        <button
-                            onClick={handleLogout}
-                            className="w-full flex items-center justify-center gap-2 border border-zinc-700 text-gray-300 hover:bg-zinc-800 h-12 text-base font-medium rounded-lg transition-colors"
-                        >
-                            <LogOut className="mr-2 w-4 h-4" />
-                            Logout & Switch Account
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    useEffect(() => { fetchData(); }, []);
 
     const filteredApplications = applications.filter(app => {
         const matchesSearch = searchTerm === '' ||
@@ -166,21 +107,12 @@ export default function AdminDashboard() {
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
                     <p className="text-gray-500 dark:text-gray-400 mt-1">Overview of brand applications and system activity</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={fetchData}
-                        className="h-9 px-4 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors"
-                    >
-                        Refresh
-                    </button>
-                    <button
-                        onClick={handleLogout}
-                        className="h-9 px-4 flex items-center gap-2 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm font-medium transition-colors"
-                    >
-                        <LogOut className="w-4 h-4" />
-                        Logout
-                    </button>
-                </div>
+                <button
+                    onClick={fetchData}
+                    className="h-9 px-4 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                    Refresh
+                </button>
             </div>
 
             {/* Stats toggle + filters */}

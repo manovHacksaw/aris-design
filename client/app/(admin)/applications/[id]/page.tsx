@@ -12,11 +12,10 @@ import {
   ClipboardCheck, Info, Send, RotateCcw,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useAdminAuth } from "../../layout";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+import { apiRequest } from "@/services/api";
 
 type ApplicationStatus = "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED";
 
@@ -148,7 +147,7 @@ function ScoreBar({ label, score, color }: { label: string; score: number; color
 
 export default function ApplicationDetailPage() {
   const params = useParams<{ id: string }>();
-  const { credentials } = useAdminAuth();
+  const router = useRouter();
 
   const [app, setApp] = useState<BrandApplication | null>(null);
   const [loading, setLoading] = useState(true);
@@ -163,64 +162,57 @@ export default function ApplicationDetailPage() {
   const [linkCopied, setLinkCopied] = useState(false);
 
   const fetchApplication = async () => {
-    if (!credentials || !params.id) return;
+    if (!params.id) return;
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_URL}/admin/applications/${params.id}`, {
-        headers: { Authorization: `Basic ${credentials}` },
-      });
-      if (!res.ok) throw new Error("Application not found");
-      const data = await res.json();
+      const data = await apiRequest<BrandApplication>(`/admin/applications/${params.id}`);
       setApp(data);
       if (data.claimToken) {
         setClaimLink(`${window.location.origin}/claim-brand?token=${data.claimToken}`);
       }
     } catch (err: any) {
-      setError(err.message);
+      if (err.status === 401 || err.status === 403) { router.replace("/explore"); return; }
+      setError(err.message || "Application not found");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchApplication(); }, [params.id, credentials]);
+  useEffect(() => { fetchApplication(); }, [params.id]);
 
   const handleApprove = async () => {
-    if (!credentials || !app) return;
+    if (!app) return;
     setActionLoading(true);
     try {
-      const res = await fetch(`${API_URL}/admin/applications/${app.id}/approve`, {
+      await apiRequest(`/admin/applications/${app.id}/approve`, {
         method: "PUT",
-        headers: { Authorization: `Basic ${credentials}`, "Content-Type": "application/json" },
         body: JSON.stringify({ note: adminNote }),
       });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || "Approval failed");
       toast.success("Application approved — claim token generated");
       setShowApproveModal(false);
       await fetchApplication();
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(err.message || "Approval failed");
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleReject = async () => {
-    if (!credentials || !app) return;
+    if (!app) return;
     if (!rejectReason.trim()) { toast.error("Rejection reason is required"); return; }
     setActionLoading(true);
     try {
-      const res = await fetch(`${API_URL}/admin/applications/${app.id}/reject`, {
+      await apiRequest(`/admin/applications/${app.id}/reject`, {
         method: "PUT",
-        headers: { Authorization: `Basic ${credentials}`, "Content-Type": "application/json" },
         body: JSON.stringify({ rejectionReason: rejectReason }),
       });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || "Rejection failed");
       toast.success("Application rejected");
       setShowRejectModal(false);
       await fetchApplication();
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(err.message || "Rejection failed");
     } finally {
       setActionLoading(false);
     }
