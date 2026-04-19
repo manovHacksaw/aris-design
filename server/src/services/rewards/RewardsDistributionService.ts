@@ -1,4 +1,4 @@
-import logger from '../../lib/logger';
+import logger from '../../lib/logger.js';
 import { prisma } from '../../lib/prisma.js';
 import { ClaimType, ClaimStatus, WalletStatus, RewardsPoolStatus } from '@prisma/client';
 import {
@@ -322,7 +322,7 @@ export class RewardsDistributionService {
           const onChainEventId = (await import('../../lib/blockchain.js')).eventIdToBytes32(eventId);
           const vaultAddress = process.env.REWARDS_VAULT_ADDRESS || '0x34C5A617e32c84BC9A54c862723FA5538f42F221';
 
-          const poolData: any = await publicClient.readContract({
+          const poolData: any = await (publicClient as any).readContract({
             address: vaultAddress as `0x${string}`,
             abi: [{
               inputs: [{ name: "", type: "bytes32" }],

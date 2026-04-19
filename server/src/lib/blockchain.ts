@@ -197,7 +197,7 @@ export class BlockchainService {
             client: publicClient,
             owner,
             entryPoint: { address: entryPoint07Address, version: '0.7' },
-        });
+        } as any);
 
         const smartAccountClient = createSmartAccountClient({
             account: smartAccount,
@@ -205,9 +205,9 @@ export class BlockchainService {
             bundlerTransport: http(pimlicoRpc),
             paymaster: pimlico,
             userOperation: {
-                estimateFeesPerGas: async () => (await pimlico.getUserOperationGasPrice()).fast,
+                estimateFeesPerGas: async () => (await (pimlico as any).getUserOperationGasPrice()).fast,
             },
-        });
+        } as any);
 
         return { smartAccountClient, smartAccount, publicClient };
     }
@@ -232,7 +232,7 @@ export class BlockchainService {
         try {
             const { smartAccountClient, publicClient } = await this.getSmartAccountClient();
 
-            const hash = await smartAccountClient.writeContract({
+            const hash = await (smartAccountClient as any).writeContract({
                 address: vaultAddress,
                 abi: REWARDS_VAULT_ABI,
                 functionName: 'creditRewardsBatch',
@@ -268,7 +268,7 @@ export class BlockchainService {
         try {
             const { smartAccountClient, publicClient } = await this.getSmartAccountClient();
 
-            const hash = await smartAccountClient.writeContract({
+            const hash = await (smartAccountClient as any).writeContract({
                 address: vaultAddress,
                 abi: REWARDS_VAULT_ABI,
                 functionName: 'cancelEvent',
@@ -300,7 +300,7 @@ export class BlockchainService {
         const vaultAddress = this.getVaultAddress();
 
         try {
-            const balance = await publicClient.readContract({
+            const balance = await (publicClient as any).readContract({
                 address: vaultAddress,
                 abi: REWARDS_VAULT_ABI,
                 functionName: 'getBrandRefundBalance',

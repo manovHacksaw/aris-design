@@ -1,9 +1,9 @@
-import logger from '../lib/logger';
+import logger from '../lib/logger.js';
 import { Server as HTTPServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import { PrivyClient } from '@privy-io/server-auth';
-import { prisma } from '../lib/prisma';
-import { PresenceService } from '../services/presenceService';
+import { prisma } from '../lib/prisma.js';
+import { PresenceService } from '../services/presenceService.js';
 import { AnalyticsTrackingService } from '../services/analytics/AnalyticsTrackingService.js';
 
 const privy = new PrivyClient(
@@ -284,4 +284,4 @@ export {
     isUserViewing,
     getUserEvents,
     getStats as getPresenceStats
-} from '../services/presenceService';
+} from '../services/presenceService.js';

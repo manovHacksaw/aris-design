@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { getUsers, getUserById, getUserByUsername, upsertUser, getCurrentUser, updateProfile, checkUsernameAvailability, getUserStats, getUserStatsById, getFollowers, getFollowing, followUser, unfollowUser, updateWalletAddress, saveOnboardingAnalytics, applyReferral, validateReferral, searchUsers, getUserVotedContent } from '../../controllers/users/userController';
-import { getSubmissionsByUser } from '../../controllers/events/submissionController';
-import { sendOTP, verifyOTP } from '../../controllers/users/emailController';
-import { authenticateJWT, authenticateOptional, requireEmailVerification } from '../../middlewares/authMiddleware';
+import { getUsers, getUserById, getUserByUsername, upsertUser, getCurrentUser, updateProfile, checkUsernameAvailability, getUserStats, getUserStatsById, getFollowers, getFollowing, followUser, unfollowUser, updateWalletAddress, saveOnboardingAnalytics, applyReferral, validateReferral, searchUsers, getUserVotedContent } from '../../controllers/users/userController.js';
+import { getSubmissionsByUser } from '../../controllers/events/submissionController.js';
+import { sendOTP, verifyOTP } from '../../controllers/users/emailController.js';
+import { authenticateJWT, authenticateOptional, requireEmailVerification } from '../../middlewares/authMiddleware.js';
 import { otpRateLimit } from '../../config/rateLimits.js';
 
 const router = Router();

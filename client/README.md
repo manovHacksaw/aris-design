@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Aris Client (Frontend)
 
-## Getting Started
+The Aris Client is a high-performance, decentralized web application built with **Next.js 15** and **Tailwind CSS**.
 
-First, run the development server:
+## 🎨 Features
+- **Modern UI**: Built with Framer Motion for smooth, premium transitions.
+- **Web3 Integration**: Uses **Privy** for seamless smart wallet onboarding.
+- **Analytics Dashboards**: Interactive charts powered by **Recharts**.
+- **Real-time Updates**: Integrated with **Socket.io** for live scoring and event status changes.
 
+## 🚀 Getting Started
+
+### Prerequisites
+- [Bun Runtime](https://bun.sh/)
+
+### Installation
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Environment Variables
+Configure `.env.local`:
+- `NEXT_PUBLIC_PRIVY_APP_ID`: Your Privy Project ID.
+- `NEXT_PUBLIC_API_URL`: Your backend URL (e.g., `http://localhost:8000/api`).
+- `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`: For media uploads.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Running
+```bash
+# Development
+bun run dev
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Production Build (Docker-ready)
+bun run build
+bun run start
+```
 
-## Learn More
+## 🏗️ Folder Structure
+- `/app`: Next.js App Router pages and layouts.
+- `/components`: Reusable UI components (using Tailwind Merge).
+- `/context`: Global state management (Auth, Theme).
+- `/services`: API client functions to communicate with the Backend.
+- `/lib`: Helper utilities and shared constants.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🐳 Docker Deployment
+We use a **multi-stage build** with Next.js **Standalone Mode** for ultra-small production images.
+- [Dockerfile](file:///c:/Users/manov/Desktop/code/aris/client/Dockerfile)
+- Configured via `next.config.ts` with `output: 'standalone'`.

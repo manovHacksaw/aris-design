@@ -1,10 +1,11 @@
-import logger from '../../lib/logger';
+import logger from '../../lib/logger.js';
 import { Request, Response } from 'express';
+import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
 import { BrandQueryService } from '../../services/brands/BrandQueryService.js';
 import { BrandMutationService } from '../../services/brands/BrandMutationService.js';
 import { AppError } from '../../utils/errors.js';
 
-export const getCurrentBrand = async (req: Request, res: Response): Promise<void> => {
+export const getCurrentBrand = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
     if (!userId) { res.status(401).json({ success: false, error: 'Unauthorized' }); return; }
@@ -18,7 +19,7 @@ export const getCurrentBrand = async (req: Request, res: Response): Promise<void
   }
 };
 
-export const upsertBrandProfile = async (req: Request, res: Response): Promise<void> => {
+export const upsertBrandProfile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user?.id;
   const { name, tagline, description, logoCid, categories, socialLinks } = req.body;
 
@@ -44,7 +45,21 @@ export const upsertBrandProfile = async (req: Request, res: Response): Promise<v
   }
 };
 
-export const getBrandMilestones = async (req: Request, res: Response): Promise<void> => {
+export const updatePersonalDiscount = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) { res.status(401).json({ success: false, error: 'Unauthorized' }); return; }
+
+    const result = await BrandQueryService.getMilestones(userId);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    if (error instanceof AppError) { res.status(error.status).json({ success: false, error: error.message }); return; }
+    logger.error({ err: error }, 'Error updating personal discount:');
+    res.status(500).json({ success: false, error: 'Failed to update personal discount' });
+  }
+};
+
+export const getBrandMilestones = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
     if (!userId) { res.status(401).json({ success: false, error: 'Unauthorized' }); return; }
@@ -58,7 +73,7 @@ export const getBrandMilestones = async (req: Request, res: Response): Promise<v
   }
 };
 
-export const getPublicBrandProfile = async (req: Request, res: Response): Promise<void> => {
+export const getPublicBrandProfile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { identifier } = req.params;
     if (!identifier) { res.status(400).json({ success: false, error: 'Identifier is required' }); return; }

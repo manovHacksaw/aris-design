@@ -1,11 +1,11 @@
-import './env';
-import logger from './lib/logger';
+import './env.js';
+import logger from './lib/logger.js';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import routes from './routes';
-import { errorHandler } from './middlewares/errorHandler';
-import { notFound } from './middlewares/notFound';
+import routes from './routes/index.js';
+import { errorHandler } from './middlewares/errorHandler.js';
+import { notFound } from './middlewares/notFound.js';
 
 export const createApp = () => {
     const app = express();

@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
 import { AnalyticsTrackingService } from '../../services/analytics/AnalyticsTrackingService.js';
 import { AnalyticsQueryService } from '../../services/analytics/AnalyticsQueryService.js';
 import { AnalyticsBrandService } from '../../services/analytics/AnalyticsBrandService.js';
@@ -7,7 +8,7 @@ import { BrandService } from '../../services/brands/BrandService.js';
 
 // Removed local requireEventOwner and requireBrand helpers, using BrandService instead.
 
-export const trackEventView = async (req: Request, res: Response): Promise<void> => {
+export const trackEventView = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     await AnalyticsTrackingService.trackEventView(req.params.id, req.user?.id ?? null);
     res.status(200).json({ success: true });
@@ -16,7 +17,7 @@ export const trackEventView = async (req: Request, res: Response): Promise<void>
   }
 };
 
-export const trackShare = async (req: Request, res: Response): Promise<void> => {
+export const trackShare = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     await AnalyticsTrackingService.trackShare(req.params.id, req.user?.id ?? null);
     res.status(200).json({ success: true });
@@ -25,7 +26,7 @@ export const trackShare = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-export const trackClick = async (req: Request, res: Response): Promise<void> => {
+export const trackClick = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { target } = req.body;
     if (!target || typeof target !== 'string') {
@@ -39,7 +40,7 @@ export const trackClick = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-export const getEventAnalytics = async (req: Request, res: Response): Promise<void> => {
+export const getEventAnalytics = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user?.id) { res.status(401).json({ error: 'Unauthorized' }); return; }
     if (!await BrandService.verifyEventOwnership(req.params.id, req.user.id, req.user.role)) {
@@ -53,7 +54,7 @@ export const getEventAnalytics = async (req: Request, res: Response): Promise<vo
   }
 };
 
-export const getDetailedEventAnalytics = async (req: Request, res: Response): Promise<void> => {
+export const getDetailedEventAnalytics = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user?.id) { res.status(401).json({ error: 'Unauthorized' }); return; }
     if (!await BrandService.verifyEventOwnership(req.params.id, req.user.id, req.user.role)) {
@@ -67,7 +68,7 @@ export const getDetailedEventAnalytics = async (req: Request, res: Response): Pr
   }
 };
 
-export const getBrandOverview = async (req: Request, res: Response): Promise<void> => {
+export const getBrandOverview = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user?.id) { res.status(401).json({ error: 'Unauthorized' }); return; }
     const brand = await BrandService.getBrandByOwnerId(req.user.id);
@@ -79,7 +80,7 @@ export const getBrandOverview = async (req: Request, res: Response): Promise<voi
   }
 };
 
-export const generateEventSummary = async (req: Request, res: Response): Promise<void> => {
+export const generateEventSummary = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
     if (!userId) { res.status(401).json({ error: 'Unauthorized' }); return; }
@@ -107,7 +108,7 @@ export const generateEventSummary = async (req: Request, res: Response): Promise
   }
 };
 
-export const getBrandStats = async (req: Request, res: Response): Promise<void> => {
+export const getBrandStats = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user?.id) {
       res.status(401).json({ error: 'Unauthorized' });
@@ -120,7 +121,7 @@ export const getBrandStats = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-export const getBrandTimeseries = async (req: Request, res: Response): Promise<void> => {
+export const getBrandTimeseries = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { metric, from, to } = req.query;
     if (!metric || typeof metric !== 'string') {
@@ -137,7 +138,7 @@ export const getBrandTimeseries = async (req: Request, res: Response): Promise<v
   }
 };
 
-export const getEventClicksBreakdown = async (req: Request, res: Response): Promise<void> => {
+export const getEventClicksBreakdown = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user?.id) { res.status(401).json({ error: 'Unauthorized' }); return; }
     if (!await BrandService.verifyEventOwnership(req.params.id, req.user.id, req.user.role)) {
@@ -151,7 +152,7 @@ export const getEventClicksBreakdown = async (req: Request, res: Response): Prom
   }
 };
 
-export const getBrandClicksBreakdown = async (req: Request, res: Response): Promise<void> => {
+export const getBrandClicksBreakdown = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user?.id) { res.status(401).json({ error: 'Unauthorized' }); return; }
     const brand = await BrandService.getBrandByOwnerId(req.user.id);
@@ -163,7 +164,7 @@ export const getBrandClicksBreakdown = async (req: Request, res: Response): Prom
   }
 };
 
-export const trackBrandView = async (req: Request, res: Response): Promise<void> => {
+export const trackBrandView = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     await AnalyticsBrandService.trackBrandView(req.params.id);
     res.status(200).json({ success: true });
@@ -172,7 +173,7 @@ export const trackBrandView = async (req: Request, res: Response): Promise<void>
   }
 };
 
-export const getBrandViews = async (req: Request, res: Response): Promise<void> => {
+export const getBrandViews = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const views = await AnalyticsBrandService.getBrandViews(req.params.id);
     res.status(200).json(views);
@@ -181,7 +182,7 @@ export const getBrandViews = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-export const getBrandFollowerGrowth = async (req: Request, res: Response): Promise<void> => {
+export const getBrandFollowerGrowth = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { from, to, granularity } = req.query;
     if (!req.user?.id) { res.status(401).json({ error: 'Unauthorized' }); return; }
@@ -194,7 +195,7 @@ export const getBrandFollowerGrowth = async (req: Request, res: Response): Promi
   }
 };
 
-export const generateEventInsights = async (req: Request, res: Response): Promise<void> => {
+export const generateEventInsights = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const eventId = req.params.id;
     const userId = req.user?.id;
@@ -215,7 +216,7 @@ export const generateEventInsights = async (req: Request, res: Response): Promis
   }
 };
 
-export const generateBrandSummary = async (req: Request, res: Response): Promise<void> => {
+export const generateBrandSummary = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user?.id) { res.status(401).json({ error: 'Unauthorized' }); return; }
     const brand = await BrandService.getBrandByOwnerId(req.user.id);

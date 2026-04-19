@@ -96,7 +96,7 @@ export class RewardsClaimService {
           metadata: { eventId },
         });
       } catch (error: any) {
-        logger.error(`❌ RewardsService.claimPendingRewards: Failed for event ${eventId}:`, error.message);
+        logger.error({ err: error }, `❌ RewardsService.claimPendingRewards: Failed for event ${eventId}`);
         result.errors.push(`Event ${eventId}: ${error.message}`);
       }
     }
