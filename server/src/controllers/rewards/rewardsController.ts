@@ -1,5 +1,6 @@
-import logger from '../../lib/logger';
+import logger from '../../lib/logger.js';
 import { Request, Response } from 'express';
+import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
 
 import { ClaimType } from '@prisma/client';
 import { EventType, REWARDS_CONSTANTS } from '../../types/rewards.js';
@@ -29,7 +30,7 @@ export class RewardsController {
    * GET /api/rewards/pools/:eventId
    * Get pool status for an event
    */
-  static async getPool(req: Request, res: Response): Promise<void> {
+  static async getPool(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { eventId } = req.params;
 
@@ -63,7 +64,7 @@ export class RewardsController {
    * POST /api/rewards/pools/:eventId/cancel
    * Cancel a pool (Brand or Admin) - Web2 only
    */
-  static async cancelPool(req: Request, res: Response): Promise<void> {
+  static async cancelPool(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { eventId } = req.params;
       const userId = req.user?.id;
@@ -99,7 +100,7 @@ export class RewardsController {
    * GET /api/rewards/pools/:eventId/calculate
    * Calculate pool requirements for an event
    */
-  static async calculatePoolRequirements(req: Request, res: Response): Promise<void> {
+  static async calculatePoolRequirements(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { eventId } = req.params;
       const { maxParticipants, topPoolAmount } = req.query;
@@ -149,7 +150,7 @@ export class RewardsController {
    * GET /api/rewards/claims/:eventId
    * Get user's claims for an event
    */
-  static async getUserClaims(req: Request, res: Response): Promise<void> {
+  static async getUserClaims(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { eventId } = req.params;
       const userId = req.user?.id;
@@ -180,7 +181,7 @@ export class RewardsController {
    * POST /api/rewards/claims/:eventId/confirm
    * Confirm claim (Web2 only - no transaction hash needed)
    */
-  static async confirmClaim(req: Request, res: Response): Promise<void> {
+  static async confirmClaim(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { eventId } = req.params;
       const { claimType } = req.body;
@@ -225,7 +226,7 @@ export class RewardsController {
    * Confirm all CREDITED claims after on-chain transaction
    * Called by frontend after successful claimRewards() transaction
    */
-  static async confirmAllClaims(req: Request, res: Response): Promise<void> {
+  static async confirmAllClaims(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { transactionHash } = req.body;
       const userId = req.user?.id;
@@ -260,7 +261,7 @@ export class RewardsController {
    * Sync database claims with on-chain state
    * Used when user has already claimed on-chain but DB is out of sync
    */
-  static async syncClaims(req: Request, res: Response): Promise<void> {
+  static async syncClaims(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const userId = req.user?.id;
 
@@ -290,7 +291,7 @@ export class RewardsController {
    * GET /api/rewards/me
    * Get user's rewards summary (simplified endpoint as requested)
    */
-  static async getMyRewards(req: Request, res: Response): Promise<void> {
+  static async getMyRewards(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       RewardsController.setNoStore(res);
       const userId = req.user?.id;
@@ -334,7 +335,7 @@ export class RewardsController {
    * POST /api/rewards/claim
    * Claim a single reward (Web2 only - simplified)
    */
-  static async claimReward(req: Request, res: Response): Promise<void> {
+  static async claimReward(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { eventId, claimType } = req.body;
       const userId = req.user?.id;
@@ -418,7 +419,7 @@ export class RewardsController {
    * GET /api/rewards/user/claimable
    * Get all claimable rewards for the user
    */
-  static async getClaimableRewards(req: Request, res: Response): Promise<void> {
+  static async getClaimableRewards(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       RewardsController.setNoStore(res);
       const userId = req.user?.id;
@@ -453,7 +454,7 @@ export class RewardsController {
    * GET /api/rewards/user/history
    * Get user's claim history
    */
-  static async getClaimHistory(req: Request, res: Response): Promise<void> {
+  static async getClaimHistory(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       RewardsController.setNoStore(res);
       const userId = req.user?.id;
@@ -484,7 +485,7 @@ export class RewardsController {
    * GET /api/rewards/constants
    * Get reward system constants
    */
-  static async getConstants(_req: Request, res: Response): Promise<void> {
+  static async getConstants(req: Request, res: Response): Promise<void> {
     res.json({
       success: true,
       data: {
@@ -506,7 +507,7 @@ export class RewardsController {
    * GET /api/rewards/contract-info
    * Get smart contract addresses
    */
-  static async getContractInfo(_req: Request, res: Response): Promise<void> {
+  static async getContractInfo(req: Request, res: Response): Promise<void> {
     res.json({
       success: true,
       data: {
@@ -522,7 +523,7 @@ export class RewardsController {
    * POST /api/rewards/claim-pending
    * User-triggered: distribute PENDING rewards now that the user has a Smart Account
    */
-  static async claimPendingRewards(req: Request, res: Response): Promise<void> {
+  static async claimPendingRewards(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const userId = req.user?.id;
 
@@ -551,7 +552,7 @@ export class RewardsController {
    * GET /api/rewards/brand/refunds
    * Get brand's refundable balance and pool details
    */
-  static async getBrandRefunds(req: Request, res: Response): Promise<void> {
+  static async getBrandRefunds(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const userId = req.user?.id;
 
@@ -593,7 +594,7 @@ export class RewardsController {
    * GET /api/rewards/brand/claimable
    * Get all claimable rewards for participants in brand's events
    */
-  static async getBrandClaimableRewards(req: Request, res: Response): Promise<void> {
+  static async getBrandClaimableRewards(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const userId = req.user?.id;
 
@@ -633,7 +634,7 @@ export class RewardsController {
    * POST /api/rewards/brand/refunds/prepare
    * Prepare refund claim data for a specific event
    */
-  static async prepareRefundClaim(req: Request, res: Response): Promise<void> {
+  static async prepareRefundClaim(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { eventId } = req.body;
       const userId = req.user?.id;

@@ -2,7 +2,7 @@ import { EventValidationService } from './EventValidationService.js';
 import { RewardsPoolService } from '../rewards/RewardsPoolService.js';
 import { RewardsDistributionService } from '../rewards/RewardsDistributionService.js';
 import { EventRankingService } from './EventRankingService.js';
-import logger from '../../lib/logger';
+import logger from '../../lib/logger.js';
 import { prisma } from '../../lib/prisma.js';
 import { Event } from '@prisma/client';
 import { NotFoundError, ForbiddenError, ValidationError } from '../../utils/errors.js';

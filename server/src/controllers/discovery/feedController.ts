@@ -1,11 +1,12 @@
-import logger from '../../lib/logger';
+import logger from '../../lib/logger.js';
 import { Request, Response } from "express";
 import { HomeService } from "../../services/discovery/homeService.js";
+import { AuthenticatedRequest } from "../../middlewares/authMiddleware.js";
 
 /**
  * Get personalized Home event feed
  */
-export async function getHomeEvents(req: Request, res: Response): Promise<void> {
+export async function getHomeEvents(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -24,7 +25,7 @@ export async function getHomeEvents(req: Request, res: Response): Promise<void> 
 /**
  * Get personalized Home content feed
  */
-export async function getHomeContent(req: Request, res: Response): Promise<void> {
+export async function getHomeContent(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const userId = req.user?.id;
     if (!userId) {
