@@ -35,6 +35,29 @@ export const authenticateJWT = async (
 ): Promise<void> => {
   const authReq = req as AuthenticatedRequest;
   try {
+    // TEST BYPASS: inject user by ID — only active when NODE_ENV=test
+    if (process.env.NODE_ENV === 'test') {
+      const testUserId = authReq.headers['x-test-user-id'] as string | undefined;
+      if (testUserId) {
+        const user = await prisma.user.findUnique({
+          where: { id: testUserId },
+          select: { id: true, walletAddress: true, email: true, role: true, privyId: true },
+        });
+        if (user) {
+          authReq.user = {
+            id: user.id,
+            address: user.walletAddress || '',
+            email: user.email,
+            role: user.role,
+            walletAddress: user.walletAddress || undefined,
+            privyId: user.privyId || undefined,
+          };
+          next();
+          return;
+        }
+      }
+    }
+
     const authHeader = authReq.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
       res.status(401).json({
@@ -99,6 +122,29 @@ export const authenticateOptional = async (
 ): Promise<void> => {
   const authReq = req as AuthenticatedRequest;
   try {
+    // TEST BYPASS: inject user by ID — only active when NODE_ENV=test
+    if (process.env.NODE_ENV === 'test') {
+      const testUserId = authReq.headers['x-test-user-id'] as string | undefined;
+      if (testUserId) {
+        const user = await prisma.user.findUnique({
+          where: { id: testUserId },
+          select: { id: true, walletAddress: true, email: true, role: true, privyId: true },
+        });
+        if (user) {
+          authReq.user = {
+            id: user.id,
+            address: user.walletAddress || '',
+            email: user.email,
+            role: user.role,
+            walletAddress: user.walletAddress || undefined,
+            privyId: user.privyId || undefined,
+          };
+          next();
+          return;
+        }
+      }
+    }
+
     const authHeader = authReq.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
       next();

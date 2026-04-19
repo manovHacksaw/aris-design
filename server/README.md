@@ -1,97 +1,56 @@
-# ARIS Server
+# Aris Backend (Server)
 
-The backend server for the ARIS platform, built with Express, Prisma, and PostgreSQL.
+The Aris Backend is a robust, service-oriented API built with **Bun** and **Express**. It handles core business logic for events, rewards, and AI-driven analytics.
 
-## Architecture
+## 🏗️ Architecture
 
-The server follows a layered architecture:
-- **Controllers** (`src/controllers`): Handle HTTP requests and responses.
-- **Services** (`src/services`): Contain business logic.
-- **Routes** (`src/routes`): Define API endpoints.
-- **Middlewares** (`src/middlewares`): Handle cross-cutting concerns (auth, error handling).
-- **Utils** (`src/utils`): Helper functions.
+We strictly follow the **Service / Controller / Route** pattern:
+- **Routes**: Define endpoints and handle authentication.
+- **Controllers**: Extract request data, perform validation, and return responses.
+- **Services**: The "Source of Truth" for business logic and all Prisma database interactions.
 
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
-- Bun (or Node.js)
-- PostgreSQL
-- Firebase Admin credentials (for phone auth)
+- [Bun Runtime](https://bun.sh/)
+- PostgreSQL (or Supabase URL)
 
 ### Installation
-1. Install dependencies:
-   ```bash
-   bun install
-   ```
-2. Set up environment variables:
-   ```bash
-   cp .env.example .env
-   ```
-3. Run database migrations:
-   ```bash
-   bun prisma migrate dev
-   ```
-
-### Running the Server
-- **Development**:
-  ```bash
-  bun run dev
-  ```
-- **Production**:
-  ```bash
-  bun run build
-  bun start
-  ```
-
-## API Documentation
-
-Base URL: `/api`
-
-### General
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| `GET` | `/` | API Information and version | No |
-| `GET` | `/health` | Health check (DB connection status) | No |
-
-### Authentication (`/auth`)
-| Method | Endpoint | Description | Auth Required | Body/Params |
-|--------|----------|-------------|---------------|-------------|
-| `GET` | `/nonce` | Get a nonce for wallet signature | No | Query: `address` (Ethereum address) |
-| `POST` | `/login` | Authenticate with wallet signature | No | Body: `address`, `signature`, `message`, `nonce` |
-| `POST` | `/logout` | Invalidate current session | Yes | - |
-| `POST` | `/verify` | Verify a signature (Testing utility) | No | Body: `address`, `signature`, `message` |
-
-### User Management (`/users`)
-| Method | Endpoint | Description | Auth Required | Body/Params |
-|--------|----------|-------------|---------------|-------------|
-| `GET` | `/me` | Get current authenticated user profile | Yes | - |
-| `GET` | `/` | Get list of users (paginated) | No | - |
-| `GET` | `/:id` | Get public profile of a specific user | No | Param: `id` (User ID) |
-| `GET` | `/check-username` | Check if a username is available | No | Query: `username` |
-| `POST` | `/` | Create or update user (Upsert) | Yes | Body: `email`, `displayName`, `avatarUrl`, etc. |
-| `PUT` | `/` | Create or update user (Upsert) | Yes | Body: `email`, `displayName`, `avatarUrl`, etc. |
-| `PATCH` | `/profile` | Update user profile fields | Yes | Body: `username`, `bio`, `socialLinks`, etc. |
-| `POST` | `/email/send-otp` | Send verification OTP to email | Yes | Body: `email` |
-| `POST` | `/email/verify-otp` | Verify email OTP | Yes | Body: `email`, `otp` |
-
-### Phone Verification (`/phone`)
-| Method | Endpoint | Description | Auth Required | Body/Params |
-|--------|----------|-------------|---------------|-------------|
-| `GET` | `/check-availability` | Check if phone number is available | Yes | Query: `phoneNumber` |
-| `POST` | `/verify-firebase` | Verify Firebase ID token & link phone | Yes | Body: `idToken` |
-
-## Error Handling
-All endpoints return standard error responses:
-```json
-{
-  "error": "Error message description",
-  "message": "Detailed error (dev mode only)"
-}
+```bash
+bun install
+bun prisma generate
 ```
 
-## Authentication
-Authentication is handled via JWT tokens in the `Authorization` header:
+### Environment Variables
+Copy `.env.example` to `.env` and fill in:
+- `DATABASE_URL`: Your Supabase connection string.
+- `ARCJET_KEY`: For rate limiting and security.
+- `GEMINI_API_KEY`: For AI analytics reporting.
+- `PRIVY_APP_ID/SECRET`: For server-side auth verification.
+
+### Running
+```bash
+# Development (with hot-reload)
+bun run dev
+
+# Production Build
+bun run build
+bun run start
 ```
-Authorization: Bearer <token>
-```
-Tokens are issued upon successful login via `/api/auth/login`.
+
+## 🛠️ Core Services
+
+- **RewardsDistributionService**: Manages USDC reward calculations and event pool status.
+- **EventLifecycleService**: Handles auto-transitioning events from `scheduled` -> `active` -> `voting` -> `completed`.
+- **BrandService**: Single source of truth for brand verification and ownership.
+- **AnalyticsService**: Aggregates event participation data and triggers Gemini AI reporting.
+
+## 🔒 Security
+- **Authentication**: Handled via `authenticateJWT` (for users) and `authenticateAdmin` (for staff).
+- **Protections**: Integrated with **Arcjet** for bot detection, rate-limiting, and SQL injection prevention.
+
+## 🚢 Deployment (Railway)
+This service is Docker-ready. To deploy to Railway:
+1. Set the **Root Directory** to `/server`.
+2. Add all `.env` variables to the Railway dashboard.
+3. Railway will use the [Dockerfile](file:///c:/Users/manov/Desktop/code/aris/server/Dockerfile) to build and run the service.

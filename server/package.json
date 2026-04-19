@@ -17,7 +17,16 @@
     "test:auth": "bun test-auth.ts",
     "test:unauth": "bun test-unauthenticated.ts",
     "test:cycle": "bun run src/scripts/testEventCycle.ts",
-    "inspect:event": "bun run src/scripts/inspectEvent.ts"
+    "inspect:event": "bun run src/scripts/inspectEvent.ts",
+    "test": "NODE_ENV=test bun test tests/**/*.test.ts --timeout 30000",
+    "test:watch": "NODE_ENV=test bun test tests/**/*.test.ts --watch --timeout 30000",
+    "test:auth-suite": "NODE_ENV=test bun test tests/auth/ --timeout 30000",
+    "test:users": "NODE_ENV=test bun test tests/users/ --timeout 30000",
+    "test:events": "NODE_ENV=test bun test tests/events/ --timeout 30000",
+    "test:rewards": "NODE_ENV=test bun test tests/rewards/ --timeout 30000",
+    "test:admin": "NODE_ENV=test bun test tests/admin/ --timeout 30000",
+    "test:integration": "NODE_ENV=test bun test tests/integration/ --timeout 60000",
+    "test:db:push": "DATABASE_URL=$TEST_DATABASE_URL bun prisma db push"
   },
   "keywords": [],
   "author": "",

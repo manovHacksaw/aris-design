@@ -147,7 +147,7 @@ export class EventLifecycleService {
         where: { id: eventId },
         data: { status: EventStatus.COMPLETED },
       });
-    });
+    }, { timeout: 30000, maxWait: 10000 });
 
     TrustService.updateTrustScores(eventId).catch((error) => {
       logger.error({ err: error }, 'Failed to update trust scores:');

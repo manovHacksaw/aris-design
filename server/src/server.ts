@@ -1,14 +1,11 @@
+import './env';
 import logger from './lib/logger';
-import dotenv from 'dotenv';
 import http from 'http';
 import { createApp } from './app';
 import { checkDatabaseConnection, disconnectDatabase } from './utils/dbConnection';
 import { setupSocket, closeSocket } from './socket';
 import { EventLifecycleService } from './services/events/EventLifecycleService.js';
 import { RewardsDistributionService } from './services/rewards/RewardsDistributionService.js';
-
-// Load environment variables
-dotenv.config();
 
 const PORT = process.env.PORT || 5000;
 
