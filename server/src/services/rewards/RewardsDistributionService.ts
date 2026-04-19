@@ -320,7 +320,7 @@ export class RewardsDistributionService {
           const polygonAmoy = defineChain({ id: chainId, name: 'Polygon Amoy', nativeCurrency: { decimals: 18, name: 'MATIC', symbol: 'MATIC' }, rpcUrls: { default: { http: [process.env.RPC_URL || 'https://rpc-amoy.polygon.technology'] } }, testnet: true });
           const publicClient = createPublicClient({ chain: polygonAmoy, transport: http(process.env.RPC_URL || 'https://rpc-amoy.polygon.technology') });
           const onChainEventId = (await import('../../lib/blockchain.js')).eventIdToBytes32(eventId);
-          const vaultAddress = process.env.REWARDS_VAULT_ADDRESS || '0x7BEbA9297aED5a2c09a05807617318bAA0F561C6';
+          const vaultAddress = process.env.REWARDS_VAULT_ADDRESS || '0x34C5A617e32c84BC9A54c862723FA5538f42F221';
 
           const poolData: any = await publicClient.readContract({
             address: vaultAddress as `0x${string}`,

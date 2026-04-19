@@ -1,7 +1,5 @@
+import '../../env';
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 export class AiUtils {
     public static genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
