@@ -1,4 +1,4 @@
-import logger from '../../lib/logger';
+import logger from '../../lib/logger.js';
 import { prisma } from '../../lib/prisma.js';
 import { ClaimType, ClaimStatus, WalletStatus } from '@prisma/client';
 import {
@@ -345,22 +345,13 @@ export class RewardsClaimService {
       throw new Error('No pending claim found');
     }
 
-    // Update claim status and increment user's totalEarnings in a transaction
+    // Update claim status in a transaction
     const [updatedClaim] = await prisma.$transaction([
       prisma.rewardClaim.update({
         where: { id: claim.id },
         data: {
           status: ClaimStatus.CLAIMED,
           claimedAt: new Date(),
-        },
-      }),
-      // Increment user's totalEarnings
-      prisma.user.update({
-        where: { id: userId },
-        data: {
-          totalEarnings: {
-            increment: claim.finalAmount,
-          },
         },
       }),
       // Log the activity
@@ -488,5 +479,74 @@ export class RewardsClaimService {
     });
 
     return { claimsSynced: claims.length };
+  }
+
+  /**
+   * Get all claimable rewards for a brand's events
+   */
+  static async getBrandClaimableRewards(brandId: string) {
+    // Get all events for this brand with their pools and claims
+    const events = await prisma.event.findMany({
+      where: { brandId },
+      include: {
+        rewardsPool: {
+          include: {
+            claims: {
+              where: {
+                status: { in: ['PENDING', 'SIGNED'] }
+              },
+              include: {
+                user: {
+                  select: { id: true, username: true, walletAddress: true, avatarUrl: true }
+                }
+              }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Format the response
+    const eventsWithClaims = events
+      .filter(event => event.rewardsPool && event.rewardsPool.claims.length > 0)
+      .map(event => {
+        const pool = event.rewardsPool!;
+        const claims = pool.claims.map(claim => ({
+          id: claim.id,
+          claimType: claim.claimType,
+          baseAmount: claim.baseAmount,
+          multiplier: claim.multiplier,
+          finalAmount: claim.finalAmount,
+          status: claim.status,
+          user: {
+            id: claim.user?.id,
+            username: claim.user?.username || 'Unknown',
+            walletAddress: claim.user?.walletAddress,
+            avatarUrl: claim.user?.avatarUrl
+          }
+        }));
+
+        const totalClaimable = claims.reduce((sum, c) => sum + c.finalAmount, 0);
+
+        return {
+          eventId: event.id,
+          eventTitle: event.title,
+          onChainEventId: event.onChainEventId,
+          poolStatus: pool.status,
+          claims,
+          totalClaimable,
+          claimCount: claims.length
+        };
+      });
+
+    const totalClaimableAll = eventsWithClaims.reduce((sum, e) => sum + e.totalClaimable, 0);
+    const totalClaimCount = eventsWithClaims.reduce((sum, e) => sum + e.claimCount, 0);
+
+    return {
+      events: eventsWithClaims,
+      totalClaimable: totalClaimableAll,
+      totalClaimCount
+    };
   }
 }

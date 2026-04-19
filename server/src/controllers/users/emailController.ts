@@ -2,7 +2,7 @@ import logger from '../../lib/logger';
 import { Response } from 'express';
 import { EmailService } from '../../services/users/emailService';
 import { AuthenticatedRequest } from '../../middlewares/authMiddleware';
-import { prisma } from '../../lib/prisma';
+
 import { AppError } from '../../utils/errors';
 
 /**
@@ -79,13 +79,7 @@ export const verifyOTP = async (req: AuthenticatedRequest, res: Response): Promi
         }
 
         // Update user to verified without OTP check
-        const updatedUser = await prisma.user.update({
-            where: { id: userId },
-            data: {
-                email: email.toLowerCase().trim(),
-                emailVerified: true,
-            },
-        });
+        const updatedUser = await EmailService.bypassVerification(email, userId);
 
         res.json({
             success: true,

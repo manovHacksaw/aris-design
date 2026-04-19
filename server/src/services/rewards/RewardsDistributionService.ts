@@ -33,9 +33,14 @@ export class RewardsDistributionService {
         throw new Error(`No rewards pool found for event ${eventId}. The blockchain transaction may have failed. Check event.blockchainStatus.`);
       }
 
+      if (pool.status === RewardsPoolStatus.COMPLETED) {
+        logger.info(`ℹ️ RewardsService: Pool for event ${eventId} is already COMPLETED. Skipping.`);
+        result.success = true;
+        return result;
+      }
+
       if (pool.status !== RewardsPoolStatus.ACTIVE) {
-        // If already completed, check if we need to re-sync
-        logger.info(`ℹ️ RewardsService: Pool for event ${eventId} is already ${pool.status}. Processing anyway to ensure DB sync.`);
+        logger.info(`ℹ️ RewardsService: Pool for event ${eventId} is ${pool.status}. Proceeding with caution.`);
       }
 
       // Get event with votes and submissions
@@ -311,7 +316,8 @@ export class RewardsDistributionService {
         let skipOnChain = false;
         try {
           const { createPublicClient, http, defineChain } = (await import('viem'));
-          const polygonAmoy = defineChain({ id: 80002, name: 'Polygon Amoy', nativeCurrency: { decimals: 18, name: 'MATIC', symbol: 'MATIC' }, rpcUrls: { default: { http: [process.env.RPC_URL || 'https://rpc-amoy.polygon.technology'] } }, testnet: true });
+          const chainId = parseInt(process.env.CHAIN_ID || '80002');
+          const polygonAmoy = defineChain({ id: chainId, name: 'Polygon Amoy', nativeCurrency: { decimals: 18, name: 'MATIC', symbol: 'MATIC' }, rpcUrls: { default: { http: [process.env.RPC_URL || 'https://rpc-amoy.polygon.technology'] } }, testnet: true });
           const publicClient = createPublicClient({ chain: polygonAmoy, transport: http(process.env.RPC_URL || 'https://rpc-amoy.polygon.technology') });
           const onChainEventId = (await import('../../lib/blockchain.js')).eventIdToBytes32(eventId);
           const vaultAddress = process.env.REWARDS_VAULT_ADDRESS || '0x7BEbA9297aED5a2c09a05807617318bAA0F561C6';
@@ -393,34 +399,26 @@ export class RewardsDistributionService {
         async (tx) => {
           // Save smart-account claims as CREDITED
           for (const claim of validClaims) {
-            try {
-              const { walletAddress, eoaAddress, ...dbClaim } = claim;
-              const saved = await tx.rewardClaim.upsert({
-                where: { poolId_userId_claimType: { poolId: dbClaim.poolId, userId: dbClaim.userId, claimType: dbClaim.claimType } },
-                create: { ...dbClaim, status: ClaimStatus.CREDITED, walletStatus: WalletStatus.SMART_ACCOUNT, claimedAt: new Date(), transactionHash: result.transactionHash } as any,
-                update: { status: ClaimStatus.CREDITED, walletStatus: WalletStatus.SMART_ACCOUNT, claimedAt: new Date(), transactionHash: result.transactionHash } as any,
-              });
-              logger.info(`✅ RewardsService: CREDITED claim saved: ${saved.id}`);
-              result.claimsCreated++;
-            } catch (error: any) {
-              logger.error(error, `❌ RewardsService: Failed to save CREDITED claim for ${claim.userId}:`);
-            }
+            const { walletAddress, eoaAddress, ...dbClaim } = claim;
+            const saved = await tx.rewardClaim.upsert({
+              where: { poolId_userId_claimType: { poolId: dbClaim.poolId, userId: dbClaim.userId, claimType: dbClaim.claimType } },
+              create: { ...dbClaim, status: ClaimStatus.CREDITED, walletStatus: WalletStatus.SMART_ACCOUNT, claimedAt: new Date(), transactionHash: result.transactionHash } as any,
+              update: { status: ClaimStatus.CREDITED, walletStatus: WalletStatus.SMART_ACCOUNT, claimedAt: new Date(), transactionHash: result.transactionHash } as any,
+            });
+            logger.info(`✅ RewardsService: CREDITED claim saved: ${saved.id}`);
+            result.claimsCreated++;
           }
 
           // Save EOA/no-wallet claims as PENDING
           for (const claim of pendingClaims) {
-            try {
-              const { walletAddress, eoaAddress, ...dbClaim } = claim;
-              const saved = await tx.rewardClaim.upsert({
-                where: { poolId_userId_claimType: { poolId: dbClaim.poolId, userId: dbClaim.userId, claimType: dbClaim.claimType } },
-                create: { ...dbClaim, status: ClaimStatus.PENDING } as any,
-                update: { status: ClaimStatus.PENDING, walletStatus: dbClaim.walletStatus } as any,
-              });
-              logger.info(`✅ RewardsService: PENDING claim saved: ${saved.id}`);
-              result.claimsCreated++;
-            } catch (error: any) {
-              logger.error(error, `❌ RewardsService: Failed to save PENDING claim for ${claim.userId}:`);
-            }
+            const { walletAddress, eoaAddress, ...dbClaim } = claim;
+            const saved = await tx.rewardClaim.upsert({
+              where: { poolId_userId_claimType: { poolId: dbClaim.poolId, userId: dbClaim.userId, claimType: dbClaim.claimType } },
+              create: { ...dbClaim, status: ClaimStatus.PENDING } as any,
+              update: { status: ClaimStatus.PENDING, walletStatus: dbClaim.walletStatus } as any,
+            });
+            logger.info(`✅ RewardsService: PENDING claim saved: ${saved.id}`);
+            result.claimsCreated++;
           }
 
           await tx.eventRewardsPool.update({
@@ -429,23 +427,20 @@ export class RewardsDistributionService {
               participantCount: uniqueVoters.size,
               status: RewardsPoolStatus.COMPLETED,
               completedAt: new Date(),
-              totalDisbursed: result.totalRewards
+              totalDisbursed: result.totalRewards,
+              processingAttempts: 0, // Reset attempts on success
             },
           });
 
           // Increment totalEarnings for all recipients (both CREDITED and PENDING count toward lifetime earnings)
           for (const claim of claimsToCreate) {
-            try {
-              await tx.user.update({
-                where: { id: claim.userId },
-                data: {
-                  totalEarnings: { increment: claim.finalAmount },
-                  totalRewardsClaimed: { increment: 1 }
-                }
-              });
-            } catch (error: any) {
-              logger.error(error, `❌ RewardsService: Failed to increment earnings for ${claim.userId}:`);
-            }
+            await tx.user.update({
+              where: { id: claim.userId },
+              data: {
+                totalEarnings: { increment: claim.finalAmount },
+                totalRewardsClaimed: { increment: 1 }
+              }
+            });
           }
         },
         { timeout: 60000, maxWait: 10000 }

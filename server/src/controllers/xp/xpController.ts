@@ -4,7 +4,6 @@ import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
 import { XpService } from '../../services/xp/xpService.js';
 import { LoginStreakService } from '../../services/users/loginStreakService.js';
 import { ReferralService } from '../../services/referralService.js';
-import { MilestoneService } from '../../services/xp/milestoneService.js';
 import {
   LoginPingResponse,
   XpStatusResponse,
@@ -103,7 +102,7 @@ export const getMilestoneProgress = async (
       return res.status(401).json({ success: false, error: 'Authentication required' });
     }
 
-    const milestones = await MilestoneService.getMilestoneProgress(userId);
+    const milestones = await XpService.getMilestoneProgress(userId);
 
     const response: MilestoneProgressResponse = {
       success: true,
@@ -231,7 +230,7 @@ export const getXpTransactions = async (
       return res.status(401).json({ success: false, error: 'Authentication required' });
     }
 
-    const { prisma } = await import('../lib/prisma.js');
+    const { prisma } = await import('../../lib/prisma.js');
 
     const transactions = await prisma.xpTransaction.findMany({
       where: { userId },

@@ -539,3 +539,188 @@ The `setInterval` in `server.ts` for event auto-transition is not idempotent. If
 - **`server/src/services/eventService.ts` (~1597 lines)** -> *Why it's a problem:* Combines schema validation logic, locking constraints, huge monolithic database transactions, and unpredictable sequential IPFS fetch data loading.
 - **`server/src/services/rewardsService.ts` (~1120 lines)** -> *Why it's a problem:* Highly bloated service file attempting to handle off-chain database aggregations side-by-side with localized synchronization algorithms for payout state.
 - **`server/src/controllers/authController.ts`** -> *Why it's a problem:* Visually pinpoints the systemic `catch (error: any)` typing hazard alongside ad-hoc substring matching (`error.message?.includes('expired')`), revealing the absence of disciplined `AppError` payload inheritance.
+
+---
+
+## Phase 3 Audit: Deep Structural & Architectural Analysis
+
+> Generated: 2026-04-17 | Based on current master branch post-Wave-1/2/3 refactors
+
+### 1. Architecture Summary
+
+The Aris backend is a **Hybrid Layered + Partial Modular** REST API. The intended `Route → Controller → Service → DB` pattern holds for ~60% of the codebase. 165 endpoints across 25 route files, 25 controllers, 43+ service files. 6 domains have been partially migrated to subdirectory organization (`events/`, `users/`, `rewards/`, `submissions/`, `analytics/`, `ai/`); 20 services remain flat.
+
+**Key stats:**
+- Controllers: 25 files, 2 exceed 600 lines (`userController` 631, `eventController` 678)
+- Services: 43 files — 25 in subdirectories, 20 loose at root
+- Direct Prisma calls in controllers: **84 calls across 18 controller files** (breaks service layer)
+- External integrations: Privy, Polygon Amoy + Pimlico, Firebase Admin, Pinata/IPFS, Gemini, Arcjet
+
+---
+
+### 2. Service Organization — Current State
+
+| Status | Domains | Files |
+|--------|---------|-------|
+| ✓ Subdirectory-organized | events, users, rewards, submissions, analytics, ai | 25 files |
+| ✗ Flat / ungrouped | auth, brand, xp, notifications, search, subscriptions, leaderboard, social, referral, phone, email, drafts, vote, proposal | 20 files |
+
+**Flat services that belong in a domain group:**
+- `voteService.ts`, `proposalService.ts`, `leaderboardService.ts` → should be in `events/`
+- `loginStreakService.ts`, `referralService.ts` → should be in `users/`
+- `xpService.ts`, `brandXpService.ts`, `milestoneService.ts` → fragmented XP ownership, needs consolidation
+
+---
+
+### 3. Major Structural Problems
+
+| # | Problem | Severity | Affected Files |
+|---|---------|----------|---------------|
+| 1 | **84 direct Prisma calls in 18 controllers** — DB access past service layer | HIGH | brandController (13), eventController (11), notificationController (9), searchController (8), rewardsController (7), adminDashboardController (6), analyticsController (5), brandXpController (4), draftController (4) |
+| 2 | **brandController has zero service delegation** — 13 Prisma calls, all business logic inline | HIGH | `brandController.ts` |
+| 3 | **userController is 5 domains in one file** — user CRUD + stats + social + referral + wallet | HIGH | `userController.ts` (631 lines) |
+| 4 | **XP fragmented across 3 services** with no clear owner | MEDIUM | `xpService.ts`, `brandXpService.ts`, `milestoneService.ts` |
+| 5 | **EventMutationService imports 8 services** — fan-out coupling | MEDIUM | EventValidation, EventRanking, EventLifecycle, RewardsPool, Notification, Milestone, BrandXp, Trust |
+| 6 | **No transaction boundaries** in multi-step write flows | HIGH | Brand profile update (5 sequential Prisma calls), vote creation, notification dispatch |
+| 7 | **userRoutes.ts mixes 3 domains** — user + email + submission routes in one file | MEDIUM | `userRoutes.ts` |
+| 8 | **Rate-limit config duplicated** in route files instead of centralized | LOW | `userRoutes.ts`, `rewardsRoutes.ts` |
+| 9 | **draftController has no service layer** — all Prisma calls inline | MEDIUM | `draftController.ts` |
+| 10 | **notificationController ignores NotificationService** — 9 direct Prisma calls despite service existing | MEDIUM | `notificationController.ts` |
+
+---
+
+### 4. Domain Grouping (165 Endpoints → 23 Domains)
+
+| Domain | Endpoints | Service State | Notes |
+|--------|-----------|---------------|-------|
+| User Management | ~28 | ✓ `users/` (5 files) | Well-organized |
+| Events | ~13 | ✓ `events/` (5 files) but vote/proposal/leaderboard loose | Incomplete grouping |
+| Rewards | ~17 | ✓ `rewards/` (4 files) | Best-organized domain |
+| Analytics | ~23 | ✓ `analytics/` (4 files) | Well-organized |
+| Submissions | ~6 | ✓ `submissions/` (3 files) | OK |
+| AI | ~7 | ✓ `ai/` (4 files) | OK |
+| Brand Management | ~14 | ✗ brandApplicationService, brandClaimService, brandXpService all loose | Should be grouped |
+| XP / Gamification | ~12 | ✗ xpService, brandXpService, milestoneService loose + overlapping | Needs consolidation |
+| Voting & Proposals | ~10 | ✗ voteService, proposalService loose | Belong in `events/` |
+| Notifications | ~6 | ✗ notificationService loose | Should be grouped |
+| Search / Discovery | ~10 | ✗ exploreService, homeService loose | Should be grouped |
+| Auth | ~2 | ✗ authService loose | Small, acceptable standalone |
+| Subscriptions | ~6 | ✗ subscriptionService loose | Small, acceptable standalone |
+| Leaderboard | ~4 | ✗ leaderboardService loose | Belongs in `events/` |
+| Social (follows) | ~2 | ✓ UserSocialService in `users/` | Embedded in userController |
+| Referrals | ~2 | ✓ UserReferralService in `users/` | Embedded in userController |
+| Phone / Email OTP | ~4 | ✗ phoneService, emailService loose | Integration services |
+| Drafts | ~3 | ✗ No service — all in controller | Missing service layer entirely |
+| Feed | ~2 | ✗ homeService loose | Specialized |
+| Admin | ~8 | Mixed — no dedicated service | Should have adminService |
+
+---
+
+### 5. Controller Prisma Usage (Service Layer Violations)
+
+Controllers that bypass the service layer with direct Prisma calls:
+
+| Controller | Direct Prisma Calls | Impact |
+|-----------|-------------------|--------|
+| `brandController.ts` | 13 | All brand profile logic in controller |
+| `eventController.ts` | 11 | Brand lookup + event queries mixed with service calls |
+| `notificationController.ts` | 9 | Ignores NotificationService entirely |
+| `searchController.ts` | 8 | No search service; all inline |
+| `rewardsController.ts` | 7 | Pool/claim queries duplicating service logic |
+| `adminDashboardController.ts` | 6 | No admin service; all inline stats queries |
+| `analyticsController.ts` | 5 | Mixed with AnalyticsController delegation |
+| `brandXpController.ts` | 4 | Should delegate to brandXpService |
+| `draftController.ts` | 4 | No DraftService exists |
+| `xpController.ts` | 3 | Mixed with xpService calls |
+
+**Controllers with proper delegation (no direct Prisma):** authController, submissionController, proposalController, leaderboardController, feedController, aiController, brandClaimController, brandApplicationController, phoneController
+
+---
+
+### 6. Dependency Flow — Risk Traces
+
+**Event Creation (highest fan-out):**
+```
+POST /api/events
+→ eventController (direct: prisma.brand.findFirst)
+→ EventMutationService
+  → EventValidationService
+  → EventLifecycleService
+  → RewardsPoolService
+  → MilestoneService → XpService
+  → BrandXpService
+  → NotificationService
+  → TrustService
+```
+8 service dependencies. No single transaction wraps this chain.
+
+**Reward Claim:**
+```
+POST /api/rewards/claim
+→ rewardsController (direct: prisma.eventRewardsPool + prisma.rewardClaim)
+→ RewardsClaimService → BlockchainService (external: Pimlico/Viem)
+→ RewardsDistributionService → BlockchainService (external)
+→ NotificationService
+```
+Blockchain operations are not idempotent; partial-commit risk if distribution succeeds but DB update fails.
+
+**Brand Profile Update:**
+```
+POST /api/brands
+→ brandController
+  → prisma.user.findUnique (direct)
+  → prisma.brand.upsert (direct)
+  → prisma.brand.findUnique (direct)
+  → prisma.brandLevelSnapshot.create (direct)
+  → prisma.brand.update x2 (direct)
+```
+Zero service delegation. 5 sequential Prisma calls with no transaction.
+
+---
+
+### 7. Risk Areas
+
+| Risk | What breaks | Priority |
+|------|------------|---------|
+| **Enforce service-only DB access** before creating missing services | Controllers break with no service to call | Must create BrandService, DraftService, NotificationService usage, SearchService first |
+| **EventMutationService 8-service fan-out** | Event creation if any dependency is restructured | High — add integration tests before touching |
+| **XP ownership across 3 services** | XP calculations if one is changed without the others | Consolidate before any XP feature work |
+| **Reward blockchain operations not idempotent** | Double-distribution on retry | Add idempotency keys before scaling |
+| **No transaction in brand update** | Data inconsistency on partial failure | Wrap in `prisma.$transaction` before adding any new brand write ops |
+| **NotificationService called from 6+ services** | Cascade failures if notification throws | Ensure all notification calls are fire-and-forget with try/catch |
+
+---
+
+### 8. What Was Fixed Since Initial Audit
+
+| Item | Status |
+|------|--------|
+| Analytics fat route (~350 lines) → extracted to `analyticsController.ts` | ✓ Done (Wave 2) |
+| Admin Basic Auth → Privy JWT + email allowlist | ✓ Done |
+| 381 `console.*` calls → Pino structured logger | ✓ Done |
+| String-matching catch blocks → `instanceof AppError` | ✓ Done (Wave 3) |
+| Custom error class hierarchy (`AppError`, `NotFoundError`, etc.) | ✓ Done |
+| Arcjet rate limiting on auth/OTP/vote/rewards/brand-register | ✓ Done |
+| Analytics ownership gaps (missing `requireEventOwner`) | ✓ Done |
+| `profilePicCid` runtime crash in `getEventParticipants` | ✓ Done |
+| Morgan removed (redundant with Pino) | ✓ Done |
+| Pino logger overload type errors (84 call sites fixed) | ✓ Done |
+| `EventMutationService.updateEventStatus` wrong service reference | ✓ Done |
+| monolithic `aiService.ts` (796 lines) → `ai/` subdirectory (4 files) | ✓ Done |
+
+### 9. What Remains
+
+| Item | Priority |
+|------|---------|
+| ~~Create BrandService (replace 13 direct Prisma calls in brandController)~~ | ~~High~~ ✓ Done |
+| ~~Create SearchService (replace 8 direct Prisma calls in searchController)~~ | ~~High~~ ✓ Done |
+| Create DraftService (no service exists) | Medium |
+| ~~Make notificationController use NotificationService~~ | ~~Medium~~ ✓ Done |
+| Move voteService, proposalService, leaderboardService → `events/` | Medium |
+| Move loginStreakService, referralService → `users/` | Low |
+| Consolidate xpService + brandXpService + milestoneService | Medium |
+| Wrap brand profile update in `prisma.$transaction` | High |
+| Add transaction boundaries to multi-step event flows | High |
+| Centralize rate-limit config (remove inline in route files) | Low |
+| Remove `src/examples/ipfsOptimizationExample.ts` | Low |
+| Add idempotency to blockchain reward operations | High |

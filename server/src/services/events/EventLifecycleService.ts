@@ -54,7 +54,12 @@ export class EventLifecycleService {
       throw new ValidationError('Cannot transition to voting before posting period ends');
     }
 
-    // 6. Update status
+    // 6. Completing — route through transitionToCompleted for rankings + rewards
+    if (newStatus === EventStatus.COMPLETED) {
+      return EventLifecycleService.transitionToCompleted(id);
+    }
+
+    // 7. Update status
     const updatedEvent = await prisma.event.update({
       where: { id },
       data: { status: newStatus },

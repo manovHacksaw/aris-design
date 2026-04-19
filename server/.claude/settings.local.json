@@ -9,7 +9,29 @@
       "Bash(bun add *)",
       "WebFetch(domain:docs.arcjet.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(node -e \"const aj = require\\('/c/Users/manov/Desktop/code/aris/server/node_modules/@arcjet/node'\\); console.log\\(Object.keys\\(aj\\)\\)\")"
+      "Bash(node -e \"const aj = require\\('/c/Users/manov/Desktop/code/aris/server/node_modules/@arcjet/node'\\); console.log\\(Object.keys\\(aj\\)\\)\")",
+      "Bash(git *)",
+      "Bash(bunx tsc *)",
+      "Bash(echo \"Exit: $?\")",
+      "Bash(xargs perl *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(echo \"EXIT_CODE:$?\")",
+      "Bash(mkdir -p server/src/controllers/brands)",
+      "Bash(mkdir -p server/src/controllers/events)",
+      "Bash(mkdir -p server/src/controllers/users)",
+      "Bash(mkdir -p server/src/controllers/rewards)",
+      "Bash(mkdir -p server/src/controllers/analytics)",
+      "Bash(mkdir -p server/src/routes/auth)",
+      "Bash(mkdir -p server/src/routes/brands)",
+      "Bash(mkdir -p server/src/routes/events)",
+      "Bash(mkdir -p server/src/routes/users)",
+      "Bash(mkdir -p server/src/routes/rewards)",
+      "Bash(mkdir -p server/src/services/auth)",
+      "Bash(mkdir -p server/src/services/xp)",
+      "Bash(mkdir -p server/src/services/social)",
+      "Bash(mkdir -p server/src/services/discovery)",
+      "Bash(mkdir -p server/src/services/drafts)",
+      "Bash(xargs grep *)"
     ]
   }
 }

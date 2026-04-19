@@ -202,4 +202,32 @@ export class EmailService {
             },
         });
     }
+    /**
+     * Bypass verification and update email (used when verification is disabled)
+     */
+    static async bypassVerification(email: string, userId: string) {
+        const normalizedEmail = email.toLowerCase().trim();
+
+        // Check availability
+        const emailTaken = await prisma.user.findFirst({
+            where: {
+                email: normalizedEmail,
+                NOT: { id: userId },
+            },
+        });
+
+        if (emailTaken) {
+            throw new ValidationError('Email is already registered to another account');
+        }
+
+        return prisma.user.update({
+            where: { id: userId },
+            data: {
+                email: normalizedEmail,
+                emailVerified: true,
+                emailVerificationCode: null,
+                emailVerificationExpiry: null,
+            },
+        });
+    }
 }

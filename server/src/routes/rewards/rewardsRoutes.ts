@@ -1,17 +1,9 @@
 import { Router } from 'express';
 import { RewardsController } from '../../controllers/rewards/rewardsController.js';
 import { authenticateJWT, authenticateOptional } from '../../middlewares/authMiddleware.js';
-import { arcjetMiddleware } from '../../middlewares/arcjetMiddleware';
-import aj from '../../lib/arcjet';
-import { fixedWindow } from '@arcjet/node';
+import { claimRateLimit } from '../../config/rateLimits.js';
 
 const router = Router();
-
-// 5 claim operations per 5 minutes per user
-const claimRateLimit = arcjetMiddleware(
-  aj.withRule(fixedWindow({ mode: 'LIVE', window: '5m', max: 5, characteristics: ['userId'] })),
-  (req) => ({ userId: req.user?.id ?? req.ip ?? 'anon' }),
-);
 
 router.get('/constants', RewardsController.getConstants);
 router.get('/contract-info', RewardsController.getContractInfo);

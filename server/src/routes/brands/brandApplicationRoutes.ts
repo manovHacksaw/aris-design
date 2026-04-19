@@ -9,16 +9,9 @@ import {
 } from '../../controllers/brands/brandApplicationController';
 import { authenticateJWT, AuthenticatedRequest } from '../../middlewares/authMiddleware';
 import { authenticateAdmin } from '../../middlewares/adminMiddleware';
-import { arcjetMiddleware } from '../../middlewares/arcjetMiddleware';
-import aj from '../../lib/arcjet';
-import { fixedWindow } from '@arcjet/node';
+import { registerRateLimit } from '../../config/rateLimits.js';
 
 const router = Router();
-
-// 5 registrations per hour per IP
-const registerRateLimit = arcjetMiddleware(
-  aj.withRule(fixedWindow({ mode: 'LIVE', window: '1h', max: 5, characteristics: ['ip.src'] })),
-);
 
 // Public — no auth required
 router.post('/register', registerRateLimit, submitApplication);
