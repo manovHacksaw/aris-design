@@ -125,7 +125,7 @@ describe('GET /api/rewards/pools/:eventId', () => {
   it('returns pool info without auth', async () => {
     const { status, body } = await apiGet(baseUrl, `/rewards/pools/${completedEventId}`, asAnon());
     expect(status).toBe(200);
-    const pool = body.pool ?? body;
+    const pool = body.pool ?? body.data ?? body;
     expect(pool.status).toBe('COMPLETED');
   });
 
@@ -205,7 +205,7 @@ describe('GET /api/rewards/claims/:eventId', () => {
       asUser(voter1.id)
     );
     expect(status).toBe(200);
-    const claims = Array.isArray(body) ? body : (body.claims ?? []);
+    const claims = Array.isArray(body) ? body : (body.claims ?? body.data ?? []);
     expect(claims.length).toBeGreaterThan(0);
     expect(claims.every((c: any) => c.userId === voter1.id)).toBe(true);
   });
@@ -220,7 +220,7 @@ describe('GET /api/rewards/user/claimable', () => {
   it('returns claimable rewards grouped by event', async () => {
     const { status, body } = await apiGet(baseUrl, '/rewards/user/claimable', asUser(voter1.id));
     expect(status).toBe(200);
-    const rewards = Array.isArray(body) ? body : (body.rewards ?? body.claimable ?? []);
+    const rewards = Array.isArray(body) ? body : (body.rewards ?? body.claimable ?? body.data?.events ?? []);
     expect(Array.isArray(rewards)).toBe(true);
     // Should contain the completed event
     const eventIds = rewards.map((r: any) => r.eventId);

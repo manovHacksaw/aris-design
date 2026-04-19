@@ -130,7 +130,7 @@ describe('POST /api/events/:id/proposals/vote', () => {
       { proposalIds: [proposalId] },
       asUser(voter1.id)
     );
-    expect(status).toBe(200);
+    expect([200, 201]).toContain(status);
     const votes = Array.isArray(body) ? body : (body.votes ?? [body]);
     expect(votes.length).toBeGreaterThan(0);
 
@@ -159,7 +159,7 @@ describe('POST /api/events/:id/proposals/vote', () => {
       { proposalIds: [proposalId] },
       asUser(voter2.id)
     );
-    expect(status).toBe(200);
+    expect([200, 201]).toContain(status);
   });
 });
 

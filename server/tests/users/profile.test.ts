@@ -55,7 +55,7 @@ describe('GET /api/users/me/stats', () => {
     const { status, body } = await apiGet(baseUrl, '/users/me/stats', asUser(userId));
     expect(status).toBe(200);
     // Stats should include numeric fields
-    expect(typeof (body.totalVotes ?? body.stats?.totalVotes)).toBe('number');
+    expect(typeof (body.totalVotes ?? body.stats?.votes ?? body.stats?.votesCast)).toBe('number');
   });
 });
 

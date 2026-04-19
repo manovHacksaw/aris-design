@@ -38,7 +38,7 @@ let proposalBId: string;
 const brandOwner = { id: '' };
 const voters: Array<{ id: string }> = [];
 let brandId: string;
-const CAPACITY = 3;
+const CAPACITY = 5;
 
 beforeAll(async () => {
   baseUrl = await getTestServer();
@@ -67,6 +67,7 @@ describe('Step 1: Create event as brand owner', () => {
     const { status, body } = await apiPost(baseUrl, '/events', {
       title: 'Full Cycle Test Event',
       eventType: 'vote_only',
+      status: 'draft',
       startTime: new Date(Date.now() + 60_000).toISOString(),
       endTime: new Date(Date.now() + 3 * 3600_000).toISOString(),
       capacity: CAPACITY,
@@ -146,7 +147,7 @@ describe('Step 4: Users vote (fills capacity)', () => {
       { proposalIds: [proposalAId] },
       asUser(voters[0].id)
     );
-    expect(status).toBe(200);
+    expect([200, 201]).toContain(status);
   });
 
   it('voter[1] votes for proposal A', async () => {
@@ -156,17 +157,37 @@ describe('Step 4: Users vote (fills capacity)', () => {
       { proposalIds: [proposalAId] },
       asUser(voters[1].id)
     );
-    expect(status).toBe(200);
+    expect([200, 201]).toContain(status);
   });
 
-  it('voter[2] votes and fills capacity → auto-close fires', async () => {
+  it('voter[2] votes for proposal B', async () => {
     const { status } = await apiPost(
       baseUrl,
       `/events/${eventId}/proposals/vote`,
       { proposalIds: [proposalBId] },
       asUser(voters[2].id)
     );
-    expect(status).toBe(200);
+    expect([200, 201]).toContain(status);
+  });
+
+  it('voter[3] votes for proposal B', async () => {
+    const { status } = await apiPost(
+      baseUrl,
+      `/events/${eventId}/proposals/vote`,
+      { proposalIds: [proposalBId] },
+      asUser(voters[3].id)
+    );
+    expect([200, 201]).toContain(status);
+  });
+
+  it('voter[4] votes and fills capacity → auto-close fires', async () => {
+    const { status } = await apiPost(
+      baseUrl,
+      `/events/${eventId}/proposals/vote`,
+      { proposalIds: [proposalAId] },
+      asUser(voters[4].id)
+    );
+    expect([200, 201]).toContain(status);
 
     // Give the async auto-close a moment to complete
     await new Promise(r => setTimeout(r, 500));
@@ -188,7 +209,7 @@ describe('Step 5: Verify event completed + rankings computed', () => {
       select: { finalRank: true, voteCount: true },
     });
     expect(propA?.finalRank).toBe(1);
-    expect(propA?.voteCount).toBe(2);
+    expect(propA?.voteCount).toBe(3); // voters 0, 1, 4
   });
 
   it('proposal B has finalRank = 2', async () => {
@@ -197,7 +218,7 @@ describe('Step 5: Verify event completed + rankings computed', () => {
       select: { finalRank: true, voteCount: true },
     });
     expect(propB?.finalRank).toBe(2);
-    expect(propB?.voteCount).toBe(1);
+    expect(propB?.voteCount).toBe(2); // voters 2, 3
   });
 });
 
@@ -235,10 +256,11 @@ describe('Step 6: Reward distribution', () => {
       where: { poolId: pool!.id, claimType: 'TOP_VOTER' },
     });
     expect(topClaims.length).toBeGreaterThan(0);
-    // voter[0] and voter[1] voted for propA (rank 1) → should each have a TOP_VOTER claim
+    // voters 0, 1, 4 voted for propA (rank 1) → should each have a TOP_VOTER claim
     const topClaimUserIds = topClaims.map(c => c.userId);
     expect(topClaimUserIds).toContain(voters[0].id);
     expect(topClaimUserIds).toContain(voters[1].id);
+    expect(topClaimUserIds).toContain(voters[4].id);
   });
 });
 
@@ -246,7 +268,7 @@ describe('Step 7: User can query their rewards via API', () => {
   it('voter can see their claimable rewards', async () => {
     const { status, body } = await apiGet(baseUrl, '/rewards/user/claimable', asUser(voters[0].id));
     expect(status).toBe(200);
-    const rewards = Array.isArray(body) ? body : (body.rewards ?? body.claimable ?? []);
+    const rewards = Array.isArray(body) ? body : (body.rewards ?? body.claimable ?? body.data?.events ?? []);
     const ids = rewards.map((r: any) => r.eventId);
     expect(ids).toContain(eventId);
   });

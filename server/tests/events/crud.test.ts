@@ -87,6 +87,7 @@ describe('POST /api/events', () => {
     const { status, body } = await apiPost(baseUrl, '/events', {
       title: 'My Vote-Only Event',
       eventType: 'vote_only',
+      status: 'draft',
       startTime: futureStart(),
       endTime: futureEnd(),
       capacity: 5,
@@ -120,9 +121,10 @@ describe('GET /api/events', () => {
 });
 
 describe('GET /api/events/:id', () => {
-  it('returns event by ID', async () => {
+  it('returns event by ID for brand owner', async () => {
     if (!createdEventId) return;
-    const { status, body } = await apiGet(baseUrl, `/events/${createdEventId}`, asAnon());
+    // Draft events are hidden from anon (blockchainStatus PENDING); use brand owner auth
+    const { status, body } = await apiGet(baseUrl, `/events/${createdEventId}`, asUser(brandOwner.id));
     expect(status).toBe(200);
     const event = body.event ?? body;
     expect(event.id).toBe(createdEventId);
@@ -218,16 +220,17 @@ describe('DELETE /api/events/:id', () => {
     expect(status).toBe(401);
   });
 
-  it('soft-deletes the event as owner', async () => {
+  it('deletes the event as owner', async () => {
     if (!createdEventId) return;
     const { status } = await apiDelete(baseUrl, `/events/${createdEventId}`, asUser(brandOwner.id));
     expect(status).toBe(200);
 
-    // Verify DB isDeleted flag
+    // Draft events with no submissions are hard-deleted; others are soft-deleted
     const dbEvent = await db.event.findUnique({
       where: { id: createdEventId },
       select: { isDeleted: true },
     });
-    expect(dbEvent?.isDeleted).toBe(true);
+    // Either hard-deleted (null) or soft-deleted (isDeleted: true)
+    expect(dbEvent === null || dbEvent?.isDeleted === true).toBe(true);
   });
 });

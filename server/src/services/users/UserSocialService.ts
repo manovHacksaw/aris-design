@@ -6,7 +6,7 @@ export class UserSocialService {
      */
     static async followUser(followerId: string, followingId: string) {
         if (followerId === followingId) {
-            throw new Error('Cannot follow yourself');
+            return { success: false, message: 'Cannot follow yourself' };
         }
 
         const existingFollow = await prisma.userFollowers.findUnique({
