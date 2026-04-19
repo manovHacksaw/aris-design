@@ -2,7 +2,7 @@ import logger from '../../lib/logger';
 import { Response } from 'express';
 import { PhoneService } from '../../services/users/phoneService';
 import { AuthenticatedRequest } from '../../middlewares/authMiddleware';
-import { prisma } from '../../lib/prisma';
+
 
 /**
  * Check if phone number is available
@@ -52,13 +52,7 @@ export const verifyFirebasePhone = async (req: AuthenticatedRequest, res: Respon
     }
 
     // Update user with phone number, mark as verified
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        phoneNumber: phoneNumber,
-        phoneVerified: true,
-      },
-    });
+    const updatedUser = await PhoneService.bypassVerification(phoneNumber, userId);
 
     res.json({
       success: true,

@@ -3,17 +3,9 @@ import { getUsers, getUserById, getUserByUsername, upsertUser, getCurrentUser, u
 import { getSubmissionsByUser } from '../../controllers/events/submissionController';
 import { sendOTP, verifyOTP } from '../../controllers/users/emailController';
 import { authenticateJWT, authenticateOptional, requireEmailVerification } from '../../middlewares/authMiddleware';
-import { arcjetMiddleware } from '../../middlewares/arcjetMiddleware';
-import aj from '../../lib/arcjet';
-import { fixedWindow } from '@arcjet/node';
+import { otpRateLimit } from '../../config/rateLimits.js';
 
 const router = Router();
-
-// 3 OTP sends per 5 minutes per user
-const otpRateLimit = arcjetMiddleware(
-  aj.withRule(fixedWindow({ mode: 'LIVE', window: '5m', max: 3, characteristics: ['userId'] })),
-  (req) => ({ userId: req.user?.id ?? req.ip ?? 'anon' }),
-);
 
 router.get('/me', authenticateJWT, getCurrentUser);
 router.get('/me/stats', authenticateJWT, getUserStats);

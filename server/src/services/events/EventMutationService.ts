@@ -1,28 +1,16 @@
 import { EventValidationService } from './EventValidationService.js';
-import { EventQueryService } from './EventQueryService.js';
-import { EventLifecycleService } from './EventLifecycleService.js';
-import { EventRankingService } from './EventRankingService.js';
 import logger from '../../lib/logger';
 import { prisma } from '../../lib/prisma.js';
-import { Event, EventType } from '@prisma/client';
+import { Event } from '@prisma/client';
 import { NotFoundError, ForbiddenError, ValidationError } from '../../utils/errors.js';
 import {
   CreateEventRequest,
   UpdateEventRequest,
-  EventFilters,
   EventStatus,
-  EventStatusType,
-  VALID_TRANSITIONS,
-  LOCKED_FIELDS_MAP,
-  TimestampData,
-  ValidationResult,
 } from '../../types/event.js';
 import { NotificationService } from '../social/notificationService.js';
-import { getIPFSUrl } from '../ipfsService.js';
-import { MilestoneService } from '../xp/milestoneService.js';
-import { BrandXpService } from '../brands/brandXpService.js';
 
-import { TrustService } from '../trustService.js';
+
 
 export class EventMutationService {
 
@@ -38,7 +26,7 @@ export class EventMutationService {
   ): Promise<Event> {
     // 1. Validate required fields
     if (!data.title || !data.eventType || !data.startTime || !data.endTime) {
-      throw new Error(
+      throw new ValidationError(
         'Missing required fields: title, eventType, startTime, and endTime are required'
       );
     }
@@ -66,7 +54,7 @@ export class EventMutationService {
     // 4. Validate event data
     const dataValidation = EventValidationService.validateEventData(data, data.eventType);
     if (!dataValidation.isValid) {
-      throw new Error(`Validation failed: ${dataValidation.errors.join(', ')}`);
+      throw new ValidationError(`Validation failed: ${dataValidation.errors.join(', ')}`);
     }
 
     // 5. Validate timestamps
@@ -75,19 +63,19 @@ export class EventMutationService {
       data.eventType
     );
     if (!timestampValidation.isValid) {
-      throw new Error(`Timestamp validation failed: ${timestampValidation.errors.join(', ')}`);
+      throw new ValidationError(`Timestamp validation failed: ${timestampValidation.errors.join(', ')}`);
     }
 
     // 6. Validate nextPhaseAt if autoTransition is enabled
     if (data.autoTransition && nextPhaseAt) {
       if (nextPhaseAt <= new Date()) {
-        throw new Error('nextPhaseAt must be in the future when autoTransition is enabled');
+        throw new ValidationError('nextPhaseAt must be in the future when autoTransition is enabled');
       }
     }
 
     // Validate rewards and capacity
-    if (data.baseReward && data.baseReward < 0) throw new Error("Base reward cannot be negative");
-    if (data.topReward && data.topReward < 0) throw new Error("Top reward cannot be negative");
+    if (data.baseReward && data.baseReward < 0) throw new ValidationError("Base reward cannot be negative");
+    if (data.topReward && data.topReward < 0) throw new ValidationError("Top reward cannot be negative");
 
     // Enforce reward pool minimums:
     // All event types: topReward >= 1× (baseReward × capacity)
@@ -96,7 +84,7 @@ export class EventMutationService {
       const multiplier = 1;
       const minTopReward = basePool * multiplier;
       if (data.topReward < minTopReward) {
-        throw new Error(
+        throw new ValidationError(
           `Top reward must be at least ${multiplier}× the base reward pool ($${minTopReward.toFixed(2)} USDC)`
         );
       }
@@ -104,13 +92,13 @@ export class EventMutationService {
 
     // Capacity check: Must be present and > 4
     if (!data.capacity || data.capacity < 5) {
-      throw new Error("Capacity is required and must be at least 5");
+      throw new ValidationError("Capacity is required and must be at least 5");
     }
 
     // Minimum duration check: 10 minutes
     const durationMs = endTime.getTime() - startTime.getTime();
     if (durationMs < 10 * 60 * 1000) {
-      throw new Error("Event duration must be at least 10 minutes");
+      throw new ValidationError("Event duration must be at least 10 minutes");
     }
 
     // 7. Validate proposals for VOTE_ONLY events
@@ -122,19 +110,19 @@ export class EventMutationService {
         // Enforce proposals requirement for SCHEDULED vote_only events
         // Each proposal is now ONE voting option, so we need at least 2
         if (!data.proposals || data.proposals.length < 2) {
-          throw new Error('Vote only events must have at least 2 proposals');
+          throw new ValidationError('Vote only events must have at least 2 proposals');
         }
 
         // Maximum 10 proposals allowed for vote-only events
         if (data.proposals.length > 10) {
-          throw new Error('Vote only events can have at most 10 proposals');
+          throw new ValidationError('Vote only events can have at most 10 proposals');
         }
       }
 
     } else if (data.eventType === 'post_and_vote') {
       // Reject proposals for post_and_vote events
       if (data.proposals && data.proposals.length > 0) {
-        throw new Error('Proposals are only allowed for VOTE_ONLY events');
+        throw new ValidationError('Proposals are only allowed for VOTE_ONLY events');
       }
     }
 
@@ -269,7 +257,7 @@ export class EventMutationService {
       );
 
     if (attemptedLocked.length > 0) {
-      throw new Error(
+      throw new ValidationError(
         `Cannot update locked fields: ${attemptedLocked.join(', ')}`
       );
     }
@@ -280,17 +268,17 @@ export class EventMutationService {
     if (!lockedFields.includes('title') && data.title !== undefined) {
       const trimmedTitle = data.title.trim();
       if (trimmedTitle.length === 0) {
-        throw new Error('Title cannot be empty');
+        throw new ValidationError('Title cannot be empty');
       }
       if (trimmedTitle.length > 200) {
-        throw new Error('Title must be 200 characters or less');
+        throw new ValidationError('Title must be 200 characters or less');
       }
       updateData.title = trimmedTitle;
     }
 
     if (!lockedFields.includes('description') && data.description !== undefined) {
       if (data.description.length > 2000) {
-        throw new Error('Description must be 2000 characters or less');
+        throw new ValidationError('Description must be 2000 characters or less');
       }
       updateData.description = data.description;
     }
@@ -307,7 +295,7 @@ export class EventMutationService {
       // Validate CID if provided
       if (data.imageCid.length > 0) {
         if (!/^(Qm[1-9A-HJ-NP-Za-km-z]{44}|bafy[a-z0-9]{50,})$/.test(data.imageCid)) {
-          throw new Error('Invalid IPFS CID format');
+          throw new ValidationError('Invalid IPFS CID format');
         }
       }
       updateData.imageCid = data.imageCid;
@@ -316,9 +304,7 @@ export class EventMutationService {
       updateData.imageUrl = data.imageUrl;
     }
 
-    if (!lockedFields.includes('imageUrl') && data.imageUrl !== undefined) {
-      updateData.imageUrl = data.imageUrl;
-    }
+
 
     if (!lockedFields.includes('allowSubmissions') && data.allowSubmissions !== undefined) {
       updateData.allowSubmissions = data.allowSubmissions;
@@ -390,7 +376,7 @@ export class EventMutationService {
 
       const timestampValidation = EventValidationService.validateTimestamps(mergedTimestamps, eventType);
       if (!timestampValidation.isValid) {
-        throw new Error(
+        throw new ValidationError(
           `Timestamp validation failed: ${timestampValidation.errors.join(', ')}`
         );
       }
@@ -403,7 +389,7 @@ export class EventMutationService {
     const mergedData = { ...event, ...updateData };
     const dataValidation = EventValidationService.validateEventData(mergedData, mergedData.eventType);
     if (!dataValidation.isValid) {
-      throw new Error(`Validation failed: ${dataValidation.errors.join(', ')}`);
+      throw new ValidationError(`Validation failed: ${dataValidation.errors.join(', ')}`);
     }
 
     // Update event
@@ -433,17 +419,17 @@ export class EventMutationService {
     });
 
     if (!event) {
-      throw new Error('Event not found');
+      throw new NotFoundError('Event not found');
     }
 
     // Check if already soft-deleted
     if ((event as any).isDeleted) {
-      throw new Error('Event not found');
+      throw new NotFoundError('Event not found');
     }
 
     // 2. Ownership check
     if (event.brandId !== brandId) {
-      throw new Error('Forbidden: You do not own this event');
+      throw new ForbiddenError('Forbidden: You do not own this event');
     }
 
     // 3. Hard delete allowed ONLY for draft events with no submissions

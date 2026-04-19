@@ -1,4 +1,4 @@
-import logger from '../../lib/logger';
+import logger from '../../lib/logger.js';
 import { prisma } from '../../lib/prisma.js';
 import { NotificationService } from '../social/notificationService.js';
 import { Vote, MilestoneCategory } from '@prisma/client';
@@ -628,5 +628,61 @@ export class VoteService {
             },
         });
         return !!vote;
+    }
+
+    /**
+     * Get voter breakdown for an event
+     */
+    static async getVoterBreakdown(eventId: string) {
+        const votes = await prisma.vote.findMany({
+            where: { eventId },
+            select: {
+                submissionId: true,
+                proposalId: true,
+                user: {
+                    select: {
+                        id: true,
+                        displayName: true,
+                        username: true,
+                        avatarUrl: true,
+                    },
+                },
+            },
+        });
+
+        const breakdown: Record<string, { id: string; displayName: string | null; username: string | null; avatarUrl: string | null }[]> = {};
+        for (const v of votes) {
+            const key = v.submissionId ?? v.proposalId;
+            if (!key) continue;
+            if (!breakdown[key]) breakdown[key] = [];
+            breakdown[key].push(v.user);
+        }
+
+        return breakdown;
+    }
+
+    /**
+     * Get distinct participants for an event
+     */
+    static async getEventParticipants(eventId: string, limit: number = 50) {
+        const votes = await prisma.vote.findMany({
+            where: { eventId },
+            distinct: ['userId'],
+            take: limit,
+            orderBy: { createdAt: 'asc' },
+            select: {
+                userId: true,
+                user: {
+                    select: {
+                        id: true,
+                        displayName: true,
+                        username: true,
+                        avatarUrl: true,
+                    },
+                },
+            },
+        });
+
+        return votes.map((v) => v.user);
     }
 }

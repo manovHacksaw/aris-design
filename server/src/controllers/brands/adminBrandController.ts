@@ -1,6 +1,6 @@
 import logger from '../../lib/logger';
 import { Request, Response } from 'express';
-import { prisma } from '../../lib/prisma.js';
+
 import { BrandClaimService } from '../../services/brands/brandClaimService';
 
 /**
@@ -122,12 +122,7 @@ export const getClaimEmailTemplate = async (req: Request, res: Response): Promis
     }
 
     // Get application by ID
-    const application = await prisma.brandApplication.findUnique({
-      where: { id: applicationId },
-      include: {
-        brand: true,
-      },
-    });
+    const application = await BrandClaimService.getApplicationWithBrandById(applicationId);
 
     if (!application) {
       res.status(404).json({

@@ -1,11 +1,13 @@
 import logger from '../../lib/logger';
 import { Request, Response } from 'express';
-import { prisma } from '../../lib/prisma.js';
+
 import { ClaimType } from '@prisma/client';
 import { EventType, REWARDS_CONSTANTS } from '../../types/rewards.js';
 import { RewardsPoolService } from '../../services/rewards/RewardsPoolService.js';
 import { RewardsClaimService } from '../../services/rewards/RewardsClaimService.js';
 import { RewardsRefundService } from '../../services/rewards/RewardsRefundService.js';
+import { BrandService } from '../../services/brands/BrandService.js';
+import { EventQueryService } from '../../services/events/EventQueryService.js';
 
 /**
  * Rewards Controller
@@ -72,18 +74,8 @@ export class RewardsController {
         return;
       }
 
-      // Get event and verify ownership or admin
-      const event = await prisma.event.findUnique({
-        where: { id: eventId },
-        include: { brand: true },
-      });
-
-      if (!event) {
-        res.status(404).json({ success: false, error: 'Event not found' });
-        return;
-      }
-
-      if (event.brand.ownerId !== userId && userRole !== 'ADMIN') {
+      // verify ownership or admin
+      if (!await BrandService.verifyEventOwnership(eventId, userId, userRole)) {
         res.status(403).json({ success: false, error: 'Not authorized' });
         return;
       }
@@ -112,10 +104,7 @@ export class RewardsController {
       const { eventId } = req.params;
       const { maxParticipants, topPoolAmount } = req.query;
 
-      // Get event to determine type
-      const event = await prisma.event.findUnique({
-        where: { id: eventId },
-      });
+      const event = await EventQueryService.getEventById(eventId);
 
       if (!event) {
         res.status(404).json({ success: false, error: 'Event not found' });
@@ -572,9 +561,7 @@ export class RewardsController {
       }
 
       // Get user's brand
-      const brand = await prisma.brand.findFirst({
-        where: { ownerId: userId },
-      });
+      const brand = await BrandService.getBrandByOwnerId(userId);
 
       if (!brand) {
         res.status(404).json({ success: false, error: 'Brand not found' });
@@ -616,81 +603,21 @@ export class RewardsController {
       }
 
       // Get user's brand
-      const brand = await prisma.brand.findFirst({
-        where: { ownerId: userId },
-      });
+      const brand = await BrandService.getBrandByOwnerId(userId);
 
       if (!brand) {
         res.status(404).json({ success: false, error: 'Brand not found' });
         return;
       }
 
-      // Get all events for this brand with their pools and claims
-      const events = await prisma.event.findMany({
-        where: { brandId: brand.id },
-        include: {
-          rewardsPool: {
-            include: {
-              claims: {
-                where: {
-                  status: { in: ['PENDING', 'SIGNED'] }
-                },
-                include: {
-                  user: {
-                    select: { id: true, username: true, walletAddress: true, avatarUrl: true }
-                  }
-                }
-              }
-            }
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
-
-      // Format the response
-      const eventsWithClaims = events
-        .filter(event => event.rewardsPool && event.rewardsPool.claims.length > 0)
-        .map(event => {
-          const pool = event.rewardsPool!;
-          const claims = pool.claims.map(claim => ({
-            id: claim.id,
-            claimType: claim.claimType,
-            baseAmount: claim.baseAmount,
-            multiplier: claim.multiplier,
-            finalAmount: claim.finalAmount,
-            status: claim.status,
-            user: {
-              id: claim.user?.id,
-              username: claim.user?.username || 'Unknown',
-              walletAddress: claim.user?.walletAddress,
-              avatarUrl: claim.user?.avatarUrl
-            }
-          }));
-
-          const totalClaimable = claims.reduce((sum, c) => sum + c.finalAmount, 0);
-
-          return {
-            eventId: event.id,
-            eventTitle: event.title,
-            onChainEventId: event.onChainEventId,
-            poolStatus: pool.status,
-            claims,
-            totalClaimable,
-            claimCount: claims.length
-          };
-        });
-
-      const totalClaimableAll = eventsWithClaims.reduce((sum, e) => sum + e.totalClaimable, 0);
-      const totalClaimCount = eventsWithClaims.reduce((sum, e) => sum + e.claimCount, 0);
+      const result = await RewardsClaimService.getBrandClaimableRewards(brand.id);
 
       res.json({
         success: true,
         data: {
           brandId: brand.id,
           brandName: brand.name,
-          events: eventsWithClaims,
-          totalClaimable: totalClaimableAll,
-          totalClaimCount
+          ...result
         }
       });
     } catch (error: any) {
@@ -722,9 +649,7 @@ export class RewardsController {
       }
 
       // Get user's brand
-      const brand = await prisma.brand.findFirst({
-        where: { ownerId: userId },
-      });
+      const brand = await BrandService.getBrandByOwnerId(userId);
 
       if (!brand) {
         res.status(404).json({ success: false, error: 'Brand not found' });

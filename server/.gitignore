@@ -35,10 +35,20 @@ lerna-debug.log*
 *.swo
 *~
 
-# IDE
+# IDE & AI
 .vscode/
 .idea/
 *.iml
+.claude/
+.cursor/
+
+# Scratch & Debug
+scratch/
+*.json
+!package.json
+!tsconfig.json
+!bun.lock
+!*firebase*.json
 
 # Prisma
 *.db

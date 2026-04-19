@@ -72,4 +72,28 @@ export class PhoneService {
             },
         });
     }
+    /**
+     * Bypass verification and update phone (used when verification is disabled)
+     */
+    static async bypassVerification(phoneNumber: string, userId: string) {
+        // Check availability
+        const existingUser = await prisma.user.findFirst({
+            where: {
+                phoneNumber: phoneNumber,
+                NOT: { id: userId },
+            },
+        });
+
+        if (existingUser) {
+            throw new Error('Phone number is already registered to another account');
+        }
+
+        return prisma.user.update({
+            where: { id: userId },
+            data: {
+                phoneNumber: phoneNumber,
+                phoneVerified: true,
+            },
+        });
+    }
 }

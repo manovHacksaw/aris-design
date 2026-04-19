@@ -9,7 +9,7 @@ export class AiImageService {
      */
     static async generateImage(prompt: string): Promise<{ base64: string, buffer: Buffer }> {
         try {
-            logger.info(prompt, 'Generating image for prompt:');
+            logger.info({ prompt }, 'Generating image for prompt:');
             const model = AiUtils.getModel("imagen-3.0-generate-001");
             const result = await model.generateContent(prompt);
             const response = await result.response;
@@ -52,7 +52,7 @@ export class AiImageService {
 
             return response.data.IpfsHash;
         } catch (error: any) {
-            logger.error(error.response?.data || error.message, 'Pinata upload error:');
+            logger.error({ err: error.response?.data || error.message }, 'Pinata upload error:');
             throw new Error('Failed to upload generated image to IPFS');
         }
     }
