@@ -3,8 +3,9 @@ import { Response } from 'express';
 import { VoteService } from '../../services/events/voteService.js';
 import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
 import { VoteForProposalsRequest, VoteForSubmissionRequest } from '../../types/vote.js';
-
 import { broadcastToEvent } from '../../socket/index.js';
+import { prisma } from '../../lib/prisma.js';
+import { ExploreService } from '../../services/discovery/exploreService.js';
 
 /**
  * Vote for a submission (POST_VOTE events)
@@ -20,7 +21,11 @@ export const voteForSubmission = async (req: AuthenticatedRequest, res: Response
         }
 
         const data: VoteForSubmissionRequest = { submissionId };
-        const vote = await VoteService.voteForSubmission(eventId, userId, data);
+        const [vote, eventMeta, nextEvent] = await Promise.all([
+            VoteService.voteForSubmission(eventId, userId, data),
+            prisma.event.findUnique({ where: { id: eventId }, select: { endTime: true, status: true, title: true } }).catch(() => null),
+            ExploreService.getNextEventForUser(userId, eventId).catch(() => null),
+        ]);
 
         broadcastToEvent(eventId, 'vote-update', { submissionId, delta: 1 });
         broadcastToEvent(eventId, 'participant-update', { delta: 1 });
@@ -29,6 +34,8 @@ export const voteForSubmission = async (req: AuthenticatedRequest, res: Response
             success: true,
             message: 'Vote cast successfully',
             vote,
+            ...(eventMeta && { eventMeta: { endTime: eventMeta.endTime, status: eventMeta.status } }),
+            ...(nextEvent && { nextEvent }),
         });
     } catch (error: any) {
         logger.error({ err: error }, 'Error in voteForSubmission:');
@@ -53,7 +60,12 @@ export const voteForProposals = async (req: AuthenticatedRequest, res: Response)
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        const votes = await VoteService.voteForProposals(eventId, userId, data);
+        // Run vote + event meta + next-event fetch in parallel (next-event never blocks)
+        const [votes, eventMeta, nextEvent] = await Promise.all([
+            VoteService.voteForProposals(eventId, userId, data),
+            prisma.event.findUnique({ where: { id: eventId }, select: { endTime: true, status: true, title: true } }).catch(() => null),
+            ExploreService.getNextEventForUser(userId, eventId).catch(() => null),
+        ]);
 
         if (votes.length > 0) {
             const proposalId = votes[0].proposalId;
@@ -65,6 +77,9 @@ export const voteForProposals = async (req: AuthenticatedRequest, res: Response)
             success: true,
             message: 'Votes cast successfully',
             votes,
+            // Optional engagement fields — clients that don't use them are unaffected
+            ...(eventMeta && { eventMeta: { endTime: eventMeta.endTime, status: eventMeta.status } }),
+            ...(nextEvent && { nextEvent }),
         });
     } catch (error: any) {
         logger.error({ err: error }, 'Error in voteForProposals:');

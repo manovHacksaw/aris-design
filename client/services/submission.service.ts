@@ -84,7 +84,7 @@ export async function getSubmissionById(id: string): Promise<Submission> {
     return response.submission;
 }
 
-export async function createSubmission(data: CreateSubmissionRequest): Promise<Submission> {
+export async function createSubmission(data: CreateSubmissionRequest): Promise<any> {
     const response = await apiRequest<SubmissionResponse>(
         `/events/${data.eventId}/submissions`,
         {
@@ -100,7 +100,7 @@ export async function createSubmission(data: CreateSubmissionRequest): Promise<S
     if (!response.success || !response.submission) {
         throw new Error(response.error || 'Failed to create submission');
     }
-    return response.submission;
+    return response;
 }
 
 export async function deleteSubmission(eventId: string, submissionId: string): Promise<void> {

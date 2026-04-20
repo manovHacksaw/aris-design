@@ -5,6 +5,8 @@ import { SubmissionMutationService } from '../../services/submissions/Submission
 import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
 import { CreateSubmissionRequest, UpdateSubmissionRequest } from '../../types/submission.js';
 import { AppError } from '../../utils/errors.js';
+import { prisma } from '../../lib/prisma.js';
+import { ExploreService } from '../../services/discovery/exploreService.js';
 
 /**
  * Create a submission for an event
@@ -20,12 +22,18 @@ export const createSubmission = async (req: AuthenticatedRequest, res: Response)
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        const submission = await SubmissionMutationService.createSubmission(eventId, userId, data);
+        const [submission, eventMeta, nextEvent] = await Promise.all([
+            SubmissionMutationService.createSubmission(eventId, userId, data),
+            prisma.event.findUnique({ where: { id: eventId }, select: { endTime: true, postingEnd: true, status: true } }).catch(() => null),
+            ExploreService.getNextEventForUser(userId, eventId).catch(() => null),
+        ]);
 
         res.status(201).json({
             success: true,
             message: 'Submission created successfully',
             submission,
+            ...(eventMeta && { eventMeta: { endTime: eventMeta.endTime, postingEnd: eventMeta.postingEnd, status: eventMeta.status } }),
+            ...(nextEvent && { nextEvent }),
         });
     } catch (error: any) {
         logger.error({ err: error }, 'Error in createSubmission:');

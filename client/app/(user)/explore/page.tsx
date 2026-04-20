@@ -262,6 +262,8 @@ export default function Explore() {
     const [loadingJoinedEvents, setLoadingJoinedEvents] = useState(false);
     const [brandEventStatus, setBrandEventStatus] = useState<"LIVE" | "CLOSED">("LIVE");
     const [joinedEvents, setJoinedEvents] = useState<Event[]>([]);
+    const [votedEventIds, setVotedEventIds] = useState<Set<string>>(new Set());
+    const [submittedEventIds, setSubmittedEventIds] = useState<Set<string>>(new Set());
 
     // Initial load for brands & creators
     useEffect(() => {
@@ -339,6 +341,15 @@ export default function Explore() {
                     eventsById.set(event.id, existing ? mergeEventData(existing, event) : mergeEventData(event));
                 };
 
+                const vIds = new Set(votedEvents.map((e: Event) => e.id));
+                const sIds = new Set(
+                    (userSubmissions as JoinedSubmission[])
+                        .map((s) => s.event?.id)
+                        .filter(Boolean) as string[]
+                );
+                setVotedEventIds(vIds);
+                setSubmittedEventIds(sIds);
+
                 votedEvents.forEach(addEvent);
                 (userSubmissions as JoinedSubmission[]).forEach((submission) => addEvent(submission.event ?? null));
 
@@ -364,6 +375,23 @@ export default function Explore() {
 
         return () => { isMounted = false; };
     }, [user?.id]);
+
+    // Filter trending to hide events the user has fully participated in
+    const filteredTrending = useMemo(() => {
+        const trending = eventsData?.trending ?? [];
+        if (!user?.id) return trending;
+        return trending.filter((ev) => {
+            const voted = votedEventIds.has(ev.id);
+            const submitted = submittedEventIds.has(ev.id);
+            if (ev.eventType === "vote_only") return !voted;
+            // post_and_vote: hide while user has posted in posting phase; show when voting opens; hide once voted
+            if (ev.eventType === "post_and_vote" || ev.eventType === "post") {
+                if (ev.status === "posting" && submitted) return false;
+                if (voted) return false;
+            }
+            return true;
+        });
+    }, [eventsData?.trending, user?.id, votedEventIds, submittedEventIds]);
 
     // Brand filtering (Frontend)
     const brandsRows = useMemo(() => {
@@ -554,11 +582,13 @@ export default function Explore() {
                                             className="space-y-4 sm:space-y-8"
                                         >
                                             {/* Featured Section (Horizontal Scroll) */}
-                                            {eventsData?.trending && eventsData.trending.length > 0 && !debouncedSearch && activeDomain === "ALL" && activePhase !== "JOINED" && (
-                                                <EventRow
-                                                    title="Featured"
-                                                    events={eventsData.trending.slice(0, 5)}
-                                                />
+                                            {filteredTrending.length > 0 && !debouncedSearch && activeDomain === "ALL" && activePhase !== "JOINED" && (
+                                                <div className="mb-8">
+                                                    <EventRow
+                                                        title="Featured"
+                                                        events={filteredTrending.slice(0, 5)}
+                                                    />
+                                                </div>
                                             )}
 
                                             {/* All Campaigns Header (Matching layout) */}

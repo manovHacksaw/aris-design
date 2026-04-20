@@ -11,6 +11,7 @@ import {
 import { calculateTotalPool, toBrandSlug } from "@/lib/eventUtils";
 import Link from "next/link";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { VoteSubmission, PostSubmission, SubmissionStatus } from "@/types/events";
 import { formatCount } from "@/lib/eventUtils";
@@ -39,6 +40,17 @@ import Countdown from "@/components/events/Countdown";
 import { use } from "react";
 
 const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
+
+function formatPostActionCountdown(date?: string | null): string {
+    if (!date) return "";
+    const diff = new Date(date).getTime() - Date.now();
+    if (diff <= 0) return "soon";
+    const h = Math.floor(diff / 3_600_000);
+    const m = Math.floor((diff % 3_600_000) / 60_000);
+    if (h >= 24) return `${Math.floor(h / 24)}d ${h % 24}h`;
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m`;
+}
 
 function ExpandableDescription({ text, className }: { text: string; className?: string }) {
     const ref = useRef<HTMLParagraphElement>(null);
@@ -682,6 +694,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     const { isAuthenticated } = useWallet();
     const { openLoginModal } = useLoginModal();
     const { socket } = useSocket();
+    const router = useRouter();
 
     const [event, setEvent] = useState<Event | null>(null);
     const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -742,8 +755,6 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
             if (optimisticParticipantPending.current) {
                 optimisticParticipantPending.current = false;
                 // Already counted optimistically — skip the echo
-            } else {
-                setParticipantCount((c) => c + delta);
             }
         };
         socket.on("vote-update", handleVoteUpdate);
@@ -753,7 +764,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
             socket.off("vote-update", handleVoteUpdate);
             socket.off("participant-update", handleParticipantUpdate);
         };
-    }, [socket, id]);
+    }, [socket, id, id]);
 
 
     useEffect(() => {
@@ -829,6 +840,8 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
             setAiImageFile(selectedFile || null);
             setPreview(imageUrl);
             setFile(selectedFile || null);
+            // Automatically surface the submission modal for review
+            setSubmitModalOpen(true);
         }
         if (selectedPrompt) {
             setAiPrompt(selectedPrompt);
@@ -859,9 +872,19 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         optimisticParticipantPending.current = true;
         setParticipantCount((c) => c + 1);
         try {
-            if (event.eventType === "vote_only") await voteForProposals(event.id, [confirmingId]);
-            else await voteOnSubmission(event.id, confirmingId);
+            let voteRes: any;
+            if (event.eventType === "vote_only") voteRes = await voteForProposals(event.id, [confirmingId]);
+            else voteRes = await voteOnSubmission(event.id, confirmingId);
             setPreviewSubmissionId(null);
+            try {
+                const meta = voteRes?.eventMeta;
+                const countdown = formatPostActionCountdown(meta?.endTime);
+                toast.success(
+                    `Vote submitted to "${event.title}"` + (countdown ? ` · Results in ${countdown}` : ""),
+                    { duration: 4000 }
+                );
+                if (voteRes?.nextEvent?.id) router.push(`/events/${voteRes.nextEvent.id}`);
+            } catch { /* toast/redirect failure must never affect voting */ }
             try {
                 const confetti = (await import("canvas-confetti")).default;
                 confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 }, colors: ["#84cc16", "#a3e635", "#3B82F6", "#ffffff"] });
@@ -907,18 +930,44 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
     const handleSubmit = async () => {
         if (!isAuthenticated) { openLoginModal(); return; }
-        if (!file && !aiImageFile) { toast.error("Please select or generate an image."); return; }
+        
+        // Allowed if we have a File OR a remote URL (preview starts with http)
+        const hasRemoteImage = preview && (preview.startsWith("http") || preview.startsWith("https"));
+        if (!file && !aiImageFile && !hasRemoteImage) { 
+            toast.error("Please select or generate an image."); 
+            return; 
+        }
+
         setSubmitting(true);
         try {
             let imageUrl: string;
-            const uploadFile = aiImageFile ?? file!;
-            const res = await uploadToPinata(uploadFile);
-            imageUrl = res.imageUrl;
-            const sub = await createSubmission({ eventId: event!.id, imageUrl, caption: caption.trim() || undefined });
+            const uploadFile = aiImageFile ?? file;
+
+            if (uploadFile) {
+                // If we have a file, upload it to Pinata
+                const res = await uploadToPinata(uploadFile);
+                imageUrl = res.imageUrl;
+            } else {
+                // If no file but we have a remote image URL, use it directly
+                imageUrl = preview!;
+            }
+
+            const subRes = await createSubmission({ eventId: event!.id, imageUrl, caption: caption.trim() || undefined });
             toast.success("Submission uploaded!");
             setHasSubmitted(true);
-            setMySubmission(sub);
-            setSubmissions((prev) => [sub, ...prev]);
+            setMySubmission(subRes.submission);
+            setSubmissions((prev) => [subRes.submission, ...prev]);
+            try {
+                const meta = (subRes as any)?.eventMeta;
+                const votingStart = meta?.postingEnd ?? meta?.endTime;
+                const countdown = formatPostActionCountdown(votingStart);
+                toast.success(
+                    `Entry submitted to "${event!.title}"` + (countdown ? ` · Voting starts in ${countdown}` : ""),
+                    { duration: 4000 }
+                );
+                const nextId = (subRes as any)?.nextEvent?.id;
+                if (nextId) router.push(`/events/${nextId}`);
+            } catch { /* toast/redirect failure must never affect submission */ }
         } catch (err: any) {
             toast.error(err?.message ?? "Submission failed.");
         } finally {
@@ -1757,7 +1806,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
                                                         <button
                                                             onClick={() => { setSubmitModalOpen(false); handleSubmit(); }}
-                                                            disabled={(!aiImageFile && !file) || submitting}
+                                                            disabled={(!aiImageFile && !file && !preview?.startsWith("http")) || submitting}
                                                             className="mt-auto w-full py-4 bg-purple-500 hover:bg-purple-400 text-white rounded-[14px] text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2.5 active:scale-[0.99] transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:shadow-[0_0_20px_rgba(168,85,247,0.4)]"
                                                         >
                                                             {submitting

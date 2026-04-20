@@ -392,7 +392,7 @@ export async function voteForProposals(eventId: string, proposalIds: string[]): 
         { method: 'POST', body: JSON.stringify({ proposalIds }) }
     );
     if (!response.success) throw new Error('Failed to cast votes');
-    return response.votes;
+    return response;
 }
 
 export async function voteForSubmission(eventId: string, submissionId: string): Promise<any> {
@@ -401,7 +401,7 @@ export async function voteForSubmission(eventId: string, submissionId: string): 
         { method: 'POST' }
     );
     if (!response.success) throw new Error('Failed to cast vote');
-    return response.vote;
+    return response;
 }
 
 // ==================== UTILITIES ====================
