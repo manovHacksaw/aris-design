@@ -114,7 +114,7 @@ function LevelBreakdownModal({ open, onClose, xp, xpLevel }: {
                         exit={{ opacity: 0, y: 16, scale: 0.97 }}
                         transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
                         onClick={e => e.stopPropagation()}
-                        className="w-full max-w-xl max-h-[88vh] bg-card border border-border rounded-[28px] flex flex-col overflow-hidden shadow-2xl"
+                        className="w-full max-w-xl max-h-[92vh] bg-card border border-border rounded-[24px] flex flex-col overflow-hidden shadow-2xl"
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
@@ -413,7 +413,7 @@ function MilestonesModal({ open, onClose, stats }: {
                         exit={{ opacity: 0, y: 16, scale: 0.97 }}
                         transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
                         onClick={e => e.stopPropagation()}
-                        className="w-full max-w-4xl max-h-[88vh] bg-card border border-border rounded-[28px] flex flex-col overflow-hidden shadow-2xl"
+                        className="w-full max-w-4xl max-h-[92vh] bg-card border border-border rounded-[24px] flex flex-col overflow-hidden shadow-2xl"
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
@@ -469,10 +469,12 @@ function MilestonesModal({ open, onClose, stats }: {
                         </div>
 
                         {/* Content */}
-                        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-3">
+                        <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 space-y-3">
 
+                            {/* Scrollable milestone table */}
+                            <div className="overflow-x-auto -mx-1 px-1">
                             {/* Tier header row */}
-                            <div className="grid grid-cols-[1fr_repeat(6,_minmax(0,_1fr))] gap-2 mb-1">
+                            <div className="grid grid-cols-[1fr_repeat(6,_minmax(0,_1fr))] gap-1.5 mb-1 min-w-[560px]">
                                 <div className="text-[9px] font-black uppercase tracking-widest text-foreground/25 pl-2">Criteria</div>
                                 {TIER_LABELS.map((tier) => {
                                     const s = TIER_STYLE[tier];
@@ -498,7 +500,7 @@ function MilestonesModal({ open, onClose, stats }: {
                                         initial={{ opacity: 0, y: 6 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: ri * 0.04 }}
-                                        className="grid grid-cols-[1fr_repeat(6,_minmax(0,_1fr))] gap-2 items-center rounded-2xl border border-border bg-foreground/[0.015] hover:bg-foreground/[0.03] transition-colors p-3"
+                                        className="grid grid-cols-[1fr_repeat(6,_minmax(0,_1fr))] gap-1.5 items-center rounded-2xl border border-border bg-foreground/[0.015] hover:bg-foreground/[0.03] transition-colors p-3 min-w-[560px]"
                                     >
                                         {/* Criteria label */}
                                         <div className="flex items-center gap-2 min-w-0">
@@ -593,7 +595,7 @@ function MilestonesModal({ open, onClose, stats }: {
                             })}
 
                             {/* XP Rewards row */}
-                            <div className="grid grid-cols-[1fr_repeat(6,_minmax(0,_1fr))] gap-2 items-center rounded-2xl border border-yellow-500/20 bg-yellow-500/[0.04] p-3 mt-1">
+                            <div className="grid grid-cols-[1fr_repeat(6,_minmax(0,_1fr))] gap-1.5 items-center rounded-2xl border border-yellow-500/20 bg-yellow-500/[0.04] p-3 mt-1 min-w-[560px]">
                                 <div className="flex items-center gap-2">
                                     <div className="w-7 h-7 rounded-lg bg-yellow-500/15 border border-yellow-500/25 flex items-center justify-center shrink-0">
                                         <Zap className="w-3.5 h-3.5 text-yellow-400" />
@@ -614,8 +616,10 @@ function MilestonesModal({ open, onClose, stats }: {
                                 })}
                             </div>
 
+                            </div>{/* end overflow-x-auto */}
+
                             {/* Advantages callout */}
-                            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
                                 {[
                                     { icon: Zap, color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20", title: "Earn XP", desc: "Every milestone unlocks XP that levels up your rank and visibility." },
                                     { icon: Crown, color: "text-lime-400", bg: "bg-lime-400/10", border: "border-lime-400/20", title: "Climb Ranks", desc: "Higher tiers put you in the Veteran & Legend leaderboard brackets." },
@@ -722,7 +726,7 @@ function ActivityRow({ item, index, isLast }: { item: ActivityItem; index: numbe
             animate={{ opacity: 1 }}
             transition={{ delay: index * 0.03, duration: 0.2 }}
             className={cn(
-                "group flex items-center gap-4 px-1 py-3 cursor-pointer transition-colors duration-100",
+                "group flex items-center gap-3 px-1 py-2.5 cursor-pointer transition-colors duration-100",
                 "hover:bg-white/[0.025] rounded-lg -mx-1",
                 !isLast && "border-b border-white/[0.04]"
             )}
@@ -746,37 +750,33 @@ function ActivityRow({ item, index, isLast }: { item: ActivityItem; index: numbe
             {/* CENTER — Two content lines */}
             <div className="flex-1 min-w-0">
                 {/* Line 1: Title */}
-                <p className="text-[13px] font-semibold text-white/90 truncate leading-tight tracking-[-0.01em]">
+                <p className="text-[12px] font-semibold text-white/90 truncate leading-tight tracking-[-0.01em]">
                     {item.title}
                 </p>
 
-                {/* Line 2: Brand · Category · Type · votes */}
-                <p className="text-[11px] text-white/35 font-medium mt-0.5 truncate">
+                {/* Line 2: Brand · Type */}
+                <p className="text-[10px] text-white/35 font-medium mt-0.5 truncate">
                     <span className="text-white/50 font-semibold">{item.brand}</span>
-                    {item.domain && <><span className="mx-1.5 text-white/15">·</span><span>{item.domain}</span></>}
-                    <span className="mx-1.5 text-white/15">·</span>
+                    <span className="mx-1 text-white/15">·</span>
                     <span className={isPost ? "text-lime-400/50" : "text-blue-400/50"}>{isPost ? "Post" : "Vote"}</span>
                     {isPost && item.votesReceived !== undefined && item.votesReceived > 0 && (
-                        <><span className="mx-1.5 text-white/10">·</span>{item.votesReceived.toLocaleString()} votes</>
+                        <><span className="mx-1 text-white/10">·</span>{item.votesReceived.toLocaleString()} votes</>
                     )}
                     {!isPost && item.votesCast !== undefined && item.votesCast > 0 && (
-                        <><span className="mx-1.5 text-white/10">·</span>{item.votesCast} cast</>
+                        <><span className="mx-1 text-white/10">·</span>{item.votesCast} cast</>
                     )}
                 </p>
-
-                {/* Line 3: Date */}
-                <p className="text-[10px] text-white/20 font-medium mt-0.5">{item.date}</p>
             </div>
 
             {/* RIGHT — Earnings · Rank · Status */}
-            <div className="shrink-0 flex flex-col items-end gap-1">
+            <div className="shrink-0 flex flex-col items-end gap-0.5">
                 {!!item.earnings && item.earnings > 0 ? (
-                    <span className="text-[12px] font-black text-lime-400">+${item.earnings.toFixed(2)}</span>
+                    <span className="text-[11px] font-black text-lime-400">+${item.earnings.toFixed(2)}</span>
                 ) : null}
                 {item.rank ? <RankBadge rank={item.rank} /> : null}
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                     <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", sc.dot)} />
-                    <span className={cn("text-[10px] font-medium capitalize", sc.text)}>{sc.label}</span>
+                    <span className={cn("text-[9px] font-medium capitalize", sc.text)}>{sc.label}</span>
                 </div>
             </div>
         </motion.div>
@@ -1108,11 +1108,11 @@ export default function DashboardPage() {
     return (
         <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
             <SidebarLayout>
-                <main className="w-full pt-6 lg:pt-10 pb-20 md:pb-12 space-y-8">
+                <main className="w-full pt-4 lg:pt-10 pb-20 md:pb-12 space-y-5 sm:space-y-8">
 
                     {/* ── Header ─────────────────────────────── */}
                     <div className="space-y-1">
-                        <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight">
+                        <h1 className="font-display text-[2rem] sm:text-[3rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight">
                             Dashboard
                         </h1>
                         <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em]">
@@ -1122,32 +1122,37 @@ export default function DashboardPage() {
 
                     {/* ── Stats: 2 rows × 4 cols ─────────────── */}
                     {loading ? (
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                             {[0, 1].map(r => (
-                                <div key={r} className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div key={r} className="grid grid-cols-4 md:grid-cols-4 gap-2">
                                     {Array.from({ length: 4 }).map((_, i) => (
-                                        <div key={i} className="h-[70px] rounded-2xl bg-white/[0.03] border border-white/[0.05] animate-pulse" />
+                                        <div key={i} className="h-[52px] md:h-[70px] rounded-xl bg-white/[0.03] border border-white/[0.05] animate-pulse" />
                                     ))}
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <div className="space-y-3">
+                        <div className="space-y-2 md:space-y-3">
                             {statRows.map((row, ri) => (
-                                <div key={ri} className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div key={ri} className="grid grid-cols-4 gap-2 md:gap-3">
                                     {row.map((stat) => (
                                         <div
                                             key={stat.label}
-                                            className="bg-white/[0.03] border border-white/[0.06] rounded-2xl px-4 py-3.5 flex items-center gap-3 hover:bg-white/[0.05] hover:border-white/[0.1] transition-all"
+                                            className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-2.5 md:px-4 md:py-3.5 flex flex-col justify-between gap-2 md:flex-row md:items-center md:gap-3 hover:bg-white/[0.05] hover:border-white/[0.1] transition-all"
                                         >
-                                            <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center shrink-0", stat.bg)}>
-                                                <stat.icon className={cn("w-4 h-4", stat.color)} />
+                                            {/* top: icon + label */}
+                                            <div className="flex items-center gap-1.5 md:gap-3">
+                                                <div className={cn("w-5 h-5 md:w-8 md:h-8 rounded-md md:rounded-xl flex items-center justify-center shrink-0", stat.bg)}>
+                                                    <stat.icon className={cn("w-2.5 h-2.5 md:w-4 md:h-4", stat.color)} />
+                                                </div>
+                                                <p className="text-[7px] md:hidden font-black uppercase tracking-[0.1em] text-foreground/35 leading-none truncate">{stat.label}</p>
                                             </div>
-                                            <div className="min-w-0 flex-1">
-                                                <p className="text-[9px] font-black uppercase tracking-[0.15em] text-foreground/30 leading-none mb-1">{stat.label}</p>
-                                                <p className="font-display text-3xl text-foreground tracking-tight leading-none">{stat.value}</p>
+                                            {/* bottom: value + delta */}
+                                            <div className="md:min-w-0 md:flex-1">
+                                                <p className="text-[9px] hidden md:block font-black uppercase tracking-[0.15em] text-foreground/30 leading-none mb-1">{stat.label}</p>
+                                                <p className="font-display text-lg md:text-3xl text-foreground tracking-tight leading-none">{stat.value}</p>
                                                 <p className={cn(
-                                                    "text-[9px] font-bold mt-1 truncate",
+                                                    "text-[7px] md:text-[9px] font-semibold mt-0.5 truncate leading-none",
                                                     stat.deltaPositive ? stat.color : "text-foreground/20"
                                                 )}>{stat.delta}</p>
                                             </div>
@@ -1166,33 +1171,32 @@ export default function DashboardPage() {
                     )}
 
                     {/* ── Tabs + View toggle ─────────────────── */}
-                    <div className="flex items-center justify-between gap-3 border-t border-white/[0.05] pt-6 flex-wrap">
-                        {viewMode === "activity" && (
-                            <div className="flex items-center gap-1.5">
-                                {tabs.map((tab) => (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => setActiveTab(tab.id)}
-                                        className={cn(
-                                            "px-6 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
-                                            activeTab === tab.id
-                                                ? "bg-white text-black border-white"
-                                                : "bg-white/[0.04] text-foreground/40 border-white/[0.06] hover:bg-white/[0.08] hover:text-foreground/80"
-                                        )}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                    <div className="flex items-center justify-between gap-2 border-t border-white/[0.05] pt-3">
+                        {/* Activity tabs */}
+                        <div className="flex items-center gap-1">
+                            {viewMode === "activity" && tabs.map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={cn(
+                                        "px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all whitespace-nowrap border",
+                                        activeTab === tab.id
+                                            ? "bg-white text-black border-white"
+                                            : "bg-white/[0.04] text-foreground/40 border-white/[0.06] hover:bg-white/[0.08] hover:text-foreground/80"
+                                    )}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
                         {/* View toggle: Activity / Graphs */}
-                        <div className="flex items-center gap-0.5 bg-white/[0.04] border border-white/[0.06] rounded-xl p-0.5">
+                        <div className="flex items-center gap-0.5 bg-white/[0.04] border border-white/[0.06] rounded-lg p-0.5">
                             {(["activity", "graphs"] as const).map((v) => (
                                 <button
                                     key={v}
                                     onClick={() => setViewMode(v)}
                                     className={cn(
-                                        "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all",
+                                        "px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all",
                                         viewMode === v ? "bg-white text-black" : "text-foreground/40 hover:text-foreground/70"
                                     )}
                                 >
@@ -1203,10 +1207,10 @@ export default function DashboardPage() {
                     </div>
 
                     {/* ── Two-column layout ──────────────────── */}
-                    {viewMode === "graphs" ? null : <div className="flex flex-col lg:flex-row gap-6">
+                    {viewMode === "graphs" ? null : <div className="flex flex-col lg:flex-row gap-4">
 
                         {/* ── Left: Activity List ─────────────── */}
-                        <div className="flex-1 min-w-0 space-y-4">
+                        <div className="flex-1 min-w-0 space-y-3">
                             <div className="flex items-center justify-between">
                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/30">
                                     {activeTab === "overall" ? "Recent Activity" : activeTab === "vote" ? "Vote Events" : "Post Events"}
@@ -1320,13 +1324,13 @@ export default function DashboardPage() {
                         </div>
 
                         {/* ── Right: Gamified XP & Achievements ── */}
-                        <div className="lg:w-[300px] xl:w-[320px] flex-shrink-0 space-y-4 relative">
+                        <div className="w-full lg:w-[280px] xl:w-[300px] flex-shrink-0 space-y-3 relative">
 
                             {/* ── Level Card ─────────────────────── */}
                             <button
                                 onClick={() => setShowLevelModal(true)}
                                 className={cn(
-                                    "relative overflow-hidden rounded-[24px] border p-5 w-full text-left cursor-pointer",
+                                    "relative overflow-hidden rounded-[20px] border p-4 w-full text-left cursor-pointer",
                                     "hover:brightness-110 active:scale-[0.99] transition-all duration-200",
                                     tier.border, tier.glow,
                                     "bg-gradient-to-br from-white/[0.04] to-transparent"
@@ -1337,11 +1341,11 @@ export default function DashboardPage() {
 
                                 <div className="relative z-10">
                                     {/* Tier badge + level */}
-                                    <div className="flex items-start justify-between mb-4">
+                                    <div className="flex items-center justify-between mb-3">
                                         <div>
                                             <p className="text-[9px] font-black uppercase tracking-[0.25em] text-foreground/30 mb-1">Current Rank</p>
                                             <div className="flex items-baseline gap-2">
-                                                <span className={cn("font-display text-5xl leading-none tracking-tight", tier.color)}>
+                                                <span className={cn("font-display text-4xl leading-none tracking-tight", tier.color)}>
                                                     {xpLevel}
                                                 </span>
                                                 <span className={cn("text-xs font-black uppercase tracking-widest", tier.color)}>
@@ -1349,8 +1353,8 @@ export default function DashboardPage() {
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center border", tier.bg, tier.border)}>
-                                            <Zap className={cn("w-6 h-6", tier.color)} />
+                                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center border", tier.bg, tier.border)}>
+                                            <Zap className={cn("w-5 h-5", tier.color)} />
                                         </div>
                                     </div>
 
@@ -1677,13 +1681,13 @@ export default function DashboardPage() {
                             <div className="flex items-center justify-between">
                                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/30">Graphs &amp; Insights</p>
                                 {/* Time filter */}
-                                <div className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.06] rounded-xl p-0.5">
+                                <div className="flex items-center gap-0.5 bg-white/[0.04] border border-white/[0.06] rounded-xl p-0.5">
                                     {([7, 30, 90] as const).map((d) => (
                                         <button
                                             key={d}
                                             onClick={() => setGraphDays(d)}
                                             className={cn(
-                                                "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all",
+                                                "px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all",
                                                 graphDays === d
                                                     ? "bg-white text-black"
                                                     : "text-foreground/35 hover:text-foreground/60"
@@ -1695,10 +1699,10 @@ export default function DashboardPage() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
                             {/* XP Growth (cumulative area chart) */}
-                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
+                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[20px] p-4">
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
                                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">XP Growth</p>
@@ -1751,7 +1755,7 @@ export default function DashboardPage() {
                             </div>
 
                             {/* Daily Earnings (Cumulative) */}
-                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
+                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[20px] p-4">
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
                                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Daily Earnings</p>
@@ -1798,7 +1802,7 @@ export default function DashboardPage() {
                             </div>
 
                             {/* Activity bar chart */}
-                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
+                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[20px] p-4">
                                 <div className="flex items-center justify-between mb-3">
                                     <div>
                                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Activity</p>
@@ -1843,7 +1847,7 @@ export default function DashboardPage() {
                             </div>
 
                             {/* Follower Growth */}
-                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] p-5">
+                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-[20px] p-4">
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
                                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Follower Growth</p>

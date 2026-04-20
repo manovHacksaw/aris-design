@@ -137,21 +137,21 @@ export default function StepIdentity({ initial, prefillName, prefillAvatar, onNe
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
       <div className="space-y-1">
         <p className="text-xs font-bold text-primary/80 uppercase tracking-widest">Step 1 of 7</p>
-        <h1 className="text-2xl font-black text-foreground tracking-tighter">Your Identity</h1>
-        <p className="text-sm text-foreground/40">Set your account details to get started.</p>
+        <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tighter">Your Identity</h1>
+        <p className="text-xs sm:text-sm text-foreground/40">Set your account details to get started.</p>
       </div>
 
       <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" className="hidden" onChange={handleAvatarSelect} />
 
       {/* Avatar */}
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-3 sm:gap-5">
         <div className="relative">
           <div
             onClick={() => !isUploadingAvatar && fileInputRef.current?.click()}
-            className="w-20 h-20 rounded-2xl bg-card border-2 border-dashed border-border/60 flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden group"
+            className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-card border-2 border-dashed border-border/60 flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden group"
           >
             {avatarPreview ? (
               <>
@@ -194,7 +194,7 @@ export default function StepIdentity({ initial, prefillName, prefillAvatar, onNe
             value={form.displayName}
             onChange={e => setForm(f => ({ ...f, displayName: e.target.value }))}
             placeholder="Your full name"
-            className="w-full bg-card border border-border/50 rounded-[14px] pl-11 pr-4 py-4 text-sm font-medium placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors"
+            className="w-full bg-card border border-border/50 rounded-[14px] pl-11 pr-4 py-3 sm:py-4 text-sm font-medium placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors"
           />
         </div>
       </div>
@@ -212,7 +212,7 @@ export default function StepIdentity({ initial, prefillName, prefillAvatar, onNe
             onChange={e => handleUsernameChange(e.target.value)}
             placeholder="username"
             maxLength={30}
-            className={`w-full bg-card border rounded-[14px] pl-11 pr-4 py-4 text-sm font-medium placeholder:text-foreground/20 focus:outline-none transition-colors ${usernameStatus === "available" ? "border-emerald-400/50 focus:border-emerald-400" : usernameStatus === "taken" ? "border-red-400/50 focus:border-red-400" : "border-border/50 focus:border-primary/50"}`}
+            className={`w-full bg-card border rounded-[14px] pl-11 pr-4 py-3 sm:py-4 text-sm font-medium placeholder:text-foreground/20 focus:outline-none transition-colors ${usernameStatus === "available" ? "border-emerald-400/50 focus:border-emerald-400" : usernameStatus === "taken" ? "border-red-400/50 focus:border-red-400" : "border-border/50 focus:border-primary/50"}`}
           />
         </div>
         <div className="flex items-center justify-between px-1">
@@ -236,7 +236,7 @@ export default function StepIdentity({ initial, prefillName, prefillAvatar, onNe
             onChange={e => setForm(f => ({ ...f, bio: e.target.value.slice(0, 160) }))}
             placeholder="Tell the community about yourself..."
             rows={3}
-            className="w-full bg-card border border-border/50 rounded-[14px] pl-11 pr-4 py-4 text-sm font-medium placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors resize-none"
+            className="w-full bg-card border border-border/50 rounded-[14px] pl-11 pr-4 py-3 sm:py-4 text-sm font-medium placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors resize-none"
           />
         </div>
       </div>
@@ -253,7 +253,7 @@ export default function StepIdentity({ initial, prefillName, prefillAvatar, onNe
             value={form.email}
             onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
             placeholder="you@example.com"
-            className="w-full bg-card border border-border/50 rounded-[14px] pl-11 pr-4 py-4 text-sm font-medium placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors"
+            className="w-full bg-card border border-border/50 rounded-[14px] pl-11 pr-4 py-3 sm:py-4 text-sm font-medium placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors"
           />
         </div>
       </div>
@@ -271,7 +271,7 @@ export default function StepIdentity({ initial, prefillName, prefillAvatar, onNe
             onChange={e => setForm(f => ({ ...f, incomingReferralCode: e.target.value.toUpperCase() }))}
             onBlur={handleReferralBlur}
             placeholder="ARIS-XXXXXX-XXXX"
-            className="w-full bg-card border border-border/50 rounded-[14px] pl-11 pr-10 py-4 text-sm font-mono font-bold placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors"
+            className="w-full bg-card border border-border/50 rounded-[14px] pl-11 pr-10 py-3 sm:py-4 text-sm font-mono font-bold placeholder:text-foreground/20 focus:outline-none focus:border-primary/50 transition-colors"
           />
           {isReferralChecking && (
             <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40 animate-spin" />
@@ -282,7 +282,7 @@ export default function StepIdentity({ initial, prefillName, prefillAvatar, onNe
       <button
         onClick={handleNext}
         disabled={isUploadingAvatar}
-        className="w-full py-4 rounded-[16px] bg-foreground text-background font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-foreground/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full py-3 sm:py-4 rounded-[16px] bg-foreground text-background font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-foreground/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isUploadingAvatar ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</> : <>Continue <ArrowRight className="w-4 h-4" /></>}
       </button>

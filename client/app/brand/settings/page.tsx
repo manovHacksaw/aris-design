@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Building2,
@@ -57,6 +58,8 @@ export default function BrandSettingsPage() {
   const [walletCopied, setWalletCopied] = useState(false);
   const [saved, setSaved] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   const userSocialLinks = (user?.socialLinks ?? {}) as Record<string, string>;
 
@@ -87,7 +90,9 @@ export default function BrandSettingsPage() {
     ]).then(([brandRes, milestonesRes, eventsRes]) => {
       if (brandRes.status === "fulfilled") setBrandData(brandRes.value);
       if (milestonesRes.status === "fulfilled") setTokensMinted(milestonesRes.value.usdcDistributed);
-      if (eventsRes.status === "fulfilled") setBrandEvents(eventsRes.value);
+      if (eventsRes.status === "fulfilled") {
+        setBrandEvents(eventsRes.value.filter((ev) => ev.status !== "draft"));
+      }
     });
   }, [user]);
 
@@ -243,15 +248,15 @@ export default function BrandSettingsPage() {
 
   if (userLoading && !user) {
     return (
-      <div className="w-full pt-6 lg:pt-10 pb-24 space-y-6 animate-pulse text-white">
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className="flex-1 space-y-6">
+      <div className="w-full pt-4 md:pt-6 lg:pt-10 pb-24 space-y-4 md:space-y-6 animate-pulse text-white">
+        <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
+          <div className="flex-1 space-y-4 md:space-y-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] h-48" />
+              <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-[20px] md:rounded-[24px] h-36 md:h-48" />
             ))}
           </div>
-          <div className="lg:w-[300px] space-y-6">
-            <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] h-64" />
+          <div className="lg:w-[280px] space-y-4 md:space-y-6">
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-[20px] md:rounded-[24px] h-48 md:h-64" />
           </div>
         </div>
       </div>
@@ -259,11 +264,11 @@ export default function BrandSettingsPage() {
   }
 
   return (
-    <div className="w-full pt-6 lg:pt-10 pb-24 md:pb-12 space-y-6 text-white">
+    <div className="w-full pt-4 md:pt-6 lg:pt-10 pb-24 md:pb-12 space-y-4 md:space-y-6 text-white">
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold ${
+          className={`fixed top-4 right-4 md:top-6 md:right-6 z-50 flex items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-3 rounded-xl md:rounded-2xl shadow-xl text-xs md:text-sm font-semibold max-w-[calc(100vw-2rem)] ${
             toast.type === "success"
               ? "bg-green-500/10 border border-green-500/30 text-green-400"
               : "bg-red-500/10 border border-red-500/30 text-red-400"
@@ -281,13 +286,13 @@ export default function BrandSettingsPage() {
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
 
         {/* ── Left / Main ── */}
-        <div className="flex-1 min-w-0 space-y-6">
+        <div className="flex-1 min-w-0 space-y-4 md:space-y-6">
 
           {/* ── Identity Card ── */}
-          <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 md:p-8">
+          <div className="bg-white/[0.02] border border-white/[0.06] rounded-[20px] md:rounded-[24px] p-4 md:p-6 lg:p-8">
             <input
               ref={fileInputRef}
               type="file"
@@ -295,84 +300,86 @@ export default function BrandSettingsPage() {
               className="hidden"
               onChange={handleLogoSelect}
             />
-            <div className="flex flex-wrap items-start gap-5">
+            <div className="flex items-start gap-3 md:gap-5">
 
               {/* Logo */}
               <div className="relative shrink-0">
                 <div
-                  className="relative group cursor-pointer w-20 h-20 md:w-24 md:h-24 rounded-3xl overflow-hidden border-2 border-white/[0.1] bg-white/[0.05]"
+                  className="relative group cursor-pointer w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl md:rounded-3xl overflow-hidden border-2 border-white/[0.1] bg-white/[0.05]"
                   onClick={() => !isUploadingLogo && fileInputRef.current?.click()}
                 >
                   {logoPreview ? (
                     <img src={logoPreview} alt="Brand logo" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                      <span className="font-display text-4xl text-white/30 uppercase">{logoInitial}</span>
+                      <span className="font-display text-2xl md:text-4xl text-white/30 uppercase">{logoInitial}</span>
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/50 rounded-3xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute inset-0 bg-black/50 rounded-2xl md:rounded-3xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     {isUploadingLogo
-                      ? <Loader2 className="w-6 h-6 text-white animate-spin" />
-                      : <Camera className="w-6 h-6 text-white" />
+                      ? <Loader2 className="w-5 h-5 text-white animate-spin" />
+                      : <Camera className="w-5 h-5 text-white" />
                     }
                   </div>
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-background shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+                <div className="absolute -bottom-1 -right-1 w-3 h-3 md:w-4 md:h-4 rounded-full bg-green-500 border-2 border-background shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
               </div>
 
               {/* Brand Info */}
               <div className="flex-1 min-w-0">
-                <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight mb-1">
+                <h1 className="font-display text-[1.8rem] sm:text-[2.4rem] md:text-[3.5rem] text-foreground uppercase leading-[0.92] tracking-tight mb-1 truncate">
                   {brandName || "Your Brand"}
                 </h1>
-                <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em] mb-3">
+                <p className="text-[9px] sm:text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em] sm:tracking-[0.3em] mb-2 truncate">
                   {tagline || (user?.username ? `@${user.username}` : "@brand")}
                 </p>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-1.5">
                   {user?.walletAddress && (
                     <button
                       onClick={copyWallet}
-                      className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.2] rounded-full transition-colors group"
+                      className="flex items-center gap-1 px-2 py-0.5 bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.2] rounded-full transition-colors group"
                     >
                       <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                      <span className="text-[10px] font-black text-white/40 font-mono group-hover:text-white/70 transition-colors">
+                      <span className="text-[9px] font-black text-white/40 font-mono group-hover:text-white/70 transition-colors">
                         {walletCopied ? "Copied!" : truncateAddress(user.walletAddress)}
                       </span>
-                      <Copy className="w-2.5 h-2.5 text-white/20 group-hover:text-white/50 transition-colors" />
+                      <Copy className="w-2 h-2 text-white/20 group-hover:text-white/50 transition-colors" />
                     </button>
                   )}
                   {joinDate && (
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.04] border border-white/[0.06] rounded-full">
-                      <Calendar className="w-3 h-3 text-white/30" />
-                      <span className="text-[10px] font-black text-white/30 uppercase tracking-wide">Joined {joinDate}</span>
+                    <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 bg-white/[0.04] border border-white/[0.06] rounded-full">
+                      <Calendar className="w-2.5 h-2.5 text-white/30" />
+                      <span className="text-[9px] font-black text-white/30 uppercase tracking-wide">Joined {joinDate}</span>
                     </div>
                   )}
                   {user?.ownedBrands?.[0]?.id && (
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.04] border border-white/[0.06] rounded-full">
-                      <Tag className="w-3 h-3 text-white/30" />
-                      <span className="text-[10px] font-black text-white/30 uppercase tracking-wide font-mono">ID: {user.ownedBrands[0].id}</span>
+                    <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 bg-white/[0.04] border border-white/[0.06] rounded-full">
+                      <Tag className="w-2.5 h-2.5 text-white/30" />
+                      <span className="text-[9px] font-black text-white/30 uppercase tracking-wide font-mono">ID: {user.ownedBrands[0].id}</span>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Edit Profile Button */}
-              <div className="flex items-center gap-3 ml-auto">
+              <div className="shrink-0">
                 <button
                   onClick={() => setIsEditing((v) => !v)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/[0.04] border border-white/[0.1] hover:bg-white/[0.08] hover:border-white/[0.2] rounded-xl text-[11px] font-black text-white/60 hover:text-white uppercase tracking-widest transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 bg-white/[0.04] border border-white/[0.1] hover:bg-white/[0.08] hover:border-white/[0.2] rounded-xl text-[10px] md:text-[11px] font-black text-white/60 hover:text-white uppercase tracking-widest transition-all"
                 >
-                  <Edit3 className="w-3.5 h-3.5" />
-                  Edit Profile
+                  <Edit3 className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                  <span className="hidden sm:inline">Edit Profile</span>
+                  <span className="sm:hidden">Edit</span>
                 </button>
               </div>
             </div>
           </div>
 
-          {/* ── Edit Profile Modal ── */}
-          <AnimatePresence>
-            {isEditing && (
-              <>
+          {/* ── Edit Profile Modal (React Portal) ── */}
+          {mounted && createPortal(
+            <AnimatePresence>
+              {isEditing && (
+                <>
                 {/* Backdrop */}
                 <motion.div
                   key="edit-backdrop"
@@ -380,7 +387,7 @@ export default function BrandSettingsPage() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40"
+                  className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9998]"
                   onClick={() => setIsEditing(false)}
                 />
                 {/* Modal */}
@@ -390,209 +397,211 @@ export default function BrandSettingsPage() {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.96, y: 16 }}
                   transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                  className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+                  className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none"
                 >
                   <div
-                    className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0d0d0f] border border-white/[0.08] rounded-[28px] p-6 md:p-8 space-y-6 pointer-events-auto shadow-2xl"
+                    className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0d0d0f] border border-white/[0.08] rounded-[20px] md:rounded-[28px] p-4 md:p-6 lg:p-8 space-y-5 pointer-events-auto shadow-2xl"
                     onClick={(e) => e.stopPropagation()}
                   >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-display text-2xl text-white uppercase tracking-tight">Edit Brand Profile</h3>
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-0.5">Update your brand settings</p>
-                  </div>
-                  <button
-                    onClick={() => setIsEditing(false)}
-                    className="w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center transition-colors"
-                  >
-                    <X className="w-4 h-4 text-white/50" />
-                  </button>
-                </div>
-
-                {/* Logo actions */}
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploadingLogo}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] border border-white/[0.1] hover:bg-white/[0.08] hover:border-white/[0.2] rounded-xl text-[10px] font-black text-white/60 hover:text-white uppercase tracking-widest transition-all disabled:opacity-40"
-                  >
-                    {isUploadingLogo ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />}
-                    {isUploadingLogo ? "Uploading…" : "Change Logo"}
-                  </button>
-                  {logoPreview && (
-                    <button
-                      onClick={handleRemoveLogo}
-                      disabled={isUploadingLogo}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-[10px] font-black text-white/40 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 uppercase tracking-widest transition-all disabled:opacity-40"
-                    >
-                      <X className="w-3 h-3" /> Remove
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setAiModalOpen(true)}
-                    disabled={isUploadingLogo}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 border border-primary/20 text-primary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/20 transition-all disabled:opacity-40"
-                  >
-                    <Sparkles className="w-3 h-3" /> Generate with AI
-                  </button>
-                </div>
-
-                <div className="h-[1px] bg-white/[0.04]" />
-
-                {/* Brand Name, Tagline, Description */}
-                <div className="grid md:grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">Brand Name</label>
-                    <input
-                      type="text"
-                      value={brandName}
-                      onChange={(e) => setBrandName(e.target.value)}
-                      placeholder="Your brand name"
-                      className="w-full bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] focus:border-white/[0.2] rounded-2xl px-5 py-4 text-sm font-bold text-white placeholder:text-white/20 focus:outline-none transition-colors"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">Tagline</label>
-                    <input
-                      type="text"
-                      value={tagline}
-                      onChange={(e) => setTagline(e.target.value)}
-                      placeholder="e.g. Just Do It"
-                      maxLength={80}
-                      className="w-full bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] focus:border-white/[0.2] rounded-2xl px-5 py-4 text-sm font-bold text-white placeholder:text-white/20 focus:outline-none transition-colors"
-                    />
-                  </div>
-                  <div className="md:col-span-2 space-y-2">
-                    <div className="flex items-center justify-between ml-1 mr-1">
-                      <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Description</label>
-                      <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">{description.length}/200</span>
-                    </div>
-                    <textarea
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Tell creators what your brand is about..."
-                      maxLength={200}
-                      rows={4}
-                      className="w-full bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] focus:border-white/[0.2] rounded-2xl px-5 py-4 text-sm font-bold text-white placeholder:text-white/20 focus:outline-none transition-colors resize-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="h-[1px] bg-white/[0.04]" />
-
-                {/* Categories */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Tag className="w-4 h-4 text-primary" />
-                    <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Brand Categories</label>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {CATEGORIES.map((cat) => {
-                      const selected = categories.includes(cat);
-                      return (
-                        <button
-                          key={cat}
-                          onClick={() => toggleCategory(cat)}
-                          className={cn(
-                            "px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer",
-                            selected
-                              ? "bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20"
-                              : "bg-white/[0.03] border border-white/[0.06] text-white/40 hover:bg-white/[0.07] hover:border-white/[0.12] hover:text-white"
-                          )}
-                        >
-                          {cat}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {categories.length > 0 && (
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">
-                      {categories.length} categor{categories.length !== 1 ? "ies" : "y"} selected
-                    </p>
-                  )}
-                </div>
-
-                <div className="h-[1px] bg-white/[0.04]" />
-
-                {/* Social Links */}
-                <div className="space-y-4">
-                  <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Online Presence</label>
-                  <div className="grid gap-4">
-                    {SOCIAL_KEYS.map(({ key, label, placeholder }) => (
-                      <div key={key} className="space-y-2">
-                        <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">{label}</label>
-                        <div className="relative">
-                          <input
-                            type="url"
-                            value={socialLinks[key] ?? ""}
-                            onChange={(e) => setSocialLinks((prev) => ({ ...prev, [key]: e.target.value }))}
-                            placeholder={placeholder}
-                            className="w-full bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] focus:border-white/[0.2] rounded-2xl px-5 py-3.5 text-sm font-bold text-white placeholder:text-white/20 focus:outline-none transition-colors"
-                          />
-                          <Globe className="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/20" />
-                        </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-display text-xl md:text-2xl text-white uppercase tracking-tight">Edit Brand Profile</h3>
+                        <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-0.5">Update your brand settings</p>
                       </div>
-                    ))}
-                  </div>
-                </div>
+                      <button
+                        onClick={() => setIsEditing(false)}
+                        className="w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center transition-colors"
+                      >
+                        <X className="w-4 h-4 text-white/50" />
+                      </button>
+                    </div>
 
-                {/* Save / Cancel */}
-                <div className="flex items-center justify-end gap-3 pt-2">
-                  <button
-                    onClick={() => setIsEditing(false)}
-                    className="px-5 py-2.5 rounded-xl text-[11px] font-black text-white/40 hover:text-white/70 uppercase tracking-widest transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="flex items-center gap-2 bg-white hover:bg-white/90 text-black px-7 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
-                  >
-                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <Check className="w-4 h-4 text-green-600" /> : null}
-                    {saved ? "Saved!" : "Save Changes"}
-                  </button>
-                </div>
+                    {/* Logo actions */}
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingLogo}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] border border-white/[0.1] hover:bg-white/[0.08] hover:border-white/[0.2] rounded-xl text-[10px] font-black text-white/60 hover:text-white uppercase tracking-widest transition-all disabled:opacity-40"
+                      >
+                        {isUploadingLogo ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />}
+                        {isUploadingLogo ? "Uploading…" : "Change Logo"}
+                      </button>
+                      {logoPreview && (
+                        <button
+                          onClick={handleRemoveLogo}
+                          disabled={isUploadingLogo}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-[10px] font-black text-white/40 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 uppercase tracking-widest transition-all disabled:opacity-40"
+                        >
+                          <X className="w-3 h-3" /> Remove
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setAiModalOpen(true)}
+                        disabled={isUploadingLogo}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 border border-primary/20 text-primary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/20 transition-all disabled:opacity-40"
+                      >
+                        <Sparkles className="w-3 h-3" /> Generate with AI
+                      </button>
+                    </div>
+
+                    <div className="h-[1px] bg-white/[0.04]" />
+
+                    {/* Brand Name, Tagline, Description */}
+                    <div className="grid md:grid-cols-2 gap-3 md:gap-5">
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">Brand Name</label>
+                        <input
+                          type="text"
+                          value={brandName}
+                          onChange={(e) => setBrandName(e.target.value)}
+                          placeholder="Your brand name"
+                          className="w-full bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] focus:border-white/[0.2] rounded-xl md:rounded-2xl px-4 py-3 md:py-4 text-sm font-bold text-white placeholder:text-white/20 focus:outline-none transition-colors"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">Tagline</label>
+                        <input
+                          type="text"
+                          value={tagline}
+                          onChange={(e) => setTagline(e.target.value)}
+                          placeholder="e.g. Just Do It"
+                          maxLength={80}
+                          className="w-full bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] focus:border-white/[0.2] rounded-xl md:rounded-2xl px-4 py-3 md:py-4 text-sm font-bold text-white placeholder:text-white/20 focus:outline-none transition-colors"
+                        />
+                      </div>
+                      <div className="md:col-span-2 space-y-1.5">
+                        <div className="flex items-center justify-between ml-1 mr-1">
+                          <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Description</label>
+                          <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">{description.length}/200</span>
+                        </div>
+                        <textarea
+                          value={description}
+                          onChange={(e) => setDescription(e.target.value)}
+                          placeholder="Tell creators what your brand is about..."
+                          maxLength={200}
+                          rows={3}
+                          className="w-full bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] focus:border-white/[0.2] rounded-xl md:rounded-2xl px-4 py-3 md:py-4 text-sm font-bold text-white placeholder:text-white/20 focus:outline-none transition-colors resize-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="h-[1px] bg-white/[0.04]" />
+
+                    {/* Categories */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Tag className="w-4 h-4 text-primary" />
+                        <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Brand Categories</label>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {CATEGORIES.map((cat) => {
+                          const selected = categories.includes(cat);
+                          return (
+                            <button
+                              key={cat}
+                              onClick={() => toggleCategory(cat)}
+                              className={cn(
+                                "px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer",
+                                selected
+                                  ? "bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20"
+                                  : "bg-white/[0.03] border border-white/[0.06] text-white/40 hover:bg-white/[0.07] hover:border-white/[0.12] hover:text-white"
+                              )}
+                            >
+                              {cat}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {categories.length > 0 && (
+                        <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">
+                          {categories.length} categor{categories.length !== 1 ? "ies" : "y"} selected
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="h-[1px] bg-white/[0.04]" />
+
+                    {/* Social Links */}
+                    <div className="space-y-3">
+                      <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Online Presence</label>
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        {SOCIAL_KEYS.map(({ key, label, placeholder }) => (
+                          <div key={key} className="space-y-1.5">
+                            <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">{label}</label>
+                            <div className="relative">
+                              <input
+                                type="url"
+                                value={socialLinks[key] ?? ""}
+                                onChange={(e) => setSocialLinks((prev) => ({ ...prev, [key]: e.target.value }))}
+                                placeholder={placeholder}
+                                className="w-full bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] focus:border-white/[0.2] rounded-xl md:rounded-2xl px-4 py-3 text-xs md:text-sm font-bold text-white placeholder:text-white/20 focus:outline-none transition-colors pr-9"
+                              />
+                              <Globe className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white/20" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Save / Cancel */}
+                    <div className="flex items-center justify-end gap-2 pt-1">
+                      <button
+                        onClick={() => setIsEditing(false)}
+                        className="px-4 py-2 rounded-xl text-[10px] font-black text-white/40 hover:text-white/70 uppercase tracking-widest transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        className="flex items-center gap-2 bg-white hover:bg-white/90 text-black px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
+                      >
+                        {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : saved ? <Check className="w-3.5 h-3.5 text-green-600" /> : null}
+                        {saved ? "Saved!" : "Save Changes"}
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
-              </>
-            )}
-          </AnimatePresence>
+                </>
+              )}
+            </AnimatePresence>,
+            document.body
+          )}
 
           {/* ── Stats Row ── */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-primary">Milestone</p>
-              <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[16px] md:rounded-[20px] px-3 py-3 md:px-5 md:py-4 transition-all">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] mb-1 text-primary">Milestone</p>
+              <p className="font-display text-2xl md:text-4xl text-white uppercase tracking-tight leading-none">
                 {brandData ? levelToRank(brandData.level) : "—"}
               </p>
-              <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">
+              <p className="text-[9px] font-black text-white/30 mt-1 uppercase tracking-wide">
                 Level {brandData?.level ?? "—"}
               </p>
             </div>
 
-            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-lime-400">Events</p>
-              <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">{brandData?.eventsCreated ?? "—"}</p>
-              <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Created</p>
+            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[16px] md:rounded-[20px] px-3 py-3 md:px-5 md:py-4 transition-all">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] mb-1 text-lime-400">Events</p>
+              <p className="font-display text-2xl md:text-4xl text-white uppercase tracking-tight leading-none">{brandData ? brandEvents.length : "—"}</p>
+              <p className="text-[9px] font-black text-white/30 mt-1 uppercase tracking-wide">Created</p>
             </div>
 
-            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-blue-400">Followers</p>
-              <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">{brandData?.followerCount ?? "—"}</p>
-              <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Subscribers</p>
+            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[16px] md:rounded-[20px] px-3 py-3 md:px-5 md:py-4 transition-all">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] mb-1 text-blue-400">Followers</p>
+              <p className="font-display text-2xl md:text-4xl text-white uppercase tracking-tight leading-none">{brandData?.followerCount ?? "—"}</p>
+              <p className="text-[9px] font-black text-white/30 mt-1 uppercase tracking-wide">Subscribers</p>
             </div>
 
-            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-yellow-400">Participants</p>
-              <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">{brandData?.uniqueParticipants ?? "—"}</p>
-              <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Across Events</p>
+            <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[16px] md:rounded-[20px] px-3 py-3 md:px-5 md:py-4 transition-all">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] mb-1 text-yellow-400">Participants</p>
+              <p className="font-display text-2xl md:text-4xl text-white uppercase tracking-tight leading-none">{brandData?.uniqueParticipants ?? "—"}</p>
+              <p className="text-[9px] font-black text-white/30 mt-1 uppercase tracking-wide">Across Events</p>
             </div>
           </div>
 
           {/* ── About ── */}
-          <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 md:p-8 space-y-5">
-            <h2 className="font-display text-2xl text-white uppercase tracking-tight">
+          <div className="bg-white/[0.02] border border-white/[0.06] rounded-[20px] md:rounded-[24px] p-4 md:p-6 lg:p-8 space-y-4 md:space-y-5">
+            <h2 className="font-display text-xl md:text-2xl text-white uppercase tracking-tight">
               About {(brandName || "Brand").split(" ")[0]}
             </h2>
             {description ? (
@@ -637,28 +646,28 @@ export default function BrandSettingsPage() {
               )}
 
               {/* Stat counters row */}
-              <div className="flex items-center gap-8">
+              <div className="flex items-center gap-5 md:gap-8">
                 <div>
-                  <p className="font-display text-3xl text-white uppercase tracking-tight leading-none">
+                  <p className="font-display text-2xl md:text-3xl text-white uppercase tracking-tight leading-none">
                     {categories.length}
                   </p>
-                  <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.15em] mt-1">Categories</p>
+                  <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.15em] mt-1">Categories</p>
                 </div>
-                <div className="w-px h-8 bg-white/6" />
+                <div className="w-px h-7 bg-white/6" />
                 <div>
-                  <p className="font-display text-3xl text-white uppercase tracking-tight leading-none">
+                  <p className="font-display text-2xl md:text-3xl text-white uppercase tracking-tight leading-none">
                     {tokensMinted !== null ? `$${tokensMinted.toLocaleString(undefined, { maximumFractionDigits: 1 })}` : "—"}
                   </p>
-                  <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.15em] mt-1">Tokens Minted</p>
+                  <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.15em] mt-1">Tokens Minted</p>
                 </div>
               </div>
             </div>
           </div>
         {/* ── Showcase ── */}
-          <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 md:p-8 space-y-5">
+          <div className="bg-white/[0.02] border border-white/[0.06] rounded-[20px] md:rounded-[24px] p-4 md:p-6 lg:p-8 space-y-4 md:space-y-5">
             {/* Header */}
-            <div className="flex items-end justify-between">
-              <h2 className="font-display text-2xl text-white uppercase tracking-tight">Showcase</h2>
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="font-display text-xl md:text-2xl text-white uppercase tracking-tight">Showcase</h2>
               {/* Top-level tabs */}
               <div className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.06] rounded-xl p-1">
                 {(["events", "creations"] as const).map((tab) => (
@@ -666,7 +675,7 @@ export default function BrandSettingsPage() {
                     key={tab}
                     onClick={() => setShowcaseTab(tab)}
                     className={cn(
-                      "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                      "px-3 py-1 md:px-4 md:py-1.5 rounded-lg text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all",
                       showcaseTab === tab
                         ? "bg-white text-black"
                         : "text-white/40 hover:text-white/70"
@@ -803,16 +812,16 @@ export default function BrandSettingsPage() {
         </div>
 
         {/* ── Right Column ── */}
-        <div className="lg:w-[300px] xl:w-[320px] flex-shrink-0 space-y-6">
+        <div className="lg:w-[280px] xl:w-[300px] flex-shrink-0 space-y-4 md:space-y-6">
           {user && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.08 }}
-              className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 space-y-4"
+              className="bg-white/[0.02] border border-white/[0.06] rounded-[20px] md:rounded-[24px] p-4 md:p-6 space-y-3 md:space-y-4"
             >
               <div>
-                <h3 className="font-display text-xl text-white uppercase tracking-tight">Account Info</h3>
+                <h3 className="font-display text-lg md:text-xl text-white uppercase tracking-tight">Account Info</h3>
                 <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-0.5">Read-only</p>
               </div>
 

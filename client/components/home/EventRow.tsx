@@ -29,7 +29,7 @@ export default function EventRow({
                             {madeFor}
                         </p>
                     )}
-                    <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
+                    <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
                         {title}
                     </h2>
                 </div>
@@ -44,17 +44,17 @@ export default function EventRow({
 
             {/* Horizontal scroll row */}
             <div className="relative">
-                <div className="flex gap-5 overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
+                <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
                     {loading
                         ? Array.from({ length: 4 }).map((_, i) => (
                             <div
                                 key={i}
-                                className="flex-shrink-0 w-[320px] sm:w-[420px] aspect-[16/13] rounded-2xl bg-foreground/[0.05] animate-pulse border border-border"
+                                className="flex-shrink-0 w-55 sm:w-70 lg:w-85 aspect-16/13 rounded-2xl bg-foreground/5 animate-pulse border border-border"
                                 style={{ animationDelay: `${i * 80}ms` }}
                             />
                         ))
                         : events.map((event) => (
-                            <div key={event.id} className="flex-shrink-0 w-[320px] sm:w-[420px] transition-transform duration-300 hover:z-10 relative object-center hover:scale-105">
+                            <div key={event.id} className="flex-shrink-0 w-55 sm:w-70 lg:w-85 transition-transform duration-300 hover:z-10 relative object-center hover:scale-105">
                                 <PremiumEventCard event={event} />
                             </div>
                         ))}
