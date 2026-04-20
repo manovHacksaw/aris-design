@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2, Play } from "lucide-react";
+import { Trash2, Play, CalendarClock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function timeAgo(dateStr: string): string {
@@ -49,15 +49,14 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
 };
 
 const EVENT_TYPE_STYLES: Record<string, string> = {
-  vote_only: "bg-lime-500/15 text-lime-400 border-lime-500/25",
-  post_and_vote: "bg-orange-500/15 text-orange-400 border-orange-500/25",
+  vote_only: "bg-lime-500/10 text-lime-500 border-lime-500/20",
+  post_and_vote: "bg-orange-500/10 text-orange-500 border-orange-500/20",
 };
 
 export default function DraftEventCard({ event, onResume, onDelete }: DraftEventCardProps) {
   const coverUrl = getCoverUrl(event);
-
   const updatedAgo = timeAgo(event.updatedAt);
-
+  
   const handleCardClick = () => onResume(event);
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -73,70 +72,70 @@ export default function DraftEventCard({ event, onResume, onDelete }: DraftEvent
   return (
     <div
       onClick={handleCardClick}
-      className="bg-card border border-border rounded-2xl p-4 hover:border-primary/40 cursor-pointer group transition-all"
+      className="flex items-center gap-3.5 bg-background border border-border/60 rounded-2xl p-3 cursor-pointer group hover:border-primary/40 hover:shadow-sm hover:shadow-primary/5 transition-all w-full"
     >
-      {/* Cover image */}
-      <div className="relative aspect-video rounded-xl overflow-hidden bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 mb-3">
+      {/* Cover image thumbnail */}
+      <div className="relative w-[72px] h-[72px] shrink-0 rounded-[12px] overflow-hidden bg-gradient-to-br from-primary/5 via-secondary/10 to-accent/5 border border-border/40">
         {coverUrl ? (
           <img
             src={coverUrl}
             alt={event.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/5 via-muted/20 to-secondary/10">
-            <span className="text-2xl font-black text-muted-foreground/20 select-none">
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="text-xl font-black text-muted-foreground/30 select-none">
               {event.title?.charAt(0)?.toUpperCase() ?? "E"}
             </span>
           </div>
         )}
+      </div>
 
-        {/* Overlay badges */}
-        <div className="absolute top-2 left-2 flex gap-1.5">
-          <span className="px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-[10px] font-black text-amber-400 uppercase tracking-wider backdrop-blur-sm">
+      {/* Content */}
+      <div className="flex-1 min-w-0 py-0.5">
+        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+          <span className="px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-[9px] font-black text-amber-500 uppercase tracking-widest leading-none">
             Draft
           </span>
           {EVENT_TYPE_LABELS[event.eventType] && (
             <span
               className={cn(
-                "px-2 py-0.5 rounded-full border text-[10px] font-black uppercase tracking-wider backdrop-blur-sm",
-                EVENT_TYPE_STYLES[event.eventType] ?? "bg-muted/20 text-muted-foreground border-border"
+                "px-2 py-0.5 rounded-md border text-[9px] font-black uppercase tracking-widest leading-none",
+                EVENT_TYPE_STYLES[event.eventType] ?? "bg-muted/10 text-muted-foreground border-border/50"
               )}
             >
               {EVENT_TYPE_LABELS[event.eventType]}
             </span>
           )}
+          {event.category && (
+            <span className="px-2 py-0.5 rounded-md bg-foreground/5 border border-border/40 text-[9px] font-bold text-muted-foreground uppercase tracking-wider leading-none truncate max-w-[80px]">
+              {event.category}
+            </span>
+          )}
+        </div>
+        
+        <h3 className="font-bold text-sm text-foreground truncate pr-2 group-hover:text-primary transition-colors">
+          {event.title || "Untitled Event"}
+        </h3>
+        
+        <div className="flex items-center gap-1.5 mt-1.5 text-muted-foreground/60">
+          <CalendarClock className="w-3 h-3" />
+          <span className="text-[10px] font-medium">{updatedAgo}</span>
         </div>
       </div>
 
-      {/* Title */}
-      <h3 className="font-black text-sm text-foreground line-clamp-2 leading-snug mb-2">
-        {event.title || "Untitled Event"}
-      </h3>
-
-      {/* Category + timestamp */}
-      <div className="flex items-center gap-2 mb-3">
-        {event.category && (
-          <span className="px-2 py-0.5 rounded-full bg-muted/40 border border-border/60 text-[10px] font-medium text-muted-foreground">
-            {event.category}
-          </span>
-        )}
-        <span className="text-[10px] text-muted-foreground/60 ml-auto">{updatedAgo}</span>
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center gap-2">
+      {/* Actions (visible on hover or always on touch devices via media queries conceptually) */}
+      <div className="flex items-center gap-1.5 pr-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
         <button
           onClick={handleResume}
-          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border border-border text-xs font-black text-foreground hover:border-primary/50 hover:text-primary transition-all"
+          className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground hover:scale-105 active:scale-95 transition-all shadow-md shadow-primary/20"
         >
-          <Play className="w-3 h-3 fill-current" />
-          Resume
+          <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
         </button>
         {onDelete && (
           <button
             onClick={handleDelete}
-            className="p-1.5 rounded-xl border border-border text-muted-foreground hover:border-red-500/40 hover:text-red-400 transition-all"
+            className="w-8 h-8 rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground hover:text-red-500 hover:border-red-500/30 hover:bg-red-500/10 transition-all"
             aria-label="Delete draft"
           >
             <Trash2 className="w-3.5 h-3.5" />

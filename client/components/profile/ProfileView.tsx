@@ -4,7 +4,6 @@ import { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import SidebarLayout from "@/components/home/SidebarLayout";
-import BottomNav from "@/components/BottomNav";
 import {
   Copy, Calendar, Edit3, Trophy, Zap, Flame, ImageIcon,
   ThumbsUp, Crown, Lock, TrendingUp, Building2, Star,
@@ -230,26 +229,26 @@ export default function ProfileView({
             <div className="flex-1 min-w-0 space-y-6">
 
               {/* ── Identity Card ── */}
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 md:p-8">
-                <div className="flex flex-wrap items-start gap-5">
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-4 sm:p-6 md:p-8">
+                <div className="flex flex-wrap items-start gap-4 sm:gap-5">
 
                   {/* Avatar */}
                   <div className="relative shrink-0">
-                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-white/[0.1] bg-white/[0.05]">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-white/[0.1] bg-white/[0.05]">
                       {user?.avatarUrl ? (
                         <img src={user.avatarUrl} alt={displayName} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <span className="font-display text-4xl text-white/30 uppercase">{displayName[0]}</span>
+                          <span className="font-display text-3xl sm:text-4xl text-white/30 uppercase">{displayName[0]}</span>
                         </div>
                       )}
                     </div>
-                    <div className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-background shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+                    <div className="absolute bottom-1 right-1 w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-green-500 border-2 border-background shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
                   </div>
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight mb-1">
+                    <h1 className="font-display text-[2rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight mb-1 break-words">
                       {displayName}
                     </h1>
                     <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em] mb-3">
@@ -278,9 +277,9 @@ export default function ProfileView({
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-3 ml-auto">
+                  <div className="flex items-center gap-3 w-full sm:w-auto sm:ml-auto">
                     {isOwnProfile ? (
-                      <button className="flex items-center gap-2 px-4 py-2 bg-white/[0.04] border border-white/[0.1] hover:bg-white/[0.08] hover:border-white/[0.2] rounded-xl text-[11px] font-black text-white/60 hover:text-white uppercase tracking-widest transition-all">
+                      <button className="flex items-center gap-2 px-4 py-2 bg-white/[0.04] border border-white/[0.1] hover:bg-white/[0.08] hover:border-white/[0.2] rounded-xl text-[11px] font-black text-white/60 hover:text-white uppercase tracking-widest transition-all w-full sm:w-auto justify-center sm:justify-start">
                         <Edit3 className="w-3.5 h-3.5" />
                         Edit Profile
                       </button>
@@ -289,7 +288,7 @@ export default function ProfileView({
                         onClick={onToggleFollow}
                         disabled={isFollowLoading}
                         className={cn(
-                          "px-5 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all",
+                          "px-5 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all w-full sm:w-auto",
                           isFollowing
                             ? "bg-white/[0.06] border border-white/[0.1] text-white/50 hover:border-red-500/30 hover:text-red-400"
                             : "bg-white hover:bg-white/90 text-black"
@@ -303,38 +302,38 @@ export default function ProfileView({
               </div>
 
               {/* ── Stats Row ── */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {subsLoading ? (
                   Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="h-[90px] rounded-[20px] bg-white/[0.02] border border-white/[0.04] animate-pulse" />
+                    <div key={i} className="h-[80px] sm:h-[90px] rounded-[20px] bg-white/[0.02] border border-white/[0.04] animate-pulse" />
                   ))
                 ) : (
                   <>
-                    <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
+                    <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-4 sm:px-5 py-4 transition-all">
                       <p className={cn("text-[9px] font-black uppercase tracking-[0.2em] mb-1", tier.color)}>XP Level</p>
-                      <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">Lvl {level}</p>
+                      <p className="font-display text-3xl sm:text-4xl text-white uppercase tracking-tight leading-none">Lvl {level}</p>
                       <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">{tier.name} Tier</p>
                     </div>
 
-                    <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
+                    <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-4 sm:px-5 py-4 transition-all">
                       <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-lime-400">Earnings</p>
-                      <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">
+                      <p className="font-display text-3xl sm:text-4xl text-white uppercase tracking-tight leading-none">
                         {stats?.earnings ? stats.earnings.toLocaleString() : "0"}
                       </p>
                       <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">USDC Total</p>
                     </div>
 
-                    <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
+                    <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-4 sm:px-5 py-4 transition-all">
                       <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-blue-400">Events</p>
-                      <p className="font-display text-4xl text-white uppercase tracking-tight leading-none">
+                      <p className="font-display text-3xl sm:text-4xl text-white uppercase tracking-tight leading-none">
                         {stats?.events ?? 0}
                       </p>
                       <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Joined</p>
                     </div>
 
-                    <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-5 py-4 transition-all">
+                    <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-4 sm:px-5 py-4 transition-all">
                       <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-yellow-400">Win Rate</p>
-                      <p className={cn("font-display text-4xl uppercase tracking-tight leading-none", winRate >= 50 ? "text-lime-400" : "text-white")}>
+                      <p className={cn("font-display text-3xl sm:text-4xl uppercase tracking-tight leading-none", winRate >= 50 ? "text-lime-400" : "text-white")}>
                         {winRate}%
                       </p>
                       <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Success Score</p>
@@ -583,7 +582,7 @@ export default function ProfileView({
             <div className="lg:w-[300px] xl:w-[320px] flex-shrink-0 space-y-6">
 
               {/* ── Reputation ── */}
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 space-y-4">
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-5 sm:p-6 space-y-4">
                 <h3 className="font-display text-xl text-white uppercase tracking-tight">Reputation</h3>
                 <div className="space-y-2">
 
@@ -634,7 +633,7 @@ export default function ProfileView({
               </div>
 
               {/* ── Achievements ── */}
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 space-y-4">
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-5 sm:p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-display text-xl text-white uppercase tracking-tight">Achievements</h3>
@@ -649,7 +648,7 @@ export default function ProfileView({
                     {showAllAchievements ? "Show Less" : "See All"}
                   </button>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-4 gap-2">
                   {visibleMilestones.map(m => {
                     const current = getMilestoneCurrent(m.type);
                     const done = current >= m.target;
@@ -691,7 +690,7 @@ export default function ProfileView({
 
               {/* ── Brands Followed ── */}
               {following.length > 0 && (
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 space-y-4">
+                <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-5 sm:p-6 space-y-4">
                   <h3 className="font-display text-xl text-white uppercase tracking-tight">Brands Followed</h3>
                   <div className="space-y-3">
                     {following.slice(0, 5).map((brand: User) => (
@@ -722,14 +721,11 @@ export default function ProfileView({
           </div>
         </main>
 
-        <div className="md:hidden">
-          <BottomNav />
-        </div>
       </SidebarLayout>
 
       {/* ── Social Modal ── */}
       {showSocialModal.show && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:px-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -739,9 +735,9 @@ export default function ProfileView({
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="relative w-full max-w-md bg-[#0c0c10] border border-white/[0.08] rounded-[24px] overflow-hidden shadow-2xl"
+            className="relative w-full sm:max-w-md bg-[#0c0c10] border border-white/[0.08] rounded-t-[24px] sm:rounded-[24px] overflow-hidden shadow-2xl"
           >
-            <div className="p-5 border-b border-white/[0.06] flex items-center justify-between">
+            <div className="p-4 sm:p-5 border-b border-white/[0.06] flex items-center justify-between">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">
                 {showSocialModal.type} ({socialList.length})
               </span>
@@ -752,7 +748,7 @@ export default function ProfileView({
                 <X className="w-3.5 h-3.5 text-white/50" />
               </button>
             </div>
-            <div className="p-2 max-h-[60vh] overflow-y-auto">
+            <div className="p-2 max-h-[70vh] sm:max-h-[60vh] overflow-y-auto">
               {socialList.length === 0 ? (
                 <p className="text-center text-[11px] font-black text-white/20 uppercase tracking-widest py-10">
                   No {showSocialModal.type} yet

@@ -219,44 +219,39 @@ export default function AiVotingOptionPanel({
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
-
-  const header = (
-    <div className="flex items-center justify-between px-6 py-4 border-b border-border/40 shrink-0">
-      <div className="flex items-center gap-3">
-        <Sparkles className="w-5 h-5 text-primary shrink-0" />
-        <div>
-          <p className="font-black text-foreground text-sm">Visual Directions</p>
-          <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-            {contentTitle || "Option image"}
-          </p>
-        </div>
-      </div>
-      <button
-        onClick={onClose}
-        className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <X className="w-4 h-4" />
-      </button>
-    </div>
-  );
-
   return (
-    <div className="flex flex-col w-full max-w-lg max-h-[88vh] bg-card border border-border rounded-3xl shadow-2xl overflow-hidden">
-      {header}
+    <div className="flex flex-col w-full max-w-lg max-h-[75vh] sm:max-h-[85vh] bg-card border border-border rounded-[24px] sm:rounded-3xl shadow-2xl overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-border/40 shrink-0">
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0" />
+          <div>
+            <p className="font-black text-foreground text-xs sm:text-sm uppercase tracking-tight">Visual Directions</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground truncate max-w-[140px] sm:max-w-[200px]">
+              {contentTitle || "Option image"}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
 
-      <div className="overflow-y-auto px-6 py-6 flex flex-col gap-5">
+      <div className="overflow-y-auto px-4 py-4 sm:px-6 sm:py-6 flex flex-col gap-4 sm:gap-5">
 
         {/* Target market selector — always visible on pick step */}
         {step === "pick" && (
           <div>
             <FieldLabel>Target Market <span className="normal-case font-normal text-muted-foreground">(optional)</span></FieldLabel>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2 no-scrollbar">
               {TARGET_MARKETS.map((m) => (
                 <button
                   key={m}
                   onClick={() => setTargetMarket(targetMarket === m ? "" : m)}
                   className={cn(
-                    "px-3 py-1 rounded-full text-xs font-medium border transition-all",
+                    "shrink-0 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider border transition-all",
                     targetMarket === m
                       ? "bg-primary text-primary-foreground border-primary"
                       : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"

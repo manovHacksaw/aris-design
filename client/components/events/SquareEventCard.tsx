@@ -28,8 +28,8 @@ export default function SquareEventCard({ event, className }: SquareEventCardPro
                 />
 
                 {/* Gradient Overlays */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 dark:from-black/90 via-black/10 dark:via-black/20 to-transparent" />
+                <div className="absolute inset-0 bg-black/5 dark:bg-black/10 group-hover:bg-transparent transition-colors duration-300" />
 
                 {/* Hover glow border */}
                 <div className="absolute inset-0 rounded-[28px] border-[2px] border-blue-500/0 group-hover:border-blue-500/35 transition-colors duration-300 pointer-events-none shadow-[inset_0_0_30px_rgba(59,130,246,0)] group-hover:shadow-[inset_0_0_30px_rgba(59,130,246,0.08)]" />

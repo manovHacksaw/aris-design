@@ -144,7 +144,7 @@ export function PlaceholdersAndVanishInput({
     return (
         <form
             className={cn(
-                "w-full relative bg-black/40 backdrop-blur-xl border border-white/[0.08] rounded-[30px] overflow-hidden transition-all duration-300 focus-within:border-white/20",
+                "w-full relative bg-black/40 backdrop-blur-xl border border-white/[0.08] rounded-2xl sm:rounded-[30px] overflow-hidden transition-all duration-300 focus-within:border-white/20",
                 className
             )}
             onSubmit={handleSubmit}
@@ -156,7 +156,7 @@ export function PlaceholdersAndVanishInput({
                 )}
                 ref={canvasRef}
             />
-            <div className="flex items-center gap-2 p-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2">
                 <input
                     onChange={(e) => {
                         if (!animating) { setValue(e.target.value); onChange && onChange(e); }
@@ -166,7 +166,7 @@ export function PlaceholdersAndVanishInput({
                     value={value}
                     type="text"
                     className={cn(
-                        "flex-1 relative text-sm z-50 border-none bg-transparent text-white h-full focus:outline-none focus:ring-0 pl-4 sm:pl-12 py-5 pr-4",
+                        "flex-1 relative text-xs sm:text-sm z-50 border-none bg-transparent text-white h-full focus:outline-none focus:ring-0 pl-3 sm:pl-12 py-3 sm:py-5 pr-2 sm:pr-4",
                         animating && "text-transparent"
                     )}
                 />
@@ -181,7 +181,7 @@ export function PlaceholdersAndVanishInput({
                             animate={{ y: 0, opacity: 1 }}
                             exit={{ y: -15, opacity: 0 }}
                             transition={{ duration: 0.3, ease: "linear" }}
-                            className="text-sm font-medium text-white/20 pl-8 truncate max-w-[420px]"
+                            className="text-xs sm:text-sm font-medium text-white/20 pl-3 sm:pl-8 truncate max-w-[200px] sm:max-w-[420px]"
                         >
                             {placeholders[currentPlaceholder]}
                         </motion.p>

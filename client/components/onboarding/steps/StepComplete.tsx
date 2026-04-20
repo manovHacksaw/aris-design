@@ -69,15 +69,15 @@ export default function StepComplete({ displayName, isSaving, onComplete, onBack
   const slide = TOUR_SLIDES[current];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
       <div className="space-y-1">
         <p className="text-xs font-bold text-primary/80 uppercase tracking-widest">Step 7 of 7</p>
-        <h1 className="text-2xl font-black text-foreground tracking-tighter">Welcome, {firstName}</h1>
-        <p className="text-sm text-foreground/40">Your onboarding is complete. Start with a quick tour or skip for now.</p>
+        <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tighter">Welcome, {firstName}</h1>
+        <p className="text-xs sm:text-sm text-foreground/40">Your onboarding is complete. Start with a quick tour or skip for now.</p>
       </div>
 
       {/* XP bonus */}
-      <div className="flex items-center gap-4 p-4 rounded-[16px] bg-gradient-to-r from-primary/10 to-violet-500/10 border border-primary/20">
+      <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-[16px] bg-gradient-to-r from-primary/10 to-violet-500/10 border border-primary/20">
         <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
           <Sparkles className="w-5 h-5 text-primary" />
         </div>
@@ -130,7 +130,7 @@ export default function StepComplete({ displayName, isSaving, onComplete, onBack
         <button
           onClick={() => onComplete(true)}
           disabled={isSaving}
-          className="w-full py-4 rounded-[16px] bg-primary text-black font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-3 sm:py-4 rounded-[16px] bg-primary text-black font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving
             ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
@@ -140,14 +140,14 @@ export default function StepComplete({ displayName, isSaving, onComplete, onBack
         <button
           onClick={() => onComplete(false)}
           disabled={isSaving}
-          className="w-full py-4 rounded-[16px] bg-foreground text-background font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-foreground/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-3 sm:py-4 rounded-[16px] bg-foreground text-background font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-foreground/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving
             ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
             : <>Skip Tour <ArrowRight className="w-4 h-4" /></>
           }
         </button>
-        <button onClick={onBack} className="w-full py-3 text-foreground/30 hover:text-foreground/50 text-xs font-bold uppercase tracking-widest transition-colors">
+        <button onClick={onBack} className="w-full py-2 sm:py-3 text-foreground/30 hover:text-foreground/50 text-xs font-bold uppercase tracking-widest transition-colors">
           Back
         </button>
       </div>

@@ -40,7 +40,7 @@ export default function SidebarItem({
                 "transition-all duration-200 ease-out",
                 // Active/Hover states
                 isActive
-                    ? "bg-[#6366F1] text-white border border-white/10 shadow-[1px_1px_0px_0px_#FFFFFF]"
+                    ? "bg-[#6366F1] text-white border border-white/10 dark:shadow-[1px_1px_0px_0px_#FFFFFF] shadow-[1px_1px_0px_0px_#6366F1]"
                     : "text-foreground/50 hover:bg-foreground/5 hover:text-foreground",
                 // Rounded
                 "rounded-xl"
@@ -85,7 +85,7 @@ export default function SidebarItem({
             <span
                 className={cn(
                     "whitespace-nowrap overflow-hidden transition-all duration-150 ease-out text-base",
-                    isActive ? "font-black text-white" : "font-semibold text-foreground",
+                    isActive ? "font-black text-foreground" : "font-semibold text-foreground",
                     showExpanded ? "opacity-100 w-auto ml-3" : "opacity-0 w-0 ml-0"
                 )}
             >

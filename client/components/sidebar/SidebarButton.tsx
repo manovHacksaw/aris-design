@@ -35,7 +35,7 @@ export default function SidebarButton({
                 // Rounded
                 "rounded-xl",
                 // Active Styling
-                isActive && !isDestructive && "text-white font-black bg-[#6366F1] border border-white/10 shadow-[4px_4px_0px_0px_#FFFFFF]"
+                isActive && !isDestructive && "text-foreground font-black bg-[#6366F1] border border-white/10 dark:shadow-[4px_4px_0px_0px_#FFFFFF] shadow-[4px_4px_0px_0px_#6366F1]"
             )}
         >
             <div className="flex-shrink-0 relative flex items-center justify-center w-7 h-7">

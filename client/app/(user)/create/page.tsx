@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from "react";
 import SidebarLayout from "@/components/home/SidebarLayout";
-import BottomNav from "@/components/BottomNav";
 import { Sparkles, Palette, PenLine, Video, Building2, Rocket, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { AIGeneratorWindow } from "@/components/create/AIGeneratorWindow";
@@ -58,7 +57,7 @@ export default function Create() {
     return (
         <div className="min-h-screen bg-background text-foreground font-sans">
             <SidebarLayout>
-                <main className="flex-1 w-full max-w-[1600px] mx-auto space-y-6 pb-20 md:pb-12 pt-2">
+                <main className="flex-1 w-full max-w-[1600px] mx-auto space-y-4 sm:space-y-6 pb-20 md:pb-12 pt-2">
 
                     {/* Hero (unchanged — just passes events for preview panel) */}
                     <motion.section
@@ -114,12 +113,12 @@ export default function Create() {
                     </section>
 
                     {/* Opportunities Header — dynamic creator pool */}
-                    <div className="flex items-end justify-between border-t border-white/[0.06] pt-6">
+                    <div className="flex items-end justify-between border-t border-white/[0.06] pt-4 sm:pt-6">
                         <div>
                             <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-1">
                                 Submit your work
                             </p>
-                            <h2 className="font-display text-3xl md:text-4xl text-white uppercase tracking-tight">
+                            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl text-white uppercase tracking-tight">
                                 Opportunities
                             </h2>
                         </div>
@@ -164,7 +163,7 @@ export default function Create() {
                             <div className="absolute top-0 right-0 w-20 h-full bg-gradient-to-l from-background to-transparent pointer-events-none" />
                         </div>
                     ) : (
-                        <div className="py-16 text-center bg-white/[0.02] rounded-2xl border border-dashed border-white/[0.06]">
+                        <div className="py-10 sm:py-16 text-center bg-white/[0.02] rounded-2xl border border-dashed border-white/[0.06]">
                             <div className="w-10 h-10 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto mb-3">
                                 <Star className="w-5 h-5 text-white/20" />
                             </div>
@@ -178,9 +177,6 @@ export default function Create() {
                     <ScrollIndicator bottomOffset={72} />
                 </main>
 
-                <div className="md:hidden">
-                    <BottomNav />
-                </div>
             </SidebarLayout>
 
             <AIGeneratorWindow

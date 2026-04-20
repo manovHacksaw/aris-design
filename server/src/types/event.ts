@@ -119,6 +119,15 @@ export interface UpdateEventRequest {
   ageRestriction?: number;
   genderRestriction?: string;
   intendedCategories?: string[];
+  
+  proposals?: Array<{
+    type: 'IMAGE' | 'TEXT';
+    title: string;
+    content?: string;   // For TEXT proposals
+    imageCid?: string;  // For IMAGE proposals
+    imageUrl?: string;  // For Cloudinary images
+    order?: number;
+  }>;
 }
 
 export interface UpdateEventStatusRequest {

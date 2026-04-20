@@ -95,7 +95,7 @@ export default function OnboardingShell({ step, total, meta, children }: Onboard
 
       {/* ── Right Panel ── */}
       <div className="flex-1 flex flex-col h-screen overflow-y-auto">
-        <div className="flex-1 flex flex-col max-w-lg mx-auto w-full px-6 py-12 lg:justify-center">
+        <div className="flex-1 flex flex-col max-w-lg mx-auto w-full px-4 py-6 sm:px-6 sm:py-10 lg:justify-center">
 
           {/* Mobile progress */}
           <div className="lg:hidden flex gap-1.5 mb-6 flex-wrap">

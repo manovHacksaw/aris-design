@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Sparkles,
   Loader2,
@@ -110,7 +111,7 @@ const TABS: TabId[] = ["Event", "Image"];
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-xs font-black text-muted-foreground uppercase tracking-wider mb-1.5">
+    <p className="text-[10px] font-black text-foreground/50 uppercase tracking-widest mb-2 flex items-center gap-1.5">
       {children}
     </p>
   );
@@ -133,7 +134,7 @@ function PromptTextarea({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       rows={rows}
-      className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/60 resize-none focus:outline-none focus:border-primary/50 transition-colors"
+      className="w-full bg-secondary/30 border border-border/50 rounded-[16px] px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground/50 resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all focus:bg-background"
     />
   );
 }
@@ -185,16 +186,21 @@ function SuggestionModal({
   onApply: (s: AiEventSuggestion) => void;
   onClose: () => void;
 }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="relative w-full max-w-3xl max-h-[88vh] flex flex-col bg-card border border-border rounded-3xl shadow-2xl overflow-hidden">
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[999] flex items-start sm:items-center justify-center p-2 sm:p-4 pt-12 sm:pt-0 bg-black/60 backdrop-blur-sm">
+      <div className="relative w-full max-w-2xl sm:max-w-3xl max-h-[75vh] sm:max-h-[88vh] flex flex-col bg-card border border-border rounded-[24px] sm:rounded-3xl shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border/40 shrink-0">
-          <div className="flex items-center gap-3">
-            <Sparkles className="w-5 h-5 text-primary" />
+        <div className="flex items-center justify-between px-4 py-2 sm:px-6 sm:py-4 border-b border-border/40 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <Sparkles className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-primary" />
             <div>
-              <p className="font-black text-foreground text-sm">Event Concepts</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="font-black text-foreground text-[10px] sm:text-sm uppercase tracking-tighter sm:tracking-tight">Concepts</p>
+              <p className="hidden sm:block text-xs text-muted-foreground">
                 {suggestions.length} testable concept{suggestions.length !== 1 ? "s" : ""} — pick one to build
               </p>
             </div>
@@ -208,19 +214,19 @@ function SuggestionModal({
         </div>
 
         {/* Cards */}
-        <div className="overflow-y-auto p-6 flex flex-col gap-5">
+        <div className="overflow-y-auto p-4 sm:p-6 flex flex-col gap-4 sm:gap-5">
           {suggestions.map((s, i) => (
             <div
               key={i}
-              className="bg-background border border-border/60 rounded-2xl p-5 flex flex-col gap-4 hover:border-primary/30 transition-colors"
+              className="bg-background border border-border/60 rounded-2xl p-4 sm:p-5 flex flex-col gap-3.5 sm:gap-4 hover:border-primary/30 transition-colors"
             >
               {/* Index + type badge */}
               <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-[10px] font-black flex items-center justify-center">
+                <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                  <span className="shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary/10 text-primary text-[9px] sm:text-[10px] font-black flex items-center justify-center">
                     {i + 1}
                   </span>
-                  <p className="font-black text-foreground text-base leading-snug">{s.title}</p>
+                  <p className="font-black text-foreground text-sm sm:text-base leading-snug">{s.title}</p>
                 </div>
                 <span className={cn(
                   "shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border",
@@ -236,9 +242,9 @@ function SuggestionModal({
               <p className="text-sm text-muted-foreground leading-relaxed -mt-1">{s.description}</p>
 
               {/* Hypothesis */}
-              <div className="bg-primary/5 border border-primary/15 rounded-xl px-4 py-3">
-                <p className="text-[9px] font-black uppercase tracking-wider text-primary/60 mb-1">Hypothesis</p>
-                <p className="text-xs text-foreground/80 leading-relaxed italic">"{s.hypothesis}"</p>
+              <div className="bg-primary/5 border border-primary/15 rounded-xl px-3.5 py-2.5 sm:px-4 sm:py-3">
+                <p className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-primary/60 mb-0.5 sm:mb-1">Hypothesis</p>
+                <p className="text-[11px] sm:text-xs text-foreground/80 leading-relaxed italic">"{s.hypothesis}"</p>
               </div>
 
               {/* Meta row — duration + estimated votes */}
@@ -253,7 +259,7 @@ function SuggestionModal({
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-black">
                     Voting Options ({s.voting_options.length})
                   </p>
-                  <div className="grid grid-cols-2 gap-1.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-1.5">
                     {s.voting_options.map((p, j) => (
                       <div
                         key={j}
@@ -277,16 +283,17 @@ function SuggestionModal({
               {/* Apply */}
               <button
                 onClick={() => onApply(s)}
-                className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-black flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
+                className="w-full py-2.5 sm:py-3 rounded-xl bg-primary text-primary-foreground text-[11px] sm:text-xs font-black flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99]"
               >
-                Use This Concept
+                USE THIS CONCEPT
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -309,18 +316,18 @@ function Stepper({
     <div className="flex items-center gap-3">
       <button
         onClick={() => onChange(Math.max(min, value - 1))}
-        className="w-9 h-9 rounded-xl border border-border text-muted-foreground hover:border-primary/40 hover:text-foreground flex items-center justify-center font-black transition-all"
+        className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-border/60 text-muted-foreground hover:border-primary/40 hover:text-primary flex items-center justify-center font-black transition-all bg-secondary/20"
       >
         −
       </button>
-      <span className="text-base font-black text-foreground w-6 text-center">{value}</span>
+      <span className="text-[14px] sm:text-base font-black text-foreground w-6 text-center">{value}</span>
       <button
         onClick={() => onChange(Math.min(max, value + 1))}
-        className="w-9 h-9 rounded-xl border border-border text-muted-foreground hover:border-primary/40 hover:text-foreground flex items-center justify-center font-black transition-all"
+        className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-border/60 text-muted-foreground hover:border-primary/40 hover:text-primary flex items-center justify-center font-black transition-all bg-secondary/20"
       >
         +
       </button>
-      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">{label}</span>
     </div>
   );
 }
@@ -412,15 +419,15 @@ function EventTab({
 
   return (
     <>
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-3 sm:gap-5">
         {/* Motive */}
         <div>
           <FieldLabel>Motive</FieldLabel>
           <PromptTextarea
             value={motive}
             onChange={setMotive}
-            placeholder="What decision do you want your audience to help you make? e.g. 'Find out which packaging design Gen Z prefers for our new noodle launch'"
-            rows={3}
+            placeholder="Help me decide..."
+            rows={2}
           />
         </div>
 
@@ -433,10 +440,10 @@ function EventTab({
                 key={t}
                 onClick={() => setEventType(t)}
                 className={cn(
-                  "flex-1 py-2.5 rounded-xl text-xs font-black border transition-all",
+                  "flex-1 py-3 rounded-2xl text-xs font-black border transition-all",
                   eventType === t
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "border-border text-muted-foreground hover:border-primary/40"
+                    ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-[1.02]"
+                    : "bg-background border-border/60 text-muted-foreground hover:border-primary/40 hover:bg-secondary/40 hover:text-foreground scale-100"
                 )}
               >
                 {t === "vote" ? "Vote Campaign" : "Post Campaign"}
@@ -461,16 +468,16 @@ function EventTab({
         {/* Decision Domain */}
         <div>
           <FieldLabel>Decision Domain</FieldLabel>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex gap-2 overflow-x-auto pb-3 -mx-2 px-2 no-scrollbar">
             {EVENT_DOMAINS.map((d) => (
               <button
                 key={d}
                 onClick={() => setDecisionDomain(decisionDomain === d ? "" : d)}
                 className={cn(
-                  "px-3 py-1 rounded-full text-xs font-medium border transition-all",
+                  "shrink-0 px-4 py-2 rounded-xl text-xs font-semibold border transition-all",
                   decisionDomain === d
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                    ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20 scale-105"
+                    : "bg-background border-border/60 text-muted-foreground hover:border-primary/40 hover:bg-secondary/40 hover:text-foreground"
                 )}
               >
                 {d}
@@ -482,16 +489,16 @@ function EventTab({
         {/* Target Market */}
         <div>
           <FieldLabel>Target Market</FieldLabel>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex gap-2 overflow-x-auto pb-3 -mx-2 px-2 no-scrollbar">
             {TARGET_MARKETS.map((m) => (
               <button
                 key={m}
                 onClick={() => setTargetMarket(targetMarket === m ? "" : m)}
                 className={cn(
-                  "px-3 py-1 rounded-full text-xs font-medium border transition-all",
+                  "shrink-0 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider border transition-all",
                   targetMarket === m
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                    ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20 scale-105"
+                    : "bg-background border-border/60 text-muted-foreground hover:border-primary/40 hover:bg-secondary/40 hover:text-foreground"
                 )}
               >
                 {m}
@@ -502,13 +509,13 @@ function EventTab({
 
         {/* Budget */}
         <div>
-          <FieldLabel>Budget <span className="normal-case font-normal text-muted-foreground">(optional)</span></FieldLabel>
+          <FieldLabel>Budget <span className="normal-case font-normal text-muted-foreground/50 ml-1">(optional)</span></FieldLabel>
           <input
             type="text"
             value={budget}
             onChange={(e) => setBudget(e.target.value)}
             placeholder="e.g. $500, $2,000, flexible…"
-            className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary/50 transition-colors"
+            className="w-full bg-secondary/30 border border-border/50 rounded-[14px] sm:rounded-[16px] px-3.5 py-2.5 sm:px-4 sm:py-3.5 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all focus:bg-background"
           />
         </div>
 
@@ -577,7 +584,7 @@ function ImageTab({
 
 function TabBar({ active, onChange }: { active: TabId; onChange: (tab: TabId) => void }) {
   return (
-    <div className="flex gap-1.5 px-6 pb-4">
+    <div className="flex gap-1.5 px-4 sm:px-6 pb-2 sm:pb-4">
       {TABS.map((tab) => (
         <button
           key={tab}
@@ -615,13 +622,10 @@ export default function AiEventPanel({
   return (
     <div className="bg-card/50 border border-border/60 rounded-3xl overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-border/40 flex items-center gap-3">
-        <Sparkles className="w-5 h-5 text-primary shrink-0" />
+      <div className="px-4 py-2 sm:px-6 sm:py-4 border-b border-border/40 flex items-center gap-2 sm:gap-3">
+        <Sparkles className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-primary shrink-0" />
         <div className="min-w-0">
-          <span className="font-black text-foreground text-sm">ARIS Studio</span>
-          <p className="text-xs text-muted-foreground leading-snug">
-            Describe your motive — AI will suggest event concepts tailored to your brand
-          </p>
+          <span className="font-black text-foreground text-[10px] sm:text-sm uppercase tracking-tight">Studio</span>
         </div>
       </div>
 
@@ -631,7 +635,7 @@ export default function AiEventPanel({
       </div>
 
       {/* Content */}
-      <div className="px-6 pb-6">
+      <div className="px-3 pb-3 sm:px-6 sm:pb-6">
         {activeTab === "Event" && (
           <EventTab onApplyEvent={onApplyEvent} brandName={brandName} brandBio={brandBio} />
         )}

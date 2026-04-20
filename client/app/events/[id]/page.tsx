@@ -91,16 +91,16 @@ function BigCountdown({ targetDate }: { targetDate: string | Date }) {
         ? [{ v: days, l: "D" }, { v: hours, l: "H" }, { v: minutes, l: "M" }]
         : [{ v: hours, l: "H" }, { v: minutes, l: "M" }, { v: seconds, l: "S" }];
 
-    if (timeLeft === 0) return <span className="text-4xl font-black text-white/40 uppercase tracking-widest">Ended</span>;
+    if (timeLeft === 0) return <span className="text-2xl font-black text-white/40 uppercase tracking-widest">Ended</span>;
 
     return (
-        <div className="flex items-baseline gap-4">
+        <div className="flex items-baseline gap-2 md:gap-4">
             {units.map(({ v, l }) => (
-                <div key={l} className="flex items-baseline gap-1">
-                    <span className="text-4xl md:text-5xl font-black text-white tabular-nums leading-none">
+                <div key={l} className="flex items-baseline gap-0.5 md:gap-1">
+                    <span className="text-2xl md:text-4xl lg:text-5xl font-black text-white tabular-nums leading-none">
                         {String(v).padStart(2, "0")}
                     </span>
-                    <span className="text-sm font-black text-white/40 uppercase">{l}</span>
+                    <span className="text-xs font-black text-white/40 uppercase">{l}</span>
                 </div>
             ))}
         </div>
@@ -131,7 +131,7 @@ function ParticipantAvatars({ avatars = [], totalCount, onShowAll }: { avatars?:
                 {shown.map((p: any, i: number) => (
                     <div
                         key={p.id}
-                        className="relative w-9 h-9 rounded-full border-2 border-zinc-950 bg-zinc-900 ring-1 ring-white/10 overflow-hidden shrink-0 transition-transform group-hover/avatars:scale-105"
+                        className="relative w-7 h-7 md:w-9 md:h-9 rounded-full border-2 border-zinc-950 bg-zinc-900 ring-1 ring-white/10 overflow-hidden shrink-0 transition-transform group-hover/avatars:scale-105"
                         style={{ zIndex: 10 + (MAX - i) }}
                     >
                         {p.avatarUrl ? (
@@ -144,7 +144,7 @@ function ParticipantAvatars({ avatars = [], totalCount, onShowAll }: { avatars?:
                     </div>
                 ))}
                 {overflow > 0 && (
-                    <div className="relative w-9 h-9 rounded-full border-2 border-zinc-950 bg-zinc-900 ring-1 ring-white/10 flex items-center justify-center shrink-0 z-0 group-hover/avatars:bg-zinc-800 transition-colors">
+                    <div className="relative w-7 h-7 md:w-9 md:h-9 rounded-full border-2 border-zinc-950 bg-zinc-900 ring-1 ring-white/10 flex items-center justify-center shrink-0 z-0 group-hover/avatars:bg-zinc-800 transition-colors">
                         <span className="text-[10px] font-black text-white/60 tracking-tighter">+{overflow}</span>
                     </div>
                 )}
@@ -519,7 +519,7 @@ function EventSidebar({
                                 </div>
                                 <p className="text-[9px] font-black uppercase tracking-widest text-foreground/35 mb-1">Total Prizes</p>
                                 <div className="flex items-baseline gap-2">
-                                    <p className="text-4xl font-black text-white leading-none">${calculateTotalPool(event).toLocaleString()}</p>
+                                    <p className="text-3xl font-black text-white leading-none">${calculateTotalPool(event).toLocaleString()}</p>
                                     <span className="text-xs font-black text-foreground/40">USDC</span>
                                 </div>
                             </div>
@@ -1096,7 +1096,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: 80, opacity: 0 }}
                         transition={{ type: "spring", stiffness: 400, damping: 35 }}
-                        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl bg-background/90 backdrop-blur-xl border border-lime-400/30 shadow-[0_8px_32px_rgba(0,0,0,0.5)] min-w-[320px] max-w-[480px]"
+                        className="fixed bottom-4 md:bottom-6 left-3 right-3 md:left-1/2 md:right-auto md:-translate-x-1/2 z-50 flex items-center gap-2 md:gap-3 px-3 md:px-4 py-3 rounded-2xl bg-background/90 backdrop-blur-xl border border-lime-400/30 shadow-[0_8px_32px_rgba(0,0,0,0.5)] md:min-w-[320px] md:max-w-[480px]"
                     >
                         {/* Thumbnail */}
                         {pendingSub && (pendingSub.imageUrl || pendingSub.imageCid) && (
@@ -1180,18 +1180,18 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                 <span className="text-[11px] font-black text-white/50">{previewIdx + 1} / {sortedSubmissions.length}</span>
                             </div>
 
-                            <div className="w-full max-w-[960px] flex flex-col md:flex-row gap-6 items-center md:items-stretch h-[90vh]" onClick={(e) => e.stopPropagation()}>
+                            <div className="w-full max-w-[960px] flex flex-col md:flex-row gap-3 md:gap-6 items-center md:items-stretch h-[90vh] overflow-y-auto md:overflow-visible" onClick={(e) => e.stopPropagation()}>
                                 {/* Image */}
-                                <div className="flex-1 flex items-center justify-center overflow-hidden">
+                                <div className="flex-1 flex items-center justify-center overflow-hidden min-h-[200px] md:min-h-0">
                                     <img
                                         src={previewSub.imageUrl || `${PINATA_GW}/${previewSub.imageCid}`}
                                         alt="Submission preview"
-                                        className="max-w-full max-h-full object-contain rounded-[18px] border border-white/15"
+                                        className="max-w-full max-h-full object-contain rounded-[14px] md:rounded-[18px] border border-white/15"
                                     />
                                 </div>
 
                                 {/* Details panel */}
-                                <div className="w-full md:w-[260px] shrink-0 flex flex-col gap-3">
+                                <div className="w-full md:w-[260px] shrink-0 flex flex-col gap-2 md:gap-3 pb-4 md:pb-0">
                                     {/* Caption */}
                                     {previewSub.content && (
                                         <div className="bg-white/[0.04] border border-white/[0.08] rounded-[16px] p-4">
@@ -1266,7 +1266,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
             </AnimatePresence>
 
 
-            <main className="w-full pb-24 pt-2">
+            <main className="w-full pb-24 md:pb-16 pt-2">
                 {/* ── Breadcrumb ── */}
                 <div className="flex items-center gap-1.5 mb-4 px-0">
                     <Link href="/explore" className="text-xs text-foreground/40 hover:text-foreground transition-colors flex items-center gap-1"><ChevronLeft className="w-3 h-3" />Back</Link>
@@ -1322,7 +1322,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                             {/* Left */}
                             <div className="flex-1 min-w-0">
                                 {/* Banner with overlay */}
-                                <div className="relative rounded-[24px] overflow-hidden h-[220px] md:h-[280px] mb-5">
+                                <div className="relative rounded-[20px] md:rounded-[24px] overflow-hidden h-[160px] md:h-[280px] mb-5">
                                     {(event.imageUrl || event.imageCid) ? (
                                         <img
                                             src={event.imageUrl || `https://gateway.pinata.cloud/ipfs/${event.imageCid}`}
@@ -1335,12 +1335,12 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                     {/* Dark overlay */}
                                     <div className="absolute inset-0 bg-black/60" />
                                     {/* Cancelled badge + text */}
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-6">
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 md:gap-3 text-center px-4 md:px-6">
                                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/20 border border-red-500/40">
                                             <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
                                             <span className="text-[10px] font-black uppercase tracking-widest text-red-400">Cancelled</span>
                                         </div>
-                                        <h1 className="font-display text-4xl md:text-5xl text-white/60 uppercase leading-tight">{event.title}</h1>
+                                        <h1 className="font-display text-2xl md:text-4xl lg:text-5xl text-white/60 uppercase leading-tight">{event.title}</h1>
                                     </div>
                                 </div>
 
@@ -1399,69 +1399,69 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         ══════════════════════════════════════════════ */
                         <>
                             {/* ── Full-width hero banner (same style as vote layout) ── */}
-                            <div className="relative overflow-hidden min-h-[220px] md:min-h-[300px] mb-6 -mx-3 w-[calc(100%+1.5rem)] sm:-mx-4 sm:w-[calc(100%+2rem)] md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
+                            <div className="relative overflow-hidden min-h-[180px] md:min-h-[300px] mb-6 -mx-3 w-[calc(100%+1.5rem)] sm:-mx-4 sm:w-[calc(100%+2rem)] md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
                                 <img src={coverUrl} className="absolute inset-0 w-full h-full object-cover object-center" alt="Event" />
                                 <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/75 to-black/20" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                                <div className="relative z-10 flex flex-col justify-between h-full min-h-[260px] md:min-h-[340px] p-6 md:p-8">
+                                <div className="relative z-10 flex flex-col justify-between h-full min-h-[220px] md:min-h-[340px] p-4 md:p-8">
                                     <div>
-                                        <div className="flex items-center gap-3 mb-4 flex-wrap">
-                                            <Link 
+                                        <div className="flex items-center gap-2 mb-3 flex-wrap">
+                                            <Link
                                                 href={`/brand/${toBrandSlug(event.brand?.name || "")}`}
                                                 className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/15 hover:border-white/30 hover:bg-black/60 rounded-full pl-1 pr-3 py-1 transition-all group/brandpill"
                                             >
                                                 {event.brand?.logoCid ? (
-                                                    <img src={`${PINATA_GW}/${event.brand.logoCid}`} className="w-6 h-6 rounded-full object-cover border border-white/20 group-hover/brandpill:scale-110 transition-transform" alt={event.brand?.name} />
+                                                    <img src={`${PINATA_GW}/${event.brand.logoCid}`} className="w-5 h-5 md:w-6 md:h-6 rounded-full object-cover border border-white/20 group-hover/brandpill:scale-110 transition-transform" alt={event.brand?.name} />
                                                 ) : (
-                                                    <div className="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center shrink-0 group-hover/brandpill:scale-110 transition-transform">
+                                                    <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-white/15 flex items-center justify-center shrink-0 group-hover/brandpill:scale-110 transition-transform">
                                                         <span className="text-[9px] font-black text-white/70">{event.brand?.name?.[0]}</span>
                                                     </div>
                                                 )}
-                                                <span className="text-[11px] font-black text-white/90 group-hover/brandpill:text-white transition-colors">{event.brand?.name}</span>
+                                                <span className="text-[10px] md:text-[11px] font-black text-white/90 group-hover/brandpill:text-white transition-colors">{event.brand?.name}</span>
                                             </Link>
                                             <SocialLinks links={{ ...(event.brand as any)?.socialLinks, website: event.brand?.websiteUrl }} eventId={event.id} variant="compact" />
                                             {event.category && (
-                                                <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.10] text-white/50">
+                                                <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-white/[0.06] border border-white/[0.10] text-white/50">
                                                     {event.category}
                                                 </span>
                                             )}
                                         </div>
-                                        <h1 className="font-display text-6xl md:text-7xl lg:text-8xl text-white uppercase leading-[0.88] tracking-tighter max-w-[70%]">
+                                        <h1 className="font-display text-3xl md:text-6xl lg:text-8xl text-white uppercase leading-[0.88] tracking-tighter max-w-full md:max-w-[70%]">
                                             {event.title}
                                         </h1>
                                         {event.tagline && (
-                                            <p className="font-display text-4xl md:text-5xl lg:text-6xl text-lime-400 uppercase leading-[0.88] tracking-tight mt-1">
+                                            <p className="font-display text-xl md:text-4xl lg:text-6xl text-lime-400 uppercase leading-[0.88] tracking-tight mt-1">
                                                 {event.tagline}
                                             </p>
                                         )}
                                         {event.description && (
-                                            <p className="text-sm text-white/60 font-medium leading-relaxed mt-3 max-w-xl line-clamp-2">
+                                            <p className="text-xs md:text-sm text-white/60 font-medium leading-relaxed mt-2 max-w-xl line-clamp-2">
                                                 {event.description}
                                             </p>
                                         )}
                                     </div>
-                                    <div className="border-t border-white/10 pt-4 flex items-end gap-0 flex-wrap">
+                                    <div className="border-t border-white/10 pt-3 md:pt-4 flex items-end gap-0 flex-wrap">
                                         {event.postingEnd && (
                                             <>
-                                                <div className="pr-8">
-                                                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-2">Posting Ends In</p>
+                                                <div className="pr-4 md:pr-8">
+                                                    <p className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1 md:mb-2">Posting Ends In</p>
                                                     <BigCountdown targetDate={event.postingEnd} />
                                                 </div>
-                                                <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
+                                                <div className="self-stretch w-px bg-white/15 mx-0 mr-4 md:mr-8" />
                                             </>
                                         )}
-                                        <div className="pr-8">
-                                            <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Submissions So Far</p>
-                                            <p className="text-4xl md:text-5xl font-black text-lime-400 leading-none tabular-nums">{sortedSubmissions.length}</p>
+                                        <div className="pr-4 md:pr-8">
+                                            <p className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Submissions So Far</p>
+                                            <p className="text-2xl md:text-4xl lg:text-5xl font-black text-lime-400 leading-none tabular-nums">{sortedSubmissions.length}</p>
                                         </div>
                                         {calculateTotalPool(event) > 0 && (
                                             <>
-                                                <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
+                                                <div className="self-stretch w-px bg-white/15 mx-0 mr-4 md:mr-8" />
                                                 <div>
-                                                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Total Prize Pool</p>
-                                                    <div className="flex items-center gap-2">
-                                                        <Trophy className="w-5 h-5 text-yellow-400 shrink-0" />
-                                                        <p className="text-4xl md:text-5xl font-black text-yellow-400 leading-none tabular-nums">${calculateTotalPool(event).toLocaleString()}</p>
+                                                    <p className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Total Prize Pool</p>
+                                                    <div className="flex items-center gap-1.5 md:gap-2">
+                                                        <Trophy className="w-4 h-4 md:w-5 md:h-5 text-yellow-400 shrink-0" />
+                                                        <p className="text-2xl md:text-4xl lg:text-5xl font-black text-yellow-400 leading-none tabular-nums">${calculateTotalPool(event).toLocaleString()}</p>
                                                     </div>
                                                 </div>
                                             </>
@@ -1524,16 +1524,16 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                             animate={{ opacity: 1, y: 0 }}
                                             className="rounded-[28px] bg-[#0c0c10] border border-white/[0.07]"
                                         >
-                                            <div className="px-6 py-8 sm:px-8 space-y-6">
+                                            <div className="px-4 py-5 sm:px-6 sm:py-7 md:px-8 md:py-8 space-y-4 md:space-y-6">
                                                 {/* Heading */}
                                                 <div>
-                                                    <Link 
+                                                    <Link
                                                         href={`/brand/${toBrandSlug(event.brand?.name || "")}`}
                                                         className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2 block hover:text-primary transition-colors"
                                                     >
                                                         {event.brand?.name}
                                                     </Link>
-                                                    <h2 className="font-display text-4xl md:text-5xl text-white leading-[0.9] uppercase tracking-tight">
+                                                    <h2 className="font-display text-2xl md:text-4xl lg:text-5xl text-white leading-[0.9] uppercase tracking-tight">
                                                         Compete for the{" "}
                                                         <span className="bg-gradient-to-r from-lime-300 via-lime-400 to-green-400 bg-clip-text text-transparent">top spot</span>
                                                     </h2>
@@ -1609,7 +1609,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                                         key={i}
                                                                         type="button"
                                                                         onClick={() => setSampleLightboxUrl(s.urls?.large || s.urls?.full || s.urls?.medium || s.urls?.thumbnail)}
-                                                                        className="shrink-0 w-[160px] h-[160px] rounded-[16px] overflow-hidden border border-white/[0.08] hover:border-purple-400/40 transition-all group relative"
+                                                                        className="shrink-0 w-[120px] h-[120px] md:w-[160px] md:h-[160px] rounded-[12px] md:rounded-[16px] overflow-hidden border border-white/[0.08] hover:border-purple-400/40 transition-all group relative"
                                                                     >
                                                                         <img
                                                                             src={s.urls?.medium || s.urls?.thumbnail}
@@ -1677,10 +1677,10 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                     animate={{ opacity: 1, scale: 1, y: 0 }}
                                                     exit={{ opacity: 0, scale: 0.95, y: 12 }}
                                                     transition={{ duration: 0.22 }}
-                                                    className="w-full max-w-3xl bg-[#0e0e12] border border-white/[0.08] rounded-[28px] overflow-hidden flex flex-col md:flex-row"
+                                                    className="w-full max-w-3xl bg-[#0e0e12] border border-white/[0.08] rounded-[20px] md:rounded-[28px] overflow-hidden flex flex-col md:flex-row max-h-[90vh] overflow-y-auto"
                                                 >
                                                     {/* Left — image */}
-                                                    <div className="md:w-[52%] shrink-0 relative bg-black flex items-center justify-center min-h-[320px]">
+                                                    <div className="md:w-[52%] shrink-0 relative bg-black flex items-center justify-center min-h-[220px] md:min-h-[320px]">
                                                         <img
                                                             src={aiImageUrl || preview!}
                                                             className="w-full h-full object-contain"
@@ -1694,7 +1694,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                     </div>
 
                                                     {/* Right — caption + rewards + submit */}
-                                                    <div className="flex-1 flex flex-col p-6 gap-4">
+                                                    <div className="flex-1 flex flex-col p-4 md:p-6 gap-3 md:gap-4">
                                                         <div className="flex items-start justify-between">
                                                             <div>
                                                                 <Link 
@@ -1937,7 +1937,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         ══════════════════════════════════════════════ */
                         <>
                             {/* ── Full-width hero banner ── */}
-                            <div className="relative overflow-hidden min-h-[180px] md:min-h-[280px] mb-6 -mx-3 w-[calc(100%+1.5rem)] sm:-mx-4 sm:w-[calc(100%+2rem)] md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
+                            <div className="relative overflow-hidden min-h-[160px] md:min-h-[280px] mb-6 -mx-3 w-[calc(100%+1.5rem)] sm:-mx-4 sm:w-[calc(100%+2rem)] md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
                                 {/* Background image */}
                                 <img src={coverUrl} className="absolute inset-0 w-full h-full object-cover object-center" alt="Event" />
 
@@ -1946,50 +1946,50 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
                                 {/* Content */}
-                                <div className="relative z-10 flex flex-col justify-between h-full min-h-[220px] md:min-h-[320px] p-6 md:p-8">
+                                <div className="relative z-10 flex flex-col justify-between h-full min-h-[200px] md:min-h-[320px] p-4 md:p-8">
                                     {/* Top: brand pill + title */}
                                     <div>
                                         {/* Brand + category pill */}
-                                        <div className="flex items-center gap-3 mb-4 flex-wrap">
-                                            <Link 
+                                        <div className="flex items-center gap-2 mb-3 flex-wrap">
+                                            <Link
                                                 href={`/brand/${toBrandSlug(event.brand?.name || "")}`}
                                                 className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/15 hover:border-white/30 hover:bg-black/60 rounded-full pl-1 pr-3 py-1 transition-all group/brandpill"
                                             >
                                                 {event.brand?.logoCid ? (
                                                     <img
                                                         src={`${PINATA_GW}/${event.brand.logoCid}`}
-                                                        className="w-6 h-6 rounded-full object-cover border border-white/20 group-hover/brandpill:scale-110 transition-transform"
+                                                        className="w-5 h-5 md:w-6 md:h-6 rounded-full object-cover border border-white/20 group-hover/brandpill:scale-110 transition-transform"
                                                         alt={event.brand?.name}
                                                     />
                                                 ) : (
-                                                    <div className="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center shrink-0 group-hover/brandpill:scale-110 transition-transform">
+                                                    <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-white/15 flex items-center justify-center shrink-0 group-hover/brandpill:scale-110 transition-transform">
                                                         <span className="text-[9px] font-black text-white/70">{event.brand?.name?.[0]}</span>
                                                     </div>
                                                 )}
-                                                <span className="text-[11px] font-black text-white/90 group-hover/brandpill:text-white transition-colors">{event.brand?.name}</span>
+                                                <span className="text-[10px] md:text-[11px] font-black text-white/90 group-hover/brandpill:text-white transition-colors">{event.brand?.name}</span>
                                             </Link>
                                             <SocialLinks links={{ ...(event.brand as any)?.socialLinks, website: event.brand?.websiteUrl }} eventId={event.id} variant="compact" />
                                             {event.category && (
-                                                <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.10] text-white/50">
+                                                <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-white/[0.06] border border-white/[0.10] text-white/50">
                                                     {event.category}
                                                 </span>
                                             )}
                                         </div>
 
                                         {/* Title */}
-                                        <h1 className="font-display text-5xl md:text-6xl lg:text-7xl text-white uppercase leading-[0.88] tracking-tight max-w-[60%]">
+                                        <h1 className="font-display text-3xl md:text-5xl lg:text-7xl text-white uppercase leading-[0.88] tracking-tight max-w-full md:max-w-[60%]">
                                             {event.title}
                                         </h1>
                                         {event.tagline && (
-                                            <p className="font-display text-4xl md:text-5xl lg:text-6xl text-lime-400 uppercase leading-[0.88] tracking-tight mt-1">
+                                            <p className="font-display text-xl md:text-4xl lg:text-6xl text-lime-400 uppercase leading-[0.88] tracking-tight mt-1">
                                                 {event.tagline}
                                             </p>
                                         )}
                                         {event.description && (
-                                            <div className="mt-4 max-w-2xl">
+                                            <div className="mt-2 md:mt-4 max-w-2xl">
                                                 <ExpandableDescription
                                                     text={event.description}
-                                                    className="text-sm md:text-base text-white/70 font-medium leading-relaxed"
+                                                    className="text-xs md:text-sm lg:text-base text-white/70 font-medium leading-relaxed"
                                                 />
                                             </div>
                                         )}
@@ -2002,49 +2002,49 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
 
                                         {/* Stats row */}
-                                        <div className="border-t border-white/10 pt-4 flex items-end gap-0 flex-wrap">
+                                        <div className="border-t border-white/10 pt-3 md:pt-4 flex items-end gap-0 flex-wrap">
                                             {/* Countdown or Ended */}
                                             {isVotingEnded ? (
                                                 <>
-                                                    <div className="pr-8">
-                                                        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Event Status</p>
-                                                        <p className="text-2xl font-black text-white/50 leading-none">Ended</p>
+                                                    <div className="pr-4 md:pr-8">
+                                                        <p className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Event Status</p>
+                                                        <p className="text-lg md:text-2xl font-black text-white/50 leading-none">Ended</p>
                                                     </div>
-                                                    <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
+                                                    <div className="self-stretch w-px bg-white/15 mx-0 mr-4 md:mr-8" />
                                                 </>
                                             ) : !isVotingEnded && displayMode === "vote" && event.endTime ? (
                                                 <>
-                                                    <div className="pr-8">
-                                                        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-2">Voting Ends In</p>
+                                                    <div className="pr-4 md:pr-8">
+                                                        <p className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1 md:mb-2">Voting Ends In</p>
                                                         <BigCountdown targetDate={event.endTime} />
                                                     </div>
-                                                    <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
+                                                    <div className="self-stretch w-px bg-white/15 mx-0 mr-4 md:mr-8" />
                                                 </>
                                             ) : null}
                                             {!isVotingEnded && displayMode === "upcoming" && event.startTime && (
                                                 <>
-                                                    <div className="pr-8">
-                                                        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-2">Starts In</p>
+                                                    <div className="pr-4 md:pr-8">
+                                                        <p className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1 md:mb-2">Starts In</p>
                                                         <BigCountdown targetDate={event.startTime} />
                                                     </div>
-                                                    <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
+                                                    <div className="self-stretch w-px bg-white/15 mx-0 mr-4 md:mr-8" />
                                                 </>
                                             )}
 
                                             {/* Participants */}
-                                            <div className="pr-8">
-                                                <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Total Participants</p>
+                                            <div className="pr-4 md:pr-8">
+                                                <p className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Total Participants</p>
                                                 {loading ? (
-                                                    <div className="h-10 w-20 rounded-lg bg-white/10 animate-pulse" />
+                                                    <div className="h-8 w-16 rounded-lg bg-white/10 animate-pulse" />
                                                 ) : (
-                                                    <div className="flex items-center gap-3 mt-1">
-                                                        <div className="flex items-center justify-center w-5 h-5 opacity-40">
-                                                            <Users className="w-5 h-5 text-white" />
+                                                    <div className="flex items-center gap-2 md:gap-3 mt-1">
+                                                        <div className="flex items-center justify-center w-4 h-4 md:w-5 md:h-5 opacity-40">
+                                                            <Users className="w-4 h-4 md:w-5 md:h-5 text-white" />
                                                         </div>
                                                         <div className="flex items-baseline gap-1">
-                                                            <p className="text-4xl md:text-5xl font-black text-lime-400 leading-none tabular-nums">{participantCount.toLocaleString()}</p>
+                                                            <p className="text-2xl md:text-4xl lg:text-5xl font-black text-lime-400 leading-none tabular-nums">{participantCount.toLocaleString()}</p>
                                                             {event.capacity && (
-                                                                <span className="text-2xl md:text-3xl font-black text-white/30 leading-none">/{event.capacity.toLocaleString()}</span>
+                                                                <span className="text-lg md:text-2xl lg:text-3xl font-black text-white/30 leading-none">/{event.capacity.toLocaleString()}</span>
                                                             )}
                                                         </div>
                                                         <ParticipantAvatars avatars={(event as any).participantAvatars} totalCount={participantCount} onShowAll={() => setShowParticipantsModal(true)} />
@@ -2054,11 +2054,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
                                             {calculateTotalPool(event) > 0 && (
                                                 <>
-                                                    <div className="self-stretch w-px bg-white/15 mx-0 mr-8" />
+                                                    <div className="self-stretch w-px bg-white/15 mx-0 mr-4 md:mr-8" />
                                                     <div>
-                                                        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Total Prize Pool</p>
-                                                        <div className="flex items-center gap-2">
-                                                            <p className="text-4xl md:text-5xl font-black text-yellow-400 leading-none tabular-nums">${calculateTotalPool(event).toLocaleString()}</p>
+                                                        <p className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Total Prize Pool</p>
+                                                        <div className="flex items-center gap-1.5 md:gap-2">
+                                                            <p className="text-2xl md:text-4xl lg:text-5xl font-black text-yellow-400 leading-none tabular-nums">${calculateTotalPool(event).toLocaleString()}</p>
                                                         </div>
                                                     </div>
                                                 </>

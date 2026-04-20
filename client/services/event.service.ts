@@ -58,6 +58,7 @@ export interface Event {
         logoUrl?: string;
         socialLinks?: Record<string, string>;
         websiteUrl?: string;
+        categories?: string[];
     };
     eventAnalytics?: {
         totalViews: number;
@@ -102,6 +103,7 @@ export interface Event {
     userVotes?: any[];
     hasSubmitted?: boolean;
     userSubmission?: any;
+    participationCount?: number;
 }
 
 export interface CreateEventRequest {
@@ -172,6 +174,14 @@ export interface UpdateEventRequest {
     ageRestriction?: number;
     genderRestriction?: string;
     intendedCategories?: string[];
+    proposals?: Array<{
+        type: 'IMAGE' | 'TEXT';
+        title: string;
+        content?: string;
+        imageCid?: string;
+        imageUrl?: string;
+        order?: number;
+    }>;
 }
 
 export interface EventFilters {
