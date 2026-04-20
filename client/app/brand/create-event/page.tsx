@@ -2320,13 +2320,13 @@ export default function CreateEventPage() {
         return (
             <div className="min-h-screen w-full bg-background font-sans">
                 {/* Header */}
-                <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border/40 px-4 sm:px-6 py-4 flex items-center justify-between">
-                    <Link href="/brand/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group">
-                        <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
+                <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border/40 px-4 sm:px-6 py-3 flex items-center gap-3">
+                    <Link href="/brand/dashboard" className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors group shrink-0">
+                        <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
                         <span className="text-xs font-black tracking-widest uppercase">Dashboard</span>
                     </Link>
-                    <h1 className="text-sm font-black uppercase tracking-widest text-foreground/60">Create Event</h1>
-                    <div className="w-20" />
+                    <h1 className="flex-1 text-center text-xs font-black uppercase tracking-widest text-foreground/60 whitespace-nowrap">Create Event</h1>
+                    <div className="w-[72px] shrink-0" />
                 </div>
 
                 <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">

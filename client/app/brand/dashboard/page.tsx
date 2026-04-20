@@ -134,13 +134,13 @@ function BrandBanner({ brand, stats, loading }: { brand: Brand | null; stats: Da
     const truncated = desc.length > 160;
 
     return (
-        <div className="bg-card border border-border/60 rounded-[24px] p-6 md:p-8 space-y-5">
-            <div className="flex items-start gap-4">
+        <div className="bg-card border border-border/60 rounded-[20px] p-4 md:p-8 space-y-4">
+            <div className="flex items-start gap-3">
                 {/* Logo */}
-                <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden border border-border/60 shrink-0 bg-secondary/40">
+                <div className="w-12 h-12 md:w-20 md:h-20 rounded-xl md:rounded-2xl overflow-hidden border border-border/60 shrink-0 bg-secondary/40">
                     {logoSrc
                         ? <img src={logoSrc} alt={brand?.name} className="w-full h-full object-cover" />
-                        : <div className="w-full h-full flex items-center justify-center"><Layers className="w-6 h-6 text-muted-foreground/30" /></div>
+                        : <div className="w-full h-full flex items-center justify-center"><Layers className="w-5 h-5 text-muted-foreground/30" /></div>
                     }
                 </div>
 
@@ -148,16 +148,16 @@ function BrandBanner({ brand, stats, loading }: { brand: Brand | null; stats: Da
                 <div className="flex-1 min-w-0">
                     {loading ? (
                         <div className="space-y-2">
-                            <Skeleton className="h-8 w-48" />
-                            <Skeleton className="h-4 w-64" />
+                            <Skeleton className="h-6 w-36" />
+                            <Skeleton className="h-3 w-48" />
                         </div>
                     ) : (
                         <>
-                            <h1 className="font-display text-[2.5rem] md:text-[3.5rem] text-foreground uppercase leading-[0.9] tracking-tight">
+                            <h1 className="font-display text-[1.6rem] md:text-[3.5rem] text-foreground uppercase leading-[0.9] tracking-tight">
                                 {brand?.name ?? "Your Brand"}
                             </h1>
                             {brand?.tagline && (
-                                <p className="text-sm text-muted-foreground font-medium mt-1 italic">{brand.tagline}</p>
+                                <p className="text-xs md:text-sm text-muted-foreground font-medium mt-1 italic">{brand.tagline}</p>
                             )}
                         </>
                     )}
@@ -166,9 +166,9 @@ function BrandBanner({ brand, stats, loading }: { brand: Brand | null; stats: Da
                 {/* Create button */}
                 <Link
                     href="/brand/create-event"
-                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-bold rounded-full hover:opacity-90 transition-opacity whitespace-nowrap shrink-0 text-sm"
+                    className="flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 bg-primary text-primary-foreground font-bold rounded-full hover:opacity-90 transition-opacity whitespace-nowrap shrink-0 text-xs md:text-sm"
                 >
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-3.5 h-3.5 md:w-4 md:h-4" />
                     <span className="hidden md:inline">Create Campaign</span>
                     <span className="md:hidden">New</span>
                 </Link>
@@ -177,13 +177,13 @@ function BrandBanner({ brand, stats, loading }: { brand: Brand | null; stats: Da
             {/* Description */}
             {!loading && desc && (
                 <div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                        {truncated && !showMore ? desc.slice(0, 160) + "…" : desc}
+                    <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
+                        {truncated && !showMore ? desc.slice(0, 120) + "…" : desc}
                     </p>
                     {truncated && (
                         <button
                             onClick={() => setShowMore(v => !v)}
-                            className="mt-1 text-sm font-bold text-primary hover:underline flex items-center gap-1"
+                            className="mt-1 text-xs font-bold text-primary hover:underline flex items-center gap-1"
                         >
                             {showMore ? <><ChevronUp className="w-3 h-3" /> Show less</> : <><ChevronDown className="w-3 h-3" /> Show more</>}
                         </button>
@@ -192,38 +192,38 @@ function BrandBanner({ brand, stats, loading }: { brand: Brand | null; stats: Da
             )}
 
             {/* Quick stats row */}
-            <div className="flex flex-wrap gap-4 pt-2 border-t border-border/40">
+            <div className="flex flex-wrap gap-3 pt-2 border-t border-border/40">
                 {loading ? (
-                    Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-28" />)
+                    Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-8 w-20" />)
                 ) : (
                     <>
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center">
-                                <Radio className="w-4 h-4 text-emerald-500" />
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center">
+                                <Radio className="w-3.5 h-3.5 text-emerald-500" />
                             </div>
                             <div>
-                                <p className="text-xs font-black text-muted-foreground uppercase tracking-wider">Total Events</p>
-                                <p className="text-base font-black text-foreground">{stats.totalEvents}</p>
+                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Events</p>
+                                <p className="text-sm font-black text-foreground">{stats.totalEvents}</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center">
-                                <Users className="w-4 h-4 text-blue-400" />
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-7 h-7 rounded-lg bg-blue-500/15 flex items-center justify-center">
+                                <Users className="w-3.5 h-3.5 text-blue-400" />
                             </div>
                             <div>
-                                <p className="text-xs font-black text-muted-foreground uppercase tracking-wider">Followers</p>
-                                <p className="text-base font-black text-foreground">
+                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Followers</p>
+                                <p className="text-sm font-black text-foreground">
                                     {brand?.followerCount != null ? brand.followerCount.toLocaleString() : "—"}
                                 </p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-                                <DollarSign className="w-4 h-4 text-primary" />
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <DollarSign className="w-3.5 h-3.5 text-primary" />
                             </div>
                             <div>
-                                <p className="text-xs font-black text-muted-foreground uppercase tracking-wider">Total Spend</p>
-                                <p className="text-base font-black text-foreground">
+                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Spend</p>
+                                <p className="text-sm font-black text-foreground">
                                     {stats.totalCost > 0 ? `$${stats.totalCost.toLocaleString()}` : "—"}
                                 </p>
                             </div>
@@ -255,14 +255,14 @@ function TabHeader({
 }) {
     const tabs: Tab[] = ["overview", "stats", "insights"];
     return (
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-2">
             {/* Active tab name — left */}
-            <h2 className="font-display text-[2rem] md:text-[2.5rem] text-foreground uppercase leading-none tracking-tight">
+            <h2 className="font-display text-[1.4rem] md:text-[2.5rem] text-foreground uppercase leading-none tracking-tight shrink-0">
                 {TAB_LABELS[active]}
             </h2>
 
             {/* Right: list/card toggle (overview only) + tab switcher */}
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
                 {active === "overview" && (
                     <div className="flex items-center gap-1 bg-card border border-border/60 rounded-full p-1">
                         <button
@@ -283,13 +283,13 @@ function TabHeader({
                 )}
 
                 {/* Tab switcher pills */}
-                <div className="flex items-center gap-1 bg-card border border-border/60 rounded-full p-1">
+                <div className="flex items-center gap-0.5 bg-card border border-border/60 rounded-full p-1">
                     {tabs.map(t => (
                         <button
                             key={t}
                             onClick={() => onChange(t)}
                             className={cn(
-                                "px-3 py-1.5 rounded-full text-sm font-bold transition-all whitespace-nowrap",
+                                "px-2.5 py-1 md:px-3 md:py-1.5 rounded-full text-xs md:text-sm font-bold transition-all whitespace-nowrap",
                                 active === t
                                     ? "bg-primary text-primary-foreground"
                                     : "text-muted-foreground hover:text-foreground"
@@ -319,11 +319,11 @@ function OverviewTab({ events, loading, viewMode }: { events: Event[]; loading: 
 
     if (events.length === 0) {
         return (
-            <div className="bg-card border border-border/60 rounded-[20px] p-12 text-center">
-                <Layers className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+            <div className="bg-card border border-border/60 rounded-[20px] p-8 text-center">
+                <Layers className="w-8 h-8 text-muted-foreground/30 mx-auto mb-3" />
                 <p className="font-bold text-foreground mb-1">No campaigns yet</p>
-                <p className="text-sm text-muted-foreground mb-5">Create your first campaign to get started.</p>
-                <Link href="/brand/create-event" className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground font-bold rounded-full hover:opacity-90 text-sm">
+                <p className="text-xs text-muted-foreground mb-4">Create your first campaign to get started.</p>
+                <Link href="/brand/create-event" className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-bold rounded-full hover:opacity-90 text-sm">
                     <Plus className="w-4 h-4" /> Create Campaign
                 </Link>
             </div>
@@ -487,18 +487,24 @@ function OverviewListView({ events }: { events: Event[] }) {
                         <Link
                             key={ev.id}
                             href={`/brand/events/${ev.id}`}
-                            className="flex flex-col md:grid md:grid-cols-[32px_100px_1fr_120px_130px_90px_80px_90px_80px_100px] gap-3 px-4 py-3.5 hover:bg-secondary/20 transition-colors group items-center"
+                            className="grid grid-cols-[80px_1fr] md:grid-cols-[32px_100px_1fr_120px_130px_90px_80px_90px_80px_100px] gap-2 md:gap-3 px-3 md:px-4 py-3 hover:bg-secondary/20 transition-colors group items-center"
                         >
                             <span className="hidden md:block text-xs text-muted-foreground/40 font-bold">{idx + 1}</span>
                             <span className={cn(
-                                "px-2 py-0.5 rounded text-xs font-black uppercase tracking-wider border w-fit",
+                                "px-2 py-0.5 rounded text-[10px] md:text-xs font-black uppercase tracking-wider border w-fit",
                                 STATUS_STYLES[ev.status] ?? STATUS_STYLES.draft
                             )}>
                                 {STATUS_LABELS[ev.status] ?? ev.status}
                             </span>
-                            <span className="font-semibold text-base text-foreground group-hover:text-primary transition-colors truncate">
-                                {ev.title}
-                            </span>
+                            <div className="min-w-0">
+                                <span className="font-semibold text-sm md:text-base text-foreground group-hover:text-primary transition-colors truncate block">
+                                    {ev.title}
+                                </span>
+                                <div className="flex items-center gap-2 mt-0.5 md:hidden">
+                                    {votes > 0 && <span className="text-[10px] text-muted-foreground">{votes.toLocaleString()} votes</span>}
+                                    {pool > 0 && <span className="text-[10px] font-bold text-primary">${pool.toLocaleString()}</span>}
+                                </div>
+                            </div>
                             <span className="hidden md:block text-sm text-muted-foreground capitalize">
                                 {ev.eventType === "post_and_vote" ? "Post & Vote" : "Vote Only"}
                             </span>
@@ -532,7 +538,7 @@ function OverviewCardView({ events }: { events: Event[] }) {
                         href={`/brand/events/${ev.id}`}
                         className="group block bg-card border border-border/60 rounded-[20px] overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5"
                     >
-                        <div className="relative h-28 bg-secondary/40">
+                        <div className="relative h-24 md:h-28 bg-secondary/40">
                             {coverUrl
                                 ? <img src={coverUrl} alt={ev.title} className="w-full h-full object-cover" />
                                 : <div className="w-full h-full flex items-center justify-center"><Layers className="w-8 h-8 text-muted-foreground/20" /></div>
@@ -689,12 +695,12 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
     return (
         <div className="space-y-5">
             {/* Filters */}
-            <div className="flex flex-wrap gap-3 items-center">
+            <div className="flex flex-wrap gap-2 items-center">
                 {/* Domain */}
                 <select
                     value={domainFilter}
                     onChange={e => setDomainFilter(e.target.value)}
-                    className="px-3 py-2 rounded-full text-sm font-bold bg-card border border-border focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="px-2.5 py-1.5 rounded-full text-xs font-bold bg-card border border-border focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
                     <option value="all">All Domains</option>
                     {domains.map(d => <option key={d} value={d}>{d}</option>)}
@@ -704,7 +710,7 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                 <select
                     value={eventFilter}
                     onChange={e => setEventFilter(e.target.value)}
-                    className="px-3 py-2 rounded-full text-sm font-bold bg-card border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 max-w-[200px]"
+                    className="px-2.5 py-1.5 rounded-full text-xs font-bold bg-card border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 max-w-[140px] md:max-w-[200px]"
                 >
                     <option value="all">All Events</option>
                     {events.map(e => <option key={e.id} value={e.id}>{e.title}</option>)}
@@ -717,28 +723,28 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                             key={t}
                             onClick={() => setTimeFilter(t)}
                             className={cn(
-                                "px-3 py-1.5 rounded-full text-sm font-bold border transition-all",
+                                "px-2.5 py-1 rounded-full text-xs font-bold border transition-all",
                                 timeFilter === t
                                     ? "bg-primary text-primary-foreground border-primary"
                                     : "bg-card text-muted-foreground border-border hover:border-primary/40"
                             )}
                         >
-                            {t === "all" ? "All time" : t}
+                            {t === "all" ? "All" : t}
                         </button>
                     ))}
                 </div>
             </div>
 
             {/* Charts grid */}
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-2 gap-3 md:gap-4">
 
                 {/* Time vs Views/Votes/Posts */}
                 <div className="bg-card border border-border/60 rounded-[20px] overflow-hidden">
-                    <div className="px-5 py-4 border-b border-border/40">
-                        <h3 className="font-bold text-base">Views, Votes & Posts per Event</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">Engagement across selected events</p>
+                    <div className="px-4 py-3 md:px-5 md:py-4 border-b border-border/40">
+                        <h3 className="font-bold text-sm md:text-base">Views, Votes & Posts per Event</h3>
+                        <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">Engagement across selected events</p>
                     </div>
-                    <div className="px-2 py-3 h-[260px]">
+                    <div className="px-2 py-3 h-[200px] md:h-[260px]">
                         {!hasData ? (
                             <div className="h-full flex items-center justify-center text-sm text-muted-foreground">Not available</div>
                         ) : (
@@ -770,11 +776,11 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
 
                 {/* Demographics double bar chart */}
                 <div className="bg-card border border-border/60 rounded-[20px] overflow-hidden">
-                    <div className="px-5 py-4 border-b border-border/40">
-                        <h3 className="font-bold text-base">Voter Demographics</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">Age × Gender breakdown across all events</p>
+                    <div className="px-4 py-3 md:px-5 md:py-4 border-b border-border/40">
+                        <h3 className="font-bold text-sm md:text-base">Voter Demographics</h3>
+                        <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">Age × Gender breakdown</p>
                     </div>
-                    <div className="px-2 py-3 h-[260px]">
+                    <div className="px-2 py-3 h-[200px] md:h-[260px]">
                         {!filteredAgg || !demoData.some(d => d.male + d.female + d.others > 0) ? (
                             <div className="h-full flex items-center justify-center text-sm text-muted-foreground">Not available</div>
                         ) : (
@@ -795,11 +801,11 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
 
                 {/* Decision quality metrics */}
                 <div className="bg-card border border-border/60 rounded-[20px] overflow-hidden">
-                    <div className="px-5 py-4 border-b border-border/40">
-                        <h3 className="font-bold text-base">Decision Quality per Event</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">Entropy, winning margin, historical alignment</p>
+                    <div className="px-4 py-3 md:px-5 md:py-4 border-b border-border/40">
+                        <h3 className="font-bold text-sm md:text-base">Decision Quality per Event</h3>
+                        <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">Entropy, margin, alignment</p>
                     </div>
-                    <div className="px-2 py-3 h-[260px]">
+                    <div className="px-2 py-3 h-[200px] md:h-[260px]">
                         {filteredSummaries.filter(s => s.totalVotes > 0).length === 0 ? (
                             <div className="h-full flex items-center justify-center text-sm text-muted-foreground">Not available</div>
                         ) : (
@@ -827,8 +833,8 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                 </div>
 
                 {/* Decision Confidence + key metrics */}
-                <div className="bg-card border border-border/60 rounded-[20px] p-5 space-y-4">
-                    <h3 className="font-bold text-base">Decision Confidence & Quality</h3>
+                <div className="bg-card border border-border/60 rounded-[20px] p-4 md:p-5 space-y-3 md:space-y-4">
+                    <h3 className="font-bold text-sm md:text-base">Decision Confidence & Quality</h3>
                     {!filteredAgg ? (
                         <p className="text-sm text-muted-foreground">Not available</p>
                     ) : (
@@ -859,13 +865,13 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
             </div>
 
             {/* ── Row 2: Clicks Breakdown + Profile Visits ── */}
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-2 gap-3 md:gap-4">
 
                 {/* Clicks Breakdown Pie */}
                 <div className="bg-card border border-border/60 rounded-[20px] overflow-hidden">
-                    <div className="px-5 py-4 border-b border-border/40">
-                        <h3 className="font-bold text-base">Clicks Breakdown</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">Vote · Event · Website · Social</p>
+                    <div className="px-4 py-3 md:px-5 md:py-4 border-b border-border/40">
+                        <h3 className="font-bold text-sm md:text-base">Clicks Breakdown</h3>
+                        <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">Vote · Event · Website · Social</p>
                     </div>
                     <div className="px-4 py-4">
                         {(() => {
@@ -924,17 +930,17 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
                 </div>
 
                 {/* Profile Visits */}
-                <div className="bg-card border border-border/60 rounded-[20px] p-5 flex flex-col gap-3">
+                <div className="bg-card border border-border/60 rounded-[20px] p-4 md:p-5 flex flex-col gap-3">
                     <div>
-                        <h3 className="font-bold text-base">Profile Visits</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">Unique profile views across events</p>
+                        <h3 className="font-bold text-sm md:text-base">Profile Visits</h3>
+                        <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">Unique profile views across events</p>
                     </div>
                     {!hasData ? (
                         <p className="text-sm text-muted-foreground flex-1 flex items-center">Not available</p>
                     ) : (
                         <>
                             <div className="flex items-end gap-2">
-                                <span className="text-[2.2rem] font-black leading-none text-foreground">
+                                <span className="text-2xl md:text-[2.2rem] font-black leading-none text-foreground">
                                     {filteredEvents.reduce((s, e) => s + (e.eventAnalytics?.totalViews ?? 0), 0).toLocaleString()}
                                 </span>
                                 <span className="text-xs font-bold text-muted-foreground mb-1">total views</span>
@@ -965,11 +971,11 @@ function StatsTab({ events, analytics, loading }: { events: Event[]; analytics: 
 
             {/* ── Row 3: Time vs Subscriber Growth ── */}
             <div className="bg-card border border-border/60 rounded-[20px] overflow-hidden">
-                <div className="px-5 py-4 border-b border-border/40">
-                    <h3 className="font-bold text-base">Time vs Subscriber Growth</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">Cumulative new subscribers over events (proxy for audience growth)</p>
+                <div className="px-4 py-3 md:px-5 md:py-4 border-b border-border/40">
+                    <h3 className="font-bold text-sm md:text-base">Subscriber Growth</h3>
+                    <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">Cumulative new subscribers over events</p>
                 </div>
-                <div className="px-2 py-3 h-[220px]">
+                <div className="px-2 py-3 h-[180px] md:h-[220px]">
                     {filteredSummaries.length === 0 ? (
                         <div className="h-full flex items-center justify-center text-sm text-muted-foreground">Not available</div>
                     ) : (
@@ -1071,17 +1077,17 @@ function InsightsTab({ events, analytics, loading }: { events: Event[]; analytic
     return (
         <div className="space-y-6">
             {/* Overall insight panel */}
-            <div className="bg-card border border-border/60 rounded-[20px] p-6 space-y-5">
+            <div className="bg-card border border-border/60 rounded-[20px] p-4 md:p-6 space-y-4">
                 <div className="flex items-center gap-2 mb-1">
-                    <Lightbulb className="w-6 h-6 text-primary" />
-                    <h3 className="font-bold text-lg">Overall Brand Insights</h3>
-                    <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider ml-auto">Across all events</span>
+                    <Lightbulb className="w-5 h-5 text-primary" />
+                    <h3 className="font-bold text-base md:text-lg">Overall Brand Insights</h3>
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider ml-auto hidden sm:block">Across all events</span>
                 </div>
 
                 {!analytics ? (
                     <p className="text-sm text-muted-foreground">Not available</p>
                 ) : (
-                    <div className="grid md:grid-cols-3 gap-4">
+                    <div className="grid md:grid-cols-3 gap-3 md:gap-4">
                         {/* Result */}
                         <div className="space-y-2">
                             <p className="text-xs font-black uppercase tracking-[0.15em] text-emerald-400">Result</p>
@@ -1173,18 +1179,23 @@ function EventInsightCard({ event, summary }: { event: Event; summary?: EventSum
         <div className="bg-card border border-border/60 rounded-[18px] overflow-hidden">
             <button
                 onClick={() => setExpanded(v => !v)}
-                className="w-full flex items-center gap-4 p-4 text-left hover:bg-secondary/20 transition-colors"
+                className="w-full flex items-center gap-3 p-3 md:p-4 text-left hover:bg-secondary/20 transition-colors"
             >
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className={cn("text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded border", STATUS_STYLES[event.status] ?? STATUS_STYLES.draft)}>
+                    <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                        <span className={cn("text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded border", STATUS_STYLES[event.status] ?? STATUS_STYLES.draft)}>
                             {STATUS_LABELS[event.status] ?? event.status}
                         </span>
-                        <span className="text-xs text-muted-foreground font-medium uppercase">
+                        <span className="text-[10px] text-muted-foreground font-medium uppercase hidden sm:block">
                             {event.eventType === "post_and_vote" ? "Post & Vote" : "Vote Only"}
                         </span>
                     </div>
-                    <h4 className="font-bold text-base text-foreground truncate">{event.title}</h4>
+                    <h4 className="font-bold text-sm md:text-base text-foreground truncate">{event.title}</h4>
+                    {/* Mobile mini-stats */}
+                    <div className="flex items-center gap-3 mt-1 md:hidden">
+                        <span className="text-[10px] text-muted-foreground">{votes > 0 ? `${votes.toLocaleString()} votes` : "—"}</span>
+                        {summary && <span className="text-[10px] font-bold text-primary">{summary.topContentVotePercent.toFixed(0)}% top</span>}
+                    </div>
                 </div>
 
                 <div className="hidden md:flex items-center gap-5 shrink-0 text-center">
@@ -1215,9 +1226,9 @@ function EventInsightCard({ event, summary }: { event: Event; summary?: EventSum
                         exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}
                         className="overflow-hidden"
                     >
-                        <div className="border-t border-border/40 px-4 py-5 space-y-5">
+                        <div className="border-t border-border/40 px-3 md:px-4 py-4 md:py-5 space-y-4">
                             {/* 3-section insights */}
-                            <div className="grid md:grid-cols-3 gap-4">
+                            <div className="grid md:grid-cols-3 gap-3 md:gap-4">
                                 <div className="space-y-2">
                                     <p className="text-xs font-black uppercase tracking-[0.15em] text-emerald-400">Result</p>
                                     {summary ? (
@@ -1307,7 +1318,7 @@ export default function BrandDashboard() {
     const stats = useMemo(() => computeStats(events), [events]);
 
     return (
-        <div className="space-y-6 pb-32 md:pb-12 font-sans">
+        <div className="space-y-4 md:space-y-6 pb-28 md:pb-12 font-sans">
             {/* Brand Banner */}
             <BrandBanner brand={brand} stats={stats} loading={loading} />
 

@@ -238,7 +238,7 @@ export default function WalletPage() {
     return (
       <div className="min-h-screen bg-background text-white font-sans">
         <SidebarLayout>
-          <main className="w-full pt-6 lg:pt-10 pb-20 md:pb-12 space-y-8 max-w-2xl">
+          <main className="w-full pt-5 sm:pt-6 lg:pt-10 pb-20 md:pb-12 space-y-5 sm:space-y-8 max-w-2xl">
             {/* Header skeleton */}
             <div className="space-y-2">
               <div className="h-14 w-36 rounded-xl bg-white/[0.07] animate-pulse" />
@@ -299,46 +299,46 @@ export default function WalletPage() {
   return (
     <div className="min-h-screen bg-background text-white font-sans selection:bg-primary/30">
       <SidebarLayout>
-        <main className="w-full pt-6 lg:pt-10 pb-24 md:pb-12 space-y-8">
+        <main className="w-full pt-5 sm:pt-6 lg:pt-10 pb-24 md:pb-12 space-y-5 sm:space-y-8">
 
           {/* ── Header ── */}
           <div className="flex items-start justify-between">
             <div className="space-y-1">
-              <h1 className="font-display text-[3rem] sm:text-[4rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight">
+              <h1 className="font-display text-[2.5rem] sm:text-[3rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight">
                 Wallet
               </h1>
-              <p className="mt-1 text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em]">
+              <p className="mt-1 text-[9px] sm:text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em]">
                 Manage your digital assets
               </p>
             </div>
             <button
               onClick={handleRefresh}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-black text-white/40 hover:text-white bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] rounded-2xl transition-all"
+              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-black text-white/40 hover:text-white bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] rounded-2xl transition-all"
             >
-              <RefreshCw className={cn("w-4 h-4", isFetchingMatic && "animate-spin")} />
+              <RefreshCw className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4", isFetchingMatic && "animate-spin")} />
               Refresh
             </button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
 
             {/* Left Column */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-4 sm:space-y-6">
 
               {/* Balance Card */}
-              <div className="bg-white/[0.03] border border-white/[0.06] rounded-[24px] p-8 relative overflow-hidden group">
+              <div className="bg-white/[0.03] border border-white/[0.06] rounded-[20px] sm:rounded-[24px] p-5 sm:p-8 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
                   <div className="w-64 h-64 bg-purple-500 rounded-full blur-[100px]" />
                 </div>
 
-                <div className="relative z-10 space-y-8">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-4">
+                <div className="relative z-10 space-y-5 sm:space-y-8">
+                  <div className="flex justify-between items-start gap-3">
+                    <div className="space-y-3 sm:space-y-4 min-w-0">
                       {/* USDC Balance — primary */}
                       <div>
                         <p className="text-[9px] font-black text-white/30 mb-1 tracking-[0.2em] uppercase">USDC Balance</p>
-                        <div className="flex items-baseline gap-2">
-                          <h2 className="font-display text-5xl md:text-6xl text-white uppercase tracking-tight leading-none">
+                        <div className="flex items-baseline gap-2 flex-wrap">
+                          <h2 className="font-display text-4xl sm:text-5xl md:text-6xl text-white uppercase tracking-tight leading-none">
                             {allClaimed && displayUsdc !== "0.00"
                               ? displayUsdc
                               : parseFloat(usdcBalance) > 0 ? usdcBalance : "0.00"}
@@ -352,30 +352,30 @@ export default function WalletPage() {
 
                     </div>
 
-                    <div className="flex flex-col items-end gap-2">
+                    <div className="flex flex-col items-end gap-2 shrink-0">
                       {/* Chain Badge */}
                       <a
                         href={`${EXPLORER_BASE}/address/${address}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.04] rounded-full w-fit border border-white/[0.08] hover:border-white/[0.15] transition-colors group/badge"
+                        className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-white/[0.04] rounded-full w-fit border border-white/[0.08] hover:border-white/[0.15] transition-colors group/badge"
                       >
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-                        <span className="text-[10px] font-black text-white/40 uppercase tracking-widest group-hover/badge:text-white/70 transition-colors">{CHAIN_NAME}</span>
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+                        <span className="text-[9px] sm:text-[10px] font-black text-white/40 uppercase tracking-widest group-hover/badge:text-white/70 transition-colors hidden xs:inline">{CHAIN_NAME}</span>
                         <ExternalLink className="w-3 h-3 text-white/20 group-hover/badge:text-white/40 transition-colors" />
                       </a>
-                      <span className="text-[9px] text-white/20 font-mono">Chain ID: {CHAIN_ID}</span>
+                      <span className="text-[9px] text-white/20 font-mono hidden sm:inline">Chain ID: {CHAIN_ID}</span>
                     </div>
                   </div>
 
                   {/* Addresses */}
-                  <div className="pt-4 border-t border-white/[0.05] space-y-3">
+                  <div className="pt-3 sm:pt-4 border-t border-white/[0.05] space-y-2.5 sm:space-y-3">
                     {/* Smart Account (primary) */}
                     {address && (
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
                           <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">
-                            {isSmartAccount ? "Smart Account" : "Wallet"}
+                            {isSmartAccount ? "Smart Acct" : "Wallet"}
                           </span>
                           {isSmartAccount && (
                             <span className="text-[9px] font-black text-primary/70 bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
@@ -383,12 +383,12 @@ export default function WalletPage() {
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 sm:gap-3">
                           <a
                             href={`${EXPLORER_BASE}/address/${address}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="font-mono text-sm text-white/50 hover:text-white transition-colors flex items-center gap-1"
+                            className="font-mono text-xs sm:text-sm text-white/50 hover:text-white transition-colors flex items-center gap-1"
                           >
                             {truncateAddress(address)}
                             <ExternalLink className="w-3 h-3" />
@@ -398,9 +398,9 @@ export default function WalletPage() {
                             className="text-white/20 hover:text-white transition-colors"
                           >
                             {copied ? (
-                              <CheckCircle2 className="w-4 h-4 text-green-500" />
+                              <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" />
                             ) : (
-                              <Copy className="w-4 h-4" />
+                              <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             )}
                           </button>
                         </div>
@@ -409,15 +409,15 @@ export default function WalletPage() {
 
                     {/* EOA Address (signer) */}
                     {isSmartAccount && eoaAddress && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] shrink-0">
                           Signer (EOA)
                         </span>
                         <a
                           href={`${EXPLORER_BASE}/address/${eoaAddress}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-mono text-sm text-white/30 hover:text-white/60 transition-colors flex items-center gap-1"
+                          className="font-mono text-xs sm:text-sm text-white/30 hover:text-white/60 transition-colors flex items-center gap-1"
                         >
                           {truncateAddress(eoaAddress)}
                           <ExternalLink className="w-3 h-3" />
@@ -426,19 +426,19 @@ export default function WalletPage() {
                     )}
 
                     {/* Quick Actions */}
-                    <div className="flex gap-3 pt-2">
+                    <div className="flex gap-2 sm:gap-3 pt-1 sm:pt-2">
                       <button
                         onClick={() => setActiveTab("deposit")}
-                        className="px-4 py-2 bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.15] rounded-xl text-sm font-black text-white/60 hover:text-white transition-all flex items-center gap-2"
+                        className="px-3 sm:px-4 py-2 bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.15] rounded-xl text-xs sm:text-sm font-black text-white/60 hover:text-white transition-all flex items-center gap-1.5 sm:gap-2"
                       >
-                        <ArrowDownLeft className="w-4 h-4" />
+                        <ArrowDownLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         Deposit
                       </button>
                       <button
                         onClick={() => setActiveTab("withdraw")}
-                        className="px-4 py-2 bg-white hover:bg-white/90 text-black rounded-xl text-sm font-black transition-all flex items-center gap-2"
+                        className="px-3 sm:px-4 py-2 bg-white hover:bg-white/90 text-black rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-1.5 sm:gap-2"
                       >
-                        <ArrowUpRight className="w-4 h-4" />
+                        <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         Withdraw
                       </button>
                     </div>
@@ -448,12 +448,12 @@ export default function WalletPage() {
 
               {/* Pending Rewards — EOA users who now have a Smart Account */}
               {!rewardsLoading && hasPendingRewards && (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] flex items-center gap-2">
                     <Clock className="w-3.5 h-3.5" />
                     Pending Rewards
                   </h3>
-                  <div className="bg-yellow-500/[0.06] border border-yellow-500/20 rounded-[24px] p-5 space-y-4">
+                  <div className="bg-yellow-500/[0.06] border border-yellow-500/20 rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 space-y-3 sm:space-y-4">
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center shrink-0">
                         <Gift className="w-5 h-5 text-yellow-400" />
@@ -508,7 +508,7 @@ export default function WalletPage() {
 
               {/* Claimable Rewards */}
               {(rewardsLoading || (rewards && rewards.totalClaimableUsdc > 0) || allClaimed || recentNonClaimableRewards.length > 0) && (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] flex items-center gap-2">
                       <Gift className="w-3.5 h-3.5" />
@@ -524,7 +524,7 @@ export default function WalletPage() {
                     )}
                   </div>
 
-                  <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] overflow-hidden">
+                  <div className="bg-white/[0.02] border border-white/[0.05] rounded-[20px] sm:rounded-[24px] overflow-hidden">
                     {rewardsLoading ? (
                       <div className="p-5 space-y-3">
                         {[1, 2].map((i) => (
@@ -669,7 +669,7 @@ export default function WalletPage() {
               )}
 
               {/* Transaction History */}
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] flex items-center gap-2">
                     <History className="w-3.5 h-3.5" />
@@ -687,7 +687,7 @@ export default function WalletPage() {
                   )}
                 </div>
 
-                <div className="bg-white/[0.02] border border-white/[0.05] rounded-[24px] overflow-hidden">
+                <div className="bg-white/[0.02] border border-white/[0.05] rounded-[20px] sm:rounded-[24px] overflow-hidden">
                   {historyLoading ? (
                     <div className="p-5 space-y-4">
                       {[1, 2, 3].map((i) => (
@@ -825,10 +825,10 @@ export default function WalletPage() {
             </div>
 
             {/* Right Column */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
 
               {/* Action Panel */}
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 space-y-6">
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[20px] sm:rounded-[24px] p-4 sm:p-6 space-y-4 sm:space-y-6">
 
                 {/* Tabs */}
                 <div className="grid grid-cols-2 p-1 bg-white/[0.04] rounded-2xl border border-white/[0.06]">
@@ -857,11 +857,11 @@ export default function WalletPage() {
                 </div>
 
                 {/* Content */}
-                <div className="min-h-[300px]">
+                <div className="min-h-[260px] sm:min-h-[300px]">
                   {activeTab === "withdraw" ? (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                       <div>
-                        <h3 className="font-display text-2xl text-white uppercase tracking-tight">Send Funds</h3>
+                        <h3 className="font-display text-xl sm:text-2xl text-white uppercase tracking-tight">Send Funds</h3>
                         <p className="text-[10px] font-black text-white/30 uppercase tracking-wide mt-1">Enter an EVM address to withdraw to.</p>
                       </div>
 
@@ -921,16 +921,16 @@ export default function WalletPage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                       <div>
-                        <h3 className="font-display text-2xl text-white uppercase tracking-tight">Deposit POL</h3>
+                        <h3 className="font-display text-xl sm:text-2xl text-white uppercase tracking-tight">Deposit POL</h3>
                         <p className="text-[10px] font-black text-white/30 uppercase tracking-wide mt-1">Scan or copy your address to deposit.</p>
                       </div>
 
                       {address ? (
                         <>
-                          <div className="flex flex-col items-center justify-center p-6 bg-white rounded-2xl border-4 border-white/90 shadow-xl">
-                            <QRCodeSVG value={address} size={180} />
+                          <div className="flex flex-col items-center justify-center p-4 sm:p-6 bg-white rounded-2xl border-4 border-white/90 shadow-xl">
+                            <QRCodeSVG value={address} size={160} />
                           </div>
 
                           <div className="space-y-2">
@@ -982,7 +982,7 @@ export default function WalletPage() {
 
 
               {/* How your wallet works */}
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 space-y-5">
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[20px] sm:rounded-[24px] p-4 sm:p-6 space-y-4 sm:space-y-5">
                 <div className="flex items-center gap-2">
                   <Info className="w-3.5 h-3.5 text-white/30" />
                   <h3 className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">
@@ -992,37 +992,37 @@ export default function WalletPage() {
 
 
 
-                <div className="space-y-4">
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                      <Shield className="w-4 h-4 text-blue-400" />
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex gap-2.5 sm:gap-3">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                      <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-black text-white/70">Privy Embedded Wallet</p>
+                      <p className="text-xs sm:text-sm font-black text-white/70">Privy Embedded Wallet</p>
                       <p className="text-[10px] font-black text-white/30 mt-0.5 leading-relaxed">
                         Aris creates a non-custodial embedded wallet for you automatically at sign-in. The private key is secured by Privy using MPC — you own it, nobody else does.
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                      <Zap className="w-4 h-4 text-purple-400" />
+                  <div className="flex gap-2.5 sm:gap-3">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                      <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-black text-white/70">Smart Account (ERC-4337)</p>
+                      <p className="text-xs sm:text-sm font-black text-white/70">Smart Account (ERC-4337)</p>
                       <p className="text-[10px] font-black text-white/30 mt-0.5 leading-relaxed">
                         Your embedded wallet signs for a Smart Account. This enables gasless transactions — fees are sponsored by Pimlico paymaster so you never need POL to interact.
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                      <KeyRound className="w-4 h-4 text-green-400" />
+                  <div className="flex gap-2.5 sm:gap-3">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                      <KeyRound className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-black text-white/70">Full self-custody</p>
+                      <p className="text-xs sm:text-sm font-black text-white/70">Full self-custody</p>
                       <p className="text-[10px] font-black text-white/30 mt-0.5 leading-relaxed">
                         Export your private key anytime from your account settings and import it into MetaMask or any EVM wallet — you always have full control.
                       </p>
@@ -1044,7 +1044,7 @@ export default function WalletPage() {
               </div>
 
               {/* Coming Soon */}
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 relative overflow-hidden group">
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[20px] sm:rounded-[24px] p-4 sm:p-6 relative overflow-hidden group">
                 <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl group-hover:bg-purple-500/20 transition-colors duration-500" />
                 <div className="relative z-10 space-y-4">
                   <div className="flex items-center gap-3 mb-2">
@@ -1056,7 +1056,7 @@ export default function WalletPage() {
                     </span>
                   </div>
                   <div>
-                    <h3 className="font-display text-2xl text-white uppercase tracking-tight">Advanced Trading</h3>
+                    <h3 className="font-display text-xl sm:text-2xl text-white uppercase tracking-tight">Advanced Trading</h3>
                     <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide leading-relaxed">
                       On-platform P2P trading and direct fiat off-ramps are currently in development.
                     </p>

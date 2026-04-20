@@ -1,7 +1,6 @@
 "use client";
 
 import SidebarLayout from "@/components/home/SidebarLayout";
-import BottomNav from "@/components/BottomNav";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
@@ -99,7 +98,7 @@ function TopEventsHero({ events }: { events: Event[] }) {
     const displayImage = event.imageUrl || (event.imageCid ? `${PINATA_GW}/${event.imageCid}` : "");
 
     return (
-        <div className="relative w-full h-[450px] md:h-[480px] rounded-2xl overflow-hidden mb-0 group bg-[#0a0a0c] border border-white/5 shadow-2xl">
+        <div className="relative w-full aspect-video rounded-2xl overflow-hidden mb-0 group bg-[#0a0a0c] border border-white/5 shadow-2xl">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={event.id}
@@ -122,66 +121,70 @@ function TopEventsHero({ events }: { events: Event[] }) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
             {/* Content Left */}
-            <div className="absolute inset-y-0 left-0 w-full md:w-2/3 p-8 sm:p-10 md:p-12 flex flex-col justify-center z-10">
+            <div className="absolute inset-y-0 left-0 w-full md:w-2/3 p-3 sm:p-7 md:p-10 flex flex-col justify-end sm:justify-center z-10">
                 <motion.div
                     key={`content-${event.id}`}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.2 }}
-                    className="space-y-6"
+                    className="space-y-1.5 sm:space-y-4"
                 >
                     <div>
+                        {/* Brand row */}
                         <Link
                             href={`/brand/${toBrandSlug(event.brand?.name || "")}`}
-                            className="flex items-center gap-2 mb-6 w-fit hover:opacity-80 transition-opacity group/brand"
+                            className="flex items-center gap-1.5 mb-1.5 sm:mb-3 w-fit hover:opacity-80 transition-opacity group/brand"
                         >
                             {event.brand?.logoCid ? (
-                                <img src={`${PINATA_GW}/${event.brand.logoCid}`} alt={event.brand.name} className="w-10 h-10 rounded-full border border-white/20 px-0 group-hover/brand:scale-110 transition-transform shadow-lg" />
+                                <img src={`${PINATA_GW}/${event.brand.logoCid}`} alt={event.brand.name} className="w-5 h-5 sm:w-8 sm:h-8 rounded-full border border-white/20 group-hover/brand:scale-110 transition-transform shadow-lg" />
                             ) : (
-                                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 text-xs font-bold text-white group-hover/brand:scale-110 transition-transform">{event.brand?.name?.[0] || '?'}</div>
+                                <div className="w-5 h-5 sm:w-8 sm:h-8 rounded-full bg-white/10 flex items-center justify-center border border-white/20 text-[10px] font-bold text-white group-hover/brand:scale-110 transition-transform">{event.brand?.name?.[0] || '?'}</div>
                             )}
                             <div className="flex flex-col">
-                                <span className="text-white font-black text-sm tracking-widest uppercase group-hover/brand:text-primary transition-colors">{event.brand?.name || 'Unknown'}</span>
-                                <span className="text-white/40 font-bold text-[10px] uppercase tracking-[0.2em]">{event.brand?.categories?.[0] || 'Official Brand'}</span>
+                                <span className="text-white font-black text-[9px] sm:text-xs tracking-widest uppercase group-hover/brand:text-primary transition-colors">{event.brand?.name || 'Unknown'}</span>
+                                <span className="text-white/40 font-bold text-[8px] sm:text-[9px] uppercase tracking-[0.15em]">{event.brand?.categories?.[0] || 'Official Brand'}</span>
                             </div>
                         </Link>
 
-                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-black capitalize text-white tracking-tighter leading-[1] mb-6 line-clamp-2 drop-shadow-2xl">
+                        {/* Title */}
+                        <h1 className="text-lg sm:text-3xl md:text-4xl lg:text-5xl font-black capitalize text-white tracking-tighter leading-tight mb-1.5 sm:mb-4 line-clamp-2 drop-shadow-2xl">
                             {event.title}
                         </h1>
 
-                        <div className="flex items-center gap-8 text-white/50 text-[11px] font-black uppercase tracking-[0.15em] mb-6">
-                            <div className="flex items-center gap-2.5">
-                                <Users className="w-4 h-4 text-white/80" />
+                        {/* Stats */}
+                        <div className="flex items-center gap-3 sm:gap-6 text-[8px] sm:text-[10px] font-black uppercase tracking-[0.1em] mb-1.5 sm:mb-4">
+                            <div className="flex items-center gap-1 sm:gap-1.5">
+                                <Users className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-white/80" />
                                 <span className="text-white">{((event._count?.submissions || 0) + (event._count?.votes || 0)).toLocaleString()}</span>
-                                <span>Participants</span>
+                                <span className="text-white/50 hidden sm:inline">Participants</span>
                             </div>
-                            <div className="flex items-center gap-3 border-l border-white/10 pl-8">
-                                <span className="text-primary font-black text-lg leading-none">
+                            <div className="flex items-center gap-1 sm:gap-2 border-l border-white/10 pl-3 sm:pl-6">
+                                <span className="text-primary font-black text-xs sm:text-base leading-none">
                                     ${((event.leaderboardPool || 0) + (event.topReward || 0) + (event.baseReward || 0)).toLocaleString()}
                                 </span>
-                                <span className="text-white/40">Total Pool</span>
+                                <span className="text-white/40 hidden sm:inline">Total Pool</span>
                             </div>
                         </div>
                     </div>
 
-                    <div className="space-y-4">
-                        <Link href={`/events/${event.id}`} className="block">
-                            <button className="px-12 py-5 bg-white text-black font-black uppercase text-xs tracking-[0.2em] rounded-full hover:scale-105 hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] transition-all w-fit relative overflow-hidden group/btn">
+                    {/* CTA + Dots */}
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        <Link href={`/events/${event.id}`}>
+                            <button className="px-4 sm:px-8 py-1.5 sm:py-3 bg-white text-black font-black uppercase text-[8px] sm:text-[10px] tracking-[0.2em] rounded-full hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all w-fit relative overflow-hidden group/btn">
                                 <span className="relative z-10">{event.status === "voting" ? "Vote now" : "Submit entry"}</span>
                                 <div className="absolute inset-0 bg-primary/10 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
                             </button>
                         </Link>
 
                         {/* Pagination Dots */}
-                        <div className="flex gap-2.5 pl-2">
+                        <div className="flex gap-1.5 sm:gap-2">
                             {events.slice(0, 10).map((_, i) => (
                                 <button
                                     key={i}
                                     onClick={() => setCurrentIndex(i)}
                                     className={cn(
-                                        "h-1.5 rounded-full transition-all duration-500",
-                                        i === currentIndex ? "w-10 bg-white shadow-[0_0_15px_rgba(255,255,255,0.6)]" : "w-3 bg-white/20 hover:bg-white/40"
+                                        "h-1 sm:h-1.5 rounded-full transition-all duration-500",
+                                        i === currentIndex ? "w-6 sm:w-8 bg-white shadow-[0_0_10px_rgba(255,255,255,0.6)]" : "w-2 sm:w-3 bg-white/20 hover:bg-white/40"
                                     )}
                                 />
                             ))}
@@ -201,12 +204,12 @@ function ArisSelect({ value, onChange, options, placeholder, minWidth = "150px" 
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={cn(
-                    "w-full flex items-center justify-between bg-white/[0.03] border border-white/10 text-white/60 hover:text-white hover:border-white/20 rounded-xl pl-5 pr-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all cursor-pointer backdrop-blur-md",
+                    "w-full flex items-center justify-between bg-white/[0.03] border border-white/10 text-white/60 hover:text-white hover:border-white/20 rounded-md pl-2 pr-2 py-1.5 text-[8px] font-black uppercase tracking-[0.1em] transition-all cursor-pointer backdrop-blur-md",
                     isOpen && "border-primary/40 bg-white/[0.05] text-white"
                 )}
             >
-                <span className="truncate mr-2">{value === "ALL" || value === "TRENDING" ? placeholder : value}</span>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform duration-300 text-white/20", isOpen ? "rotate-180 text-white" : "")}><path d="m6 9 6 6 6-6" /></svg>
+                <span className="truncate mr-1">{value === "ALL" || value === "TRENDING" ? placeholder : value}</span>
+                <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform duration-300 text-white/20 shrink-0", isOpen ? "rotate-180 text-white" : "")}><path d="m6 9 6 6 6-6" /></svg>
             </button>
 
             <AnimatePresence>
@@ -229,7 +232,7 @@ function ArisSelect({ value, onChange, options, placeholder, minWidth = "150px" 
                                             setIsOpen(false);
                                         }}
                                         className={cn(
-                                            "w-full text-left px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.2em] transition-all border-l-2",
+                                            "w-full text-left px-3 py-2 text-[8px] font-bold uppercase tracking-[0.12em] transition-all border-l-2",
                                             (value === opt)
                                                 ? "bg-white/10 border-primary text-white"
                                                 : "border-transparent text-white/40 hover:bg-white/5 hover:text-white hover:border-white/20"
@@ -406,13 +409,12 @@ export default function Explore() {
     return (
         <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
             <SidebarLayout>
-                <div className="flex flex-col pb-24 lg:pb-10">
-
+                <div className="flex flex-col gap-3 sm:gap-4 pb-20 lg:pb-10">
 
                     {/* MARQUEE + HERO BANNER SECTION (PERSISTENT) */}
                     <>
                         {/* Marquee */}
-                        <div className="w-full mb-4 overflow-hidden">
+                        <div className="w-full overflow-hidden">
                             <div className="flex gap-0 animate-marquee whitespace-nowrap">
                                 {Array.from({ length: 6 }).map((_, i) => (
                                     <span key={i} className="inline-flex items-center gap-6 px-6 text-[11px] font-black uppercase tracking-[0.3em] text-foreground/30">
@@ -431,12 +433,12 @@ export default function Explore() {
 
                         {/* Banner */}
                         {loadingEvents ? (
-                            <div className="w-full mb-6 px-4 md:px-0">
-                                <div className="w-full h-[450px] md:h-[480px] rounded-2xl bg-white/[0.03] border border-white/5 animate-pulse" />
+                            <div className="w-full px-4 md:px-0">
+                                <div className="w-full aspect-video rounded-2xl bg-white/3 border border-white/5 animate-pulse" />
                             </div>
                         ) : (
                             eventsData?.trending && eventsData.trending.length > 0 && (
-                                <div className="w-full mb-6 px-4 md:px-0">
+                                <div className="w-full px-4 md:px-0">
                                     <TopEventsHero events={eventsData.trending.slice(0, 10)} />
                                 </div>
                             )
@@ -444,43 +446,41 @@ export default function Explore() {
                     </>
 
                     {/* ── Filter Bar ──────────────────────────────────── */}
-                    <div className="w-full mb-6 px-4 md:px-0 relative z-40">
-                        <div className="flex flex-col lg:flex-row items-center gap-4 w-full">
+                    <div className="w-full px-4 md:px-0 relative z-40">
+                        <div className="flex flex-col gap-2 w-full">
 
                             {/* Search Input */}
-                            <div className="w-full lg:flex-1 relative group bg-white/[0.03] border border-white/10 hover:border-white/20 focus-within:border-primary/40 focus-within:bg-white/[0.05] rounded-xl overflow-hidden transition-all shadow-2xl shadow-black/40 flex items-center backdrop-blur-md">
-                                <Search className="absolute left-4 w-4 h-4 text-foreground/20 group-focus-within:text-primary transition-colors shrink-0 pointer-events-none" />
+                            <div className="w-full relative group bg-white/[0.03] border border-white/10 hover:border-white/20 focus-within:border-primary/40 focus-within:bg-white/[0.05] rounded-lg overflow-hidden transition-all flex items-center backdrop-blur-md">
+                                <Search className="absolute left-2.5 w-3 h-3 sm:w-3.5 sm:h-3.5 text-foreground/20 group-focus-within:text-primary transition-colors shrink-0 pointer-events-none" />
                                 <input
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Search campaigns and creators..."
-                                    className="w-full bg-transparent py-4 pl-12 pr-12 text-[20px] font-bold text-foreground placeholder:text-foreground/30 placeholder:capitalize placeholder:tracking-wider placeholder:text-[16px] outline-none transition-all"
+                                    placeholder="Search..."
+                                    className="w-full bg-transparent py-2 sm:py-3 pl-8 pr-8 text-xs sm:text-sm font-bold text-foreground placeholder:text-foreground/30 outline-none transition-all"
                                 />
                                 {searchQuery && (
                                     <button
                                         onClick={() => setSearchQuery("")}
-                                        className="absolute right-4 text-foreground/20 hover:text-white transition-colors"
+                                        className="absolute right-2.5 text-foreground/20 hover:text-white transition-colors"
                                     >
-                                        <X className="w-4 h-4" />
+                                        <X className="w-3 h-3" />
                                     </button>
                                 )}
                             </div>
 
-
-
-                            {/* Dropdowns & Toggle */}
-                            <div className="w-full lg:w-auto flex flex-wrap items-center gap-3 shrink-0">
+                            {/* Dropdowns & Toggle — always one row, no wrap */}
+                            <div className="flex items-center gap-1.5 sm:gap-2 w-full">
                                 <ArisSelect
                                     value={activeTab.toUpperCase()}
                                     onChange={(val) => {
                                         const tab = val.toLowerCase() as "events" | "brands" | "content";
                                         setActiveTab(tab);
-                                        setActivePhase("ALL"); // Reset event lifecycle filters when switching tabs
+                                        setActivePhase("ALL");
                                     }}
                                     options={["EVENTS", "BRANDS", "CONTENT"]}
                                     placeholder="Explore"
-                                    minWidth="140px"
+                                    minWidth="80px"
                                 />
 
                                 <ArisSelect
@@ -488,22 +488,22 @@ export default function Explore() {
                                     onChange={(val) => setActiveDomain(val === "ALL" ? "ALL" : val)}
                                     options={DOMAINS.map(d => d === "ALL" ? "ALL" : d)}
                                     placeholder="All"
-                                    minWidth="120px"
+                                    minWidth="72px"
                                 />
 
                                 {activeTab === "events" && (
                                     <ArisSelect
-                                        value={activePhase === "ALL" ? "LIVE EVENTS" : activePhase}
-                                        onChange={(val) => setActivePhase(val === "LIVE EVENTS" ? "ALL" : val)}
+                                        value={activePhase === "ALL" ? "LIVE" : activePhase}
+                                        onChange={(val) => setActivePhase(val === "LIVE" ? "ALL" : val)}
                                         options={[
-                                            "LIVE EVENTS",
+                                            "LIVE",
                                             "VOTING",
                                             "POSTING",
                                             "JOINED",
                                             "CLOSED"
                                         ].filter(o => o !== "JOINED" || !!user?.id)}
                                         placeholder="Phase"
-                                        minWidth="160px"
+                                        minWidth="76px"
                                     />
                                 )}
 
@@ -513,7 +513,7 @@ export default function Explore() {
                                         onChange={(val) => setBrandEventStatus(val as "LIVE" | "CLOSED")}
                                         options={["LIVE", "CLOSED"]}
                                         placeholder="Live"
-                                        minWidth="120px"
+                                        minWidth="72px"
                                     />
                                 )}
 
@@ -526,27 +526,22 @@ export default function Explore() {
                                             setBrandEventStatus("LIVE");
                                             setSortOption("TRENDING");
                                         }}
-                                        className="flex items-center gap-2 px-4 py-4 rounded-xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all text-[10px] font-black uppercase tracking-widest whitespace-nowrap"
+                                        className="flex items-center justify-center p-2 rounded-lg bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all shrink-0"
                                         title="Clear all filters"
                                     >
-                                        <X className="w-3.5 h-3.5" />
-                                        <span>Reset</span>
+                                        <X className="w-3 h-3" />
                                     </button>
                                 )}
-
-
                             </div>
                         </div>
                     </div>
 
-                    <main className="w-full flex flex-col lg:flex-row gap-10 lg:gap-12">
+                    <main className="w-full flex flex-col lg:flex-row gap-4 lg:gap-8">
                         {/* ── Main Feed ───────────────────────────────────── */}
-                        <div className="flex-1 min-w-0 space-y-8">
-
-
+                        <div className="flex-1 min-w-0 space-y-4 sm:space-y-6">
 
                             {loadingEvents && activeTab === "events" ? (
-                                <div className="space-y-12 animate-pulse mt-8">
+                                <div className="space-y-6 animate-pulse">
                                     <div className="h-60 w-full bg-white/[0.02] rounded-2xl border border-white/5" />
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                         <div className="h-80 w-full bg-white/[0.02] rounded-2xl border border-white/5" />
@@ -561,25 +556,23 @@ export default function Explore() {
                                         <motion.div
                                             initial={{ opacity: 0, y: 15 }}
                                             animate={{ opacity: 1, y: 0 }}
-                                            className="space-y-12"
+                                            className="space-y-4 sm:space-y-8"
                                         >
                                             {/* Featured Section (Horizontal Scroll) */}
                                             {eventsData?.trending && eventsData.trending.length > 0 && !debouncedSearch && activeDomain === "ALL" && activePhase !== "JOINED" && (
-                                                <div className="mb-8">
-                                                    <EventRow
-                                                        title="Featured"
-                                                        events={eventsData.trending.slice(0, 5)}
-                                                    />
-                                                </div>
+                                                <EventRow
+                                                    title="Featured"
+                                                    events={eventsData.trending.slice(0, 5)}
+                                                />
                                             )}
 
                                             {/* All Campaigns Header (Matching layout) */}
                                             {eventsData?.allRanked && eventsData.allRanked.length > 0 ? (
-                                                <div className="space-y-6">
-                                                    <h3 className="text-xl font-black text-white capitalize tracking-wider pl-4 sm:pl-0 border-white/5">
+                                                <div className="space-y-3 sm:space-y-4">
+                                                    <h3 className="text-base sm:text-lg font-black text-white capitalize tracking-wider pl-4 sm:pl-0">
                                                         {(debouncedSearch || activeDomain !== "ALL") ? "Search Results" : activePhase === "JOINED" ? "My Joined Events" : "All Campaigns"}
                                                     </h3>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6 px-4 sm:px-0">
+                                                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 px-4 sm:px-0">
                                                         {(activePhase === "JOINED" ? joinedEventRows : eventsData.allRanked).map((ev) => (
                                                             <PremiumEventCard key={ev.id} event={ev} />
                                                         ))}
@@ -596,9 +589,9 @@ export default function Explore() {
                                         <motion.div
                                             initial={{ opacity: 0, y: 15 }}
                                             animate={{ opacity: 1, y: 0 }}
-                                            className="space-y-12"
+                                            className="space-y-4 sm:space-y-8"
                                         >
-                                            <div className="space-y-12">
+                                            <div className="space-y-4 sm:space-y-8">
                                                 {brandsRows.length > 0 ? (
                                                     brandsRows.map((brand) => (
                                                         <BrandRow key={brand.id} brand={brand} />
@@ -636,7 +629,7 @@ export default function Explore() {
                         <motion.div
                             initial={{ opacity: 0, y: 15 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="mt-16 mb-12 border-t border-white/5 pt-12"
+                            className="mt-6 sm:mt-10 mb-6 border-t border-white/5 pt-6 sm:pt-8"
                         >
                             <EventRow
                                 title="Joined Events"
@@ -646,9 +639,6 @@ export default function Explore() {
                     )}
                 </div>
 
-                <div className="md:hidden">
-                    <BottomNav />
-                </div>
             </SidebarLayout>
         </div>
     );

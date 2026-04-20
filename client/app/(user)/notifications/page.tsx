@@ -1,7 +1,6 @@
 "use client";
 
 import SidebarLayout from "@/components/home/SidebarLayout";
-import BottomNav from "@/components/BottomNav";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -51,7 +50,7 @@ function NotificationAvatar({ n }: { n: Notification }) {
     if (brandLogoCid && ["EVENT_RESULT", "VOTING_LIVE", "BRAND_POST", "EVENT_PHASE_CHANGE",
         "EVENT_SUBMISSION", "EVENT_VOTE", "EVENT_CANCELLED", "SUBMISSION_VOTE"].includes(n.type)) {
         return (
-            <div className="shrink-0 w-10 h-10 rounded-full overflow-hidden border border-white/10 bg-white/[0.04]">
+            <div className="shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden border border-white/10 bg-white/4">
                 <img
                     src={`${PINATA_GW}/${brandLogoCid}`}
                     alt={n.brand?.name ?? "Brand"}
@@ -130,26 +129,26 @@ export default function NotificationsPage() {
     return (
         <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
             <SidebarLayout>
-                <main className="w-full pt-8 lg:pt-12 pb-24 md:pb-16 max-w-3xl">
+                <main className="w-full pt-5 sm:pt-8 lg:pt-12 pb-24 md:pb-16 max-w-3xl">
 
                     {/* Header */}
-                    <div className="mb-8 space-y-1">
-                        <h1 className="font-display text-[3.5rem] sm:text-[5rem] md:text-[6rem] uppercase leading-none tracking-tight text-foreground">
+                    <div className="mb-5 sm:mb-8 space-y-1">
+                        <h1 className="font-display text-[2.5rem] sm:text-[5rem] md:text-[6rem] uppercase leading-none tracking-tight text-foreground">
                             Notifications
                         </h1>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-foreground/35">
+                        <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.25em] text-foreground/35">
                             Stay updated with your latest interactions
                         </p>
                     </div>
 
                     {/* Filter Tabs */}
-                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar mb-8 pb-1">
+                    <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar mb-5 sm:mb-8 pb-1">
                         {FILTERS.map((f) => (
                             <button
                                 key={f}
                                 onClick={() => setFilter(f)}
                                 className={cn(
-                                    "px-5 py-2 rounded-full text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
+                                    "px-3 sm:px-5 py-1.5 sm:py-2 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
                                     filter === f
                                         ? "bg-white text-black border-white"
                                         : "bg-transparent text-foreground/45 border-white/15 hover:border-white/30 hover:text-foreground/70"
@@ -164,12 +163,12 @@ export default function NotificationsPage() {
                     {isLoading && (
                         <div className="space-y-[3px]">
                             {[1, 2, 3, 4, 5].map((i) => (
-                                <div key={i} className="flex items-center gap-4 px-5 py-4 rounded-xl bg-white/[0.03]">
-                                    <div className="w-10 h-10 rounded-full bg-white/[0.06] animate-pulse shrink-0" />
+                                <div key={i} className="flex items-center gap-3 sm:gap-4 px-3 sm:px-5 py-3 sm:py-4 rounded-xl bg-white/[0.03]">
+                                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/[0.06] animate-pulse shrink-0" />
                                     <div className="flex-1 space-y-2">
-                                        <div className="h-3 w-2/5 rounded-md bg-white/[0.07] animate-pulse" />
-                                        <div className="h-2.5 w-3/5 rounded-md bg-white/[0.04] animate-pulse" />
-                                        <div className="h-2 w-16 rounded-md bg-white/[0.03] animate-pulse" />
+                                        <div className="h-2.5 sm:h-3 w-2/5 rounded-md bg-white/[0.07] animate-pulse" />
+                                        <div className="h-2 sm:h-2.5 w-3/5 rounded-md bg-white/[0.04] animate-pulse" />
+                                        <div className="h-1.5 sm:h-2 w-16 rounded-md bg-white/[0.03] animate-pulse" />
                                     </div>
                                 </div>
                             ))}
@@ -189,7 +188,7 @@ export default function NotificationsPage() {
                                         transition={{ delay: i * 0.03, duration: 0.2 }}
                                         onClick={() => !n.isRead && markAsRead(n.id)}
                                         className={cn(
-                                            "flex items-center gap-4 px-5 py-4 rounded-xl transition-all cursor-pointer",
+                                            "flex items-center gap-3 sm:gap-4 px-3 sm:px-5 py-3 sm:py-4 rounded-xl transition-all cursor-pointer",
                                             n.isRead
                                                 ? "bg-white/[0.03] hover:bg-white/[0.05]"
                                                 : "bg-white/[0.06] hover:bg-white/[0.08]"
@@ -198,30 +197,30 @@ export default function NotificationsPage() {
                                         <NotificationAvatar n={n} />
 
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-bold text-foreground leading-snug mb-0.5">
+                                            <p className="text-xs sm:text-sm font-bold text-foreground leading-snug mb-0.5">
                                                 {n.title}
                                             </p>
-                                            <p className="text-[13px] text-foreground/55 font-normal leading-snug">
+                                            <p className="text-[11px] sm:text-[13px] text-foreground/55 font-normal leading-snug">
                                                 {n.message}
                                             </p>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30 mt-1.5">
+                                            <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-foreground/30 mt-1">
                                                 {formatRelativeTime(n.createdAt)}
                                             </p>
                                         </div>
 
                                         {!n.isRead && (
-                                            <div className="shrink-0 w-2 h-2 rounded-full bg-primary" />
+                                            <div className="shrink-0 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary" />
                                         )}
                                     </motion.div>
                                 )) : (
-                                    <div className="py-28 text-center">
-                                        <div className="w-12 h-12 rounded-full bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
-                                            <Bell className="w-5 h-5 text-foreground/20" />
+                                    <div className="py-16 sm:py-28 text-center">
+                                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/[0.04] flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                                            <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-foreground/20" />
                                         </div>
-                                        <p className="text-[11px] font-black uppercase tracking-[0.25em] text-foreground/30">
+                                        <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.25em] text-foreground/30">
                                             No notifications yet
                                         </p>
-                                        <p className="text-[10px] text-foreground/20 font-medium mt-1 uppercase tracking-wider">
+                                        <p className="text-[9px] sm:text-[10px] text-foreground/20 font-medium mt-1 uppercase tracking-wider">
                                             We'll notify you when something happens
                                         </p>
                                     </div>
@@ -238,9 +237,6 @@ export default function NotificationsPage() {
 
                 </main>
 
-                <div className="md:hidden fixed bottom-1 left-0 right-0 z-50">
-                    <BottomNav />
-                </div>
             </SidebarLayout>
         </div>
     );

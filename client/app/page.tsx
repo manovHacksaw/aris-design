@@ -29,7 +29,7 @@ export default function Home() {
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 w-full mx-auto pb-20">
 
             {/* Left: Main Content Area (~70%) */}
-            <main className="flex-1 min-w-0 space-y-12 pt-6 lg:pt-10">
+            <main className="flex-1 min-w-0 space-y-8 sm:space-y-10 lg:space-y-12 pt-4 sm:pt-6 lg:pt-10">
 
               {/* 2. Trending Section */}
               <TrendingEvents />

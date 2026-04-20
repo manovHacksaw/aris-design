@@ -77,7 +77,7 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
                 <div className="absolute bottom-0 left-0 w-full h-2/3 bg-gradient-to-t from-[#0a0a0c] via-[#0a0a0c]/80 to-transparent opacity-95" />
 
                 {/* Content Layout */}
-                <div className="absolute inset-0 flex flex-col justify-between p-4 sm:p-5">
+                <div className="absolute inset-0 flex flex-col justify-between p-3 sm:p-4">
 
                     {/* Top Section: Brand (Always visible) */}
                     <div className="flex justify-between items-start">
@@ -116,7 +116,7 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
                                 </div>
                             )}
 
-                            <h3 className="text-xl sm:text-2xl font-bold text-white leading-tight line-clamp-2">
+                            <h3 className="text-base sm:text-lg lg:text-xl font-bold text-white leading-tight line-clamp-2">
                                 {event.title}
                             </h3>
                         </div>
