@@ -62,11 +62,6 @@ function mergeEventData(base: Event, incoming?: Partial<Event> | null): Event {
         ),
         participantAvatars: incoming?.participantAvatars ?? base.participantAvatars,
         eventAnalytics: incoming?.eventAnalytics ?? base.eventAnalytics,
-        participationCount: incoming?.participationCount
-            ?? base.participationCount
-            ?? (base.eventAnalytics
-                ? base.eventAnalytics.totalSubmissions + base.eventAnalytics.totalVotes
-                : undefined),
     };
 
     return merged;
@@ -96,7 +91,7 @@ function TopEventsHero({ events }: { events: Event[] }) {
     if (!events || events.length === 0) return null;
 
     const event = events[currentIndex];
-    const displayImage = event.image || event.imageUrl || (event.imageCid ? `${PINATA_GW}/${event.imageCid}` : "");
+    const displayImage = event.imageUrl || (event.imageCid ? `${PINATA_GW}/${event.imageCid}` : "");
 
     return (
         <div className="relative w-full h-[450px] md:h-[480px] rounded-2xl overflow-hidden mb-0 group bg-[#0a0a0c] border border-white/5 shadow-2xl">
@@ -142,7 +137,7 @@ function TopEventsHero({ events }: { events: Event[] }) {
                             )}
                             <div className="flex flex-col">
                                 <span className="text-white font-black text-sm tracking-widest uppercase group-hover/brand:text-primary transition-colors">{event.brand?.name || 'Unknown'}</span>
-                                <span className="text-white/40 font-bold text-[10px] uppercase tracking-[0.2em]">{event.brand?.categories?.[0] || 'Official Brand'}</span>
+                                <span className="text-white/40 font-bold text-[10px] uppercase tracking-[0.2em]">{ (event.brand as any)?.categories?.[0] || 'Official Brand'}</span>
                             </div>
                         </Link>
 
@@ -601,7 +596,7 @@ export default function Explore() {
                                             <div className="space-y-12">
                                                 {brandsRows.length > 0 ? (
                                                     brandsRows.map((brand) => (
-                                                        <BrandRow key={brand.id} brand={brand} />
+                                                        <BrandRow key={brand.name} brand={{ id: brand.name, ...brand } as any} />
                                                     ))
                                                 ) : (
                                                     <EmptyState label="No brands found" />

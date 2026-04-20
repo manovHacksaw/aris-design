@@ -325,6 +325,7 @@ function EventSidebar({
     onFileChange,
     onSubmit,
     onCaptionChange,
+    onOpenGallery,
     isBrand,
 }: {
     event: Event;

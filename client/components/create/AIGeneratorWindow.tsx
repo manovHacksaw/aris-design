@@ -43,6 +43,7 @@ interface GeneratedImage {
   data: string;
   mimeType: string;
   objectUrl: string;
+  file?: File;
 }
 
 interface AIGeneratorWindowProps {
@@ -263,7 +264,8 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
       }
 
       const objectUrl = base64ToObjectUrl(result.image.data, result.image.mimeType);
-      setGeneratedImage({ data: result.image.data, mimeType: result.image.mimeType, objectUrl });
+      const file = base64ToFile(result.image.data, result.image.mimeType, `ai-gen-${Date.now()}.png`);
+      setGeneratedImage({ data: result.image.data, mimeType: result.image.mimeType, objectUrl, file });
       setCurrentPrompt(userPrompt);
       setIsFirstGeneration(false);
       setStep("preview");
@@ -377,7 +379,8 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
       setGeneratedImage({ 
         data: data, 
         mimeType: file.type, 
-        objectUrl: objectUrl 
+        objectUrl: objectUrl,
+        file: file
       });
       setCurrentPrompt("Uploaded image");
       setStep("preview");
