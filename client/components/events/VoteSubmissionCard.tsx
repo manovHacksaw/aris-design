@@ -165,8 +165,13 @@ export default function VoteSubmissionCard({
                         </p>
                     </div>
                 ) : imgError || !submission.media ? (
-                    <div className="w-full h-full flex items-center justify-center bg-secondary">
+                    <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-secondary/50 gap-3 text-center">
                         <ImageIcon className="w-8 h-8 text-foreground/20" />
+                        {submission.textContent && (
+                            <p className="text-[11px] font-medium text-muted-foreground leading-relaxed line-clamp-3">
+                                {submission.textContent}
+                            </p>
+                        )}
                     </div>
                 ) : isCloudinary ? (
                     <Image

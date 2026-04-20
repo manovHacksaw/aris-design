@@ -180,19 +180,24 @@ export default function LaunchStepModal({ open, form, onClose, onSuccess }: Laun
         sampleUrls = sampleResults.map((r) => r.imageUrl).filter(Boolean) as string[];
       }
 
-      const uploadedProposals: Array<{ type: "TEXT"; title: string; imageUrl?: string; order: number }> = [];
+      const uploadedProposals: Array<{ type: "IMAGE" | "TEXT"; title: string; imageUrl?: string; imageCid?: string; order: number }> = [];
       if (form.type === "vote" && form.proposals && form.proposals.length > 0) {
         for (let i = 0; i < form.proposals.length; i++) {
           const p = form.proposals[i];
           let pImageUrl = p.imageUrl;
+          let pImageCid = undefined;
+
           if (p.media && p.media instanceof File) {
             const pUploadResult = await uploadToPinata(p.media);
             pImageUrl = pUploadResult.imageUrl;
+            pImageCid = pUploadResult.publicId;
           }
+
           uploadedProposals.push({
-            type: "TEXT" as const, // currently all proposals are TEXT typed, but can contain images
+            type: pImageUrl ? "IMAGE" : "TEXT",
             title: p.title || `Option ${i + 1}`,
             imageUrl: pImageUrl,
+            imageCid: pImageCid,
             order: p.order ?? i
           });
         }
