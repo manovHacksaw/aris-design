@@ -1,19 +1,11 @@
 import { Router } from 'express';
-import { getUsers, getUserById, getUserByUsername, upsertUser, getCurrentUser, updateProfile, checkUsernameAvailability, getUserStats, getUserStatsById, getFollowers, getFollowing, followUser, unfollowUser, updateWalletAddress, saveOnboardingAnalytics, applyReferral, validateReferral, searchUsers, getUserVotedContent } from '../../controllers/users/userController';
-import { getSubmissionsByUser } from '../../controllers/events/submissionController';
-import { sendOTP, verifyOTP } from '../../controllers/users/emailController';
-import { authenticateJWT, authenticateOptional, requireEmailVerification } from '../../middlewares/authMiddleware';
-import { arcjetMiddleware } from '../../middlewares/arcjetMiddleware';
-import aj from '../../lib/arcjet';
-import { fixedWindow } from '@arcjet/node';
+import { getUsers, getUserById, getUserByUsername, upsertUser, getCurrentUser, updateProfile, checkUsernameAvailability, getUserStats, getUserStatsById, getFollowers, getFollowing, followUser, unfollowUser, updateWalletAddress, saveOnboardingAnalytics, applyReferral, validateReferral, searchUsers, getUserVotedContent } from '../../controllers/users/userController.js';
+import { getSubmissionsByUser } from '../../controllers/events/submissionController.js';
+import { sendOTP, verifyOTP } from '../../controllers/users/emailController.js';
+import { authenticateJWT, authenticateOptional, requireEmailVerification } from '../../middlewares/authMiddleware.js';
+import { otpRateLimit } from '../../config/rateLimits.js';
 
 const router = Router();
-
-// 3 OTP sends per 5 minutes per user
-const otpRateLimit = arcjetMiddleware(
-  aj.withRule(fixedWindow({ mode: 'LIVE', window: '5m', max: 3, characteristics: ['userId'] })),
-  (req) => ({ userId: req.user?.id ?? req.ip ?? 'anon' }),
-);
 
 router.get('/me', authenticateJWT, getCurrentUser);
 router.get('/me/stats', authenticateJWT, getUserStats);

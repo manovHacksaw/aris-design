@@ -1,28 +1,13 @@
-
-import { EventQueryService } from './EventQueryService.js';
-import { EventLifecycleService } from './EventLifecycleService.js';
-import { EventRankingService } from './EventRankingService.js';
-import logger from '../../lib/logger';
-import { prisma } from '../../lib/prisma.js';
-import { Event, EventType } from '@prisma/client';
-import { NotFoundError, ForbiddenError, ValidationError } from '../../utils/errors.js';
+import { EventType } from '@prisma/client';
+import { ValidationError } from '../../utils/errors.js';
 import {
   CreateEventRequest,
-  UpdateEventRequest,
-  EventFilters,
-  EventStatus,
   EventStatusType,
   VALID_TRANSITIONS,
   LOCKED_FIELDS_MAP,
   TimestampData,
   ValidationResult,
 } from '../../types/event.js';
-import { NotificationService } from '../notificationService.js';
-import { getIPFSUrl } from '../ipfsService.js';
-import { MilestoneService } from '../milestoneService.js';
-import { BrandXpService } from '../brandXpService.js';
-
-import { TrustService } from '../trustService.js';
 
 export class EventValidationService {
 
@@ -166,7 +151,7 @@ export class EventValidationService {
   static parseDate(dateString: string): Date {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) {
-      throw new Error(`Invalid date format: ${dateString}`);
+      throw new ValidationError(`Invalid date format: ${dateString}`);
     }
     return date;
   }

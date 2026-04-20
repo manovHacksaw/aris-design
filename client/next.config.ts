@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   serverExternalPackages: ["pino", "pino-pretty", "thread-stream"],
   transpilePackages: ["@pqina/pintura", "@pqina/react-pintura"],
   images: {

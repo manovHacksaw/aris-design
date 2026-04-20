@@ -1,12 +1,12 @@
-import logger from '../../lib/logger';
+import logger from '../../lib/logger.js';
 import { Request, Response } from 'express';
 import { UserQueryService } from '../../services/users/UserQueryService.js';
 import { UserMutationService } from '../../services/users/UserMutationService.js';
 import { UserStatsService } from '../../services/users/UserStatsService.js';
 import { UserSocialService } from '../../services/users/UserSocialService.js';
 import { UserReferralService } from '../../services/users/UserReferralService.js';
-import { VoteService } from '../../services/events/voteService';
-import { AuthenticatedRequest } from '../../middlewares/authMiddleware';
+import { VoteService } from '../../services/events/voteService.js';
+import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
 
 /**
  * Search users by username or display name
@@ -296,9 +296,7 @@ export const getUserStats = async (req: AuthenticatedRequest, res: Response): Pr
       stats,
     });
   } catch (error: any) {
-    logger.error({ err: error }, '[getUserStats Controller] Error:');
-    logger.error('[getUserStats Controller] Error message:', error.message);
-    logger.error('[getUserStats Controller] Error stack:', error.stack);
+    logger.error({ err: error }, '[getUserStats Controller] Error fetching stats');
 
     // Provide more specific error messages
     if (error.message === 'User not found') {

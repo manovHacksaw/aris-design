@@ -70,7 +70,17 @@
       "Bash(DATABASE_URL=\"postgresql://postgres.gxyzvkzrltwxfjjcscdg:arisdemo123@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1\" npx tsx check_newman_temp.ts)",
       "Bash(rm -f check_newman_temp.ts)",
       "Bash(echo \"PID: $!\")",
-      "Bash(kill 866)"
+      "Bash(kill 866)",
+      "Bash(sed -i \"3s|import { prisma } from '../../lib/prisma.js';||\" src/controllers/brands/adminBrandController.ts)",
+      "Bash(sed -i \"5s|import { prisma } from '../../lib/prisma';||\" src/controllers/brands/brandApplicationController.ts)",
+      "Bash(sed -i \"5s|import { prisma } from '../../lib/prisma.js';||\" src/controllers/brands/brandXpController.ts)",
+      "Bash(sed -i \"4s|import { prisma } from '../../lib/prisma.js';||\" src/controllers/events/eventController.ts)",
+      "Bash(sed -i \"6s|import { prisma } from '../../lib/prisma.js';||\" src/controllers/events/voteController.ts)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"Exit: $?\")",
+      "Read(//tmp/**)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(echo \"EXIT: $?\")"
     ]
   }
 }

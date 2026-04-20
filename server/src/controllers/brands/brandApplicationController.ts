@@ -2,76 +2,14 @@ import logger from '../../lib/logger';
 import { Request, Response } from 'express';
 import { BrandApplicationService } from '../../services/brands/brandApplicationService';
 import { ApplicationStatus } from '@prisma/client';
-import { prisma } from '../../lib/prisma';
+
 
 /**
  * Submit brand application (No authentication required)
  */
 export const submitApplication = async (req: Request, res: Response): Promise<void> => {
   try {
-    const {
-      brandName,
-      companyName,
-      tagline,
-      description,
-      categories,
-      logoCid,
-      websiteUrl,
-      contactEmail,
-      contactPersonName,
-      contactRole,
-      phoneNumber,
-      telegramHandle,
-      socialLinks,
-      gstNumber,
-      panNumber,
-      platformUsageReason,
-      agreementAuthorized,
-      agreementAccurate
-    } = req.body;
-
-    // Validate required fields
-    if (!brandName || !contactEmail || !contactPersonName || !contactRole || !platformUsageReason) {
-      res.status(400).json({
-        success: false,
-        error: 'Missing required fields',
-      });
-      return;
-    }
-
-    // Validate agreements
-    if (!agreementAuthorized || !agreementAccurate) {
-      res.status(400).json({
-        success: false,
-        error: 'You must agree to the terms and confirm authorization',
-      });
-      return;
-    }
-
-    // Create application
-    const application = await prisma.brandApplication.create({
-      data: {
-        brandName,
-        companyName,
-        tagline,
-        description,
-        categories,
-        logoCid,
-        websiteUrl,
-        contactEmail,
-        contactPersonName,
-        contactRole,
-        phoneNumber,
-        telegramHandle,
-        socialLinks,
-        gstNumber,
-        panNumber,
-        platformUsageReason,
-        agreementAuthorized,
-        agreementAccurate,
-        status: ApplicationStatus.PENDING,
-      },
-    });
+    const application = await BrandApplicationService.submitApplication(req.body);
 
     res.status(201).json({
       success: true,
@@ -88,30 +26,13 @@ export const submitApplication = async (req: Request, res: Response): Promise<vo
   } catch (error: any) {
     logger.error({ err: error }, 'Error submitting brand application:');
 
-    // Handle known errors
-    if (error.message.includes('already')) {
-      res.status(409).json({
-        success: false,
-        error: error.message,
-      });
+    if (error.name === 'ValidationError') {
+      res.status(400).json({ success: false, error: error.message });
       return;
     }
 
-    if (error.message.includes('required') || error.message.includes('Invalid')) {
-      res.status(400).json({
-        success: false,
-        error: error.message,
-      });
-      return;
-    }
-
-    // Handle Prisma unique constraint errors
-    if (error.code === 'P2002') {
-      const field = error.meta?.target?.[0] || 'field';
-      res.status(409).json({
-        success: false,
-        error: `A record with this ${field} already exists`,
-      });
+    if (error.name === 'ConflictError') {
+      res.status(409).json({ success: false, error: error.message });
       return;
     }
 

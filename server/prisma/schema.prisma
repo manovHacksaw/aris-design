@@ -487,12 +487,14 @@ model EventRewardsPool {
   leaderboardPoolUsdc Float             @default(0) // Leaderboard pool for top 3 creators (50/35/15)
   platformFeeUsdc     Float
   creatorPoolUsdc     Float             @default(0) // Creator base pool (capacity × $0.05)
-  totalDisbursed   Float             @default(0)
-  participantCount Int               @default(0)
-  status           RewardsPoolStatus @default(ACTIVE)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  completedAt      DateTime?
+  totalDisbursed      Float             @default(0)
+  participantCount    Int               @default(0)
+  status              RewardsPoolStatus @default(ACTIVE)
+  processingAttempts  Int               @default(0)
+  lastAttemptAt       DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  completedAt         DateTime?
   event            Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
   claims           RewardClaim[]
 

@@ -2,7 +2,7 @@ import logger from '../../lib/logger';
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
 import { BrandXpService } from '../../services/brands/brandXpService.js';
-import { prisma } from '../../lib/prisma.js';
+
 import {
   BrandLevelStatusResponse,
   BrandDiscountResponse,
@@ -10,16 +10,9 @@ import {
   RecalculateBrandLevelResponse,
 } from '../../types/brandXp.js';
 
-/**
- * Helper to get brand ID for authenticated user
- */
-async function getBrandForUser(userId: string): Promise<string | null> {
-  const brand = await prisma.brand.findFirst({
-    where: { ownerId: userId },
-    select: { id: true },
-  });
-  return brand?.id || null;
-}
+import { BrandService } from '../../services/brands/BrandService.js';
+
+// Removed local getBrandForUser helper, using BrandService instead.
 
 /**
  * Get brand's level status and progress
@@ -36,11 +29,13 @@ export const getBrandLevelStatus = async (
       return res.status(401).json({ success: false, error: 'Authentication required' });
     }
 
-    const brandId = await getBrandForUser(userId);
+    const brand = await BrandService.getBrandByOwnerId(userId);
 
-    if (!brandId) {
+    if (!brand) {
       return res.status(404).json({ success: false, error: 'Brand not found' });
     }
+
+    const brandId = brand.id;
 
     const status = await BrandXpService.getBrandLevelStatus(brandId);
 
@@ -74,11 +69,13 @@ export const getBrandDiscount = async (
       return res.status(401).json({ success: false, error: 'Authentication required' });
     }
 
-    const brandId = await getBrandForUser(userId);
+    const brand = await BrandService.getBrandByOwnerId(userId);
 
-    if (!brandId) {
+    if (!brand) {
       return res.status(404).json({ success: false, error: 'Brand not found' });
     }
+
+    const brandId = brand.id;
 
     const discountPercent = await BrandXpService.getBrandDiscount(brandId);
 
@@ -113,20 +110,18 @@ export const getBrandLevelHistory = async (
       return res.status(401).json({ success: false, error: 'Authentication required' });
     }
 
-    const brandId = await getBrandForUser(userId);
+    const brand = await BrandService.getBrandByOwnerId(userId);
 
-    if (!brandId) {
+    if (!brand) {
       return res.status(404).json({ success: false, error: 'Brand not found' });
     }
 
-    const snapshots = await prisma.brandLevelSnapshot.findMany({
-      where: { brandId },
-      orderBy: { createdAt: 'desc' },
-      take: Math.min(parseInt(limit as string, 10), 100),
-      skip: parseInt(offset as string, 10),
-    });
-
-    const total = await prisma.brandLevelSnapshot.count({ where: { brandId } });
+    const brandId = brand.id;
+    const { snapshots, total } = await BrandXpService.getBrandLevelHistory(
+      brandId,
+      parseInt(limit as string, 10),
+      parseInt(offset as string, 10)
+    );
 
     const response: BrandLevelHistoryResponse = {
       success: true,
@@ -163,11 +158,13 @@ export const recalculateBrandLevel = async (
       return res.status(401).json({ success: false, error: 'Authentication required' });
     }
 
-    const brandId = await getBrandForUser(userId);
+    const brand = await BrandService.getBrandByOwnerId(userId);
 
-    if (!brandId) {
+    if (!brand) {
       return res.status(404).json({ success: false, error: 'Brand not found' });
     }
+
+    const brandId = brand.id;
 
     const result = await BrandXpService.recalculateBrandLevel(brandId, 'manual_recalc');
 

@@ -364,4 +364,15 @@ export class BrandClaimService {
       },
     });
   }
+  /**
+   * Get application with brand details by ID
+   */
+  static async getApplicationWithBrandById(id: string) {
+    return prisma.brandApplication.findUnique({
+      where: { id },
+      include: {
+        brand: true,
+      },
+    });
+  }
 }

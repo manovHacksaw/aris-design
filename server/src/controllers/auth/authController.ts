@@ -1,8 +1,8 @@
-import logger from '../../lib/logger';
+import logger from '../../lib/logger.js';
 import { Request, Response } from 'express';
 import { PrivyClient } from '@privy-io/server-auth';
-import { AuthService } from '../../services/auth/authService';
-import { AuthenticatedRequest } from '../../middlewares/authMiddleware';
+import { AuthService } from '../../services/auth/authService.js';
+import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
 
 /**
  * Authenticate with Privy token

@@ -370,4 +370,23 @@ export class BrandXpService {
       },
     };
   }
+
+  /**
+   * Get brand's level change history
+   */
+  static async getBrandLevelHistory(brandId: string, limit: number = 20, offset: number = 0) {
+    const snapshots = await prisma.brandLevelSnapshot.findMany({
+      where: { brandId },
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(limit, 100),
+      skip: offset,
+    });
+
+    const total = await prisma.brandLevelSnapshot.count({ where: { brandId } });
+
+    return {
+      snapshots,
+      total,
+    };
+  }
 }

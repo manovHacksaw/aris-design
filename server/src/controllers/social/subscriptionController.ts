@@ -1,13 +1,14 @@
-import logger from '../../lib/logger';
+import logger from '../../lib/logger.js';
 import { Request, Response } from 'express';
 import { prisma } from '../../lib/prisma.js';
-import { SubscriptionService } from '../../services/social/subscriptionService';
+import { SubscriptionService } from '../../services/social/subscriptionService.js';
+import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
 
 /**
  * Subscribe to a brand
  * POST /api/subscriptions/:brandId
  */
-export const subscribeToBrand = async (req: Request, res: Response): Promise<void> => {
+export const subscribeToBrand = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { brandId } = req.params;
@@ -43,7 +44,7 @@ export const subscribeToBrand = async (req: Request, res: Response): Promise<voi
  * Unsubscribe from a brand
  * DELETE /api/subscriptions/:brandId
  */
-export const unsubscribeFromBrand = async (req: Request, res: Response): Promise<void> => {
+export const unsubscribeFromBrand = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { brandId } = req.params;
@@ -80,7 +81,7 @@ export const unsubscribeFromBrand = async (req: Request, res: Response): Promise
  * GET /api/subscriptions/:brandId/status
  * Note: Uses optional authentication - works for both logged-in and non-logged-in users
  */
-export const getSubscriptionStatus = async (req: Request, res: Response): Promise<void> => {
+export const getSubscriptionStatus = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { brandId } = req.params;
@@ -118,7 +119,7 @@ export const getSubscriptionStatus = async (req: Request, res: Response): Promis
  * Get all brands user is subscribed to
  * GET /api/subscriptions/my-subscriptions
  */
-export const getMySubscriptions = async (req: Request, res: Response): Promise<void> => {
+export const getMySubscriptions = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
 
@@ -146,7 +147,7 @@ export const getMySubscriptions = async (req: Request, res: Response): Promise<v
  * Get all subscribers for a brand (brand owners only)
  * GET /api/subscriptions/brand/:brandId/subscribers
  */
-export const getBrandSubscribers = async (req: Request, res: Response): Promise<void> => {
+export const getBrandSubscribers = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { brandId } = req.params;
