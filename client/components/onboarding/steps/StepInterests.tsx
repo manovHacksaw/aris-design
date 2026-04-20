@@ -67,11 +67,11 @@ export default function StepInterests({ initial, onNext, onBack }: Props) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="space-y-1">
         <p className="text-xs font-bold text-primary/80 uppercase tracking-widest">Step 4 of 7</p>
-        <h1 className="text-2xl font-black text-foreground tracking-tighter">Brand & Domain Preferences</h1>
-        <p className="text-sm text-foreground/40">
+        <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tighter">Brand & Domain Preferences</h1>
+        <p className="text-xs sm:text-sm text-foreground/40">
           Choose what you want to see first in your feed.
         </p>
       </div>
@@ -131,13 +131,13 @@ export default function StepInterests({ initial, onNext, onBack }: Props) {
       </div>
 
       <div className="flex gap-3 pt-1">
-        <button onClick={onBack} className="flex items-center gap-1.5 px-5 py-4 rounded-[16px] text-foreground/40 hover:text-foreground font-bold text-xs uppercase tracking-widest transition-colors">
+        <button onClick={onBack} className="flex items-center gap-1.5 px-4 py-3 sm:px-5 sm:py-4 rounded-[16px] text-foreground/40 hover:text-foreground font-bold text-xs uppercase tracking-widest transition-colors">
           <ChevronLeft className="w-3.5 h-3.5" /> Back
         </button>
         <button
           onClick={handleNext}
           disabled={brandCategories.length === 0 || domains.length === 0}
-          className="flex-1 py-4 rounded-[16px] bg-foreground text-background font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-foreground/90 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex-1 py-3 sm:py-4 rounded-[16px] bg-foreground text-background font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-foreground/90 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Continue <ArrowRight className="w-4 h-4" />
         </button>

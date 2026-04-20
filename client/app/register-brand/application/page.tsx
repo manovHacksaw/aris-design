@@ -346,22 +346,22 @@ export default function BrandApplicationPage() {
   // ── Success State ──────────────────────────────────────────────────────────
   if (submitted) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-6">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md text-center space-y-6"
+          className="w-full max-w-md text-center space-y-5 sm:space-y-6"
         >
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            className="w-20 h-20 bg-primary/10 border-[3px] border-primary rounded-2xl flex items-center justify-center mx-auto"
+            className="w-16 h-16 sm:w-20 sm:h-20 bg-primary/10 border-[3px] border-primary rounded-2xl flex items-center justify-center mx-auto"
           >
-            <CheckCircle2 className="w-10 h-10 text-primary" />
+            <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
           </motion.div>
           <div>
-            <h1 className="text-5xl font-display text-foreground uppercase tracking-tight mb-3">
+            <h1 className="text-3xl sm:text-5xl font-display text-foreground uppercase tracking-tight mb-2 sm:mb-3">
               Application <span className="text-primary">Submitted!</span>
             </h1>
             <p className="text-foreground/50 text-sm leading-relaxed">
@@ -443,7 +443,7 @@ export default function BrandApplicationPage() {
     <div className="min-h-screen bg-background text-foreground">
 
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b border-border/30 bg-background/80 backdrop-blur-md px-6 py-4 flex items-center justify-between">
+      <div className="sticky top-0 z-10 border-b border-border/30 bg-background/80 backdrop-blur-md px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
         <Link
           href="/register-brand"
           className="flex items-center gap-1.5 text-foreground/40 hover:text-foreground transition-colors"
@@ -451,27 +451,27 @@ export default function BrandApplicationPage() {
           <ChevronLeft className="w-4 h-4" />
           <span className="text-xs font-bold uppercase tracking-widest">Back</span>
         </Link>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {hasDraft && (
             <span className="text-[10px] font-bold text-primary/60 uppercase tracking-widest hidden sm:block">
               Draft saved
             </span>
           )}
-          <span className="text-xs font-bold text-foreground/25 uppercase tracking-widest">Brand Application</span>
+          <span className="text-[10px] sm:text-xs font-bold text-foreground/25 uppercase tracking-widest">Brand Application</span>
         </div>
-        <div className="w-16" />
+        <div className="w-10 sm:w-16" />
       </div>
 
-      <div className="max-w-2xl mx-auto px-6 py-8 pb-32">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-24 sm:pb-32">
 
         {/* Resume Draft Banner */}
         {hasDraft && step === 1 && form.brandName && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 bg-primary/5 border border-primary/20 rounded-2xl p-4 flex items-center justify-between gap-4"
+            className="mb-5 sm:mb-6 bg-primary/5 border border-primary/20 rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-3 sm:gap-4"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Zap className="w-4 h-4 text-primary shrink-0" />
               <p className="text-xs text-foreground/70">
                 <span className="font-bold text-foreground">Draft resumed</span> — continuing from where you left off.
@@ -487,44 +487,44 @@ export default function BrandApplicationPage() {
         )}
 
         {/* Page Title */}
-        <div className="mb-8">
-          <h1 className="text-5xl md:text-7xl font-display text-foreground uppercase tracking-tight leading-none mb-3">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-3xl sm:text-5xl md:text-7xl font-display text-foreground uppercase tracking-tight leading-none mb-2 sm:mb-3">
             Apply as a <span className="text-primary">Brand</span>
           </h1>
-          <div className="flex items-center gap-4">
-            <p className="text-foreground/40 text-sm leading-relaxed flex-1">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <p className="text-foreground/40 text-xs sm:text-sm leading-relaxed flex-1">
               Fill out your application — our team reviews and approves within 24–48 hours.
             </p>
             <div className="shrink-0 text-right">
               <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-widest">Completeness</p>
-              <p className="text-lg font-display text-primary">{completeness}%</p>
+              <p className="text-base sm:text-lg font-display text-primary">{completeness}%</p>
             </div>
           </div>
         </div>
 
         {/* Step Indicator */}
-        <div className="flex items-center mb-10">
+        <div className="flex items-center mb-8 sm:mb-10">
           {STEPS.map((s, i) => (
             <div key={s.id} className="flex items-center flex-1 last:flex-none">
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 <div className={cn(
-                  "w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-black transition-all",
+                  "w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 flex items-center justify-center text-xs font-black transition-all",
                   step > s.id
                     ? "bg-primary border-primary text-black"
                     : step === s.id
                     ? "border-primary text-primary"
                     : "border-border/30 text-foreground/25"
                 )}>
-                  {step > s.id ? <Check className="w-4 h-4" /> : s.id}
+                  {step > s.id ? <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : s.id}
                 </div>
                 <span className={cn(
-                  "text-[10px] font-bold uppercase tracking-widest hidden md:block transition-colors",
+                  "text-[10px] font-bold uppercase tracking-widest hidden sm:block transition-colors",
                   step >= s.id ? "text-foreground" : "text-foreground/25"
                 )}>{s.label}</span>
               </div>
               {i < STEPS.length - 1 && (
                 <div className={cn(
-                  "flex-1 h-px mx-2 transition-colors",
+                  "flex-1 h-px mx-1.5 sm:mx-2 transition-colors",
                   step > s.id ? "bg-primary" : "bg-border/30"
                 )} />
               )}
@@ -714,13 +714,13 @@ export default function BrandApplicationPage() {
                 </div>
 
                 {/* Critical Email Enforcement Banner */}
-                <div className="bg-primary/8 border-2 border-primary/30 rounded-2xl p-5 space-y-3">
+                <div className="bg-primary/8 border-2 border-primary/30 rounded-2xl p-4 sm:p-5 space-y-3">
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
-                      <Lock className="w-4 h-4 text-primary" />
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                      <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm font-black text-foreground">Email Identity Enforcement</p>
+                      <p className="text-xs sm:text-sm font-black text-foreground">Email Identity Enforcement</p>
                       <p className="text-xs text-foreground/60 mt-1 leading-relaxed">
                         The contact email you provide is critical. Your brand activation link will be sent
                         <span className="font-bold text-foreground"> exclusively to this email</span>, and
@@ -729,7 +729,7 @@ export default function BrandApplicationPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="space-y-1.5 pl-11">
+                  <div className="space-y-1.5 sm:pl-11">
                     {[
                       "Ensure this email is accessible by team members who will manage the brand account",
                       "The activation link is single-use and expires after 48 hours",
@@ -743,7 +743,7 @@ export default function BrandApplicationPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <Field label="Contact Person Name" required>
                     <input
                       type="text"
@@ -781,7 +781,7 @@ export default function BrandApplicationPage() {
                   </InputWithIcon>
                 </Field>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <Field label="Phone Number" optional>
                     <InputWithIcon icon={<Phone className="w-4 h-4" />}>
                       <input
@@ -817,8 +817,8 @@ export default function BrandApplicationPage() {
                         key={key}
                         className="flex rounded-[14px] overflow-hidden border border-border/50 focus-within:border-primary/50 transition-colors"
                       >
-                        <div className="flex items-center px-3 py-3 bg-white/[0.03] border-r border-border/30 text-[11px] text-foreground/30 font-medium whitespace-nowrap shrink-0">
-                          <AtSign className="w-3 h-3 mr-1" />{prefix}
+                        <div className="flex items-center px-2.5 sm:px-3 py-3 bg-white/[0.03] border-r border-border/30 text-[10px] sm:text-[11px] text-foreground/30 font-medium shrink-0 max-w-[100px] sm:max-w-none overflow-hidden">
+                          <AtSign className="w-3 h-3 mr-1 shrink-0" /><span className="truncate">{prefix}</span>
                         </div>
                         <input
                           type="text"
@@ -862,7 +862,7 @@ export default function BrandApplicationPage() {
                   />
                 </Field>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <Field label="GST Number" optional note="India only">
                     <input
                       type="text"
@@ -1201,18 +1201,18 @@ export default function BrandApplicationPage() {
 
         {/* Navigation */}
         {step < 5 && (
-          <div className="flex gap-3 mt-8">
+          <div className="flex gap-2 sm:gap-3 mt-6 sm:mt-8">
             {step > 1 && (
               <button
                 onClick={handleBack}
-                className="flex items-center gap-1.5 px-5 py-4 rounded-[16px] text-foreground/40 hover:text-foreground font-bold text-xs uppercase tracking-widest transition-colors"
+                className="flex items-center gap-1.5 px-4 sm:px-5 py-3.5 sm:py-4 rounded-[16px] text-foreground/40 hover:text-foreground font-bold text-xs uppercase tracking-widest transition-colors"
               >
                 <ChevronLeft className="w-3.5 h-3.5" /> Back
               </button>
             )}
             <button
               onClick={handleNext}
-              className="flex-1 py-4 rounded-[16px] bg-foreground text-background font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-foreground/90 active:scale-95 transition-all"
+              className="flex-1 py-3.5 sm:py-4 rounded-[16px] bg-foreground text-background font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 sm:gap-3 hover:bg-foreground/90 active:scale-95 transition-all"
             >
               Continue <ArrowRight className="w-4 h-4" />
             </button>
@@ -1222,7 +1222,7 @@ export default function BrandApplicationPage() {
         {step === 5 && (
           <button
             onClick={handleBack}
-            className="flex items-center gap-1.5 px-5 py-2 text-foreground/30 hover:text-foreground/60 font-bold text-xs uppercase tracking-widest transition-colors mt-4"
+            className="flex items-center gap-1.5 px-4 sm:px-5 py-2 text-foreground/30 hover:text-foreground/60 font-bold text-xs uppercase tracking-widest transition-colors mt-3 sm:mt-4"
           >
             <ChevronLeft className="w-3 h-3" /> Back
           </button>
