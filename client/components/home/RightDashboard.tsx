@@ -65,12 +65,12 @@ interface TxStyle {
 }
 
 const TX_STYLES: Record<string, TxStyle> = {
-  LOGIN_STREAK: { icon: Flame,    color: "text-orange-400", bg: "bg-orange-400/10", border: "border-orange-400/25", glow: "group-hover:shadow-[0_0_12px_rgba(251,146,60,0.15)]" },
-  VOTE_CAST:    { icon: ThumbsUp, color: "text-blue-400",   bg: "bg-blue-400/10",   border: "border-blue-400/25",   glow: "group-hover:shadow-[0_0_12px_rgba(96,165,250,0.15)]" },
-  SUBMISSION:   { icon: ImageIcon, color: "text-lime-400",  bg: "bg-lime-400/10",   border: "border-lime-400/25",   glow: "group-hover:shadow-[0_0_12px_rgba(163,230,53,0.15)]" },
-  MILESTONE:    { icon: Trophy,   color: "text-[#B6FF60]", bg: "bg-[#B6FF60]/10", border: "border-[#B6FF60]/25", glow: "group-hover:shadow-[0_0_12px_rgba(182,255,96,0.16)]" },
-  REFERRAL:     { icon: UserPlus, color: "text-pink-400",   bg: "bg-pink-400/10",   border: "border-pink-400/25",   glow: "group-hover:shadow-[0_0_12px_rgba(244,114,182,0.15)]" },
-  default:      { icon: Sparkles, color: "text-[#A78BFA]",  bg: "bg-[#A78BFA]/10",  border: "border-[#A78BFA]/25",  glow: "group-hover:shadow-[0_0_12px_rgba(167,139,250,0.15)]" },
+  LOGIN_STREAK: { icon: Flame,    color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-400/10", border: "border-orange-400/25", glow: "group-hover:shadow-[0_0_12px_rgba(251,146,60,0.15)]" },
+  VOTE_CAST:    { icon: ThumbsUp, color: "text-blue-600 dark:text-blue-400",     bg: "bg-blue-400/10",   border: "border-blue-400/25",   glow: "group-hover:shadow-[0_0_12px_rgba(96,165,250,0.15)]" },
+  SUBMISSION:   { icon: ImageIcon, color: "text-lime-600 dark:text-lime-400",    bg: "bg-lime-400/10",   border: "border-lime-400/25",   glow: "group-hover:shadow-[0_0_12px_rgba(163,230,53,0.15)]" },
+  MILESTONE:    { icon: Trophy,   color: "text-[#B6FF60]",                       bg: "bg-[#B6FF60]/10", border: "border-[#B6FF60]/25", glow: "group-hover:shadow-[0_0_12px_rgba(182,255,96,0.16)]" },
+  REFERRAL:     { icon: UserPlus, color: "text-pink-600 dark:text-pink-400",     bg: "bg-pink-400/10",   border: "border-pink-400/25",   glow: "group-hover:shadow-[0_0_12px_rgba(244,114,182,0.15)]" },
+  default:      { icon: Sparkles, color: "text-[#7C5FC4] dark:text-[#A78BFA]",  bg: "bg-[#A78BFA]/10",  border: "border-[#A78BFA]/25",  glow: "group-hover:shadow-[0_0_12px_rgba(167,139,250,0.15)]" },
 };
 
 function toHuman(key: string): string {
@@ -356,7 +356,7 @@ export default function RightDashboard() {
           <div className="space-y-5 animate-pulse">
             {/* XP number skeleton */}
             <div className="space-y-2">
-              <div className="h-9 w-28 rounded-lg bg-white/5 border border-white/8 backdrop-blur-sm" />
+              <div className="h-9 w-28 rounded-lg bg-foreground/10 border border-foreground/8 backdrop-blur-sm" />
               <div className="h-3 w-20 rounded bg-white/5" />
             </div>
             {/* Bar chart skeleton */}
@@ -475,7 +475,7 @@ export default function RightDashboard() {
       <div className="mt-2 bg-card border border-border rounded-[24px] p-4 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-full border border-neutral-700 bg-neutral-900/80 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-full border border-border bg-secondary flex items-center justify-center">
               <Star className="w-3.5 h-3.5 text-foreground/70" />
             </div>
             <div>

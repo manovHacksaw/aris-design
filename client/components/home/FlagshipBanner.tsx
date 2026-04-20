@@ -41,8 +41,8 @@ export default function FlagshipBanner({ event }: FlagshipBannerProps) {
                     alt="Flagship Event"
                 />
                 {/* Dark gradient layers */}
-                <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-black/10" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 dark:from-black/95 via-black/40 dark:via-black/60 to-black/5 dark:to-black/10" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 dark:from-black/50 to-transparent" />
             </div>
 
             {/* Ambient blue glow in corner */}

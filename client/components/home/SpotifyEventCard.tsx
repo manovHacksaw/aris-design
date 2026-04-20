@@ -19,7 +19,7 @@ export default function SpotifyEventCard({ event }: Props) {
                 onHoverEnd={() => setHovered(false)}
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.15, ease: "easeOut" }}
-                className="group relative aspect-[4/5] rounded-2xl overflow-hidden cursor-pointer bg-white/[0.04] border border-white/[0.08]"
+                className="group relative aspect-[4/5] rounded-2xl overflow-hidden cursor-pointer bg-surface border border-surface-border"
             >
                 {/* Image */}
                 <img
@@ -29,7 +29,7 @@ export default function SpotifyEventCard({ event }: Props) {
                 />
 
                 {/* Base gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 dark:from-black/90 via-black/5 dark:via-black/10 to-transparent" />
 
                 {/* Default info */}
                 <AnimatePresence>
@@ -60,7 +60,7 @@ export default function SpotifyEventCard({ event }: Props) {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 6 }}
                             transition={{ duration: 0.2 }}
-                            className="absolute inset-0 flex flex-col justify-end p-4 bg-gradient-to-t from-black/95 via-black/50 to-transparent"
+                            className="absolute inset-0 flex flex-col justify-end p-4 bg-gradient-to-t from-black/70 dark:from-black/95 via-black/30 dark:via-black/50 to-transparent"
                         >
                             <h3 className="text-sm font-bold text-white line-clamp-2 leading-snug mb-2">
                                 {event.title}

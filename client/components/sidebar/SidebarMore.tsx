@@ -140,7 +140,7 @@ export default function SidebarMore() {
                                         {/* Log Out */}
                                         <button
                                             onClick={() => { setIsOpen(false); logout(); }}
-                                            className="flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium text-red-400 hover:text-red-300 hover:bg-secondary rounded-[16px] transition-colors group"
+                                            className="flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-500 dark:hover:text-red-300 hover:bg-secondary rounded-[16px] transition-colors group"
                                         >
                                             <IoLogOutOutline size={20} className="flex-shrink-0 transition-colors" />
                                             Log out
@@ -169,9 +169,9 @@ export default function SidebarMore() {
                 className={cn(
                     "group flex items-center w-full py-3 rounded-xl",
                     isCollapsed ? "justify-center" : "pl-3",
-                    "text-[#9CA3AF] hover:bg-secondary hover:text-white",
+                    "text-foreground/40 hover:bg-secondary hover:text-foreground",
                     "transition-colors duration-150 ease-out",
-                    isOpen && "text-white bg-secondary"
+                    isOpen && "text-foreground bg-secondary"
                 )}
             >
                 <div className="flex-shrink-0 relative flex items-center justify-center w-8 h-8">
