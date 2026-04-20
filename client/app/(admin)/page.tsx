@@ -86,6 +86,7 @@ const STAT_CARDS = (s: AdminStats) => [
 ];
 
 export default function AdminDashboardPage() {
+  const { logout } = useAdminAuth();
   useAdminAuth();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);

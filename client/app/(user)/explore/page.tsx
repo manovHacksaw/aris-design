@@ -61,11 +61,6 @@ function mergeEventData(base: Event, incoming?: Partial<Event> | null): Event {
         ),
         participantAvatars: incoming?.participantAvatars ?? base.participantAvatars,
         eventAnalytics: incoming?.eventAnalytics ?? base.eventAnalytics,
-        participationCount: incoming?.participationCount
-            ?? base.participationCount
-            ?? (base.eventAnalytics
-                ? base.eventAnalytics.totalSubmissions + base.eventAnalytics.totalVotes
-                : undefined),
     };
 
     return merged;
@@ -594,7 +589,7 @@ export default function Explore() {
                                             <div className="space-y-4 sm:space-y-8">
                                                 {brandsRows.length > 0 ? (
                                                     brandsRows.map((brand) => (
-                                                        <BrandRow key={brand.id} brand={brand} />
+                                                        <BrandRow key={brand.name} brand={{ id: brand.name, ...brand } as any} />
                                                     ))
                                                 ) : (
                                                     <EmptyState label="No brands found" />

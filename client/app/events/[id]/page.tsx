@@ -168,7 +168,7 @@ function toVoteSubmission(sub: Submission, currentUserId?: string | null): VoteS
             handle: sub.user?.username || "user",
         },
         media: sub.imageUrl || (sub.imageCid ? `${PINATA_GW}/${sub.imageCid}` : ""),
-        mediaType: (!sub.imageUrl && !sub.imageCid) ? "text" : "image",
+        mediaType: ((sub as any).type === "IMAGE" || sub.imageUrl || sub.imageCid) ? "image" : "text",
         textContent: (sub as any).caption || sub.content,
         voteCount: sub._count?.votes ?? 0,
         rank: sub.rank,
@@ -205,6 +205,7 @@ function mapVoteOnlyProposalsToSubmissions(event: Event): Submission[] {
         eventId: event.id,
         imageCid: p.imageCid,
         imageUrl: p.imageUrl,
+        type: p.type,
         content: p.title + (p.content ? `\n${p.content}` : ""),
         user: {
             id: event.brandId,

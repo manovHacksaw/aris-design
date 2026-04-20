@@ -34,7 +34,7 @@ export class EventValidationService {
     }
 
     // Description validation
-    if (data.description !== undefined && data.description.length > 2000) {
+    if (data.description != null && data.description.length > 2000) {
       errors.push('Description must be 2000 characters or less');
     }
 
