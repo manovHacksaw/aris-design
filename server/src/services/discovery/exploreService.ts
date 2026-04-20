@@ -115,6 +115,60 @@ function calculateCreatorScore(user: any) {
     return score;
 }
 
+/**
+ * Lightweight next-event picker for post-action engagement flow.
+ * Runs a minimal DB query — does NOT call the full getExploreEvents pipeline.
+ * Returns null silently on any failure (fail-safe by design).
+ */
+async function getNextEventForUser(userId: string, excludeEventId: string): Promise<any | null> {
+    try {
+        // Fetch IDs of events the user already voted in or submitted to
+        const [votedEventIds, submittedEventIds] = await Promise.all([
+            prisma.vote.findMany({
+                where: { userId },
+                select: { eventId: true },
+                distinct: ['eventId'],
+            }),
+            prisma.submission.findMany({
+                where: { userId },
+                select: { eventId: true },
+                distinct: ['eventId'],
+            }),
+        ]);
+
+        const participatedIds = new Set([
+            excludeEventId,
+            ...votedEventIds.map((v: any) => v.eventId),
+            ...submittedEventIds.map((s: any) => s.eventId),
+        ]);
+
+        const candidates = await prisma.event.findMany({
+            where: {
+                isDeleted: false,
+                status: { in: ['voting', 'posting'] },
+                id: { notIn: Array.from(participatedIds) },
+            },
+            include: {
+                brand: { select: { id: true, name: true, logoCid: true, isVerified: true, level: true } },
+                _count: { select: { submissions: true, votes: true } },
+            },
+            take: 20, // Score top-20 candidates, not entire table
+        });
+
+        if (candidates.length === 0) return null;
+
+        // Reuse existing scoring — no new logic
+        const scored = candidates
+            .map((e: any) => ({ ...e, _score: calculateEventScore(e) }))
+            .filter((e: any) => e._score > 0)
+            .sort((a: any, b: any) => b._score - a._score);
+
+        return scored[0] ?? null;
+    } catch {
+        return null; // Always fail-safe — never throws
+    }
+}
+
 export const ExploreService = {
     /**
      * Get explore events including trending, domain-grouped events, and closed events.
@@ -438,7 +492,9 @@ export const ExploreService = {
             logger.error({ err: error }, 'Failed to get explore content:');
             throw error;
         }
-    }
+    },
+
+    getNextEventForUser,
 };
 
 
