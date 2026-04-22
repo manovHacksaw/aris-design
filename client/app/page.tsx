@@ -1,8 +1,6 @@
 "use client";
 
 import SidebarLayout from "@/components/home/SidebarLayout";
-import HomeHeader from "@/components/home/HomeHeader";
-import TrendingEvents from "@/components/home/TrendingEvents";
 import EventsTabFeed from "@/components/home/EventsTabFeed";
 import BottomNav from "@/components/BottomNav";
 import AuthGuard from "@/components/auth/AuthGuard";
@@ -30,11 +28,6 @@ export default function Home() {
 
             {/* Left: Main Content Area (~70%) */}
             <main className="flex-1 min-w-0 space-y-8 sm:space-y-10 lg:space-y-12 pt-4 sm:pt-6 lg:pt-10">
-
-              {/* 2. Trending Section */}
-              <TrendingEvents />
-
-              {/* 4. Events Tabbed Feed */}
               <EventsTabFeed />
             </main>
 

@@ -67,7 +67,7 @@ export default function CreateHero({ onGenerate, onAttach, onRequireAuth, events
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5, delay: 0.08 }}
                         >
-                            <h1 className="font-display text-[2.6rem] sm:text-5xl md:text-[4.5rem] lg:text-[5.5rem] text-white leading-[0.88] uppercase tracking-tight">
+                            <h1 className="font-display text-3xl sm:text-5xl md:text-[4.5rem] lg:text-[5.5rem] text-white leading-[0.88] uppercase tracking-tight">
                                 Bring your
                                 <br />
                                 <span className="bg-gradient-to-r from-lime-300 via-lime-400 to-green-400 bg-clip-text text-transparent">
@@ -102,16 +102,16 @@ export default function CreateHero({ onGenerate, onAttach, onRequireAuth, events
                                             if (onRequireAuth) { onRequireAuth(); return; }
                                             onAttach?.();
                                         }}
-                                        className="p-1 sm:p-3 rounded-md sm:rounded-2xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all group/btn"
+                                        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md sm:rounded-2xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all group/btn"
                                     >
-                                        <Paperclip className="w-2.5 h-2.5 sm:w-4 sm:h-4 group-hover/btn:rotate-12 transition-transform" />
+                                        <Paperclip className="w-4 h-4 group-hover/btn:rotate-12 transition-transform" />
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => onRequireAuth?.()}
-                                        className="p-1 sm:p-3 rounded-md sm:rounded-2xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all"
+                                        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md sm:rounded-2xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all"
                                     >
-                                        <Settings2 className="w-2.5 h-2.5 sm:w-4 sm:h-4" />
+                                        <Settings2 className="w-4 h-4" />
                                     </button>
                                     <button
                                         type="button"
@@ -119,7 +119,7 @@ export default function CreateHero({ onGenerate, onAttach, onRequireAuth, events
                                             if (onRequireAuth) { onRequireAuth(); return; }
                                             if (prompt.trim() && onGenerate) onGenerate(prompt.trim());
                                         }}
-                                        className="px-2 sm:px-7 py-1 sm:py-3 rounded-md sm:rounded-2xl bg-lime-400 text-black font-black uppercase tracking-wide text-[8px] sm:text-[11px] shadow-[0_4px_24px_rgba(163,230,53,0.3)] hover:bg-lime-300 hover:scale-[1.02] active:scale-95 transition-all whitespace-nowrap"
+                                        className="min-h-[44px] px-4 sm:px-7 rounded-md sm:rounded-2xl bg-lime-400 text-black font-black uppercase tracking-wide text-[11px] shadow-[0_4px_24px_rgba(163,230,53,0.3)] hover:bg-lime-300 hover:scale-[1.02] active:scale-95 transition-all whitespace-nowrap flex items-center"
                                     >
                                         Gen
                                     </button>
@@ -135,7 +135,7 @@ export default function CreateHero({ onGenerate, onAttach, onRequireAuth, events
                                         whileHover={{ scale: 1.04 }}
                                         whileTap={{ scale: 0.97 }}
                                         onClick={() => onRequireAuth ? onRequireAuth() : handleHint(hint)}
-                                        className="px-2 sm:px-4 py-1 sm:py-1.5 rounded-full bg-white/[0.04] border border-white/[0.07] text-[8px] sm:text-[10px] font-black uppercase tracking-wide text-white/30 hover:text-white/70 hover:bg-white/[0.08] hover:border-white/[0.14] transition-all"
+                                        className="px-3 sm:px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.07] text-[11px] font-black uppercase tracking-wide text-white/30 hover:text-white/70 hover:bg-white/[0.08] hover:border-white/[0.14] transition-all"
                                     >
                                         {hint}
                                     </motion.button>

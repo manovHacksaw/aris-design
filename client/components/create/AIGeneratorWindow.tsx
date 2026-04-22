@@ -472,7 +472,7 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                     Aris AI Engine
                   </p>
                   {remainingGenerations !== null && (
-                    <p className="text-[9px] font-bold text-white/30 uppercase tracking-wider">
+                    <p className="text-[11px] font-bold text-white/30 uppercase tracking-wider">
                       {remainingGenerations} generations left today
                     </p>
                   )}
@@ -480,7 +480,7 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
               </div>
               <button
                 onClick={() => !isPosting && onClose()}
-                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
+                className="w-11 h-11 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
               >
                 <X className="w-4 h-4 text-white/50" />
               </button>
@@ -1043,7 +1043,7 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                     <button
                       onClick={handleSendPrompt}
                       disabled={!prompt.trim() || remainingGenerations === 0}
-                      className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center hover:bg-primary/90 active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+                      className="w-11 h-11 rounded-xl bg-primary flex items-center justify-center hover:bg-primary/90 active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
                     >
                       <Send className="w-3.5 h-3.5 text-white" />
                     </button>

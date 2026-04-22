@@ -11,7 +11,6 @@ import { useUser } from "@/context/UserContext";
 import EventRow from "@/components/explore/EventRow";
 import BrandRow from "@/components/explore/BrandRow";
 import ContentMosaic from "@/components/explore/ContentMosaic";
-import PremiumEventCard from "@/components/events/PremiumEventCard";
 
 import {
     getExploreEvents,
@@ -93,7 +92,7 @@ function TopEventsHero({ events }: { events: Event[] }) {
     const displayImage = event.imageUrl || (event.imageCid ? `${PINATA_GW}/${event.imageCid}` : "");
 
     return (
-        <div className="relative w-full aspect-video rounded-2xl overflow-hidden mb-0 group bg-[#0a0a0c] border border-white/5 shadow-2xl">
+        <div className="relative w-full aspect-[2.8/1] rounded-2xl overflow-hidden mb-0 group bg-[#0a0a0c] border border-white/5 shadow-2xl">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={event.id}
@@ -116,7 +115,7 @@ function TopEventsHero({ events }: { events: Event[] }) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
             {/* Content Left */}
-            <div className="absolute inset-y-0 left-0 w-full md:w-2/3 p-3 sm:p-7 md:p-10 flex flex-col justify-end sm:justify-center z-10">
+            <div className="absolute inset-y-0 left-0 w-full md:w-2/3 p-3 sm:p-6 md:p-8 flex flex-col justify-end z-10">
                 <motion.div
                     key={`content-${event.id}`}
                     initial={{ opacity: 0, y: 20 }}
@@ -142,7 +141,7 @@ function TopEventsHero({ events }: { events: Event[] }) {
                         </Link>
 
                         {/* Title */}
-                        <h1 className="text-lg sm:text-3xl md:text-4xl lg:text-5xl font-black capitalize text-white tracking-tighter leading-tight mb-1.5 sm:mb-4 line-clamp-2 drop-shadow-2xl">
+                        <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-black capitalize text-white tracking-tighter leading-tight mb-1.5 sm:mb-4 line-clamp-2 drop-shadow-2xl">
                             {event.title}
                         </h1>
 
@@ -154,7 +153,7 @@ function TopEventsHero({ events }: { events: Event[] }) {
                                 <span className="text-white/50 hidden sm:inline">Participants</span>
                             </div>
                             <div className="flex items-center gap-1 sm:gap-2 border-l border-white/10 pl-3 sm:pl-6">
-                                <span className="text-primary font-black text-xs sm:text-base leading-none">
+                                <span className="text-primary font-black text-sm sm:text-xl leading-none">
                                     ${((event.leaderboardPool || 0) + (event.topReward || 0) + (event.baseReward || 0)).toLocaleString()}
                                 </span>
                                 <span className="text-white/40 hidden sm:inline">Total Pool</span>
@@ -165,7 +164,7 @@ function TopEventsHero({ events }: { events: Event[] }) {
                     {/* CTA + Dots */}
                     <div className="flex items-center gap-3 sm:gap-4">
                         <Link href={`/events/${event.id}`}>
-                            <button className="px-4 sm:px-8 py-1.5 sm:py-3 bg-white text-black font-black uppercase text-[8px] sm:text-[10px] tracking-[0.2em] rounded-full hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all w-fit relative overflow-hidden group/btn">
+                            <button className="px-4 sm:px-6 py-1.5 sm:py-2.5 bg-white text-black font-black uppercase text-[8px] sm:text-[9px] tracking-[0.2em] rounded-full hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all w-fit relative overflow-hidden group/btn">
                                 <span className="relative z-10">{event.status === "voting" ? "Vote now" : "Submit entry"}</span>
                                 <div className="absolute inset-0 bg-primary/10 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
                             </button>
@@ -199,12 +198,12 @@ function ArisSelect({ value, onChange, options, placeholder, minWidth = "150px" 
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={cn(
-                    "w-full flex items-center justify-between bg-white/[0.03] border border-white/10 text-white/60 hover:text-white hover:border-white/20 rounded-md pl-2 pr-2 py-1.5 text-[8px] font-black uppercase tracking-[0.1em] transition-all cursor-pointer backdrop-blur-md",
+                    "w-full flex items-center justify-between bg-white/[0.03] border border-white/10 text-white/60 hover:text-white hover:border-white/20 rounded-md pl-3 pr-2.5 py-2 text-[10px] font-black uppercase tracking-[0.1em] transition-all cursor-pointer backdrop-blur-md",
                     isOpen && "border-primary/40 bg-white/[0.05] text-white"
                 )}
             >
-                <span className="truncate mr-1">{value === "ALL" || value === "TRENDING" ? placeholder : value}</span>
-                <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform duration-300 text-white/20 shrink-0", isOpen ? "rotate-180 text-white" : "")}><path d="m6 9 6 6 6-6" /></svg>
+                <span className="truncate mr-1.5">{value === "ALL" || value === "TRENDING" ? placeholder : value}</span>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform duration-300 text-white/20 shrink-0", isOpen ? "rotate-180 text-white" : "")}><path d="m6 9 6 6 6-6" /></svg>
             </button>
 
             <AnimatePresence>
@@ -227,7 +226,7 @@ function ArisSelect({ value, onChange, options, placeholder, minWidth = "150px" 
                                             setIsOpen(false);
                                         }}
                                         className={cn(
-                                            "w-full text-left px-3 py-2 text-[8px] font-bold uppercase tracking-[0.12em] transition-all border-l-2",
+                                            "w-full text-left px-3 py-2 text-[10px] font-bold uppercase tracking-[0.12em] transition-all border-l-2",
                                             (value === opt)
                                                 ? "bg-white/10 border-primary text-white"
                                                 : "border-transparent text-white/40 hover:bg-white/5 hover:text-white hover:border-white/20"
@@ -457,7 +456,7 @@ export default function Explore() {
                         {/* Banner */}
                         {loadingEvents ? (
                             <div className="w-full px-4 md:px-0">
-                                <div className="w-full aspect-video rounded-2xl bg-white/3 border border-white/5 animate-pulse" />
+                                <div className="w-full aspect-[2.8/1] rounded-2xl bg-white/3 border border-white/5 animate-pulse" />
                             </div>
                         ) : (
                             eventsData?.trending && eventsData.trending.length > 0 && (
@@ -503,7 +502,7 @@ export default function Explore() {
                                     }}
                                     options={["EVENTS", "BRANDS", "CONTENT"]}
                                     placeholder="Explore"
-                                    minWidth="80px"
+                                    minWidth="96px"
                                 />
 
                                 <ArisSelect
@@ -511,7 +510,7 @@ export default function Explore() {
                                     onChange={(val) => setActiveDomain(val === "ALL" ? "ALL" : val)}
                                     options={DOMAINS.map(d => d === "ALL" ? "ALL" : d)}
                                     placeholder="All"
-                                    minWidth="72px"
+                                    minWidth="86px"
                                 />
 
                                 {activeTab === "events" && (
@@ -526,7 +525,7 @@ export default function Explore() {
                                             "CLOSED"
                                         ].filter(o => o !== "JOINED" || !!user?.id)}
                                         placeholder="Phase"
-                                        minWidth="76px"
+                                        minWidth="90px"
                                     />
                                 )}
 
@@ -536,7 +535,7 @@ export default function Explore() {
                                         onChange={(val) => setBrandEventStatus(val as "LIVE" | "CLOSED")}
                                         options={["LIVE", "CLOSED"]}
                                         placeholder="Live"
-                                        minWidth="72px"
+                                        minWidth="86px"
                                     />
                                 )}
 
@@ -591,18 +590,12 @@ export default function Explore() {
                                                 </div>
                                             )}
 
-                                            {/* All Campaigns Header (Matching layout) */}
+                                            {/* All Campaigns */}
                                             {eventsData?.allRanked && eventsData.allRanked.length > 0 ? (
-                                                <div className="space-y-3 sm:space-y-4">
-                                                    <h3 className="text-base sm:text-lg font-black text-white capitalize tracking-wider pl-4 sm:pl-0">
-                                                        {(debouncedSearch || activeDomain !== "ALL") ? "Search Results" : activePhase === "JOINED" ? "My Joined Events" : "All Campaigns"}
-                                                    </h3>
-                                                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 px-4 sm:px-0">
-                                                        {(activePhase === "JOINED" ? joinedEventRows : eventsData.allRanked).map((ev) => (
-                                                            <PremiumEventCard key={ev.id} event={ev} />
-                                                        ))}
-                                                    </div>
-                                                </div>
+                                                <EventRow
+                                                    title={(debouncedSearch || activeDomain !== "ALL") ? "Search Results" : activePhase === "JOINED" ? "My Joined Events" : "All Campaigns"}
+                                                    events={activePhase === "JOINED" ? joinedEventRows : eventsData.allRanked}
+                                                />
                                             ) : (
                                                 <EmptyState label="No campaigns found" />
                                             )}

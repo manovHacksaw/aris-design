@@ -962,7 +962,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                 const votingStart = meta?.postingEnd ?? meta?.endTime;
                 const countdown = formatPostActionCountdown(votingStart);
                 toast.success(
-                    `Entry submitted to "${event!.title}"` + (countdown ? ` · Voting starts in ${countdown}` : ""),
+                        `Entry submitted to "${event!.title}"` + (countdown ? ` · Voting starts in ${countdown}` : ""),
                     { duration: 4000 }
                 );
                 const nextId = (subRes as any)?.nextEvent?.id;
@@ -1448,11 +1448,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         ══════════════════════════════════════════════ */
                         <>
                             {/* ── Full-width hero banner (same style as vote layout) ── */}
-                            <div className="relative overflow-hidden min-h-[180px] md:min-h-[300px] mb-6 -mx-3 w-[calc(100%+1.5rem)] sm:-mx-4 sm:w-[calc(100%+2rem)] md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
+                            <div className="relative overflow-hidden min-h-[140px] md:min-h-[240px] mb-6 w-full md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
                                 <img src={coverUrl} className="absolute inset-0 w-full h-full object-cover object-center" alt="Event" />
                                 <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/75 to-black/20" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                                <div className="relative z-10 flex flex-col justify-between h-full min-h-[220px] md:min-h-[340px] p-4 md:p-8">
+                                <div className="relative z-10 flex flex-col justify-between h-full min-h-[180px] md:min-h-[280px] p-4 md:p-8">
                                     <div>
                                         <div className="flex items-center gap-2 mb-3 flex-wrap">
                                             <Link
@@ -1475,11 +1475,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                 </span>
                                             )}
                                         </div>
-                                        <h1 className="font-display text-3xl md:text-6xl lg:text-8xl text-white uppercase leading-[0.88] tracking-tighter max-w-full md:max-w-[70%]">
+                                        <h1 className="font-display text-3xl md:text-5xl lg:text-6xl text-white uppercase leading-[0.88] tracking-tighter max-w-full md:max-w-[70%]">
                                             {event.title}
                                         </h1>
                                         {event.tagline && (
-                                            <p className="font-display text-xl md:text-4xl lg:text-6xl text-lime-400 uppercase leading-[0.88] tracking-tight mt-1">
+                                            <p className="font-display text-xl md:text-3xl lg:text-4xl text-lime-400 uppercase leading-[0.88] tracking-tight mt-1">
                                                 {event.tagline}
                                             </p>
                                         )}
@@ -1501,7 +1501,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                         )}
                                         <div className="pr-4 md:pr-8">
                                             <p className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Submissions So Far</p>
-                                            <p className="text-2xl md:text-4xl lg:text-5xl font-black text-lime-400 leading-none tabular-nums">{sortedSubmissions.length}</p>
+                                            <p className="text-xl md:text-3xl lg:text-4xl font-black text-lime-400 leading-none tabular-nums">{sortedSubmissions.length}</p>
                                         </div>
                                         {calculateTotalPool(event) > 0 && (
                                             <>
@@ -1510,7 +1510,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                     <p className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] text-white/40 mb-1">Total Prize Pool</p>
                                                     <div className="flex items-center gap-1.5 md:gap-2">
                                                         <Trophy className="w-4 h-4 md:w-5 md:h-5 text-yellow-400 shrink-0" />
-                                                        <p className="text-2xl md:text-4xl lg:text-5xl font-black text-yellow-400 leading-none tabular-nums">${calculateTotalPool(event).toLocaleString()}</p>
+                                                        <p className="text-xl md:text-3xl lg:text-4xl font-black text-yellow-400 leading-none tabular-nums">${calculateTotalPool(event).toLocaleString()}</p>
                                                     </div>
                                                 </div>
                                             </>
@@ -1986,7 +1986,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         ══════════════════════════════════════════════ */
                         <>
                             {/* ── Full-width hero banner ── */}
-                            <div className="relative overflow-hidden min-h-[160px] md:min-h-[280px] mb-6 -mx-3 w-[calc(100%+1.5rem)] sm:-mx-4 sm:w-[calc(100%+2rem)] md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
+                            <div className="relative overflow-hidden min-h-[140px] md:min-h-[220px] mb-6 w-full md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
                                 {/* Background image */}
                                 <img src={coverUrl} className="absolute inset-0 w-full h-full object-cover object-center" alt="Event" />
 
@@ -1995,7 +1995,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
                                 {/* Content */}
-                                <div className="relative z-10 flex flex-col justify-between h-full min-h-[200px] md:min-h-[320px] p-4 md:p-8">
+                                <div className="relative z-10 flex flex-col justify-between h-full min-h-[180px] md:min-h-[280px] p-4 md:p-8">
                                     {/* Top: brand pill + title */}
                                     <div>
                                         {/* Brand + category pill */}
@@ -2026,11 +2026,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                         </div>
 
                                         {/* Title */}
-                                        <h1 className="font-display text-3xl md:text-5xl lg:text-7xl text-white uppercase leading-[0.88] tracking-tight max-w-full md:max-w-[60%]">
+                                        <h1 className="font-display text-3xl md:text-5xl lg:text-6xl text-white uppercase leading-[0.88] tracking-tight max-w-full md:max-w-[60%]">
                                             {event.title}
                                         </h1>
                                         {event.tagline && (
-                                            <p className="font-display text-xl md:text-4xl lg:text-6xl text-lime-400 uppercase leading-[0.88] tracking-tight mt-1">
+                                            <p className="font-display text-xl md:text-3xl lg:text-4xl text-lime-400 uppercase leading-[0.88] tracking-tight mt-1">
                                                 {event.tagline}
                                             </p>
                                         )}
