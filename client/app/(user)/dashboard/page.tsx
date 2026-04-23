@@ -320,10 +320,6 @@ const MILESTONE_CATEGORIES: MilestoneCategory[] = [
         xp: [10, 25, 50, 100, 250, 500],
         rows: [
             { label: "Rank #1 Picks",   icon: Crown,        targets: [1, 3, 10, 25, 50, 100],         unit: "times" },
-            { label: "Top 3 Picks",     icon: ThumbsUp,     targets: [1, 5, 25, 50, 100, 250],        unit: "times" },
-            { label: "Top 5 Picks",     icon: Star,         targets: [1, 5, 50, 100, 250, 500],       unit: "times" },
-            { label: "Top 10 Picks",    icon: TrendingUp,   targets: [1, 10, 100, 100, 250, 500],     unit: "times" },
-            { label: ">51% Accuracy",   icon: Target,       targets: [1, 25, 125, 250, 500, 1000],    unit: "times" },
             { label: "Votes Cast",      icon: Zap,          statKey: "votesCast", targets: [1, 25, 125, 250, 500, 1000], unit: "votes" },
             { label: "Events Voted In", icon: Calendar,     statKey: "events",    targets: [1, 5, 25, 50, 100, 250],    unit: "events" },
         ],
@@ -336,10 +332,6 @@ const MILESTONE_CATEGORIES: MilestoneCategory[] = [
         xp: [10, 50, 100, 250, 500, 1000],
         rows: [
             { label: "Rank #1 Posts",    icon: Crown,        targets: [1, 3, 10, 25, 50, 100],         unit: "times" },
-            { label: "Top 3 Finishes",   icon: Trophy,       targets: [1, 5, 10, 50, 100, 250],        unit: "times" },
-            { label: "Top 5 Finishes",   icon: Star,         targets: [1, 5, 25, 100, 250, 500],       unit: "times" },
-            { label: "Top 10 Finishes",  icon: TrendingUp,   targets: [1, 10, 25, 100, 250, 500],      unit: "times" },
-            { label: ">51% Post Rank",   icon: Shield,       targets: [1, 25, 50, 250, 500, 1000],     unit: "times" },
             { label: "Posts Submitted",  icon: ImageIcon,    statKey: "posts",     targets: [1, 25, 100, 250, 500, 1000], unit: "posts" },
             { label: "Events Posted In", icon: Calendar,     statKey: "events",    targets: [1, 5, 10, 25, 50, 100],     unit: "events" },
         ],
@@ -1084,7 +1076,7 @@ export default function DashboardPage() {
                 deltaPositive: (stats?.votesReceived ?? 0) > 0,
             },
             {
-                label: "Top 3 Finishes", value: (stats?.topRankedEvents ?? 0).toString(), icon: Crown, color: "text-yellow-400", bg: "bg-yellow-400/10",
+                label: "#1 Finishes", value: (stats?.topRankedEvents ?? 0).toString(), icon: Crown, color: "text-yellow-400", bg: "bg-yellow-400/10",
                 delta: (stats?.topRankedEvents ?? 0) > 0 ? `${stats?.topRankedEvents} podium finish${(stats?.topRankedEvents ?? 0) !== 1 ? "es" : ""}` : "No podium finishes yet",
                 deltaPositive: (stats?.topRankedEvents ?? 0) > 0,
             },

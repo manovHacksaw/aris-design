@@ -694,8 +694,12 @@ export default function ProfileView({
                   <h3 className="font-display text-xl text-white uppercase tracking-tight">Brands Followed</h3>
                   <div className="space-y-3">
                     {following.slice(0, 5).map((brand: User) => (
-                      <div key={brand.id} className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-white/[0.05] border border-white/[0.06] shrink-0">
+                      <Link 
+                        key={brand.id} 
+                        href={`/profile/${brand.username || brand.id}`}
+                        className="flex items-center gap-3 group/brand hover:bg-white/[0.04] p-2 -mx-2 rounded-2xl transition-all"
+                      >
+                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-white/[0.05] border border-white/[0.06] shrink-0 group-hover/brand:border-white/20 transition-all">
                           {brand.avatarUrl ? (
                             <img src={brand.avatarUrl} alt={brand.displayName || ""} className="w-full h-full object-cover" />
                           ) : (
@@ -705,13 +709,13 @@ export default function ProfileView({
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-black text-white truncate">{brand.displayName || brand.username}</p>
+                          <p className="text-sm font-black text-white truncate group-hover/brand:text-primary transition-colors">{brand.displayName || brand.username}</p>
                           <p className="text-[9px] font-black text-white/30 uppercase tracking-wide">Brand</p>
                         </div>
                         <span className="text-[9px] font-black text-white/30 border border-white/[0.08] px-2 py-0.5 rounded-full uppercase tracking-widest shrink-0">
                           Following
                         </span>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 </div>

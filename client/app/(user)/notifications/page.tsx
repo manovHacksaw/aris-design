@@ -133,7 +133,7 @@ export default function NotificationsPage() {
 
                     {/* Header */}
                     <div className="mb-5 sm:mb-8 space-y-1">
-                        <h1 className="font-display text-[2.5rem] sm:text-[5rem] md:text-[6rem] uppercase leading-none tracking-tight text-foreground">
+                        <h1 className="font-display text-[1.8rem] sm:text-[5rem] md:text-[6rem] uppercase leading-none tracking-tight text-foreground">
                             Notifications
                         </h1>
                         <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.25em] text-foreground/35">
@@ -200,7 +200,7 @@ export default function NotificationsPage() {
                                             <p className="text-xs sm:text-sm font-bold text-foreground leading-snug mb-0.5">
                                                 {n.title}
                                             </p>
-                                            <p className="text-[11px] sm:text-[13px] text-foreground/55 font-normal leading-snug">
+                                            <p className="text-[11px] sm:text-[13px] text-foreground/55 font-normal leading-snug line-clamp-2">
                                                 {n.message}
                                             </p>
                                             <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-foreground/30 mt-1">

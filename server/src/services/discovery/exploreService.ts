@@ -461,22 +461,71 @@ export const ExploreService = {
                 });
             }
 
-            const content = await prisma.submission.findMany({
+            // 1. Fetch User Submissions
+            const submissions = await prisma.submission.findMany({
                 where: {
                     status: 'active',
                 },
                 include: {
                     user: { select: { username: true, avatarUrl: true } },
-                    event: { select: { title: true, ageRestriction: true, genderRestriction: true } },
+                    event: { 
+                        select: { 
+                            title: true, 
+                            ageRestriction: true, 
+                            genderRestriction: true,
+                            brand: { select: { id: true, name: true, logoCid: true } }
+                        } 
+                    },
                     _count: { select: { votes: true } }
                 },
                 orderBy: { voteCount: 'desc' },
-                take: 50
+                take: 40
             });
 
-            // Filter content based on event restrictions
-            const filteredContent = content.filter(sub => {
-                const event = sub.event as any;
+            // 2. Fetch Brand Proposals
+            const proposals = await prisma.proposal.findMany({
+                include: {
+                    event: { 
+                        select: { 
+                            title: true, 
+                            ageRestriction: true, 
+                            genderRestriction: true,
+                            brand: { select: { id: true, name: true, logoCid: true } }
+                        } 
+                    },
+                    _count: { select: { votes: true } }
+                },
+                orderBy: { voteCount: 'desc' },
+                take: 40
+            });
+
+            // 3. Transform Proposals to match Submission structure
+            const transformedProposals = proposals.map(p => ({
+                id: p.id,
+                eventId: p.eventId,
+                imageCid: p.imageCid,
+                imageUrl: p.imageUrl,
+                caption: p.content || p.title,
+                status: 'active',
+                voteCount: p.voteCount,
+                createdAt: p.createdAt,
+                updatedAt: p.updatedAt,
+                event: p.event,
+                _count: p._count,
+                // Mock user object using brand info for brand proposals
+                isBrandProposal: true,
+                user: {
+                    username: p.event.brand?.name || 'brand',
+                    avatarUrl: p.event.brand?.logoCid ? `https://gateway.pinata.cloud/ipfs/${p.event.brand.logoCid}` : null,
+                    isBrand: true
+                }
+            }));
+
+            const combined = [...submissions, ...transformedProposals];
+
+            // 4. Filter content based on event restrictions
+            const filteredContent = combined.filter(item => {
+                const event = item.event as any;
                 if (!event) return true;
 
                 try {
@@ -487,7 +536,8 @@ export const ExploreService = {
                 }
             });
 
-            return filteredContent;
+            // Sort by vote count descending and take top 60
+            return filteredContent.sort((a, b) => (b.voteCount || 0) - (a.voteCount || 0)).slice(0, 60);
         } catch (error) {
             logger.error({ err: error }, 'Failed to get explore content:');
             throw error;

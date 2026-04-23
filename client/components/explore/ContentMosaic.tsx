@@ -3,8 +3,8 @@
 import { motion } from "framer-motion";
 import { Heart, User } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { PINATA_GW } from "@/lib/eventUtils";
 
-const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
 interface ContentMosaicProps {
     submissions: any[];
@@ -27,7 +27,10 @@ export default function ContentMosaic({ submissions }: ContentMosaicProps) {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: (i % 10) * 0.05 }}
                         className="break-inside-avoid cursor-pointer group relative rounded-2xl overflow-hidden bg-foreground/5"
-                        onClick={() => router.push(`/events/${sub.eventId}?submission=${sub.id}`)}
+                        onClick={() => {
+                            const queryParam = sub.isBrandProposal ? `proposal=${sub.id}` : `submission=${sub.id}`;
+                            router.push(`/events/${sub.eventId}?${queryParam}`);
+                        }}
                     >
                         {image ? (
                             <img src={image} alt="Submission" className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -48,9 +51,14 @@ export default function ContentMosaic({ submissions }: ContentMosaicProps) {
                                             <User className="w-3 h-3 text-white" />
                                         )}
                                     </div>
-                                    <p className="text-[10px] font-bold text-white uppercase truncate">
-                                        @{sub.user?.username || "anonymous"}
-                                    </p>
+                                    <div className="flex flex-col min-w-0">
+                                        <p className="text-[10px] font-bold text-white uppercase truncate">
+                                            {sub.user?.isBrand ? sub.user.username : `@${sub.user?.username || "anonymous"}`}
+                                        </p>
+                                        {sub.user?.isBrand && (
+                                            <span className="text-[8px] font-black text-primary uppercase tracking-tighter">Brand Content</span>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="flex items-center gap-1 bg-white/20 backdrop-blur-md px-2 py-1 rounded-full shrink-0">
                                     <Heart className="w-3 h-3 text-red-400 fill-red-400" />

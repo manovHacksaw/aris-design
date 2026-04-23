@@ -1,5 +1,13 @@
 import { EventStatus, UserEventState } from "@/types/events";
 
+export const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
+
+export function getMediaUrl(cidOrUrl: string | undefined | null): string {
+    if (!cidOrUrl) return "";
+    if (cidOrUrl.startsWith("http")) return cidOrUrl;
+    return `${PINATA_GW}/${cidOrUrl}`;
+}
+
 export function getStatusStyles(status: EventStatus, userState?: UserEventState) {
     const base = {
         borderClass: "border-border",

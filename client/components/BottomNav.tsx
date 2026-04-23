@@ -3,23 +3,32 @@
 import { Home, Compass, PlusCircle, LayoutDashboard, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { clsx } from "clsx";
 import { useState, useEffect } from "react";
+import { clsx } from "clsx";
+import { useWallet } from "@/context/WalletContext";
+import { useLoginModal } from "@/context/LoginModalContext";
 
 const navItems = [
-    { icon: Home, label: "Home", href: "/home" },
-    { icon: Compass, label: "Explore", href: "/explore" },
-    { icon: PlusCircle, label: "Create", href: "/create" },
-    { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-    { icon: Wallet, label: "Wallet", href: "/wallet" },
+    { icon: Home, label: "Home", href: "/home", requiresAuth: true },
+    { icon: Compass, label: "Explore", href: "/explore", requiresAuth: false },
+    { icon: PlusCircle, label: "Create", href: "/create", requiresAuth: false },
+    { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard", requiresAuth: true },
+    { icon: Wallet, label: "Wallet", href: "/wallet", requiresAuth: true },
 ];
 
 export default function BottomNav() {
     const pathname = usePathname();
+    const { isAuthenticated } = useWallet();
+    const { openLoginModal } = useLoginModal();
     const [tappedHref, setTappedHref] = useState<string | null>(null);
 
-    const handleTap = (href: string) => {
-        setTappedHref(href);
+    const handleTap = (e: React.MouseEvent, item: typeof navItems[0]) => {
+        if (item.requiresAuth && !isAuthenticated) {
+            e.preventDefault();
+            openLoginModal();
+            return;
+        }
+        setTappedHref(item.href);
     };
 
     useEffect(() => {
@@ -39,7 +48,7 @@ export default function BottomNav() {
                     <Link
                         key={item.href}
                         href={item.href}
-                        onClick={() => handleTap(item.href)}
+                        onClick={(e) => handleTap(e, item)}
                         className={clsx(
                             "relative flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors duration-150",
                             isActive ? "text-foreground" : "text-foreground/40"

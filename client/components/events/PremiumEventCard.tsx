@@ -57,7 +57,7 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
                 aria-label={`View ${event.title}`}
             />
 
-            <div className="relative z-10 pointer-events-none w-full aspect-[16/14] rounded-2xl overflow-hidden bg-[#111] border border-white/5 transition-all duration-500 ease-out group-hover:border-white/20 group-hover:-translate-y-1 group-hover:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.8)] active:scale-[0.98] cursor-pointer">
+            <div className="relative z-10 pointer-events-none w-full aspect-[4/3] rounded-2xl overflow-hidden bg-[#111] border border-white/5 transition-all duration-500 ease-out group-hover:border-white/20 group-hover:-translate-y-1 group-hover:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.8)] active:scale-[0.98] cursor-pointer">
 
                 {/* Background Image Area */}
                 <div className="absolute inset-0 w-full h-full">
@@ -74,7 +74,7 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
 
                 {/* Gradients for text readability */}
                 <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-b from-black/80 via-black/40 to-transparent opacity-90" />
-                <div className="absolute bottom-0 left-0 w-full h-2/3 bg-gradient-to-t from-[#0a0a0c] via-[#0a0a0c]/80 to-transparent opacity-95" />
+                <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-[#0a0a0c] via-[#0a0a0c]/80 to-transparent opacity-95" />
 
                 {/* Content Layout */}
                 <div className="absolute inset-0 flex flex-col justify-between p-3 sm:p-4">
@@ -104,7 +104,7 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
                     </div>
 
                     {/* Bottom Section: Category, Title, Footer Stats */}
-                    <div className="flex flex-col gap-4 pointer-events-none">
+                    <div className="flex flex-col gap-2 pointer-events-none">
 
                         {/* Category & Title */}
                         <div className="flex flex-col gap-2">
@@ -116,13 +116,13 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
                                 </div>
                             )}
 
-                            <h3 className="text-base sm:text-lg lg:text-xl font-bold text-white leading-tight line-clamp-2">
+                            <h3 className="text-sm sm:text-base lg:text-lg font-bold text-white leading-tight line-clamp-2">
                                 {event.title}
                             </h3>
                         </div>
 
                         {/* Footer Stats Row */}
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-3 border-t border-white/10">
+                        <div className="flex flex-nowrap items-center gap-x-3 overflow-hidden pt-2 border-t border-white/10">
                             {/* Task Type */}
                             <div className="flex items-center gap-1.5 grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
                                 {event.eventType === "vote_only" || event.status === "voting" ? (
@@ -198,7 +198,7 @@ export default function PremiumEventCard({ event, className }: PremiumEventCardP
 
 export function PremiumEventCardSkeleton({ className }: { className?: string }) {
     return (
-        <div className={cn("relative w-full aspect-[16/14] rounded-2xl overflow-hidden bg-[#111] animate-pulse border border-white/5", className)}>
+        <div className={cn("relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-[#111] animate-pulse border border-white/5", className)}>
             <div className="absolute inset-0 bg-white/5" />
             <div className="absolute bottom-0 left-0 w-full p-5 space-y-4">
                 <div className="h-4 bg-white/10 rounded w-1/4" />

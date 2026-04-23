@@ -23,14 +23,12 @@ import { useUser } from "@/context/UserContext";
 import { cn } from "@/lib/utils";
 
 const primaryItems = [
-    { label: "Leaderboard", href: "/leaderboard", icon: IoTrophyOutline, activeIcon: IoTrophy },
-    { label: "Profile", href: "/profile", icon: IoPersonOutline, activeIcon: IoPerson },
+    { label: "Leaderboard", href: "/leaderboard", icon: IoTrophyOutline, activeIcon: IoTrophy, requiresAuth: false },
+    { label: "Profile", href: "/profile", icon: IoPersonOutline, activeIcon: IoPerson, requiresAuth: true },
 ];
 
 const authItems = [
     { label: "Settings", href: "/settings", icon: IoSettingsOutline },
-    { label: "Activity", href: "/activity", icon: IoPulseOutline },
-    { label: "Saved", href: "/saved", icon: IoBookmarkOutline },
 ];
 
 const publicItems = [
@@ -47,6 +45,16 @@ export default function MobileSidebar() {
     const { user } = useUser();
 
     const close = () => setMobileOpen(false);
+
+    const handleProtectedClick = (e: React.MouseEvent, item: typeof primaryItems[0]) => {
+        if (item.requiresAuth && !isAuthenticated) {
+            e.preventDefault();
+            close();
+            openLoginModal();
+            return;
+        }
+        close();
+    };
 
     return (
         <AnimatePresence>
@@ -113,7 +121,7 @@ export default function MobileSidebar() {
                                     <Link
                                         key={item.href}
                                         href={item.href}
-                                        onClick={close}
+                                        onClick={(e) => handleProtectedClick(e, item)}
                                         className={cn(
                                             "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors",
                                             isActive

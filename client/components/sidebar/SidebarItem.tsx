@@ -14,6 +14,7 @@ interface SidebarItemProps {
     avatar?: string;
     showUserFallback?: boolean;
     isActive?: boolean;
+    hasNotification?: boolean;
     onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
@@ -25,6 +26,7 @@ export default function SidebarItem({
     avatar,
     showUserFallback,
     isActive,
+    hasNotification,
     onClick,
 }: SidebarItemProps) {
     const { isCollapsed } = useSidebar();
@@ -80,6 +82,9 @@ export default function SidebarItem({
                         )}
                     />
                 ) : null}
+                {hasNotification && (
+                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full border border-card shadow-[0_0_8px_rgba(239,68,68,0.4)]" />
+                )}
             </div>
 
             <span

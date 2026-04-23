@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useSidebar } from "@/context/SidebarContext";
 import { motion } from "framer-motion";
 import { useTheme } from "next-themes";
+import { getClaimableRewards } from "@/services/reward.service";
 
 export default function Sidebar() {
     const pathname = usePathname();
@@ -21,6 +22,7 @@ export default function Sidebar() {
     const { theme, setTheme } = useTheme();
     const { logout } = usePrivy();
     const [mounted, setMounted] = useState(false);
+    const [hasRewards, setHasRewards] = useState(false);
 
     const showExpanded = !isCollapsed;
 
@@ -32,6 +34,14 @@ export default function Sidebar() {
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            getClaimableRewards()
+                .then(data => setHasRewards(data.totalClaimableUsdc > 0))
+                .catch(() => setHasRewards(false));
+        }
+    }, [isAuthenticated]);
 
     const navItems = [
         { label: "Home",          href: "/home",          icon: IoHomeOutline,          activeIcon: IoHome,          requiresAuth: true },
@@ -123,6 +133,7 @@ export default function Sidebar() {
                                         activeIcon={item.activeIcon}
                                         avatar={item.avatar}
                                         isActive={isActive}
+                                        hasNotification={item.label === "Wallet" && hasRewards}
                                         onClick={item.requiresAuth ? handleProtectedClick : undefined}
                                     />
                                 </div>

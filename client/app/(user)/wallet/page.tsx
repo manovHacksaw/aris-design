@@ -304,8 +304,15 @@ export default function WalletPage() {
           {/* ── Header ── */}
           <div className="flex items-start justify-between">
             <div className="space-y-1">
-              <h1 className="font-display text-[2.5rem] sm:text-[3rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight">
+              <h1 className="font-display text-[2.5rem] sm:text-[3rem] md:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight flex items-center gap-4">
                 Wallet
+                {rewards && rewards.totalClaimableUsdc > 0 && (
+                  <motion.div 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.5)]"
+                  />
+                )}
               </h1>
               <p className="mt-1 text-[9px] sm:text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em]">
                 Manage your digital assets
@@ -427,20 +434,26 @@ export default function WalletPage() {
 
                     {/* Quick Actions */}
                     <div className="flex gap-2 sm:gap-3 pt-1 sm:pt-2">
-                      <button
-                        onClick={() => setActiveTab("deposit")}
-                        className="px-3 sm:px-4 py-2 bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.15] rounded-xl text-xs sm:text-sm font-black text-white/60 hover:text-white transition-all flex items-center gap-1.5 sm:gap-2"
-                      >
-                        <ArrowDownLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        Deposit
-                      </button>
-                      <button
-                        onClick={() => setActiveTab("withdraw")}
-                        className="px-3 sm:px-4 py-2 bg-white hover:bg-white/90 text-black rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-1.5 sm:gap-2"
-                      >
-                        <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        Withdraw
-                      </button>
+                      <div className="relative group/action">
+                        <button
+                          disabled
+                          className="px-3 sm:px-4 py-2 bg-white/[0.05] border border-white/[0.08] rounded-xl text-xs sm:text-sm font-black text-white/20 cursor-not-allowed flex items-center gap-1.5 sm:gap-2"
+                        >
+                          <ArrowDownLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          Deposit
+                        </button>
+                        <span className="absolute -top-2 -right-2 px-1.5 py-0.5 bg-purple-500 text-[8px] font-black text-white rounded uppercase tracking-tighter shadow-lg">Soon</span>
+                      </div>
+                      <div className="relative group/action">
+                        <button
+                          disabled
+                          className="px-3 sm:px-4 py-2 bg-white/[0.05] border border-white/[0.08] rounded-xl text-xs sm:text-sm font-black text-white/20 cursor-not-allowed flex items-center gap-1.5 sm:gap-2"
+                        >
+                          <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          Withdraw
+                        </button>
+                        <span className="absolute -top-2 -right-2 px-1.5 py-0.5 bg-purple-500 text-[8px] font-black text-white rounded uppercase tracking-tighter shadow-lg">Soon</span>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -69,7 +69,7 @@ export default function CreateHero({ onGenerate, onAttach, onRequireAuth, events
                         >
                             <h1 className="font-display text-3xl sm:text-5xl md:text-[4.5rem] lg:text-[5.5rem] text-white leading-[0.88] uppercase tracking-tight">
                                 Bring your
-                                <br />
+                                <br className="hidden sm:block" />
                                 <span className="bg-gradient-to-r from-lime-300 via-lime-400 to-green-400 bg-clip-text text-transparent">
                                     Ideas
                                 </span>{" "}
@@ -95,23 +95,23 @@ export default function CreateHero({ onGenerate, onAttach, onRequireAuth, events
                                 className="group focus-within:shadow-[0_0_0_1px_rgba(163,230,53,0.3),0_8px_32px_rgba(163,230,53,0.1)]"
                             >
                                 {/* Icon buttons + CTA inside the input row */}
-                                <div className="flex items-center gap-1 sm:gap-2 pr-0.5 sm:pr-1 shrink-0">
+                                <div className="flex items-center gap-1 sm:gap-2 pr-1 shrink-0">
                                     <button
                                         type="button"
                                         onClick={() => {
                                             if (onRequireAuth) { onRequireAuth(); return; }
                                             onAttach?.();
                                         }}
-                                        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md sm:rounded-2xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all group/btn"
+                                        className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg sm:rounded-2xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all group/btn"
                                     >
-                                        <Paperclip className="w-4 h-4 group-hover/btn:rotate-12 transition-transform" />
+                                        <Paperclip className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover/btn:rotate-12 transition-transform" />
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => onRequireAuth?.()}
-                                        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md sm:rounded-2xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all"
+                                        className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg sm:rounded-2xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all"
                                     >
-                                        <Settings2 className="w-4 h-4" />
+                                        <Settings2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                     </button>
                                     <button
                                         type="button"
@@ -119,7 +119,7 @@ export default function CreateHero({ onGenerate, onAttach, onRequireAuth, events
                                             if (onRequireAuth) { onRequireAuth(); return; }
                                             if (prompt.trim() && onGenerate) onGenerate(prompt.trim());
                                         }}
-                                        className="min-h-[44px] px-4 sm:px-7 rounded-md sm:rounded-2xl bg-lime-400 text-black font-black uppercase tracking-wide text-[11px] shadow-[0_4px_24px_rgba(163,230,53,0.3)] hover:bg-lime-300 hover:scale-[1.02] active:scale-95 transition-all whitespace-nowrap flex items-center"
+                                        className="px-3 sm:px-7 py-2 sm:py-3 rounded-lg sm:rounded-2xl bg-lime-400 text-black font-black uppercase tracking-wide text-[11px] shadow-[0_4px_24px_rgba(163,230,53,0.3)] hover:bg-lime-300 hover:scale-[1.02] active:scale-95 transition-all whitespace-nowrap"
                                     >
                                         Gen
                                     </button>

@@ -6,9 +6,10 @@ import {
     Clock, Trophy, Users, ChevronLeft, Share2, ImageIcon, CheckCircle2, Loader2,
     AlertCircle, Info, Upload, PlusCircle, Vote, ChevronRight,
     Twitter, Instagram, Globe, ExternalLink, LayoutGrid, List, ThumbsUp, Coins,
-    ShieldCheck, Tag, Sparkles, Wand2, RefreshCw, X, ZoomIn, Eye
+    ShieldCheck, Tag, Sparkles, Wand2, RefreshCw, X, ZoomIn, Eye, MessageSquare
 } from "lucide-react";
-import { calculateTotalPool, toBrandSlug } from "@/lib/eventUtils";
+import { PINATA_GW, getMediaUrl, toBrandSlug } from "@/lib/eventUtils";
+import { SocialLinks } from "@/components/events/SocialLinks";
 import Link from "next/link";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -38,8 +39,6 @@ import { useSocket } from "@/context/SocketContext";
 import { toast } from "sonner";
 import Countdown from "@/components/events/Countdown";
 import { use } from "react";
-
-const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
 function formatPostActionCountdown(date?: string | null): string {
     if (!date) return "";
@@ -242,82 +241,6 @@ function deriveSubmissionsFromEvent(event: Event): Submission[] {
     }
 
     return mapVoteOnlyProposalsToSubmissions(event);
-}
-
-// ─── Social link helpers ─────────────────────────────────────────────────────
-
-const SOCIAL_SLOTS = [
-    { key: "twitter", label: "Twitter", icon: <Twitter className="w-3.5 h-3.5" /> },
-    { key: "instagram", label: "Instagram", icon: <Instagram className="w-3.5 h-3.5" /> },
-    { key: "website", label: "Website", icon: <Globe className="w-3.5 h-3.5" /> },
-];
-
-function SocialLinks({ links, eventId, variant = 'full' }: { links?: Record<string, string>; eventId?: string; variant?: 'full' | 'compact' }) {
-    const trackLink = (platform: string) => {
-        if (!eventId) return;
-        fetch(`/api/analytics/events/${eventId}/click`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ target: platform === 'website' ? 'website' : 'social', platform }),
-        }).catch(() => { });
-    };
-
-    if (variant === 'compact') {
-        return (
-            <div className="flex items-center gap-1.5 ml-2">
-                {SOCIAL_SLOTS.map(({ key, label, icon }) => {
-                    const url = links?.[key];
-                    if (!url) return null;
-                    return (
-                        <a
-                            key={key}
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={label}
-                            onClick={() => trackLink(key)}
-                            className="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/15 hover:border-white/25 transition-all"
-                        >
-                            {icon}
-                        </a>
-                    );
-                })}
-            </div>
-        );
-    }
-
-    return (
-        <div className="pt-3 border-t border-white/[0.06] mt-3">
-            <p className="text-[9px] font-black uppercase tracking-widest text-foreground/30 mb-2.5">Brand Links</p>
-            <div className="flex gap-2">
-                {SOCIAL_SLOTS.map(({ key, label, icon }) => {
-                    const url = links?.[key];
-                    return url ? (
-                        <a
-                            key={key}
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={label}
-                            onClick={() => trackLink(key)}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-white/[0.05] border border-white/[0.08] text-foreground/60 hover:text-foreground hover:bg-white/[0.08] hover:border-white/[0.15] transition-all"
-                        >
-                            {icon}
-                            <span className="text-[9px] font-black uppercase tracking-wider hidden sm:block">{label}</span>
-                        </a>
-                    ) : (
-                        <div
-                            key={key}
-                            title={`${label} not linked`}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-white/[0.02] border border-white/[0.04] text-foreground/20 cursor-not-allowed"
-                        >
-                            {icon}
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
-    );
 }
 
 // ─── Right Sidebar ────────────────────────────────────────────────────────────
@@ -1448,11 +1371,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         ══════════════════════════════════════════════ */
                         <>
                             {/* ── Full-width hero banner (same style as vote layout) ── */}
-                            <div className="relative overflow-hidden min-h-[140px] md:min-h-[240px] mb-6 w-full md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
-                                <img src={coverUrl} className="absolute inset-0 w-full h-full object-cover object-center" alt="Event" />
+                            <div className="relative overflow-hidden min-h-[220px] md:min-h-[340px] mb-6 w-full md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
+                                <img src={coverUrl} className="absolute inset-0 w-full h-full object-cover object-center" alt={event.title} title={event.title} />
                                 <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/75 to-black/20" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                                <div className="relative z-10 flex flex-col justify-between h-full min-h-[180px] md:min-h-[280px] p-4 md:p-8">
+                                <div className="relative z-10 flex flex-col justify-between h-full min-h-[220px] md:min-h-[340px] p-4 md:p-8">
                                     <div>
                                         <div className="flex items-center gap-2 mb-3 flex-wrap">
                                             <Link
@@ -1468,12 +1391,12 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                 )}
                                                 <span className="text-[10px] md:text-[11px] font-black text-white/90 group-hover/brandpill:text-white transition-colors">{event.brand?.name}</span>
                                             </Link>
-                                            <SocialLinks links={{ ...(event.brand as any)?.socialLinks, website: event.brand?.websiteUrl }} eventId={event.id} variant="compact" />
                                             {event.category && (
                                                 <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-white/[0.06] border border-white/[0.10] text-white/50">
                                                     {event.category}
                                                 </span>
                                             )}
+                                            <SocialLinks links={{ ...(event.brand as any)?.socialLinks, website: event.brand?.websiteUrl }} eventId={event.id} variant="compact" />
                                         </div>
                                         <h1 className="font-display text-3xl md:text-5xl lg:text-6xl text-white uppercase leading-[0.88] tracking-tighter max-w-full md:max-w-[70%]">
                                             {event.title}
@@ -1986,7 +1909,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         ══════════════════════════════════════════════ */
                         <>
                             {/* ── Full-width hero banner ── */}
-                            <div className="relative overflow-hidden min-h-[140px] md:min-h-[220px] mb-6 w-full md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
+                            <div className="relative overflow-hidden min-h-[220px] md:min-h-[280px] mb-6 w-full md:-mx-6 md:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
                                 {/* Background image */}
                                 <img src={coverUrl} className="absolute inset-0 w-full h-full object-cover object-center" alt="Event" />
 

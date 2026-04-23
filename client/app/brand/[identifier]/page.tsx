@@ -219,7 +219,10 @@ export default function BrandPublicPage() {
                                         )}
                                     </div>
                                     {brand.tagline && (
-                                        <p className="text-sm text-foreground/50 font-medium mb-3">{brand.tagline}</p>
+                                        <p className="text-sm text-foreground/50 font-medium mb-1">{brand.tagline}</p>
+                                    )}
+                                    {(brand as any).description && (
+                                        <p className="text-xs text-foreground/35 font-medium leading-relaxed mb-3">{(brand as any).description}</p>
                                     )}
 
                                     {/* Categories */}

@@ -8,7 +8,12 @@ import EventRow from "./EventRow";
 import { useUser } from "@/context/UserContext";
 import { getHomeFeedData } from "./homeFeedData";
 
-export default function EventsTabFeed() {
+interface EventsTabFeedProps {
+    searchQuery?: string;
+    category?: string;
+}
+
+export default function EventsTabFeed({ searchQuery = "", category = "ALL" }: EventsTabFeedProps) {
     const { user } = useUser();
     const username = user?.displayName ?? user?.username ?? "You";
 
@@ -20,7 +25,7 @@ export default function EventsTabFeed() {
     useEffect(() => {
         getHomeFeedData()
             .then((res) => setCurated(res.curated))
-            .catch(() => {})
+            .catch(() => { })
             .finally(() => setLoadingCurated(false));
     }, []);
 
@@ -37,26 +42,52 @@ export default function EventsTabFeed() {
                 if (s.event?.id && !byId.has(s.event.id)) byId.set(s.event.id, s.event as Event);
             });
             setJoinedEvents(Array.from(byId.values()));
-        }).catch(() => {}).finally(() => setLoadingJoined(false));
+        }).catch(() => { }).finally(() => setLoadingJoined(false));
     }, [user?.id]);
+
+    const filterEvents = (list: Event[]) => {
+        return list.filter((e) => {
+            const matchesSearch = !searchQuery ||
+                e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                e.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                e.brandName?.toLowerCase().includes(searchQuery.toLowerCase());
+
+            const matchesCategory = category === "ALL" ||
+                e.category?.toUpperCase() === category.toUpperCase() ||
+                e.tags?.some(t => t.toUpperCase() === category.toUpperCase());
+
+            return matchesSearch && matchesCategory;
+        });
+    };
+
+    const filteredCurated = filterEvents(curated);
+    const filteredJoined = filterEvents(joinedEvents);
 
     return (
         <div className="space-y-10">
-            <EventRow
-                madeFor="Made for"
-                title={username}
-                events={curated}
-                loading={loadingCurated}
-                showAllHref="/explore"
-            />
+            {(loadingCurated || filteredCurated.length > 0) && (
+                <EventRow
+                    madeFor="Made for"
+                    title={username}
+                    events={filteredCurated}
+                    loading={loadingCurated}
+                    showAllHref="/explore"
+                />
+            )}
 
-            {(loadingJoined || joinedEvents.length > 0) && (
+            {(loadingJoined || filteredJoined.length > 0) && (
                 <EventRow
                     title="Joined Events"
-                    events={joinedEvents}
+                    events={filteredJoined}
                     loading={loadingJoined}
                     showAllHref="/explore"
                 />
+            )}
+
+            {!loadingCurated && !loadingJoined && filteredCurated.length === 0 && filteredJoined.length === 0 && (
+                <div className="py-20 text-center">
+                    <p className="text-foreground/40 font-bold">No events match your filters.</p>
+                </div>
             )}
         </div>
     );

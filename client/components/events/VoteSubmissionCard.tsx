@@ -81,8 +81,8 @@ export default function VoteSubmissionCard({
                 {/* Caption */}
                 <div className="flex-1 min-w-0">
                     {optionIndex !== undefined ? (
-                        <p className="text-xl font-black text-foreground uppercase tracking-tight">
-                            Option {optionIndex + 1}
+                        <p className="text-xl font-black text-foreground uppercase tracking-tight truncate">
+                            {submission.textContent?.split('\n')[0] || `Option ${optionIndex + 1}`}
                         </p>
                     ) : (
                         <p className="text-lg font-black text-foreground uppercase tracking-tight">
@@ -208,7 +208,7 @@ export default function VoteSubmissionCard({
                 <div className="flex items-center gap-2 min-w-0">
                     {optionIndex !== undefined ? (
                         <span className="text-[12px] font-bold text-foreground/60 truncate">
-                            Option {optionIndex + 1}
+                            {submission.textContent?.split('\n')[0] || `Option ${optionIndex + 1}`}
                         </span>
                     ) : (
                         <>

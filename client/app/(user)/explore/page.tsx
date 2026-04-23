@@ -19,10 +19,11 @@ import {
     ExploreEventsResponse
 } from "@/services/explore.service";
 import { getEventsVotedByUser, type Event } from "@/services/event.service";
-import { toBrandSlug } from "@/lib/eventUtils";
+import { toBrandSlug, PINATA_GW } from "@/lib/eventUtils";
 import { getUserSubmissions } from "@/services/user.service";
+import { ArisSelect } from "@/components/ui/ArisSelect";
+import { SocialLinks } from "@/components/events/SocialLinks";
 
-const PINATA_GW = "https://gateway.pinata.cloud/ipfs";
 
 const DOMAINS = [
     "ALL", "AI", "DESIGN", "MARKETING", "WEB3",
@@ -125,20 +126,25 @@ function TopEventsHero({ events }: { events: Event[] }) {
                 >
                     <div>
                         {/* Brand row */}
-                        <Link
-                            href={`/brand/${toBrandSlug(event.brand?.name || "")}`}
-                            className="flex items-center gap-1.5 mb-1.5 sm:mb-3 w-fit hover:opacity-80 transition-opacity group/brand"
-                        >
-                            {event.brand?.logoCid ? (
-                                <img src={`${PINATA_GW}/${event.brand.logoCid}`} alt={event.brand.name} className="w-5 h-5 sm:w-8 sm:h-8 rounded-full border border-white/20 group-hover/brand:scale-110 transition-transform shadow-lg" />
-                            ) : (
-                                <div className="w-5 h-5 sm:w-8 sm:h-8 rounded-full bg-white/10 flex items-center justify-center border border-white/20 text-[10px] font-bold text-white group-hover/brand:scale-110 transition-transform">{event.brand?.name?.[0] || '?'}</div>
-                            )}
-                            <div className="flex flex-col">
-                                <span className="text-white font-black text-[9px] sm:text-xs tracking-widest uppercase group-hover/brand:text-primary transition-colors">{event.brand?.name || 'Unknown'}</span>
-                                <span className="text-white/40 font-bold text-[8px] sm:text-[9px] uppercase tracking-[0.15em]">{event.brand?.categories?.[0] || 'Official Brand'}</span>
+                            <div className="flex items-center gap-2">
+                                <Link
+                                    href={`/brand/${toBrandSlug(event.brand?.name || "")}`}
+                                    className="flex items-center gap-1.5 mb-1.5 sm:mb-3 w-fit hover:opacity-80 transition-opacity group/brand"
+                                >
+                                    {event.brand?.logoCid ? (
+                                        <img src={`${PINATA_GW}/${event.brand.logoCid}`} alt={event.brand.name} className="w-5 h-5 sm:w-8 sm:h-8 rounded-full border border-white/20 group-hover/brand:scale-110 transition-transform shadow-lg" />
+                                    ) : (
+                                        <div className="w-5 h-5 sm:w-8 sm:h-8 rounded-full bg-white/10 flex items-center justify-center border border-white/20 text-[10px] font-bold text-white group-hover/brand:scale-110 transition-transform">{event.brand?.name?.[0] || '?'}</div>
+                                    )}
+                                    <div className="flex flex-col">
+                                        <span className="text-white font-black text-[9px] sm:text-xs tracking-widest uppercase group-hover/brand:text-primary transition-colors">{event.brand?.name || 'Unknown'}</span>
+                                        <span className="text-white/40 font-bold text-[8px] sm:text-[9px] uppercase tracking-[0.15em]">{event.brand?.categories?.[0] || 'Official Brand'}</span>
+                                    </div>
+                                </Link>
+                                <div className="mb-1.5 sm:mb-3">
+                                    <SocialLinks links={{ ...(event.brand as any)?.socialLinks, website: event.brand?.websiteUrl }} eventId={event.id} variant="compact" />
+                                </div>
                             </div>
-                        </Link>
 
                         {/* Title */}
                         <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-black capitalize text-white tracking-tighter leading-tight mb-1.5 sm:mb-4 line-clamp-2 drop-shadow-2xl">
@@ -190,59 +196,6 @@ function TopEventsHero({ events }: { events: Event[] }) {
     );
 }
 
-function ArisSelect({ value, onChange, options, placeholder, minWidth = "150px" }: { value: string, onChange: (v: string) => void, options: string[], placeholder: string, minWidth?: string }) {
-    const [isOpen, setIsOpen] = useState(false);
-
-    return (
-        <div className="relative shrink-0" style={{ minWidth }}>
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className={cn(
-                    "w-full flex items-center justify-between bg-white/[0.03] border border-white/10 text-white/60 hover:text-white hover:border-white/20 rounded-md pl-3 pr-2.5 py-2 text-[10px] font-black uppercase tracking-[0.1em] transition-all cursor-pointer backdrop-blur-md",
-                    isOpen && "border-primary/40 bg-white/[0.05] text-white"
-                )}
-            >
-                <span className="truncate mr-1.5">{value === "ALL" || value === "TRENDING" ? placeholder : value}</span>
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform duration-300 text-white/20 shrink-0", isOpen ? "rotate-180 text-white" : "")}><path d="m6 9 6 6 6-6" /></svg>
-            </button>
-
-            <AnimatePresence>
-                {isOpen && (
-                    <>
-                        <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-                        <motion.div
-                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                            transition={{ duration: 0.2, ease: "easeOut" }}
-                            className="absolute top-full left-0 mt-2 w-full bg-[#0a0a0c] border border-white/20 rounded-xl overflow-hidden z-[999] backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
-                        >
-                            <div className="max-h-[300px] overflow-y-auto no-scrollbar py-2">
-                                {options.map((opt) => (
-                                    <button
-                                        key={opt}
-                                        onClick={() => {
-                                            onChange(opt);
-                                            setIsOpen(false);
-                                        }}
-                                        className={cn(
-                                            "w-full text-left px-3 py-2 text-[10px] font-bold uppercase tracking-[0.12em] transition-all border-l-2",
-                                            (value === opt)
-                                                ? "bg-white/10 border-primary text-white"
-                                                : "border-transparent text-white/40 hover:bg-white/5 hover:text-white hover:border-white/20"
-                                        )}
-                                    >
-                                        {opt === "ALL" || opt === "TRENDING" ? placeholder : opt}
-                                    </button>
-                                ))}
-                            </div>
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
-        </div>
-    );
-}
 
 export default function Explore() {
     const { user } = useUser();
@@ -395,23 +348,45 @@ export default function Explore() {
     // Brand filtering (Frontend)
     const brandsRows = useMemo(() => {
         let rows = [...brands];
+        
+        // Filter by category
         if (activeDomain !== "ALL") {
             rows = rows.filter(b => b.categories?.some((c: string) => c.toUpperCase() === activeDomain));
         }
+        
+        // Filter by search query
         if (debouncedSearch.trim()) {
             const q = debouncedSearch.toLowerCase();
             rows = rows.filter(b => b.name.toLowerCase().includes(q));
         }
-        // Filter brand events by live/closed status
-        return rows.map(b => ({
-            ...b,
-            events: (b.events || []).filter((ev) => {
+
+        // Map and sort
+        const processedRows = rows.map(b => {
+            const filteredEvents = (b.events || []).filter((ev: any) => {
                 const status = (ev.status || "").toLowerCase();
                 const isFinal = status === "closed" || status === "completed";
                 if (brandEventStatus === "CLOSED") return isFinal;
                 return !isFinal;
-            })
-        })).filter(b => b.events.length > 0);
+            });
+
+            // Calculate max reward for sorting
+            const maxReward = filteredEvents.reduce((max: number, ev: any) => {
+                const reward = (ev.leaderboardPool || 0) + (ev.topReward || 0) + (ev.baseReward || 0);
+                return reward > max ? reward : max;
+            }, 0);
+
+            return {
+                ...b,
+                events: filteredEvents,
+                maxReward
+            };
+        });
+
+        // Sort by maxReward desc, then by name
+        return processedRows.sort((a, b) => {
+            if (b.maxReward !== a.maxReward) return b.maxReward - a.maxReward;
+            return a.name.localeCompare(b.name);
+        });
     }, [brands, activeDomain, debouncedSearch, brandEventStatus]);
 
     const joinedEventRows = useMemo(() => {
@@ -440,6 +415,8 @@ export default function Explore() {
                             <div className="flex gap-0 animate-marquee whitespace-nowrap">
                                 {Array.from({ length: 6 }).map((_, i) => (
                                     <span key={i} className="inline-flex items-center gap-6 px-6 text-[11px] font-black uppercase tracking-[0.3em] text-foreground/30">
+                                        <span className="text-yellow-500/50 underline decoration-yellow-500/20 underline-offset-4">Testnet Active</span>
+                                        <span className="text-primary">✦</span>
                                         <span>Join Events</span>
                                         <span className="text-primary">✦</span>
                                         <span>Earn Dollars</span>
@@ -468,7 +445,7 @@ export default function Explore() {
                     </>
 
                     {/* ── Filter Bar ──────────────────────────────────── */}
-                    <div className="w-full px-4 md:px-0 relative z-40">
+                    <div className="w-full px-4 md:px-0 sticky top-0 z-40 bg-background/95 backdrop-blur-md py-2 -my-2">
                         <div className="flex flex-col gap-2 w-full">
 
                             {/* Search Input */}

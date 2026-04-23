@@ -80,8 +80,6 @@ export default function SidebarMore() {
 
     const authMenuItems = [
         { label: "Settings", icon: IoSettingsOutline, href: "/settings" },
-        { label: "Your Activity", icon: IoPulseOutline, href: "/activity" },
-        { label: "Saved", icon: IoBookmarkOutline, href: "/saved" },
         { label: "Link Tree", icon: IoLinkOutline, href: "/link-tree" },
     ];
 
