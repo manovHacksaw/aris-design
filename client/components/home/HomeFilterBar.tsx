@@ -33,7 +33,7 @@ export function HomeFilterBar({ searchQuery, setSearchQuery, activeTab, setActiv
                 {searchQuery && (
                     <button
                         onClick={() => setSearchQuery("")}
-                        className="absolute right-4 text-foreground/20 hover:text-white transition-colors"
+                        className="absolute right-3 p-1.5 text-foreground/20 hover:text-white transition-colors"
                     >
                         <X className="w-4 h-4" />
                     </button>

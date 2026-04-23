@@ -8,9 +8,10 @@ import PremiumEventCard from "@/components/events/PremiumEventCard";
 interface EventRowProps {
     title: string;
     events: Event[];
+    variant?: "scroll" | "grid";
 }
 
-export default function EventRow({ title, events }: EventRowProps) {
+export default function EventRow({ title, events, variant = "scroll" }: EventRowProps) {
     const rowRef = useRef<HTMLDivElement>(null);
     const [isMoved, setIsMoved] = useState(false);
 
@@ -31,42 +32,52 @@ export default function EventRow({ title, events }: EventRowProps) {
                 {title}
             </h3>
 
-            <div className="relative">
-                {/* Left control */}
-                {isMoved && (
-                    <button
-                        onClick={() => handleScroll("left")}
-                        className="absolute left-0 top-0 bottom-0 w-12 z-20 bg-gradient-to-r from-background to-transparent flex items-center justify-start pl-2 opacity-0 group-hover/row:opacity-100 transition-opacity"
-                    >
-                        <div className="bg-background/80 p-1.5 rounded-full border border-border backdrop-blur-sm text-foreground hover:bg-white hover:text-black transition-colors">
-                            <ChevronLeft className="w-5 h-5" />
-                        </div>
-                    </button>
-                )}
-
-                {/* Container */}
-                <div
-                    ref={rowRef}
-                    className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth pl-4 sm:pl-0 pr-4 sm:pr-0 pb-4"
-                    onScroll={(e) => setIsMoved(e.currentTarget.scrollLeft > 0)}
-                >
+            {variant === "grid" ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {events.map((ev, i) => (
-                        <div key={ev.id || i} className="shrink-0 w-55 sm:w-70 lg:w-85 transition-transform duration-300 hover:z-10 relative object-center group-hover/row:hover:scale-105">
+                        <div key={ev.id || i} className="transition-transform duration-300 hover:scale-[1.02] hover:z-10 relative">
                             <PremiumEventCard event={ev} />
                         </div>
                     ))}
                 </div>
+            ) : (
+                <div className="relative">
+                    {/* Left control */}
+                    {isMoved && (
+                        <button
+                            onClick={() => handleScroll("left")}
+                            className="absolute left-0 top-0 bottom-0 w-12 z-20 bg-gradient-to-r from-background to-transparent flex items-center justify-start pl-2 opacity-0 group-hover/row:opacity-100 transition-opacity"
+                        >
+                            <div className="bg-background/80 p-1.5 rounded-full border border-border backdrop-blur-sm text-foreground hover:bg-white hover:text-black transition-colors">
+                                <ChevronLeft className="w-5 h-5" />
+                            </div>
+                        </button>
+                    )}
 
-                {/* Right control */}
-                <button
-                    onClick={() => handleScroll("right")}
-                    className="absolute right-0 top-0 bottom-0 w-12 z-20 bg-gradient-to-l from-background to-transparent flex items-center justify-end pr-2 opacity-0 group-hover/row:opacity-100 transition-opacity hidden sm:flex"
-                >
-                    <div className="bg-background/80 p-1.5 rounded-full border border-border backdrop-blur-sm text-foreground hover:bg-white hover:text-black transition-colors">
-                        <ChevronRight className="w-5 h-5" />
+                    {/* Container */}
+                    <div
+                        ref={rowRef}
+                        className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth pl-4 sm:pl-0 pr-4 sm:pr-0 pb-4"
+                        onScroll={(e) => setIsMoved(e.currentTarget.scrollLeft > 0)}
+                    >
+                        {events.map((ev, i) => (
+                            <div key={ev.id || i} className="shrink-0 w-55 sm:w-70 lg:w-85 transition-transform duration-300 hover:z-10 relative object-center group-hover/row:hover:scale-105">
+                                <PremiumEventCard event={ev} />
+                            </div>
+                        ))}
                     </div>
-                </button>
-            </div>
+
+                    {/* Right control */}
+                    <button
+                        onClick={() => handleScroll("right")}
+                        className="absolute right-0 top-0 bottom-0 w-12 z-20 bg-gradient-to-l from-background to-transparent flex items-center justify-end pr-2 opacity-0 group-hover/row:opacity-100 transition-opacity hidden sm:flex"
+                    >
+                        <div className="bg-background/80 p-1.5 rounded-full border border-border backdrop-blur-sm text-foreground hover:bg-white hover:text-black transition-colors">
+                            <ChevronRight className="w-5 h-5" />
+                        </div>
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

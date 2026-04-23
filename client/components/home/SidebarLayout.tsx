@@ -27,7 +27,7 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
 
                 {/* Content wrapper - Responsive padding and container sizing */}
                 <div className="flex-1 w-full max-w-[1600px] mx-auto pt-3 px-0 md:pt-4 lg:pt-6 md:px-6 lg:px-8">
-                    <div className="px-4 md:px-0">
+                    <div className="px-6 md:px-0">
                         {children}
                     </div>
                 </div>

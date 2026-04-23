@@ -61,6 +61,7 @@ export interface UserStats {
   referrals: number;
   loginStreak: number;
   topRankedEvents: number; // submissions where finalRank is 1, 2, or 3
+  firstRankedEvents: number; // submissions where finalRank is 1
 }
 
 export interface UpdateUserData {

@@ -127,6 +127,10 @@ export class UserStatsService {
                 prisma.submission.count({
                     where: { userId, finalRank: { gte: 1, lte: 3 } },
                 }),
+                // #1 finishes
+                prisma.submission.count({
+                    where: { userId, finalRank: 1 },
+                }),
             ]);
 
             // Combine event sets to get unique events participated in
@@ -161,6 +165,7 @@ export class UserStatsService {
                 referrals: referralsCount,
                 loginStreak: loginStreakData?.currentStreak ?? 0,
                 topRankedEvents,
+                firstRankedEvents,
             };
 
             logger.info({ stats }, `[UserStatsService.getUserStats] Resulting Stats:`);

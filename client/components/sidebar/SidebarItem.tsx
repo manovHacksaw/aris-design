@@ -15,6 +15,7 @@ interface SidebarItemProps {
     showUserFallback?: boolean;
     isActive?: boolean;
     hasNotification?: boolean;
+    notificationCount?: number;
     onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
@@ -27,10 +28,13 @@ export default function SidebarItem({
     showUserFallback,
     isActive,
     hasNotification,
+    notificationCount,
     onClick,
 }: SidebarItemProps) {
     const { isCollapsed } = useSidebar();
     const showExpanded = !isCollapsed;
+    const showCount = typeof notificationCount === "number" && notificationCount > 0;
+    const countLabel = notificationCount && notificationCount > 99 ? "99+" : notificationCount;
 
     return (
         <Link
@@ -40,11 +44,9 @@ export default function SidebarItem({
                 "group flex items-center relative w-full py-2.5 my-1",
                 isCollapsed ? "justify-center" : "pl-3",
                 "transition-all duration-200 ease-out",
-                // Active/Hover states
                 isActive
                     ? "bg-[#6366F1] text-white border border-white/10 dark:shadow-[1px_1px_0px_0px_#FFFFFF] shadow-[1px_1px_0px_0px_#6366F1]"
                     : "text-foreground/50 hover:bg-foreground/5 hover:text-foreground",
-                // Rounded
                 "rounded-xl"
             )}
         >
@@ -67,24 +69,25 @@ export default function SidebarItem({
                         )}
                     />
                 ) : isActive && ActiveIcon ? (
-                    <ActiveIcon
-                        size={18}
-                        className="transition-colors duration-150 text-foreground"
-                    />
+                    <ActiveIcon size={18} className="transition-colors duration-150 text-foreground" />
                 ) : Icon ? (
                     <Icon
                         size={18}
                         className={cn(
                             "transition-colors duration-150",
-                            isActive
-                                ? "text-foreground"
-                                : "text-foreground/40 group-hover:text-foreground"
+                            isActive ? "text-foreground" : "text-foreground/40 group-hover:text-foreground"
                         )}
                     />
                 ) : null}
-                {hasNotification && (
+
+                {/* Badge on icon */}
+                {showCount ? (
+                    <span className="absolute -top-1 -right-1.5 min-w-[15px] h-[15px] px-[3px] bg-red-500 text-white text-[8px] font-black rounded-full border border-card flex items-center justify-center tabular-nums leading-none shadow-[0_0_6px_rgba(239,68,68,0.5)]">
+                        {countLabel}
+                    </span>
+                ) : hasNotification ? (
                     <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full border border-card shadow-[0_0_8px_rgba(239,68,68,0.4)]" />
-                )}
+                ) : null}
             </div>
 
             <span

@@ -93,7 +93,7 @@ function TopEventsHero({ events }: { events: Event[] }) {
     const displayImage = event.imageUrl || (event.imageCid ? `${PINATA_GW}/${event.imageCid}` : "");
 
     return (
-        <div className="relative w-full aspect-[2.8/1] rounded-2xl overflow-hidden mb-0 group bg-[#0a0a0c] border border-white/5 shadow-2xl">
+        <div className="relative w-full aspect-[2/1] sm:aspect-[2.4/1] md:aspect-[2.8/1] rounded-2xl overflow-hidden mb-0 group bg-[#0a0a0c] border border-white/5 shadow-2xl">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={event.id}
@@ -138,7 +138,7 @@ function TopEventsHero({ events }: { events: Event[] }) {
                                     )}
                                     <div className="flex flex-col">
                                         <span className="text-white font-black text-[9px] sm:text-xs tracking-widest uppercase group-hover/brand:text-primary transition-colors">{event.brand?.name || 'Unknown'}</span>
-                                        <span className="text-white/40 font-bold text-[8px] sm:text-[9px] uppercase tracking-[0.15em]">{event.brand?.categories?.[0] || 'Official Brand'}</span>
+                                        <span className="text-white/40 font-bold text-[9px] uppercase tracking-[0.15em]">{event.brand?.categories?.[0] || 'Official Brand'}</span>
                                     </div>
                                 </Link>
                                 <div className="mb-1.5 sm:mb-3">
@@ -152,7 +152,7 @@ function TopEventsHero({ events }: { events: Event[] }) {
                         </h1>
 
                         {/* Stats */}
-                        <div className="flex items-center gap-3 sm:gap-6 text-[8px] sm:text-[10px] font-black uppercase tracking-[0.1em] mb-1.5 sm:mb-4">
+                        <div className="flex items-center gap-3 sm:gap-6 text-[10px] font-black uppercase tracking-[0.1em] mb-1.5 sm:mb-4">
                             <div className="flex items-center gap-1 sm:gap-1.5">
                                 <Users className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-white/80" />
                                 <span className="text-white">{((event._count?.submissions || 0) + (event._count?.votes || 0)).toLocaleString()}</span>
@@ -170,23 +170,26 @@ function TopEventsHero({ events }: { events: Event[] }) {
                     {/* CTA + Dots */}
                     <div className="flex items-center gap-3 sm:gap-4">
                         <Link href={`/events/${event.id}`}>
-                            <button className="px-4 sm:px-6 py-1.5 sm:py-2.5 bg-white text-black font-black uppercase text-[8px] sm:text-[9px] tracking-[0.2em] rounded-full hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all w-fit relative overflow-hidden group/btn">
+                            <button className="px-4 sm:px-6 py-2 sm:py-2.5 bg-white text-black font-black uppercase text-[9px] tracking-[0.2em] rounded-full hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all w-fit relative overflow-hidden group/btn min-h-[36px]">
                                 <span className="relative z-10">{event.status === "voting" ? "Vote now" : "Submit entry"}</span>
                                 <div className="absolute inset-0 bg-primary/10 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
                             </button>
                         </Link>
 
                         {/* Pagination Dots */}
-                        <div className="flex gap-1.5 sm:gap-2">
+                        <div className="flex gap-0.5 sm:gap-1">
                             {events.slice(0, 10).map((_, i) => (
                                 <button
                                     key={i}
                                     onClick={() => setCurrentIndex(i)}
-                                    className={cn(
-                                        "h-1 sm:h-1.5 rounded-full transition-all duration-500",
+                                    className="p-1.5 flex items-center justify-center"
+                                    aria-label={`Go to slide ${i + 1}`}
+                                >
+                                    <span className={cn(
+                                        "h-1 sm:h-1.5 rounded-full transition-all duration-500 block",
                                         i === currentIndex ? "w-6 sm:w-8 bg-white shadow-[0_0_10px_rgba(255,255,255,0.6)]" : "w-2 sm:w-3 bg-white/20 hover:bg-white/40"
-                                    )}
-                                />
+                                    )} />
+                                </button>
                             ))}
                         </div>
                     </div>
@@ -461,15 +464,15 @@ export default function Explore() {
                                 {searchQuery && (
                                     <button
                                         onClick={() => setSearchQuery("")}
-                                        className="absolute right-2.5 text-foreground/20 hover:text-white transition-colors"
+                                        className="absolute right-1.5 p-1.5 text-foreground/20 hover:text-white transition-colors"
                                     >
                                         <X className="w-3 h-3" />
                                     </button>
                                 )}
                             </div>
 
-                            {/* Dropdowns & Toggle — always one row, no wrap */}
-                            <div className="flex items-center gap-1.5 sm:gap-2 w-full">
+                            {/* Dropdowns & Toggle — horizontally scrollable on narrow screens */}
+                            <div className="flex items-center gap-1.5 sm:gap-2 w-full overflow-x-auto scrollbar-hide pb-px">
                                 <ArisSelect
                                     value={activeTab.toUpperCase()}
                                     onChange={(val) => {
@@ -525,10 +528,10 @@ export default function Explore() {
                                             setBrandEventStatus("LIVE");
                                             setSortOption("TRENDING");
                                         }}
-                                        className="flex items-center justify-center p-2 rounded-lg bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all shrink-0"
+                                        className="flex items-center justify-center p-2.5 min-w-[40px] min-h-[40px] rounded-lg bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all shrink-0"
                                         title="Clear all filters"
                                     >
-                                        <X className="w-3 h-3" />
+                                        <X className="w-3.5 h-3.5" />
                                     </button>
                                 )}
                             </div>
@@ -572,6 +575,7 @@ export default function Explore() {
                                                 <EventRow
                                                     title={(debouncedSearch || activeDomain !== "ALL") ? "Search Results" : activePhase === "JOINED" ? "My Joined Events" : "All Campaigns"}
                                                     events={activePhase === "JOINED" ? joinedEventRows : eventsData.allRanked}
+                                                    variant="grid"
                                                 />
                                             ) : (
                                                 <EmptyState label="No campaigns found" />
@@ -629,6 +633,7 @@ export default function Explore() {
                             <EventRow
                                 title="Joined Events"
                                 events={joinedEventRows}
+                                variant="grid"
                             />
                         </motion.div>
                     )}

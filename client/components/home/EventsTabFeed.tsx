@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Info } from "lucide-react";
 import type { Event } from "@/services/event.service";
 import { getEventsVotedByUser } from "@/services/event.service";
 import { getUserSubmissions } from "@/services/user.service";
@@ -62,6 +63,7 @@ export default function EventsTabFeed({ searchQuery = "", category = "ALL" }: Ev
 
     const filteredCurated = filterEvents(curated);
     const filteredJoined = filterEvents(joinedEvents);
+    const hasAnyEvents = curated.length > 0 || joinedEvents.length > 0;
 
     return (
         <div className="space-y-10">
@@ -85,8 +87,25 @@ export default function EventsTabFeed({ searchQuery = "", category = "ALL" }: Ev
             )}
 
             {!loadingCurated && !loadingJoined && filteredCurated.length === 0 && filteredJoined.length === 0 && (
-                <div className="py-20 text-center">
-                    <p className="text-foreground/40 font-bold">No events match your filters.</p>
+                <div className="py-20 flex flex-col items-center justify-center text-center space-y-4">
+                    {!hasAnyEvents ? (
+                        <>
+                            <div className="w-16 h-16 rounded-full bg-foreground/5 flex items-center justify-center">
+                                <Info className="w-8 h-8 text-foreground/20" />
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-foreground/60 font-black uppercase tracking-[0.2em] text-[10px]">No active events</p>
+                                <p className="text-foreground/30 text-xs max-w-[280px] font-medium leading-relaxed">
+                                    There are no active events available right now.<br />Check back soon for new opportunities.
+                                </p>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="space-y-1">
+                            <p className="text-foreground/60 font-black uppercase tracking-[0.2em] text-[10px]">No matches found</p>
+                            <p className="text-foreground/30 text-xs font-medium">Try adjusting your filters or search query.</p>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

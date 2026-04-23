@@ -8,7 +8,7 @@ import {
     Twitter, Instagram, Globe, ExternalLink, LayoutGrid, List, ThumbsUp, Coins,
     ShieldCheck, Tag, Sparkles, Wand2, RefreshCw, X, ZoomIn, Eye, MessageSquare
 } from "lucide-react";
-import { PINATA_GW, getMediaUrl, toBrandSlug } from "@/lib/eventUtils";
+import { PINATA_GW, getMediaUrl, toBrandSlug, calculateTotalPool } from "@/lib/eventUtils";
 import { SocialLinks } from "@/components/events/SocialLinks";
 import Link from "next/link";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
@@ -1391,12 +1391,14 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                                                 )}
                                                 <span className="text-[10px] md:text-[11px] font-black text-white/90 group-hover/brandpill:text-white transition-colors">{event.brand?.name}</span>
                                             </Link>
-                                            {event.category && (
-                                                <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-white/[0.06] border border-white/[0.10] text-white/50">
-                                                    {event.category}
-                                                </span>
-                                            )}
-                                            <SocialLinks links={{ ...(event.brand as any)?.socialLinks, website: event.brand?.websiteUrl }} eventId={event.id} variant="compact" />
+                                            <div className="flex items-center gap-1.5">
+                                                {event.category && (
+                                                    <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-white/[0.06] border border-white/[0.10] text-white/50">
+                                                        {event.category}
+                                                    </span>
+                                                )}
+                                                <SocialLinks links={{ ...(event.brand as any)?.socialLinks, website: event.brand?.websiteUrl }} eventId={event.id} variant="compact" />
+                                            </div>
                                         </div>
                                         <h1 className="font-display text-3xl md:text-5xl lg:text-6xl text-white uppercase leading-[0.88] tracking-tighter max-w-full md:max-w-[70%]">
                                             {event.title}

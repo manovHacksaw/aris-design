@@ -14,8 +14,46 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!user?.id) return;
-    getFollowers(user.id).then(setFollowers).catch(() => {});
-    getFollowing(user.id).then(setFollowing).catch(() => {});
+    
+    const fetchSocial = async () => {
+      try {
+        const [fUsers, fFollowers] = await Promise.all([
+          getFollowing(user.id),
+          getFollowers(user.id)
+        ]);
+        
+        setFollowers(fFollowers);
+        
+        // Combine followed users with brand subscriptions
+        let combinedFollowing = [...fUsers];
+        try {
+          // Dynamic import to avoid SSR issues if any, though this is "use client"
+          const { getMySubscriptions } = await import("@/services/subscription.service");
+          const brandSubs = await getMySubscriptions();
+          
+          // Map brand subs to User-like objects for ProfileView
+          const brandUsers = brandSubs
+            .filter(sub => sub.brandId || sub.id)
+            .map(sub => ({
+              id: sub.brandId ?? sub.id,
+              displayName: sub.brand?.name || "Brand",
+              username: sub.brand?.slug || sub.brand?.name || "brand",
+              avatarUrl: sub.brand?.logo || sub.brand?.logoUrl || "",
+              role: "BRAND" as any,
+            } as User));
+          
+          combinedFollowing = [...combinedFollowing, ...brandUsers];
+        } catch (e) {
+          console.error("Error fetching brand subscriptions:", e);
+        }
+        
+        setFollowing(combinedFollowing);
+      } catch (err) {
+        console.error("Error fetching social data:", err);
+      }
+    };
+
+    fetchSocial();
   }, [user?.id]);
 
   if (isLoading || !user) {

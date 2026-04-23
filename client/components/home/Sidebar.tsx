@@ -15,6 +15,7 @@ import { useSidebar } from "@/context/SidebarContext";
 import { motion } from "framer-motion";
 import { useTheme } from "next-themes";
 import { getClaimableRewards } from "@/services/reward.service";
+import { useNotifications } from "@/context/NotificationContext";
 
 export default function Sidebar() {
     const pathname = usePathname();
@@ -28,6 +29,7 @@ export default function Sidebar() {
 
     const { user } = useUser();
     const { userInfo, isAuthenticated } = useWallet();
+    const { unreadCount } = useNotifications();
     const { openLoginModal } = useLoginModal();
     const avatarUrl = user?.avatarUrl || userInfo?.profileImage || undefined;
 
@@ -134,6 +136,7 @@ export default function Sidebar() {
                                         avatar={item.avatar}
                                         isActive={isActive}
                                         hasNotification={item.label === "Wallet" && hasRewards}
+                                        notificationCount={item.label === "Notifications" ? unreadCount : undefined}
                                         onClick={item.requiresAuth ? handleProtectedClick : undefined}
                                     />
                                 </div>

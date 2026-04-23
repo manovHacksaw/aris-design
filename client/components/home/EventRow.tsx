@@ -43,7 +43,7 @@ export default function EventRow({
             </div>
 
             {/* Horizontal scroll row */}
-            <div className="relative">
+            <div className="relative overflow-hidden">
                 <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
                     {loading
                         ? Array.from({ length: 4 }).map((_, i) => (

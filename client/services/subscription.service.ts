@@ -30,3 +30,8 @@ export async function getSubscriberCount(brandId: string): Promise<number> {
     const res = await apiRequest<{ success: boolean; count: number }>(`/subscriptions/brand/${brandId}/count`);
     return res.count;
 }
+
+export async function getMySubscriptions(): Promise<any[]> {
+    const res = await apiRequest<{ success: boolean; subscriptions: any[] }>("/subscriptions/my-subscriptions");
+    return res.subscriptions;
+}

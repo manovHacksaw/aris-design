@@ -13,6 +13,9 @@ import {
   UserPlus,
   Star,
   Sparkles,
+  Users2,
+  Building2,
+  Check,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -31,6 +34,8 @@ import {
   type XpTransactionSummary,
 } from "@/services/xp.service";
 import { getRewardHistory } from "@/services/reward.service";
+import { getFollowing } from "@/services/user.service";
+import { getMySubscriptions } from "@/services/subscription.service";
 import { perfLog, perfNow } from "@/lib/perf";
 
 function buildDailyXP(transactions: XpTransactionSummary[], days = 7): number[] {
@@ -129,6 +134,9 @@ export default function RightDashboard() {
   const [xpLoading, setXpLoading] = useState(true);
   const [weeklyUsdcChange, setWeeklyUsdcChange] = useState<number | null>(null);
   const [weeklyUsdcLoaded, setWeeklyUsdcLoaded] = useState(false);
+  const [followingUsers, setFollowingUsers] = useState<any[]>([]);
+  const [followingBrands, setFollowingBrands] = useState<any[]>([]);
+  const [followingLoading, setFollowingLoading] = useState(true);
 
   const truncatedAddress = address
     ? `${address.slice(0, 4)}...${address.slice(-4)}`
@@ -191,6 +199,24 @@ export default function RightDashboard() {
     }
 
     loadWeeklyUsdcChange();
+    
+    async function loadFollowing() {
+      if (!user?.id) return;
+      try {
+        const [users, brands] = await Promise.all([
+          getFollowing(user.id).catch(() => []),
+          getMySubscriptions().catch(() => []),
+        ]);
+        if (!cancelled) {
+          setFollowingUsers(users || []);
+          setFollowingBrands(brands || []);
+          setFollowingLoading(false);
+        }
+      } catch {
+        if (!cancelled) setFollowingLoading(false);
+      }
+    }
+    loadFollowing();
 
     // Defer non-critical calls to reduce first-load fan-out.
     const deferred = setTimeout(() => {
@@ -448,6 +474,82 @@ export default function RightDashboard() {
             </div>
           </>
         )}
+      </div>
+
+      {/* 3.5 Following Card */}
+      <div className="bg-card border border-border rounded-[28px] p-5 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h3 className="text-[13px] font-black text-foreground">Following</h3>
+            <div className="px-2 py-0.5 bg-foreground/5 rounded-full border border-foreground/10">
+              <span className="text-[10px] font-black text-foreground/40 tracking-tight">
+                {followingBrands.length} Following • {followingUsers.length} Users
+              </span>
+            </div>
+          </div>
+          <Link href="/explore" className="text-[11px] font-black text-foreground/30 hover:text-foreground uppercase tracking-widest transition-colors">
+            Explore
+          </Link>
+        </div>
+
+        <div className="space-y-1.5">
+          {followingLoading ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-10 w-full rounded-xl bg-foreground/5 animate-pulse" />
+              ))}
+            </div>
+          ) : (followingUsers.length === 0 && followingBrands.length === 0) ? (
+            <div className="py-4 px-2 text-center rounded-2xl border border-dashed border-border">
+              <p className="text-[11px] font-bold text-foreground/30 uppercase tracking-widest">Not following anyone yet</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              {[
+                ...followingBrands.map(b => ({ ...b, type: 'brand' })),
+                ...followingUsers.map(u => ({ ...u, type: 'user' }))
+              ].slice(0, 5).map((item, idx) => (
+                <div key={`${item.type}-${item.id}`} className="group flex items-center justify-between p-2 rounded-xl bg-foreground/[0.02] border border-border/50 hover:bg-foreground/[0.04] transition-all">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="relative w-8 h-8 rounded-full overflow-hidden border border-border bg-foreground/5 shrink-0">
+                      <img 
+                        src={item.type === 'brand' 
+                          ? (item.logoUrls?.thumbnail || item.logoUrl || '/placeholder-brand.png')
+                          : (item.avatarUrl || '/placeholder-user.png')
+                        } 
+                        alt="" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[12px] font-black text-foreground/80 truncate leading-tight">
+                        {item.type === 'brand' ? item.name : (item.displayName || item.username)}
+                      </p>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        {item.type === 'brand' ? (
+                          <Building2 className="w-2.5 h-2.5 text-primary/60" />
+                        ) : (
+                          <Users2 className="w-2.5 h-2.5 text-purple-400/60" />
+                        )}
+                        <span className="text-[9px] font-black text-foreground/20 uppercase tracking-widest">
+                          {item.type === 'brand' ? 'Following' : 'User'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Check className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                </div>
+              ))}
+              {(followingUsers.length + followingBrands.length) > 5 && (
+                <p className="text-center text-[10px] font-black text-foreground/20 uppercase tracking-widest pt-1">
+                  +{(followingUsers.length + followingBrands.length) - 5} more
+                </p>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 4. Referral Card */}

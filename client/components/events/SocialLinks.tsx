@@ -48,7 +48,7 @@ export function SocialLinks({ links, eventId, variant = 'full' }: SocialLinksPro
 
     if (variant === 'compact') {
         return (
-            <div className="flex items-center gap-1 ml-1">
+            <div className="flex items-center gap-1">
                 {activeSlots.map(({ key, label, icon }) => (
                     <a
                         key={key}

@@ -7,11 +7,12 @@ import SidebarLayout from "@/components/home/SidebarLayout";
 import {
   Copy, Calendar, Edit3, Trophy, Zap, Flame, ImageIcon,
   ThumbsUp, Crown, Lock, TrendingUp, Building2, Star,
-  Shield, MousePointerClick, X, Users,
+  Shield, MousePointerClick, X, Users, User2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/context/UserContext";
 import { followUser, unfollowUser, getUserSubmissions, getUserVotedContent } from "@/services/user.service";
+import { subscribeToBrand, unsubscribeFromBrand } from "@/services/subscription.service";
 import type { User, UserStats } from "@/types/user";
 
 // ─── Tiers ───────────────────────────────────────────────────────
@@ -94,6 +95,7 @@ export default function ProfileView({
   }>({ show: false, type: "followers" });
   const [modalFollowLoading, setModalFollowLoading] = useState<string | null>(null);
   const [modalFollowing, setModalFollowing] = useState<Set<string>>(new Set());
+  const [isInitializingModal, setIsInitializingModal] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -120,19 +122,65 @@ export default function ProfileView({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleModalFollow = useCallback(async (personId: string) => {
+  // Initialize modalFollowing when modal opens
+  useEffect(() => {
+    const initModal = async () => {
+      if (!showSocialModal.show || !currentUser) return;
+      
+      setIsInitializingModal(true);
+      try {
+        if (isOwnProfile) {
+          // If it's my own profile, I already have the 'following' list
+          setModalFollowing(new Set(following.map(f => f.id)));
+        } else {
+          // If viewing someone else, I need MY following list to see who I follow
+          const { getFollowing } = await import("@/services/user.service");
+          const { getMySubscriptions } = await import("@/services/subscription.service");
+          
+          const [myFollowingUsers, myBrandSubs] = await Promise.all([
+            getFollowing(currentUser.id),
+            getMySubscriptions().catch(() => [])
+          ]);
+          
+          const combined = new Set([
+            ...myFollowingUsers.map(u => u.id),
+            ...myBrandSubs.map(s => s.brandId)
+          ]);
+          setModalFollowing(combined);
+        }
+      } catch (err) {
+        console.error("Error initializing modal follow state:", err);
+      } finally {
+        setIsInitializingModal(false);
+      }
+    };
+
+    initModal();
+  }, [showSocialModal.show, currentUser?.id, isOwnProfile, following]);
+
+  const handleModalFollow = useCallback(async (personId: string, isBrand?: boolean) => {
     if (!currentUser || modalFollowLoading) return;
     setModalFollowLoading(personId);
     const alreadyFollowing = modalFollowing.has(personId);
+    
+    // Optimistic UI update
     setModalFollowing(prev => {
       const next = new Set(prev);
       if (alreadyFollowing) next.delete(personId); else next.add(personId);
       return next;
     });
+
     try {
-      if (alreadyFollowing) await unfollowUser(personId);
-      else await followUser(personId);
-    } catch {
+      if (isBrand) {
+        if (alreadyFollowing) await unsubscribeFromBrand(personId);
+        else await subscribeToBrand(personId);
+      } else {
+        if (alreadyFollowing) await unfollowUser(personId);
+        else await followUser(personId);
+      }
+    } catch (err) {
+      console.error("Error toggling follow/sub:", err);
+      // Rollback on error
       setModalFollowing(prev => {
         const next = new Set(prev);
         if (alreadyFollowing) next.add(personId); else next.delete(personId);
@@ -229,7 +277,7 @@ export default function ProfileView({
             <div className="flex-1 min-w-0 space-y-6">
 
               {/* ── Identity Card ── */}
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-4 sm:p-6 md:p-8">
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-3xl p-4 sm:p-6 md:p-8">
                 <div className="flex flex-wrap items-start gap-4 sm:gap-5">
 
                   {/* Avatar */}
@@ -248,10 +296,10 @@ export default function ProfileView({
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <h1 className="font-display text-[2rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] text-foreground uppercase leading-[0.92] tracking-tight mb-1 break-words">
+                    <h1 className="font-display text-2xl sm:text-4xl md:text-5xl lg:text-6xl text-foreground leading-tight tracking-tight mb-1 break-words">
                       {displayName}
                     </h1>
-                    <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.3em] mb-3">
+                    <p className="text-xs font-bold text-foreground/30 tracking-wide mb-3">
                       @{username}
                     </p>
                     <div className="flex flex-wrap items-center gap-2">
@@ -261,7 +309,7 @@ export default function ProfileView({
                           className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.2] rounded-full transition-colors group"
                         >
                           <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                          <span className="text-[10px] font-black text-white/40 font-mono group-hover:text-white/70 transition-colors">
+                          <span className="text-[11px] font-bold text-white/40 font-mono group-hover:text-white/70 transition-colors">
                             {copied ? "Copied!" : truncateAddress(walletAddr)}
                           </span>
                           <Copy className="w-2.5 h-2.5 text-white/20 group-hover:text-white/50 transition-colors" />
@@ -270,7 +318,7 @@ export default function ProfileView({
                       {joinDate && (
                         <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.04] border border-white/[0.06] rounded-full">
                           <Calendar className="w-3 h-3 text-white/30" />
-                          <span className="text-[10px] font-black text-white/30 uppercase tracking-wide">Joined {joinDate}</span>
+                          <span className="text-[11px] font-bold text-white/30 uppercase tracking-wide">Joined {joinDate}</span>
                         </div>
                       )}
                     </div>
@@ -279,7 +327,7 @@ export default function ProfileView({
                   {/* Actions */}
                   <div className="flex items-center gap-3 w-full sm:w-auto sm:ml-auto">
                     {isOwnProfile ? (
-                      <button className="flex items-center gap-2 px-4 py-2 bg-white/[0.04] border border-white/[0.1] hover:bg-white/[0.08] hover:border-white/[0.2] rounded-xl text-[11px] font-black text-white/60 hover:text-white uppercase tracking-widest transition-all w-full sm:w-auto justify-center sm:justify-start">
+                      <button className="flex items-center gap-2 px-5 py-2.5 bg-white/[0.06] border border-white/[0.1] hover:bg-white/[0.1] hover:border-white/[0.3] rounded-2xl text-[11px] font-bold text-white/80 hover:text-white uppercase tracking-widest transition-all w-full sm:w-auto justify-center sm:justify-start shadow-sm active:scale-[0.98]">
                         <Edit3 className="w-3.5 h-3.5" />
                         Edit Profile
                       </button>
@@ -288,10 +336,10 @@ export default function ProfileView({
                         onClick={onToggleFollow}
                         disabled={isFollowLoading}
                         className={cn(
-                          "px-5 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all w-full sm:w-auto",
+                          "px-6 py-2.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all w-full sm:w-auto active:scale-[0.98] shadow-lg",
                           isFollowing
                             ? "bg-white/[0.06] border border-white/[0.1] text-white/50 hover:border-red-500/30 hover:text-red-400"
-                            : "bg-white hover:bg-white/90 text-black"
+                            : "bg-white hover:bg-white/90 text-black shadow-white/10"
                         )}
                       >
                         {isFollowLoading ? "..." : isFollowing ? "Following" : "Follow"}
@@ -309,83 +357,115 @@ export default function ProfileView({
                   ))
                 ) : (
                   <>
-                    <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-4 sm:px-5 py-4 transition-all">
-                      <p className={cn("text-[9px] font-black uppercase tracking-[0.2em] mb-1", tier.color)}>XP Level</p>
-                      <p className="font-display text-3xl sm:text-4xl text-white uppercase tracking-tight leading-none">Lvl {level}</p>
-                      <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">{tier.name} Tier</p>
+                    <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-2xl px-4 sm:px-5 py-4 transition-all flex flex-col justify-center">
+                      <div className="flex items-baseline gap-2">
+                        <p className="font-display text-3xl sm:text-4xl text-white uppercase tracking-tight leading-none">Lvl {level}</p>
+                        <p className={cn("text-[10px] font-black uppercase tracking-widest", tier.color)}>Level</p>
+                      </div>
+                      <p className="text-xs font-bold text-white/30 mt-1 uppercase tracking-wide">{tier.name} Tier</p>
                     </div>
 
-                    <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-4 sm:px-5 py-4 transition-all">
-                      <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-lime-400">Earnings</p>
-                      <p className="font-display text-3xl sm:text-4xl text-white uppercase tracking-tight leading-none">
-                        {stats?.earnings ? stats.earnings.toLocaleString() : "0"}
-                      </p>
-                      <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">USDC Total</p>
+                    <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-2xl px-4 sm:px-5 py-4 transition-all flex flex-col justify-center">
+                      <div className="flex items-baseline gap-2">
+                        <p className="font-display text-3xl sm:text-4xl text-white uppercase tracking-tight leading-none">
+                          {stats?.earnings ? stats.earnings.toLocaleString() : "0"}
+                        </p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-lime-400">Earnings</p>
+                      </div>
+                      <p className="text-xs font-bold text-white/30 mt-1 uppercase tracking-wide">USDC Total</p>
                     </div>
 
-                    <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-4 sm:px-5 py-4 transition-all">
-                      <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-blue-400">Events</p>
-                      <p className="font-display text-3xl sm:text-4xl text-white uppercase tracking-tight leading-none">
-                        {stats?.events ?? 0}
-                      </p>
-                      <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Joined</p>
+                    <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-2xl px-4 sm:px-5 py-4 transition-all flex flex-col justify-center">
+                      <div className="flex items-baseline gap-2">
+                        <p className="font-display text-3xl sm:text-4xl text-white uppercase tracking-tight leading-none">
+                          {stats?.events ?? 0}
+                        </p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-400">Events</p>
+                      </div>
+                      <p className="text-xs font-bold text-white/30 mt-1 uppercase tracking-wide">Joined</p>
                     </div>
 
-                    <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-[20px] px-4 sm:px-5 py-4 transition-all">
-                      <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-yellow-400">Win Rate</p>
-                      <p className={cn("font-display text-3xl sm:text-4xl uppercase tracking-tight leading-none", winRate >= 50 ? "text-lime-400" : "text-white")}>
-                        {winRate}%
-                      </p>
-                      <p className="text-[10px] font-black text-white/30 mt-1 uppercase tracking-wide">Success Score</p>
+                    <div className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1] rounded-2xl px-4 sm:px-5 py-4 transition-all flex flex-col justify-center">
+                      <div className="flex items-baseline gap-2">
+                        <p className={cn("font-display text-3xl sm:text-4xl uppercase tracking-tight leading-none", winRate >= 50 ? "text-lime-400" : "text-white")}>
+                          {winRate}%
+                        </p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-yellow-400">Win Rate</p>
+                      </div>
+                      <p className="text-xs font-bold text-white/30 mt-1 uppercase tracking-wide">Success Score</p>
                     </div>
                   </>
                 )}
               </div>
 
               {/* ── About ── */}
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-6 md:p-8 space-y-5">
-                <h2 className="font-display text-2xl text-white uppercase tracking-tight">
-                  About {displayName.split(" ")[0]}
-                </h2>
-                {user?.bio ? (
+              {user?.bio && (
+                <div className="bg-white/[0.02] border border-white/[0.06] rounded-3xl p-6 md:p-8 space-y-5">
+                  <h2 className="font-display text-2xl text-white uppercase tracking-tight">
+                    About {displayName.split(" ")[0]}
+                  </h2>
                   <p className="text-sm font-medium text-white/50 leading-relaxed">{user.bio}</p>
-                ) : (
-                  <p className="text-sm font-black text-white/20 uppercase tracking-wide">No bio yet.</p>
-                )}
 
-                <div className="flex items-center gap-8 pt-3 border-t border-white/[0.04]">
+                  <div className="flex items-center gap-6 pt-3 border-t border-white/[0.04]">
+                    <button
+                      onClick={() => setShowSocialModal({ show: true, type: "followers" })}
+                      className="flex items-baseline gap-2 group transition-all"
+                    >
+                      <span className="font-display text-2xl text-white tracking-tight leading-none group-hover:text-primary transition-colors">
+                        {formatK(stats?.subscribers ?? followers.length)}
+                      </span>
+                      <span className="text-[11px] font-bold text-white/30 uppercase tracking-widest">Followers</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowSocialModal({ show: true, type: "following" })}
+                      className="flex items-baseline gap-2 group transition-all"
+                    >
+                      <span className="font-display text-2xl text-white tracking-tight leading-none group-hover:text-primary transition-colors">
+                        {following.length}
+                      </span>
+                      <span className="text-[11px] font-bold text-white/30 uppercase tracking-widest">Following</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {!user?.bio && (
+                <div className="flex items-center gap-8 px-2">
                   <button
                     onClick={() => setShowSocialModal({ show: true, type: "followers" })}
-                    className="text-left group"
+                    className="flex items-baseline gap-2 group transition-all"
                   >
-                    <p className="font-display text-3xl text-white tracking-tight leading-none group-hover:text-primary transition-colors">
+                    <span className="font-display text-2xl text-white tracking-tight leading-none group-hover:text-primary transition-colors">
                       {formatK(stats?.subscribers ?? followers.length)}
-                    </p>
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-1">Followers</p>
+                    </span>
+                    <span className="text-[11px] font-bold text-white/30 uppercase tracking-widest">Followers</span>
                   </button>
+
                   <button
                     type="button"
                     onClick={() => setShowSocialModal({ show: true, type: "following" })}
-                    className="text-left group"
+                    className="flex items-baseline gap-2 group transition-all"
                   >
-                    <p className="font-display text-3xl text-white tracking-tight leading-none group-hover:text-primary transition-colors">
+                    <span className="font-display text-2xl text-white tracking-tight leading-none group-hover:text-primary transition-colors">
                       {following.length}
-                    </p>
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-1">Brands Followed</p>
+                    </span>
+                    <span className="text-[11px] font-bold text-white/30 uppercase tracking-widest">Following</span>
                   </button>
                 </div>
-              </div>
+              )}
 
               {/* ── Showcase Section ── */}
               <div className="space-y-5">
                 {/* Header + Tabs */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-1 p-1 bg-white/[0.04] border border-white/[0.06] rounded-2xl h-fit">
+                  <div className="flex items-center gap-1 p-1 bg-white/[0.04] border border-white/[0.06] rounded-2xl h-fit w-full sm:w-auto">
                     <button
                       onClick={() => setActiveTab("posted")}
                       className={cn(
-                        "px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                        activeTab === "posted" ? "bg-white text-black" : "text-white/30 hover:text-white/60"
+                        "flex-1 sm:flex-none px-6 py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all",
+                        activeTab === "posted" ? "bg-white text-black shadow-lg" : "text-white/40 hover:text-white/70"
                       )}
                     >
                       Posts
@@ -393,21 +473,21 @@ export default function ProfileView({
                     <button
                       onClick={() => setActiveTab("voted")}
                       className={cn(
-                        "px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                        activeTab === "voted" ? "bg-white text-black" : "text-white/30 hover:text-white/60"
+                        "flex-1 sm:flex-none px-6 py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all",
+                        activeTab === "voted" ? "bg-white text-black shadow-lg" : "text-white/40 hover:text-white/70"
                       )}
                     >
                       Votes
                     </button>
                   </div>
 
-                  <div className="flex items-center gap-1 p-1 bg-white/[0.04] border border-white/[0.06] rounded-2xl h-fit">
+                  <div className="flex items-center gap-1 p-1 bg-white/[0.04] border border-white/[0.06] rounded-2xl h-fit w-full sm:w-auto overflow-x-auto no-scrollbar">
                     {(["all", "live", "completed"] as ContentFilter[]).map(f => (
                       <button
                         key={f}
                         onClick={() => setContentFilter(f)}
                         className={cn(
-                          "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                          "flex-1 sm:flex-none px-5 py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all whitespace-nowrap",
                           contentFilter === f ? "bg-white/10 text-white" : "text-white/30 hover:text-white/60"
                         )}
                       >
@@ -461,7 +541,7 @@ export default function ProfileView({
                                 }
                               }}
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
 
                             {/* Rank badge — top left, prominent */}
                             {rank != null && (
@@ -534,7 +614,7 @@ export default function ProfileView({
                                 <ThumbsUp className="w-8 h-8 text-white/10" />
                               </div>
                             )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
 
                             {/* Rank badge — top left */}
                             {rank != null && (
@@ -582,7 +662,7 @@ export default function ProfileView({
             <div className="lg:w-[300px] xl:w-[320px] flex-shrink-0 space-y-6">
 
               {/* ── Reputation ── */}
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-5 sm:p-6 space-y-4">
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-3xl p-5 sm:p-6 space-y-4">
                 <h3 className="font-display text-xl text-white uppercase tracking-tight">Reputation</h3>
                 <div className="space-y-2">
 
@@ -592,12 +672,12 @@ export default function ProfileView({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-black text-white">Best Ranking</p>
-                      <p className="text-[9px] font-black text-white/30 uppercase tracking-wide mt-0.5">
+                      <p className="text-[11px] font-bold text-white/30 uppercase tracking-wide mt-0.5">
                         {bestRank ? `Global Rank #${bestRank}` : "No rankings yet"}
                       </p>
                     </div>
                     {bestRank && (
-                      <span className="text-[10px] font-black text-yellow-400 shrink-0">
+                      <span className="text-[11px] font-bold text-yellow-400 shrink-0">
                         Top {bestRank === 1 ? "1%" : bestRank <= 3 ? "5%" : "10%"}
                       </span>
                     )}
@@ -609,9 +689,9 @@ export default function ProfileView({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-black text-white">Current Streak</p>
-                      <p className="text-[9px] font-black text-white/30 uppercase tracking-wide mt-0.5">Daily submissions</p>
+                      <p className="text-[11px] font-bold text-white/30 uppercase tracking-wide mt-0.5">Daily submissions</p>
                     </div>
-                    <span className="text-[10px] font-black text-orange-400 shrink-0">
+                    <span className="text-[11px] font-bold text-orange-400 shrink-0">
                       {streak > 0 ? `${streak} Days` : "—"}
                     </span>
                   </div>
@@ -622,9 +702,9 @@ export default function ProfileView({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-black text-white">Engagement</p>
-                      <p className="text-[9px] font-black text-white/30 uppercase tracking-wide mt-0.5">Votes & posts</p>
+                      <p className="text-[11px] font-bold text-white/30 uppercase tracking-wide mt-0.5">Votes & posts</p>
                     </div>
-                    <span className={cn("text-[10px] font-black shrink-0", engagementColor)}>
+                    <span className={cn("text-[11px] font-bold shrink-0", engagementColor)}>
                       {engagementLabel}
                     </span>
                   </div>
@@ -633,17 +713,17 @@ export default function ProfileView({
               </div>
 
               {/* ── Achievements ── */}
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-5 sm:p-6 space-y-4">
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-3xl p-5 sm:p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-display text-xl text-white uppercase tracking-tight">Achievements</h3>
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-0.5">
+                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mt-0.5">
                       {unlockedCount}/{MILESTONES.length} Unlocked
                     </p>
                   </div>
                   <button
                     onClick={() => setShowAllAchievements(v => !v)}
-                    className="text-[9px] font-black text-primary/70 hover:text-primary uppercase tracking-widest transition-colors"
+                    className="text-[10px] font-black text-primary/70 hover:text-primary uppercase tracking-widest transition-colors"
                   >
                     {showAllAchievements ? "Show Less" : "See All"}
                   </button>
@@ -690,8 +770,8 @@ export default function ProfileView({
 
               {/* ── Brands Followed ── */}
               {following.length > 0 && (
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-[24px] p-5 sm:p-6 space-y-4">
-                  <h3 className="font-display text-xl text-white uppercase tracking-tight">Brands Followed</h3>
+                <div className="bg-white/[0.02] border border-white/[0.06] rounded-3xl p-5 sm:p-6 space-y-4">
+                  <h3 className="font-display text-xl text-white uppercase tracking-tight">Following</h3>
                   <div className="space-y-3">
                     {following.slice(0, 5).map((brand: User) => (
                       <Link 
@@ -752,60 +832,108 @@ export default function ProfileView({
                 <X className="w-3.5 h-3.5 text-white/50" />
               </button>
             </div>
-            <div className="p-2 max-h-[70vh] sm:max-h-[60vh] overflow-y-auto">
+            <div className="max-h-[70vh] sm:max-h-[60vh] overflow-y-auto px-2 pb-4">
               {socialList.length === 0 ? (
                 <p className="text-center text-[11px] font-black text-white/20 uppercase tracking-widest py-10">
                   No {showSocialModal.type} yet
                 </p>
               ) : (
-                socialList.map(person => {
-                  const isSelf = currentUser?.id === person.id;
-                  const isPersonFollowed = modalFollowing.has(person.id);
-                  return (
-                    <div
-                      key={person.id}
-                      className="flex items-center justify-between p-3 hover:bg-white/[0.04] rounded-[14px] transition-colors"
-                    >
-                      <Link
-                        href={`/profile/${person.username || person.id}`}
-                        onClick={() => setShowSocialModal(s => ({ ...s, show: false }))}
-                        className="flex items-center gap-3 flex-1 min-w-0"
-                      >
-                        {person.avatarUrl ? (
-                          <img src={person.avatarUrl} className="w-9 h-9 rounded-xl object-cover border border-white/[0.08] shrink-0" alt={person.displayName || ""} />
-                        ) : (
-                          <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                            <span className="text-primary text-sm font-black uppercase">
-                              {(person.displayName || person.username || "?").charAt(0)}
-                            </span>
-                          </div>
-                        )}
-                        <div className="min-w-0">
-                          <p className="text-xs font-black text-white truncate">{person.displayName || person.username || "Unknown"}</p>
-                          <p className="text-[10px] text-white/30 font-bold">{person.username ? `@${person.username}` : ""}</p>
-                        </div>
-                      </Link>
-                      {!isSelf && currentUser && (
-                        <button
-                          onClick={() => handleModalFollow(person.id)}
-                          disabled={modalFollowLoading === person.id}
-                          className={cn(
-                            "ml-3 shrink-0 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-40",
-                            isPersonFollowed
-                              ? "bg-white/[0.05] border border-white/[0.08] text-white/40 hover:border-red-500/30 hover:text-red-400"
-                              : "bg-white text-black hover:bg-white/90"
-                          )}
-                        >
-                          {modalFollowLoading === person.id ? "..." : isPersonFollowed ? "Unfollow" : "Follow"}
-                        </button>
-                      )}
+                <div className="space-y-4 pt-2">
+                  {/* Brands Section */}
+                  {socialList.some(p => (p as any).role === 'BRAND') && (
+                    <div className="space-y-2">
+                      <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] px-3">Brands</p>
+                      {socialList.filter(p => (p as any).role === 'BRAND').map(person => (
+                        <SocialRow 
+                          key={person.id} 
+                          person={person} 
+                          isBrand={true}
+                          currentUser={currentUser}
+                          isFollowed={modalFollowing.has(person.id)}
+                          isLoading={modalFollowLoading === person.id}
+                          onToggle={() => handleModalFollow(person.id, true)}
+                        />
+                      ))}
                     </div>
-                  );
-                })
+                  )}
+
+                  {/* Users Section */}
+                  {socialList.some(p => (p as any).role !== 'BRAND') && (
+                    <div className="space-y-2">
+                      <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] px-3">Users</p>
+                      {socialList.filter(p => (p as any).role !== 'BRAND').map(person => (
+                        <SocialRow 
+                          key={person.id} 
+                          person={person} 
+                          isBrand={false}
+                          currentUser={currentUser}
+                          isFollowed={modalFollowing.has(person.id)}
+                          isLoading={modalFollowLoading === person.id}
+                          onToggle={() => handleModalFollow(person.id, false)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </motion.div>
         </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Helper Components ──────────────────────────────────────────
+
+function SocialRow({ person, isBrand, currentUser, isFollowed, isLoading, onToggle }: {
+  person: User;
+  isBrand: boolean;
+  currentUser: User | null;
+  isFollowed: boolean;
+  isLoading: boolean;
+  onToggle: () => void;
+}) {
+  const isSelf = currentUser?.id === person.id;
+
+  return (
+    <div className="flex items-center justify-between p-3 hover:bg-white/[0.04] rounded-[18px] transition-colors group">
+      <Link
+        href={isBrand ? `/brand/${person.username || person.id}` : `/profile/${person.username || person.id}`}
+        className="flex items-center gap-3 flex-1 min-w-0"
+      >
+        <div className="relative shrink-0">
+          {person.avatarUrl ? (
+            <img src={person.avatarUrl} className="w-10 h-10 rounded-xl object-cover border border-white/[0.08]" alt={person.displayName || ""} />
+          ) : (
+            <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center">
+              {isBrand ? <Building2 className="w-5 h-5 text-white/20" /> : <User2 className="w-5 h-5 text-white/20" />}
+            </div>
+          )}
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-black text-white truncate group-hover:text-primary transition-colors">
+            {person.displayName || person.username || "Unknown"}
+          </p>
+          <p className="text-[10px] text-white/30 font-bold tracking-tight">
+            {person.username ? `@${person.username}` : ""}
+          </p>
+        </div>
+      </Link>
+
+      {!isSelf && currentUser && (
+        <button
+          onClick={onToggle}
+          disabled={isLoading}
+          className={cn(
+            "ml-3 shrink-0 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-40",
+            isFollowed
+              ? "bg-white/[0.08] border border-white/[0.1] text-white/60 hover:border-red-500/40 hover:text-red-400"
+              : "bg-white text-black hover:bg-white/90"
+          )}
+        >
+          {isLoading ? "..." : isFollowed ? "Following" : "Follow"}
+        </button>
       )}
     </div>
   );
