@@ -1130,21 +1130,21 @@ export default function DashboardPage() {
                                     {row.map((stat) => (
                                         <div
                                             key={stat.label}
-                                            className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-2.5 md:px-4 md:py-3.5 flex flex-col justify-between gap-2 md:flex-row md:items-center md:gap-3 hover:bg-white/[0.05] hover:border-white/[0.1] transition-all"
+                                            className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-2.5 md:px-4 md:py-3.5 flex items-center gap-3 md:gap-4 hover:bg-white/[0.05] hover:border-white/[0.1] transition-all"
                                         >
-                                            {/* top: icon + label */}
-                                            <div className="flex items-center gap-1.5 md:gap-3">
-                                                <div className={cn("w-5 h-5 md:w-8 md:h-8 rounded-md md:rounded-xl flex items-center justify-center shrink-0", stat.bg)}>
-                                                    <stat.icon className={cn("w-2.5 h-2.5 md:w-4 md:h-4", stat.color)} />
-                                                </div>
-                                                <p className="text-[7px] md:hidden font-black uppercase tracking-[0.1em] text-foreground/35 leading-none truncate">{stat.label}</p>
+                                            {/* Icon */}
+                                            <div className={cn("w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl flex items-center justify-center shrink-0", stat.bg)}>
+                                                <stat.icon className={cn("w-3.5 h-3.5 md:w-5 md:h-5", stat.color)} />
                                             </div>
-                                            {/* bottom: value + delta */}
-                                            <div className="md:min-w-0 md:flex-1">
-                                                <p className="text-[9px] hidden md:block font-black uppercase tracking-[0.15em] text-foreground/30 leading-none mb-1">{stat.label}</p>
-                                                <p className="font-display text-lg md:text-3xl text-foreground tracking-tight leading-none">{stat.value}</p>
+
+                                            {/* Content */}
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-baseline gap-1.5 md:gap-2">
+                                                    <p className="font-display text-lg md:text-2xl text-foreground tracking-tight leading-none">{stat.value}</p>
+                                                    <p className="text-[7px] md:text-[9px] font-black uppercase tracking-[0.15em] text-foreground/30 leading-none truncate">{stat.label}</p>
+                                                </div>
                                                 <p className={cn(
-                                                    "text-[7px] md:text-[9px] font-semibold mt-0.5 truncate leading-none",
+                                                    "text-[7px] md:text-[9px] font-semibold mt-1 truncate leading-none",
                                                     stat.deltaPositive ? stat.color : "text-foreground/20"
                                                 )}>{stat.delta}</p>
                                             </div>
