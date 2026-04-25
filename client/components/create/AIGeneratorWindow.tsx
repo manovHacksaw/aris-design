@@ -165,27 +165,27 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
 
   const isGeneratingRef = useRef(false);
   const limitCheckedRef = useRef(false);
+  const autoFirePromptRef = useRef("");
 
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
   }, []);
 
-  // Check limit on open + jump to prompt step if initialPrompt or initialShowAttachMenu was provided
+  // On open: queue auto-generation if a hero prompt was passed, check generation limit, handle attach
   useEffect(() => {
     if (isOpen) {
+      if (initialPrompt) {
+        autoFirePromptRef.current = initialPrompt;
+      }
+
       if (userId && !limitCheckedRef.current) {
         limitCheckedRef.current = true;
         checkGenerationLimit(userId, "user").then((info) => {
           setRemainingGenerations(info.remainingGenerations);
         });
       }
-      
-      if (initialPrompt) {
-        setPrompt(initialPrompt);
-        setStep("prompt");
-      }
-      
+
       if (initialShowAttachMenu) {
         setStep("prompt");
         setShowAttachMenu(true);
@@ -218,6 +218,7 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
       setShowAttachMenu(false); // Explicitly reset attach menu
       limitCheckedRef.current = false;
       isGeneratingRef.current = false;
+      autoFirePromptRef.current = "";
     }
   }, [isOpen]);
 
@@ -234,6 +235,8 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
       setIsLoadingEvents(false);
     }
   }, [eventsLoaded, isLoadingEvents]);
+
+  const handleGenerateRef = useRef<(p: string, e?: Event | null) => void>(() => {});
 
   const handleGenerate = useCallback(
     async (userPrompt: string, eventCtx?: Event | null) => {
@@ -272,6 +275,18 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
     },
     [userId, selectedEvent, generatedImage]
   );
+
+  // Keep ref in sync so the open-effect can call it without a stale closure
+  useEffect(() => { handleGenerateRef.current = handleGenerate; }, [handleGenerate]);
+
+  // Auto-fire generation when window opens with a hero bar prompt
+  useEffect(() => {
+    if (isOpen && autoFirePromptRef.current) {
+      const p = autoFirePromptRef.current;
+      autoFirePromptRef.current = "";
+      handleGenerateRef.current(p);
+    }
+  }, [isOpen]);
 
   const handleSendPrompt = () => {
     const raw = prompt.trim();

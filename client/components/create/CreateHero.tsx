@@ -102,16 +102,16 @@ export default function CreateHero({ onGenerate, onAttach, onRequireAuth, events
                                             if (onRequireAuth) { onRequireAuth(); return; }
                                             onAttach?.();
                                         }}
-                                        className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg sm:rounded-2xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all group/btn"
+                                        className="w-7 h-7 sm:w-10 sm:h-10 flex items-center justify-center rounded-md sm:rounded-2xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all group/btn"
                                     >
-                                        <Paperclip className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover/btn:rotate-12 transition-transform" />
+                                        <Paperclip className="w-3 h-3 sm:w-4 sm:h-4 group-hover/btn:rotate-12 transition-transform" />
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => onRequireAuth?.()}
-                                        className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg sm:rounded-2xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all"
+                                        className="w-7 h-7 sm:w-10 sm:h-10 flex items-center justify-center rounded-md sm:rounded-2xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:bg-white/[0.08] hover:text-white transition-all"
                                     >
-                                        <Settings2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                        <Settings2 className="w-3 h-3 sm:w-4 sm:h-4" />
                                     </button>
                                     <button
                                         type="button"
@@ -119,15 +119,16 @@ export default function CreateHero({ onGenerate, onAttach, onRequireAuth, events
                                             if (onRequireAuth) { onRequireAuth(); return; }
                                             if (prompt.trim() && onGenerate) onGenerate(prompt.trim());
                                         }}
-                                        className="px-3 sm:px-7 py-2 sm:py-3 rounded-lg sm:rounded-2xl bg-lime-400 text-black font-black uppercase tracking-wide text-[11px] shadow-[0_4px_24px_rgba(163,230,53,0.3)] hover:bg-lime-300 hover:scale-[1.02] active:scale-95 transition-all whitespace-nowrap"
+                                        className="w-7 h-7 sm:w-auto sm:h-auto sm:px-7 sm:py-3 flex items-center justify-center rounded-md sm:rounded-2xl bg-lime-400 text-black font-black uppercase tracking-wide text-[11px] shadow-[0_4px_24px_rgba(163,230,53,0.3)] hover:bg-lime-300 hover:scale-[1.02] active:scale-95 transition-all"
                                     >
-                                        Gen
+                                        <Sparkles className="w-3.5 h-3.5 sm:hidden" />
+                                        <span className="hidden sm:inline whitespace-nowrap">Generate</span>
                                     </button>
                                 </div>
                             </PlaceholdersAndVanishInput>
 
                             {/* Prompt hints */}
-                            <div className="flex gap-1 sm:gap-2">
+                            <div className="flex gap-1 sm:gap-2 overflow-x-auto no-scrollbar">
                                 {HINTS.map((hint) => (
                                     <motion.button
                                         key={hint}
@@ -135,7 +136,7 @@ export default function CreateHero({ onGenerate, onAttach, onRequireAuth, events
                                         whileHover={{ scale: 1.04 }}
                                         whileTap={{ scale: 0.97 }}
                                         onClick={() => onRequireAuth ? onRequireAuth() : handleHint(hint)}
-                                        className="px-3 sm:px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.07] text-[11px] font-black uppercase tracking-wide text-white/30 hover:text-white/70 hover:bg-white/[0.08] hover:border-white/[0.14] transition-all"
+                                        className="shrink-0 px-3 sm:px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.07] text-[11px] font-black uppercase tracking-wide text-white/30 hover:text-white/70 hover:bg-white/[0.08] hover:border-white/[0.14] transition-all"
                                     >
                                         {hint}
                                     </motion.button>

@@ -1116,9 +1116,9 @@ export default function DashboardPage() {
                     {loading ? (
                         <div className="space-y-2">
                             {[0, 1].map(r => (
-                                <div key={r} className="grid grid-cols-4 md:grid-cols-4 gap-2">
+                                <div key={r} className="grid grid-cols-4 gap-1.5 md:gap-3">
                                     {Array.from({ length: 4 }).map((_, i) => (
-                                        <div key={i} className="h-[52px] md:h-[70px] rounded-xl bg-white/[0.03] border border-white/[0.05] animate-pulse" />
+                                        <div key={i} className="h-[58px] md:h-[70px] rounded-xl bg-white/[0.03] border border-white/[0.05] animate-pulse" />
                                     ))}
                                 </div>
                             ))}
@@ -1126,25 +1126,31 @@ export default function DashboardPage() {
                     ) : (
                         <div className="space-y-2 md:space-y-3">
                             {statRows.map((row, ri) => (
-                                <div key={ri} className="grid grid-cols-4 gap-2 md:gap-3">
+                                <div key={ri} className="grid grid-cols-4 gap-1.5 md:gap-3">
                                     {row.map((stat) => (
                                         <div
                                             key={stat.label}
-                                            className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-2.5 md:px-4 md:py-3.5 flex items-center gap-3 md:gap-4 hover:bg-white/[0.05] hover:border-white/[0.1] transition-all"
+                                            className="relative bg-white/[0.03] border border-white/[0.06] rounded-xl p-1.5 md:px-4 md:py-3.5 flex flex-col items-center justify-center md:flex-row md:items-center md:gap-4 hover:bg-white/[0.05] hover:border-white/[0.1] transition-all min-h-[44px] md:min-h-0"
                                         >
-                                            {/* Icon */}
-                                            <div className={cn("w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl flex items-center justify-center shrink-0", stat.bg)}>
-                                                <stat.icon className={cn("w-3.5 h-3.5 md:w-5 md:h-5", stat.color)} />
+                                            {/* Icon — top-left on mobile, normal flow on desktop */}
+                                            <div className={cn("absolute top-1.5 left-1.5 w-4 h-4 rounded-md flex items-center justify-center md:static md:w-10 md:h-10 md:rounded-xl md:shrink-0", stat.bg)}>
+                                                <stat.icon className={cn("w-2 h-2 md:w-5 md:h-5", stat.color)} />
                                             </div>
 
-                                            {/* Content */}
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex items-baseline gap-1.5 md:gap-2">
-                                                    <p className="font-display text-lg md:text-2xl text-foreground tracking-tight leading-none">{stat.value}</p>
-                                                    <p className="text-[7px] md:text-[9px] font-black uppercase tracking-[0.15em] text-foreground/30 leading-none truncate">{stat.label}</p>
+                                            {/* Value + label centered in pill on mobile */}
+                                            <div className="flex flex-col items-center gap-0.5 md:hidden">
+                                                <p className="font-display text-base text-foreground tracking-tight leading-none">{stat.value}</p>
+                                                <p className="text-[6px] font-black uppercase tracking-[0.12em] text-foreground/40 leading-none truncate">{stat.label}</p>
+                                            </div>
+
+                                            {/* Desktop content */}
+                                            <div className="hidden md:block min-w-0 flex-1">
+                                                <div className="flex items-baseline gap-2">
+                                                    <p className="font-display text-2xl text-foreground tracking-tight leading-none">{stat.value}</p>
+                                                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-foreground/30 leading-none truncate">{stat.label}</p>
                                                 </div>
                                                 <p className={cn(
-                                                    "text-[7px] md:text-[9px] font-semibold mt-1 truncate leading-none",
+                                                    "text-[9px] font-semibold mt-1 truncate leading-none",
                                                     stat.deltaPositive ? stat.color : "text-foreground/20"
                                                 )}>{stat.delta}</p>
                                             </div>

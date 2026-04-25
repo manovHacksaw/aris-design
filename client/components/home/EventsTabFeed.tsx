@@ -51,11 +51,10 @@ export default function EventsTabFeed({ searchQuery = "", category = "ALL" }: Ev
             const matchesSearch = !searchQuery ||
                 e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 e.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                e.brandName?.toLowerCase().includes(searchQuery.toLowerCase());
+                e.brand?.name?.toLowerCase().includes(searchQuery.toLowerCase());
 
             const matchesCategory = category === "ALL" ||
-                e.category?.toUpperCase() === category.toUpperCase() ||
-                e.tags?.some(t => t.toUpperCase() === category.toUpperCase());
+                e.category?.toUpperCase() === category.toUpperCase();
 
             return matchesSearch && matchesCategory;
         });
