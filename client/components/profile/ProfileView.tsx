@@ -531,15 +531,9 @@ export default function ProfileView({
                             className="group relative aspect-[3/4] bg-white/[0.02] border border-white/[0.06] hover:border-white/20 rounded-[20px] overflow-hidden transition-all cursor-pointer"
                           >
                             <img
-                              src={s.imageUrl || `https://gateway.pinata.cloud/ipfs/${s.imageCid}`}
+                              src={s.imageUrls?.medium || s.imageUrl}
                               alt=""
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                if (s.imageCid && !target.src.includes('infura-ipfs.io')) {
-                                  target.src = `https://skywalker.infura-ipfs.io/ipfs/${s.imageCid}`;
-                                }
-                              }}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
 
@@ -595,35 +589,47 @@ export default function ProfileView({
                           rank === 2 ? "bg-zinc-300 text-black" :
                           rank === 3 ? "bg-orange-400 text-black" :
                           "bg-black/60 text-white/80";
+                        const isImage = !item.isTextProposal && !!item.imageUrl;
+                        const textContent = item.proposalTitle || item.caption;
+
                         return (
                           <motion.div
                             key={item.id}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: i * 0.04 }}
-                            className="group relative aspect-[3/4] bg-white/[0.02] border border-white/[0.06] hover:border-white/20 rounded-[20px] overflow-hidden transition-all cursor-pointer"
+                            className="group relative aspect-[3/4] border rounded-[20px] overflow-hidden transition-all cursor-pointer bg-white/[0.02] border-white/[0.06] hover:border-white/20"
                           >
-                            {item.displayImageUrl ? (
+                            {/* ── Image ── */}
+                            {isImage ? (
                               <img
-                                src={item.displayImageUrl}
+                                src={item.imageUrl}
                                 alt=""
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-white/[0.03]">
-                                <ThumbsUp className="w-8 h-8 text-white/10" />
+                              /* ── Text proposal ── */
+                              <div className="w-full h-full flex flex-col items-center justify-center p-5 bg-gradient-to-br from-white/[0.05] to-white/[0.01]">
+                                {textContent ? (
+                                  <p className="font-display text-xl sm:text-2xl text-white text-center leading-tight tracking-tight line-clamp-5 break-words">
+                                    {textContent}
+                                  </p>
+                                ) : (
+                                  <ThumbsUp className="w-8 h-8 text-white/10" />
+                                )}
                               </div>
                             )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
 
-                            {/* Rank badge — top left */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent pointer-events-none" />
+
+                            {/* Rank badge */}
                             {rank != null && (
                               <div className={cn("absolute top-2.5 left-2.5 w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-black shadow-lg", rankColors)}>
                                 #{rank}
                               </div>
                             )}
 
-                            {/* Live badge — top right */}
+                            {/* Live badge */}
                             {item.isLive && (
                               <div className="absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur-sm border border-lime-400/40 rounded-full">
                                 <div className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-pulse" />
@@ -631,20 +637,17 @@ export default function ProfileView({
                               </div>
                             )}
 
-
                             {/* Bottom: votes + event name */}
                             <div className="absolute bottom-0 left-0 right-0 p-3">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-1">
-                                  <ThumbsUp className="w-3 h-3 text-white/50" />
-                                  <span className="text-[11px] font-black text-white/70">{item.voteCount.toLocaleString()}</span>
-                                </div>
+                              <div className="flex items-center gap-1 mb-1">
+                                <ThumbsUp className="w-3 h-3 text-white/50" />
+                                <span className="text-[11px] font-black text-white/70">{item.voteCount.toLocaleString()}</span>
                                 {item.isLive && rank == null && (
-                                  <span className="text-[9px] font-black text-lime-400 uppercase tracking-wider">Live</span>
+                                  <span className="ml-auto text-[9px] font-black text-lime-400 uppercase tracking-wider">Live</span>
                                 )}
                               </div>
-                              <p className="text-[9px] font-bold text-white/30 uppercase tracking-wide mt-1 truncate">
-                                {item.isTextProposal && item.proposalTitle ? item.proposalTitle : item.event?.title}
+                              <p className="text-[9px] font-bold text-white/30 uppercase tracking-wide truncate">
+                                {item.event?.title}
                               </p>
                             </div>
 
