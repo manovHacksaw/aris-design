@@ -27,12 +27,12 @@ export function UserStats({ user }: UserStatsProps) {
   return (
     <div className="space-y-6">
       {/* XP Progress Bar */}
-      <div className="bg-card border-[3px] border-foreground rounded-2xl p-6 shadow-[4px_4px_0px_#1A1A1A] dark:shadow-[4px_4px_0px_#FDF6E3]">
+      <div className="bg-card border border-surface-border-strong rounded-2xl p-6 shadow-card">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-bold uppercase tracking-widest text-foreground/60">XP Progress — Level {level}</span>
           <span className="text-xs font-bold uppercase tracking-widest text-primary">{progress}%</span>
         </div>
-        <div className="h-3 bg-secondary border-2 border-foreground rounded-full overflow-hidden">
+        <div className="h-3 bg-input border border-surface-border rounded-full overflow-hidden">
           <div
             className="h-full bg-primary transition-all duration-700 ease-out"
             style={{ width: `${progress}%` }}
@@ -50,9 +50,9 @@ export function UserStats({ user }: UserStatsProps) {
           return (
             <div
               key={item.label}
-              className={`flex flex-col items-start gap-3 p-4 ${item.bg} border-[3px] border-foreground rounded-2xl shadow-[4px_4px_0px_#1A1A1A] dark:shadow-[4px_4px_0px_#FDF6E3] hover:-translate-y-0.5 hover:translate-x-0.5 transition-transform`}
+              className={`flex flex-col items-start gap-3 p-4 ${item.bg} border border-surface-border rounded-2xl shadow-soft hover:-translate-y-0.5 transition-all duration-150`}
             >
-              <div className={`w-8 h-8 rounded-lg ${item.bg} border-2 border-foreground flex items-center justify-center`}>
+              <div className={`w-8 h-8 rounded-lg ${item.bg} border border-surface-border flex items-center justify-center`}>
                 <Icon className={`w-4 h-4 ${item.color}`} />
               </div>
               <div>

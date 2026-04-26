@@ -16,7 +16,7 @@ export default function LandingValueBlock() {
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="relative w-full h-full min-h-[400px] flex flex-col justify-between p-8 md:p-10 rounded-[2.5rem] bg-[#1A1B1F] border border-primary/20 shadow-[0_10px_30px_rgba(0,0,0,0.25)] overflow-hidden"
+            className="relative w-full h-full min-h-[400px] flex flex-col justify-between p-8 md:p-10 rounded-[2.5rem] bg-foreground dark:bg-[#1A1B1F] border border-primary/20 shadow-card overflow-hidden"
         >
             {/* Background Gradient/Ambience */}
             <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-primary/5 blur-[100px] rounded-full pointer-events-none" />

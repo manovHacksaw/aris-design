@@ -36,14 +36,14 @@ function StepRow({ index, currentStep, error }: { index: number; currentStep: nu
               <Loader2 className="w-4 h-4 animate-spin" />
             </motion.div>
           ) : (
-            <motion.div key="idle" className="absolute inset-0 flex items-center justify-center rounded-full bg-white/5 text-white/20">
+            <motion.div key="idle" className="absolute inset-0 flex items-center justify-center rounded-full bg-foreground/6 text-foreground/25 border border-surface-border">
               <span className="text-xs font-bold">{index + 1}</span>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-bold transition-colors ${done ? "text-primary" : active ? (failed ? "text-red-400" : "text-foreground") : "text-white/30"}`}>
+        <p className={`text-sm font-bold transition-colors ${done ? "text-primary" : active ? (failed ? "text-red-500" : "text-foreground") : "text-foreground/30"}`}>
           {STEPS[index].label}
         </p>
         {active && !done && (

@@ -149,7 +149,7 @@ export default function NotificationDropdown({ isOpen, onClose }: NotificationDr
                                 </div>
                             ))
                         ) : (
-                            <div className="py-8 text-center text-[#6B7280] text-sm">
+                            <div className="py-8 text-center text-foreground/40 text-sm">
                                 <Bell className="w-8 h-8 mx-auto mb-2 opacity-20" />
                                 No notifications yet
                             </div>

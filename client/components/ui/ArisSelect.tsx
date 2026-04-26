@@ -54,7 +54,7 @@ export function ArisSelect({ value, onChange, options, placeholder, minWidth = "
                                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
                                 transition={{ duration: 0.2, ease: "easeOut" }}
                                 style={{ top: dropdownStyle.top, left: dropdownStyle.left, minWidth: dropdownStyle.width }}
-                                className="fixed bg-[#0a0a0c] border border-white/20 rounded-xl overflow-hidden z-[999] backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
+                                className="fixed bg-card border border-surface-border-strong rounded-xl overflow-hidden z-[999] shadow-spotify"
                             >
                                 <div className="max-h-[300px] overflow-y-auto no-scrollbar py-2">
                                     {options.map((opt) => (

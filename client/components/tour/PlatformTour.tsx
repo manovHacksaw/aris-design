@@ -56,7 +56,7 @@ export default function PlatformTour() {
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={() => setOpen(false)}
       />
-      <div className="relative w-full max-w-lg rounded-[24px] bg-[#0c0c10] border border-white/[0.1] shadow-2xl p-6 space-y-5">
+      <div className="relative w-full max-w-lg rounded-[24px] bg-card border border-surface-border-strong shadow-spotify p-6 space-y-5">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[10px] font-black text-primary/80 uppercase tracking-[0.2em]">

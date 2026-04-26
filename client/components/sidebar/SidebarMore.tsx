@@ -138,7 +138,7 @@ export default function SidebarMore() {
                                         {/* Log Out */}
                                         <button
                                             onClick={() => { setIsOpen(false); logout(); }}
-                                            className="flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-500 dark:hover:text-red-300 hover:bg-secondary rounded-[16px] transition-colors group"
+                                            className="flex items-center gap-3 w-full px-4 py-3 text-left text-sm font-medium text-red-500 hover:text-red-600 hover:bg-red-500/8 rounded-[16px] transition-colors group"
                                         >
                                             <IoLogOutOutline size={20} className="flex-shrink-0 transition-colors" />
                                             Log out

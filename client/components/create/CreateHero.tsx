@@ -39,7 +39,7 @@ export default function CreateHero({ onGenerate, onAttach, onRequireAuth, events
     };
 
     return (
-        <div className="relative w-full rounded-[24px] sm:rounded-[40px] overflow-hidden bg-[#070709] border border-white/[0.06] min-h-[260px] sm:min-h-[320px]">
+        <div className="relative w-full rounded-[24px] sm:rounded-[40px] overflow-hidden bg-foreground dark:bg-[#070709] border border-surface-border min-h-[260px] sm:min-h-[320px]">
             {/* Dynamic Stars Background */}
             <StarsBackground
                 starDensity={0.0002}
@@ -52,7 +52,7 @@ export default function CreateHero({ onGenerate, onAttach, onRequireAuth, events
 
             {/* Extra colour glow layers */}
             <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute -top-32 -left-32 w-[500px] h-[500px] bg-[#A78BFA]/8 rounded-full blur-[140px]" />
+                <div className="absolute -top-32 -left-32 w-[500px] h-[500px] bg-secondary/8 rounded-full blur-[140px]" />
                 <div className="absolute -bottom-16 right-0 w-[400px] h-[400px] bg-orange-500/6 rounded-full blur-[120px]" />
                 <div className="absolute top-1/2 left-1/3 w-[300px] h-[300px] bg-lime-400/5 rounded-full blur-[100px]" />
             </div>

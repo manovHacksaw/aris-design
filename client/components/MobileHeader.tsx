@@ -10,7 +10,7 @@ export default function MobileHeader() {
 
     return (
         <>
-            <header className="md:hidden flex items-center justify-between px-6 py-3 bg-background border-b border-border sticky top-0 z-40">
+            <header className="md:hidden flex items-center justify-between px-6 py-3 bg-card dark:bg-card glass-nav border-b border-border sticky top-0 z-40">
                 {/* Left: Hamburger + Logo */}
                 <div className="flex items-center gap-3">
                     <button
@@ -21,7 +21,7 @@ export default function MobileHeader() {
                     </button>
                     <Link href="/home" className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-                            <span className="text-white font-bold text-sm">A</span>
+                            <span className="text-primary-foreground font-bold text-sm">A</span>
                         </div>
                         <span className="text-lg font-bold tracking-tight text-foreground">Aris</span>
                     </Link>

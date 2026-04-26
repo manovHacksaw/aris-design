@@ -12,7 +12,7 @@ export default function SidebarToggle() {
             onClick={toggleSidebar}
             className={cn(
                 "w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200",
-                "text-[#9CA3AF] hover:text-white hover:bg-secondary",
+                "text-foreground/40 hover:text-foreground hover:bg-surface-hover",
                 "focus:outline-none"
             )}
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}

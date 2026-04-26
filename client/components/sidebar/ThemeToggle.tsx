@@ -21,7 +21,7 @@ export default function ThemeToggle() {
         return (
             <button
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="w-10 h-10 rounded-full bg-gray-100 dark:bg-secondary flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-primary transition-colors mx-auto"
+                className="w-10 h-10 rounded-full bg-surface hover:bg-surface-hover flex items-center justify-center text-foreground/50 hover:text-primary transition-colors mx-auto border border-surface-border"
             >
                 {theme === "dark" ? <IoMoonOutline size={18} /> : <IoSunnyOutline size={18} />}
             </button>
@@ -29,14 +29,14 @@ export default function ThemeToggle() {
     }
 
     return (
-        <div className="bg-[#F3F4F6] dark:bg-card p-1 rounded-full flex items-center w-full max-w-[200px] mx-auto">
+        <div className="bg-surface border border-surface-border p-1 rounded-full flex items-center w-full max-w-[200px] mx-auto">
             <button
                 onClick={() => setTheme("light")}
                 className={cn(
                     "flex-1 flex items-center justify-center gap-2 py-1.5 rounded-full text-xs font-medium transition-all duration-200",
                     theme === "light"
-                        ? "bg-white text-black shadow-sm"
-                        : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                        ? "bg-card text-foreground shadow-soft border border-surface-border"
+                        : "text-foreground/40 hover:text-foreground"
                 )}
             >
                 <IoSunnyOutline size={14} />
@@ -47,8 +47,8 @@ export default function ThemeToggle() {
                 className={cn(
                     "flex-1 flex items-center justify-center gap-2 py-1.5 rounded-full text-xs font-medium transition-all duration-200",
                     theme === "dark"
-                        ? "bg-secondary text-white shadow-sm"
-                        : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                        ? "bg-secondary text-secondary-foreground shadow-soft"
+                        : "text-foreground/40 hover:text-foreground"
                 )}
             >
                 <IoMoonOutline size={14} />

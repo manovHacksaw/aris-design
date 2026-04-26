@@ -40,14 +40,14 @@ function SparkleCanvas() {
             {particles.map((p) => (
                 <motion.div
                     key={p.id}
-                    className="absolute rounded-full bg-lime-400"
+                    className="absolute rounded-full bg-primary"
                     style={{ left: `${p.x}%`, top: `${p.y}%`, width: p.size, height: p.size }}
                     animate={{ y: [0, -30, 0], opacity: [0, p.opacity, 0], scale: [0.5, 1, 0.5] }}
                     transition={{ duration: p.duration, delay: p.delay, repeat: Infinity, ease: "easeInOut" }}
                 />
             ))}
-            <div className="absolute -top-12 -left-12 w-64 h-64 bg-lime-500/[0.08] rounded-full blur-3xl" />
-            <div className="absolute -top-8 right-1/3 w-48 h-48 bg-lime-400/[0.05] rounded-full blur-3xl" />
+            <div className="absolute -top-12 -left-12 w-64 h-64 bg-primary/[0.08] rounded-full blur-3xl" />
+            <div className="absolute -top-8 right-1/3 w-48 h-48 bg-primary-light/[0.06] rounded-full blur-3xl" />
         </div>
     );
 }
@@ -57,7 +57,7 @@ function SparkleCanvas() {
 ───────────────────────────────────────────────────────── */
 function ShimmerWord({ children }: { children: string }) {
     return (
-        <span className="bg-gradient-to-r from-lime-300 via-green-300 to-lime-400 bg-clip-text text-transparent">
+        <span className="bg-gradient-to-r from-primary-dark via-primary to-primary-light bg-clip-text text-transparent">
             {children}
         </span>
     );
@@ -160,7 +160,7 @@ export default function HomeHeader() {
                 <div
                     className="absolute inset-0 pointer-events-none opacity-[0.025]"
                     style={{
-                        backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)",
+                        backgroundImage: "radial-gradient(circle, rgba(0,0,0,0.08) 1px, transparent 1px)",
                         backgroundSize: "28px 28px",
                     }}
                 />
@@ -194,11 +194,11 @@ export default function HomeHeader() {
                 transition={{ delay: 0.9, duration: 0.35 }}
                 className="relative group max-w-3xl"
             >
-                <div className="absolute -inset-px bg-gradient-to-r from-lime-400/20 via-green-400/15 to-lime-400/20 rounded-2xl opacity-0 group-focus-within:opacity-100 transition-all duration-500 blur-sm pointer-events-none" />
-                <div className="relative flex items-center bg-white/[0.03] border border-border group-focus-within:border-lime-400/35 rounded-2xl transition-all duration-300">
+                <div className="absolute -inset-px bg-gradient-to-r from-primary/15 via-primary-light/10 to-primary/15 rounded-2xl opacity-0 group-focus-within:opacity-100 transition-all duration-500 blur-sm pointer-events-none" />
+                <div className="relative flex items-center bg-input border border-border group-focus-within:border-primary/40 rounded-2xl transition-all duration-300 shadow-soft">
                     {loading
-                        ? <Loader2 className="absolute left-5 w-4 h-4 text-lime-400 animate-spin pointer-events-none" />
-                        : <Search className="absolute left-5 w-4 h-4 text-foreground/30 group-focus-within:text-lime-400 transition-colors duration-300 pointer-events-none" />
+                        ? <Loader2 className="absolute left-5 w-4 h-4 text-primary animate-spin pointer-events-none" />
+                        : <Search className="absolute left-5 w-4 h-4 text-foreground/30 group-focus-within:text-primary transition-colors duration-300 pointer-events-none" />
                     }
                     <input
                         type="text"
@@ -231,7 +231,7 @@ export default function HomeHeader() {
                             {!hasResults ? (
                                 <p className="px-5 py-4 text-sm text-foreground/50">No results for "{searchQuery}"</p>
                             ) : (
-                                <div className="divide-y divide-white/[0.05]">
+                                <div className="divide-y divide-surface-border">
                                     {/* Events */}
                                     {results!.events.length > 0 && (
                                         <div className="p-3">
@@ -240,17 +240,17 @@ export default function HomeHeader() {
                                                 <button
                                                     key={ev.id}
                                                     onClick={() => { router.push(`/events/${ev.id}`); setOpen(false); setSearchQuery(""); }}
-                                                    className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/[0.04] transition-colors text-left"
+                                                    className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-surface-hover transition-colors text-left"
                                                 >
                                                     {ev.imageUrls?.thumbnail
                                                         ? <img src={ev.imageUrls.thumbnail} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
-                                                        : <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0"><Calendar className="w-4 h-4 text-white/20" /></div>
+                                                        : <div className="w-8 h-8 rounded-lg bg-input flex items-center justify-center flex-shrink-0"><Calendar className="w-4 h-4 text-foreground/30" /></div>
                                                     }
                                                     <div className="min-w-0">
                                                         <p className="text-sm font-semibold text-foreground truncate">{ev.title}</p>
                                                         {ev.brand && <p className="text-xs text-foreground/50 truncate">{ev.brand.name}</p>}
                                                     </div>
-                                                    <span className={`ml-auto text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full flex-shrink-0 ${ev.status === 'posting' || ev.status === 'voting' ? 'bg-lime-400/10 text-lime-400' : 'bg-white/5 text-white/30'}`}>
+                                                    <span className={`ml-auto text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full flex-shrink-0 ${ev.status === 'posting' || ev.status === 'voting' ? 'bg-primary/10 text-primary-dark' : 'bg-surface text-foreground/30 border border-surface-border'}`}>
                                                         {ev.status}
                                                     </span>
                                                 </button>
@@ -266,11 +266,11 @@ export default function HomeHeader() {
                                                 <button
                                                     key={brand.id}
                                                     onClick={() => { router.push(`/brand/${brand.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`); setOpen(false); setSearchQuery(""); }}
-                                                    className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/[0.04] transition-colors text-left"
+                                                    className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-surface-hover transition-colors text-left"
                                                 >
                                                     {brand.logoCid
                                                         ? <img src={`https://gateway.pinata.cloud/ipfs/${brand.logoCid}`} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
-                                                        : <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0"><Building2 className="w-4 h-4 text-white/20" /></div>
+                                                        : <div className="w-8 h-8 rounded-lg bg-input flex items-center justify-center flex-shrink-0"><Building2 className="w-4 h-4 text-foreground/30" /></div>
                                                     }
                                                     <div className="min-w-0">
                                                         <p className="text-sm font-semibold text-foreground truncate">{brand.name}</p>
@@ -289,11 +289,11 @@ export default function HomeHeader() {
                                                 <button
                                                     key={user.id}
                                                     onClick={() => { router.push(`/profile/${user.username}`); setOpen(false); setSearchQuery(""); }}
-                                                    className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/[0.04] transition-colors text-left"
+                                                    className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-surface-hover transition-colors text-left"
                                                 >
                                                     {user.avatarUrl
                                                         ? <img src={user.avatarUrl} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-                                                        : <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0"><User className="w-4 h-4 text-white/20" /></div>
+                                                        : <div className="w-8 h-8 rounded-full bg-input flex items-center justify-center flex-shrink-0"><User className="w-4 h-4 text-foreground/30" /></div>
                                                     }
                                                     <div className="min-w-0">
                                                         <p className="text-sm font-semibold text-foreground truncate">{user.displayName}</p>

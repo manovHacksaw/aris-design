@@ -25,8 +25,8 @@ export function ThemeToggle({ className }: { className?: string }) {
         <button
             onClick={() => setTheme(isDark ? "light" : "dark")}
             className={clsx(
-                "relative rounded-full w-14 h-8 p-1 flex items-center transition-colors duration-300",
-                isDark ? "bg-[#111217]" : "bg-[#E5E7EB]",
+                "relative rounded-full w-14 h-8 p-1 flex items-center transition-colors duration-300 border",
+                isDark ? "bg-card border-surface-border" : "bg-input border-surface-border",
                 className
             )}
             aria-label="Toggle Theme"
@@ -35,8 +35,8 @@ export function ThemeToggle({ className }: { className?: string }) {
                 layout
                 transition={{ type: "spring", stiffness: 700, damping: 30 }}
                 className={clsx(
-                    "w-6 h-6 rounded-full shadow-sm flex items-center justify-center",
-                    "bg-white text-black"
+                    "w-6 h-6 rounded-full shadow-soft flex items-center justify-center",
+                    "bg-card text-foreground border border-surface-border"
                 )}
                 style={{
                     marginLeft: isDark ? "auto" : "0",

@@ -57,7 +57,7 @@ export default function UserPostsSection({ userId }: { userId: string }) {
                     <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-1">Your work</p>
                     <h2 className="font-display text-3xl text-white uppercase tracking-tight">Posted</h2>
                 </div>
-                <Link href="/dashboard" className="text-[10px] font-black text-[#A78BFA] hover:text-[#A78BFA]/80 uppercase tracking-[0.15em] transition-colors">
+                <Link href="/dashboard" className="text-[10px] font-black text-secondary hover:text-secondary/80 uppercase tracking-[0.15em] transition-colors">
                     Show all
                 </Link>
             </div>

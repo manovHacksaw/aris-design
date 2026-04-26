@@ -640,7 +640,7 @@ export function AIGeneratorWindow({ isOpen, onClose, userId, initialPrompt = "",
                             initial={{ opacity: 0, y: 10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className="absolute bottom-full left-0 mb-3 w-48 p-2 rounded-2xl bg-[#1a1a1e] border border-white/10 shadow-2xl z-50"
+                            className="absolute bottom-full left-0 mb-3 w-48 p-2 rounded-2xl bg-card border border-surface-border-strong shadow-spotify z-50"
                           >
                             <button
                               onClick={() => fileInputRef.current?.click()}

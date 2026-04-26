@@ -73,9 +73,9 @@ const TX_STYLES: Record<string, TxStyle> = {
   LOGIN_STREAK: { icon: Flame,    color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-400/10", border: "border-orange-400/25", glow: "group-hover:shadow-[0_0_12px_rgba(251,146,60,0.15)]" },
   VOTE_CAST:    { icon: ThumbsUp, color: "text-blue-600 dark:text-blue-400",     bg: "bg-blue-400/10",   border: "border-blue-400/25",   glow: "group-hover:shadow-[0_0_12px_rgba(96,165,250,0.15)]" },
   SUBMISSION:   { icon: ImageIcon, color: "text-lime-600 dark:text-lime-400",    bg: "bg-lime-400/10",   border: "border-lime-400/25",   glow: "group-hover:shadow-[0_0_12px_rgba(163,230,53,0.15)]" },
-  MILESTONE:    { icon: Trophy,   color: "text-[#B6FF60]",                       bg: "bg-[#B6FF60]/10", border: "border-[#B6FF60]/25", glow: "group-hover:shadow-[0_0_12px_rgba(182,255,96,0.16)]" },
+  MILESTONE:    { icon: Trophy,   color: "text-primary dark:text-[#B6FF60]",     bg: "bg-primary/10",   border: "border-primary/25",   glow: "group-hover:shadow-[0_0_12px_rgba(132,225,28,0.16)]" },
   REFERRAL:     { icon: UserPlus, color: "text-pink-600 dark:text-pink-400",     bg: "bg-pink-400/10",   border: "border-pink-400/25",   glow: "group-hover:shadow-[0_0_12px_rgba(244,114,182,0.15)]" },
-  default:      { icon: Sparkles, color: "text-[#7C5FC4] dark:text-[#A78BFA]",  bg: "bg-[#A78BFA]/10",  border: "border-[#A78BFA]/25",  glow: "group-hover:shadow-[0_0_12px_rgba(167,139,250,0.15)]" },
+  default:      { icon: Sparkles, color: "text-secondary dark:text-[#A78BFA]",  bg: "bg-secondary/10",  border: "border-secondary/25",  glow: "group-hover:shadow-[0_0_12px_rgba(111,111,255,0.15)]" },
 };
 
 function toHuman(key: string): string {
@@ -272,8 +272,8 @@ export default function RightDashboard() {
   const weeklyUsdcTextClass = weeklyUsdcChange === null
     ? "text-foreground/40"
     : weeklyUsdcChange < 0
-      ? "text-red-400"
-      : "text-[#60A5FA]";
+      ? "text-red-500 dark:text-red-400"
+      : "text-vibrant-blue";
 
   return (
     <div className="flex flex-col gap-4 sticky top-6 pb-10">
@@ -373,7 +373,7 @@ export default function RightDashboard() {
       <div className="bg-card border border-border rounded-[28px] p-6 shadow-sm flex flex-col h-auto">
         <div className="flex items-center justify-between mb-6">
           <span className="text-[13px] font-black text-foreground">XP Tracking</span>
-          <Link href="/dashboard" className="text-[11px] font-black text-[#A78BFA] hover:underline uppercase tracking-wider">
+          <Link href="/dashboard" className="text-[11px] font-black text-secondary hover:underline uppercase tracking-wider">
             View Dashboard
           </Link>
         </div>
@@ -382,20 +382,16 @@ export default function RightDashboard() {
           <div className="space-y-5 animate-pulse">
             {/* XP number skeleton */}
             <div className="space-y-2">
-              <div className="h-9 w-28 rounded-lg bg-foreground/10 border border-foreground/8 backdrop-blur-sm" />
-              <div className="h-3 w-20 rounded bg-white/5" />
+              <div className="h-9 w-28 rounded-lg bg-foreground/10 border border-surface-border" />
+              <div className="h-3 w-20 rounded bg-foreground/6" />
             </div>
             {/* Bar chart skeleton */}
             <div className="flex items-end justify-between gap-1.5 px-0.5" style={{ height: "7rem" }}>
               {[40, 60, 30, 75, 50, 85, 100].map((h, i) => (
                 <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
                   <div
-                    className="w-full rounded-sm border border-white/8"
-                    style={{
-                      height: `${h}%`,
-                      background: "linear-gradient(to top, rgba(167,139,250,0.12), rgba(167,139,250,0.04))",
-                      backdropFilter: "blur(4px)",
-                    }}
+                    className="w-full rounded-sm border border-surface-border bg-secondary/8"
+                    style={{ height: `${h}%` }}
                   />
                 </div>
               ))}
@@ -404,20 +400,20 @@ export default function RightDashboard() {
             <div className="flex justify-between gap-1.5 px-0.5">
               {Array.from({ length: 7 }).map((_, i) => (
                 <div key={i} className="flex-1 flex justify-center">
-                  <div className="h-2 w-5 rounded bg-white/5" />
+                  <div className="h-2 w-5 rounded bg-foreground/6" />
                 </div>
               ))}
             </div>
             {/* Progress bar skeleton */}
             <div className="space-y-2">
-              <div className="h-1.5 w-full rounded-full bg-white/5 border border-white/5" />
-              <div className="h-2.5 w-24 rounded bg-white/5 mx-auto" />
+              <div className="h-1.5 w-full rounded-full bg-foreground/6 border border-surface-border" />
+              <div className="h-2.5 w-24 rounded bg-foreground/6 mx-auto" />
             </div>
           </div>
         ) : (
           <>
             <div className="mb-8">
-              <h4 className="text-4xl font-black text-[#A78BFA] tracking-tight">{earnedToday} XP</h4>
+              <h4 className="text-4xl font-black text-secondary tracking-tight">{earnedToday} XP</h4>
               <p className="text-xs font-bold text-foreground/50">Earned Today</p>
             </div>
 
@@ -436,7 +432,7 @@ export default function RightDashboard() {
                       animate={{ height: `${pct || 2}%` }}
                       className={cn(
                         "w-full transition-all duration-300 rounded-sm",
-                        i === 6 ? "bg-[#A78BFA]" : "bg-[#A78BFA]/20"
+                        i === 6 ? "bg-secondary" : "bg-secondary/20"
                       )}
                     />
                   </div>
@@ -451,7 +447,7 @@ export default function RightDashboard() {
                 const dayName = dayDate.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase();
                 return (
                   <div key={i} className="flex-1 text-center">
-                    <span className={cn("text-[8px] font-black tracking-wide", i === 6 ? "text-[#A78BFA]" : "text-foreground/20")}>
+                    <span className={cn("text-[8px] font-black tracking-wide", i === 6 ? "text-secondary" : "text-foreground/20")}>
                       {dayName}
                     </span>
                   </div>
@@ -465,7 +461,7 @@ export default function RightDashboard() {
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
-                  className="h-full bg-[#A78BFA] rounded-full"
+                  className="h-full bg-secondary rounded-full"
                 />
               </div>
               <p className="text-[10px] font-bold text-foreground/40 text-center uppercase tracking-[0.15em]">
@@ -563,11 +559,11 @@ export default function RightDashboard() {
           </div>
           <button
             onClick={handleCopy}
-            className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-black transition-all active:scale-95 hover:bg-white/90 shadow-sm"
+            className="w-12 h-12 rounded-xl bg-input border border-surface-border flex items-center justify-center text-foreground/70 hover:text-foreground transition-all active:scale-95 hover:bg-surface-hover shadow-soft"
           >
             {copied ? <div className="text-[10px] font-black uppercase">OK</div> : <Copy size={20} />}
           </button>
-          <button className="w-12 h-12 rounded-xl bg-[#B6FF60] flex items-center justify-center text-black transition-all active:scale-95 hover:bg-[#c8ff7a] shadow-lg shadow-[#B6FF60]/20">
+          <button className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-primary-foreground transition-all active:scale-95 hover:bg-primary-dark shadow-card shadow-primary/20">
             <Share2 size={20} />
           </button>
         </div>
@@ -630,20 +626,20 @@ export default function RightDashboard() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-white leading-snug truncate">{label}</p>
+                    <p className="text-[13px] font-semibold text-foreground/90 leading-snug truncate">{label}</p>
                     {sub ? (
-                      <p className="text-[11px] font-medium text-neutral-400 truncate mt-0.5">{sub}</p>
+                      <p className="text-[11px] font-medium text-foreground/50 truncate mt-0.5">{sub}</p>
                     ) : (
-                      <p className="text-[11px] font-medium text-neutral-400 truncate mt-0.5">XP activity</p>
+                      <p className="text-[11px] font-medium text-foreground/50 truncate mt-0.5">XP activity</p>
                     )}
-                    <p className="text-[10px] font-medium text-neutral-500 mt-1">{relativeTime(tx.createdAt, nowMs)}</p>
+                    <p className="text-[10px] font-medium text-foreground/35 mt-1">{relativeTime(tx.createdAt, nowMs)}</p>
                   </div>
 
                   <div className={cn(
-                    "shrink-0 px-2.5 py-1 rounded-full text-[11px] font-black border shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] transition-shadow duration-300",
+                    "shrink-0 px-2.5 py-1 rounded-full text-[11px] font-black border transition-shadow duration-300",
                     tx.amount >= 0
-                      ? "text-[#B6FF60] bg-[#B6FF60]/10 border-[#B6FF60]/25 shadow-[0_0_10px_rgba(182,255,96,0.14)] group-hover:shadow-[0_0_14px_rgba(182,255,96,0.26)]"
-                      : "text-red-300 bg-red-500/10 border-red-400/25"
+                      ? "text-primary-dark bg-primary/10 border-primary/25 shadow-[0_0_10px_rgba(132,225,28,0.12)] group-hover:shadow-[0_0_14px_rgba(132,225,28,0.22)] dark:text-[#B6FF60] dark:bg-[#B6FF60]/10 dark:border-[#B6FF60]/25"
+                      : "text-red-500 bg-red-500/10 border-red-400/25"
                   )}>
                     {tx.amount >= 0 ? "+" : ""}{tx.amount} XP
                   </div>

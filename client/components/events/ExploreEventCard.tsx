@@ -48,7 +48,7 @@ export default function ExploreEventCard({ event }: { event: ExploreEvent | any 
 
     return (
         <Link href={`/events/${event.id}`} className="block group">
-            <div className="relative rounded-2xl overflow-hidden border border-white/[0.07] hover:border-white/[0.14] transition-all duration-200 bg-[#0d0d10]">
+            <div className="relative rounded-2xl overflow-hidden border border-surface-border hover:border-surface-border-strong transition-all duration-200 bg-card shadow-soft hover:shadow-card">
                 {/* Image — 3:2 aspect */}
                 <div className="relative w-full aspect-[3/2] overflow-hidden">
                     {displayImage ? (
@@ -58,7 +58,7 @@ export default function ExploreEventCard({ event }: { event: ExploreEvent | any 
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                         />
                     ) : (
-                        <div className="w-full h-full bg-white/[0.04]" />
+                        <div className="w-full h-full bg-input" />
                     )}
 
                     {/* Gradient — lighter than before */}

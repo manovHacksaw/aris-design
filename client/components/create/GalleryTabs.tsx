@@ -164,7 +164,7 @@ export default function GalleryTabs({ userId }: { userId?: string }) {
                                 {activeTab === "posted" && hasPosts && (
                                     <Link
                                         href="/dashboard"
-                                        className="text-[10px] font-black text-[#A78BFA] hover:text-[#A78BFA]/80 uppercase tracking-[0.15em] transition-colors"
+                                        className="text-[10px] font-black text-secondary hover:text-secondary/80 uppercase tracking-[0.15em] transition-colors"
                                     >
                                         Show all
                                     </Link>

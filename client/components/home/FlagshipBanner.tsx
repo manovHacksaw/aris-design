@@ -30,7 +30,7 @@ export default function FlagshipBanner({ event }: FlagshipBannerProps) {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            className="relative w-full rounded-[28px] overflow-hidden group border border-white/8 shadow-2xl"
+            className="relative w-full rounded-[28px] overflow-hidden group border border-surface-border-strong shadow-spotify"
             style={{ height: 280 }}
         >
             {/* Background Image */}
