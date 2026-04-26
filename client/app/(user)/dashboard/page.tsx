@@ -1130,7 +1130,7 @@ export default function DashboardPage() {
                                     {row.map((stat) => (
                                         <div
                                             key={stat.label}
-                                            className="relative bg-white/[0.03] border border-white/[0.06] rounded-xl p-1.5 md:px-4 md:py-3.5 flex flex-col items-center justify-center md:flex-row md:items-center md:gap-4 hover:bg-white/[0.05] hover:border-white/[0.1] transition-all min-h-[44px] md:min-h-0"
+                                            className="relative bg-white/[0.03] border border-white/[0.06] rounded-xl p-1.5 md:px-4 md:py-3.5 flex flex-col items-center justify-center md:flex-row md:items-center md:gap-4 hover:bg-white/[0.05] hover:border-white/[0.1] transition-all min-h-[55px] md:min-h-0"
                                         >
                                             {/* Icon — top-left on mobile, normal flow on desktop */}
                                             <div className={cn("absolute top-1.5 left-1.5 w-4 h-4 rounded-md flex items-center justify-center md:static md:w-10 md:h-10 md:rounded-xl md:shrink-0", stat.bg)}>
@@ -1139,8 +1139,8 @@ export default function DashboardPage() {
 
                                             {/* Value + label centered in pill on mobile */}
                                             <div className="flex flex-col items-center gap-0.5 md:hidden">
-                                                <p className="font-display text-base text-foreground tracking-tight leading-none">{stat.value}</p>
-                                                <p className="text-[6px] font-black uppercase tracking-[0.12em] text-foreground/40 leading-none truncate">{stat.label}</p>
+                                                <p className="font-display text-xl text-foreground tracking-tight leading-none">{stat.value}</p>
+                                                <p className="text-[7.5px] font-black uppercase tracking-[0.12em] text-foreground/40 leading-none truncate">{stat.label}</p>
                                             </div>
 
                                             {/* Desktop content */}
