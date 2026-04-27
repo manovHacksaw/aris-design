@@ -1,34 +1,35 @@
 @import "tailwindcss";
 
 :root {
-  /* ─── Premium Light Mode ─────────────────────────── */
-  --color-background: #F7F9FC;
-  --color-foreground: #0E1116;
+  /* ─── Envato-style Warm Light Mode ───────────────── */
 
-  /* Primary: Toned lime for light backgrounds */
-  --color-primary: #84E11C;
-  --color-primary-foreground: #0A0A0A;
-  --color-primary-dark: #6BC915;
-  --color-primary-light: #A6F25A;
+  /* Backgrounds */
+  --color-background: #EDEAE4;
+  --color-foreground: #111111;
 
-  /* Secondary: Soft indigo/purple */
-  --color-secondary: #6F6FFF;
+  /* Brand */
+  --color-primary: #82E600;
+  --color-primary-foreground: #111111;
+  --color-primary-dark: #6FD400;
+  --color-primary-light: #A6F34A;
+
+  /* Secondary / Accent */
+  --color-secondary: #7B3FE4;
   --color-secondary-foreground: #FFFFFF;
 
-  /* Accent: Vibrant Orange */
-  --color-accent: #FF6A00;
+  --color-accent: #FF6B35;
   --color-accent-foreground: #FFFFFF;
 
-  /* UI Surfaces — pure white cards on soft gray page */
+  /* UI Surfaces — white cards pop off the warm beige page */
   --color-card: #FFFFFF;
-  --color-card-border: rgba(0, 0, 0, 0.06);
-  --color-input: #F1F3F5;
-  --color-folder: #F1F3F5;
+  --color-card-border: #E2DED7;
+  --color-input: #F7F5F2;
+  --color-folder: #F7F5F2;
 
-  /* Additional Vibrant Colors */
-  --color-vibrant-yellow: #FFB800;
-  --color-vibrant-pink: #FF4FA3;
-  --color-vibrant-blue: #4FA3FF;
+  /* Vibrant */
+  --color-vibrant-yellow: #FFC700;
+  --color-vibrant-pink: #FF4D8D;
+  --color-vibrant-blue: #3A86FF;
 
   /* Radius System */
   --radius-sm: 12px;
@@ -37,18 +38,26 @@
   --radius-xl: 40px;
   --radius-full: 9999px;
 
-  /* Theme-adaptive surfaces */
-  --color-surface: rgba(0, 0, 0, 0.02);
-  --color-surface-hover: rgba(0, 0, 0, 0.05);
-  --color-surface-border: rgba(0, 0, 0, 0.06);
-  --color-surface-border-strong: rgba(0, 0, 0, 0.12);
+  /* Surfaces */
+  --color-surface: #F7F5F2;
+  --color-surface-hover: #F0EDE7;
+  --color-surface-border: #E2DED7;
+  --color-surface-border-strong: #CCC8C0;
 
-  /* Elevation shadows — soft, breathable */
-  --shadow-soft: 0 2px 6px rgba(0, 0, 0, 0.04);
-  --shadow-card: 0 8px 20px rgba(0, 0, 0, 0.06);
-  --shadow-spotify: 0 20px 60px rgba(0, 0, 0, 0.08);
+  /* Layered elevation shadows — warm undertone, real depth */
+  --shadow-soft:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-card:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    0 8px 24px rgba(0, 0, 0, 0.04);
+  --shadow-spotify:
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.10),
+    0 20px 48px rgba(0, 0, 0, 0.08);
 
-  --border-thick: 1.5px solid #E5E7EB;
+  --border-thick: 1.5px solid #E2DED7;
 }
 
 .dark {
@@ -178,17 +187,170 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Light mode — subtle page gradient */
+/* Light mode — warm sand page */
 :root:not(.dark) body {
-  background: linear-gradient(180deg, #FFFFFF 0%, #F7F9FC 100%);
+  background: #EDEAE4;
   min-height: 100vh;
 }
 
-/* Light mode glass navbar/sidebar helper */
+/* Light mode glass navbar / sidebar */
 :root:not(.dark) .glass-nav {
-  background: rgba(255, 255, 255, 0.80) !important;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.88) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid #E2DED7;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04), 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* ─── Light mode container depth ──────────────────── */
+
+/* Every bg-card element gets real elevation in light mode */
+:root:not(.dark) .bg-card {
+  background: #FFFFFF;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.07),
+    0 8px 24px rgba(0, 0, 0, 0.03);
+  border-color: #E2DED7;
+}
+
+/* Hover lift — cards that already have hover:-translate-y-1 get a stronger shadow */
+:root:not(.dark) .bg-card:hover {
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.05),
+    0 8px 28px rgba(0, 0, 0, 0.10),
+    0 16px 40px rgba(0, 0, 0, 0.05);
+}
+
+/* shadow-sm in light mode → small but visible */
+:root:not(.dark) .shadow-sm {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.05),
+    0 3px 10px rgba(0, 0, 0, 0.07) !important;
+}
+
+/* shadow-card token */
+:root:not(.dark) .shadow-card {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    0 8px 24px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* shadow-spotify / shadow-xl / shadow-2xl — premium depth */
+:root:not(.dark) .shadow-spotify,
+:root:not(.dark) .shadow-xl,
+:root:not(.dark) .shadow-2xl {
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.10),
+    0 24px 56px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* shadow-lg */
+:root:not(.dark) .shadow-lg {
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.05),
+    0 6px 20px rgba(0, 0, 0, 0.09),
+    0 16px 36px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* bg-surface helper — inner panel depth */
+:root:not(.dark) .bg-surface {
+  background: #F7F5F2;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Input fields — sunken feel against white card */
+:root:not(.dark) input,
+:root:not(.dark) textarea,
+:root:not(.dark) select,
+:root:not(.dark) .bg-input {
+  background: #F7F5F2;
+  border-color: #D8D4CC;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+:root:not(.dark) input:focus,
+:root:not(.dark) textarea:focus {
+  background: #FFFFFF;
+  border-color: #82E600;
+  box-shadow: 0 0 0 3px rgba(130, 230, 0, 0.12), inset 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+/* Sidebar — white panel with right-edge depth */
+:root:not(.dark) .bg-card.glass-nav {
+  background: #FFFFFF !important;
+  box-shadow:
+    2px 0 8px rgba(0, 0, 0, 0.06),
+    4px 0 24px rgba(0, 0, 0, 0.05) !important;
+  border-right: 1px solid #E2DED7;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* ─── Light mode text shadows ─────────────────────── */
+
+/* Page headings — h1, h2: crisp lift */
+:root:not(.dark) h1 {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.10);
+}
+
+:root:not(.dark) h2 {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+:root:not(.dark) h3,
+:root:not(.dark) h4 {
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.06);
+}
+
+/* Primary brand / neon accent text — subtle glow */
+:root:not(.dark) .text-primary {
+  text-shadow:
+    0 0 12px rgba(130, 230, 0, 0.25),
+    0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* Sidebar nav label text — lifted off the white panel */
+:root:not(.dark) aside span {
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.07);
+}
+
+/* Active sidebar item label — stronger definition */
+:root:not(.dark) aside a.bg-secondary span,
+:root:not(.dark) aside a[class*="bg-secondary"] span {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.20);
+}
+
+/* ARIS logo wordmark */
+:root:not(.dark) aside .text-foreground {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.10);
+}
+
+/* Card headings inside bg-card */
+:root:not(.dark) .bg-card h1,
+:root:not(.dark) .bg-card h2,
+:root:not(.dark) .bg-card h3,
+:root:not(.dark) .bg-card h4 {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* Muted / secondary text — barely-there depth so it doesn't look flat */
+:root:not(.dark) .text-foreground\/50,
+:root:not(.dark) .text-foreground\/40,
+:root:not(.dark) .text-foreground\/60 {
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.80);
+}
+
+/* Tooltip text on collapsed sidebar */
+:root:not(.dark) aside [class*="shadow-spotify"] {
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.10),
+    0 8px 24px rgba(0, 0, 0, 0.08) !important;
+  text-shadow: none;
 }
 
 /* Custom Scrollbar — Light */
@@ -198,16 +360,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #EAEAEA;
+  background: #E8E4DD;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #C1C1C1;
+  background: #C4BFB6;
   border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9E9E9E;
+  background: #A8A39A;
 }
 
 /* Custom Scrollbar — Dark */
@@ -221,11 +383,6 @@ body {
 
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #555;
-}
-
-/* Light mode surface elevation */
-:root:not(.dark) .bg-surface {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 /* Utility to hide scrollbar but keep functionality */
