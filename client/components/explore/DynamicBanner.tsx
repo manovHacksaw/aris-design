@@ -123,16 +123,16 @@ export default function DynamicBanner({ events }: { events: BannerEvent[] }) {
                             </span>
                         </div>
 
-                        <div className="bg-primary text-black px-5 py-2.5 rounded-full flex items-center gap-2.5 shadow-[0_10px_20px_rgba(163,230,53,0.2)]">
-                            <Award className="w-4 h-4 fill-black/20" />
+                        <div className="bg-primary text-primary-foreground px-5 py-2.5 rounded-full flex items-center gap-2.5 shadow-[0_10px_20px_rgba(132,225,28,0.2)]">
+                            <Award className="w-4 h-4 fill-current opacity-40" />
                             <span className="text-[11px] font-black uppercase tracking-tight">
                                 ${totalReward.toLocaleString()} Pool
                             </span>
                         </div>
 
-                        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 px-5 py-2.5 rounded-full flex items-center gap-3">
-                            <Users className="w-4 h-4 text-white/40" />
-                            <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">
+                        <div className="bg-black/20 backdrop-blur-2xl border border-white/15 px-5 py-2.5 rounded-full flex items-center gap-3">
+                            <Users className="w-4 h-4 text-white/60" />
+                            <span className="text-[10px] font-black text-white/80 uppercase tracking-widest">
                                 {participants.toLocaleString()} Active
                             </span>
                         </div>

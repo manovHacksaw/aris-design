@@ -22,9 +22,9 @@ export function ActivityFeed({ userId }: ActivityFeedProps) {
         return (
           <div
             key={item.id}
-            className="flex items-start gap-4 p-4 bg-card border-[3px] border-foreground rounded-2xl shadow-[4px_4px_0px_#1A1A1A] dark:shadow-[4px_4px_0px_#FDF6E3] hover:-translate-y-0.5 hover:translate-x-0.5 transition-transform"
+            className="flex items-start gap-4 p-4 bg-card border border-surface-border-strong rounded-2xl shadow-card hover:-translate-y-0.5 transition-all duration-150"
           >
-            <div className="w-10 h-10 rounded-xl bg-secondary border-2 border-foreground flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-input border border-surface-border flex items-center justify-center shrink-0">
               <Icon className={`w-5 h-5 ${item.color}`} />
             </div>
             <div className="flex-1 min-w-0">

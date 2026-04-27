@@ -83,12 +83,12 @@ export default function LoginModal() {
             transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
             className="fixed inset-0 z-[201] flex items-center justify-center p-4"
           >
-            <div className="relative w-full max-w-md bg-card border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
+            <div className="relative w-full max-w-md bg-card border border-surface-border-strong rounded-3xl overflow-hidden shadow-spotify">
 
               {/* Close */}
               <button
                 onClick={closeLoginModal}
-                className="absolute top-4 right-4 z-10 w-8 h-8 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center text-foreground/50 hover:text-foreground transition-colors"
+                className="absolute top-4 right-4 z-10 w-8 h-8 rounded-xl bg-surface hover:bg-surface-hover flex items-center justify-center text-foreground/50 hover:text-foreground transition-colors border border-surface-border"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -99,7 +99,7 @@ export default function LoginModal() {
               <div className="p-7 pt-8">
                 {/* Brand mark */}
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-xl bg-surface border border-surface-border flex items-center justify-center">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-foreground">
                       <path d="M12 4L4 18H20L12 4Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
@@ -124,7 +124,7 @@ export default function LoginModal() {
                   {BENEFITS.map((b) => (
                     <div
                       key={b.title}
-                      className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-3.5 space-y-1.5"
+                      className="bg-surface border border-surface-border rounded-2xl p-3.5 space-y-1.5"
                     >
                       <div className="flex items-center gap-2">
                         {b.icon}

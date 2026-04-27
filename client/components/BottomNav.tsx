@@ -38,7 +38,7 @@ export default function BottomNav() {
     }, [tappedHref]);
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/60 flex justify-around items-center px-2 [box-shadow:0_-4px_12px_0px_rgba(255,255,255,0.06)]" style={{ height: "calc(4rem + env(safe-area-inset-bottom))", paddingBottom: "env(safe-area-inset-bottom)" }}>
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border flex justify-around items-center px-2 shadow-[0_-2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_12px_rgba(255,255,255,0.04)]" style={{ height: "calc(4rem + env(safe-area-inset-bottom))", paddingBottom: "env(safe-area-inset-bottom)" }}>
             {navItems.map((item) => {
                 const isActive = pathname === item.href || (item.href === "/home" && pathname === "/");
                 const isTapped = tappedHref === item.href;

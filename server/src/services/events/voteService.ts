@@ -11,7 +11,7 @@ import {
 import { EventStatus } from '../../types/event.js';
 import { XpService } from '../xp/xpService.js';
 import { enforceEventDemographics } from '../../utils/eventUtils.js';
-import { getIPFSUrl } from '../ipfsService.js';
+
 
 export class VoteService {
     /**
@@ -545,15 +545,16 @@ export class VoteService {
             let proposalTitle: string | null = null;
 
             if (vote.submission) {
-                displayImageUrl = vote.submission.imageUrl
-                    || (vote.submission.imageCid ? getIPFSUrl(vote.submission.imageCid, 'medium') : null);
+                displayImageUrl = vote.submission.imageUrl ?? null;
             } else if (vote.proposal) {
                 proposalTitle = vote.proposal.title ?? null;
-                if (vote.proposal.type === 'IMAGE') {
-                    displayImageUrl = vote.proposal.imageUrl
-                        || (vote.proposal.imageCid ? getIPFSUrl(vote.proposal.imageCid, 'medium') : null);
+                // Treat as image if imageUrl exists, regardless of stored type field
+                const proposalImage = vote.proposal.imageUrl ?? null;
+                if (proposalImage) {
+                    displayImageUrl = proposalImage;
+                } else if (vote.proposal.type === 'IMAGE') {
+                    displayImageUrl = null; // IMAGE type but no URL stored
                 } else {
-                    // TEXT proposal — no image content, leave displayImageUrl null
                     isTextProposal = true;
                 }
             }
@@ -566,11 +567,12 @@ export class VoteService {
                 createdAt: vote.createdAt,
                 isLive,
                 isCompleted,
-                displayImageUrl,
+                imageUrl: displayImageUrl,
+                caption: vote.submission?.caption ?? null,
                 isTextProposal,
                 proposalTitle,
-                rank: rank,
-                voteCount: voteCount,
+                rank,
+                voteCount,
                 event: {
                     id: vote.event?.id,
                     title: vote.event?.title,

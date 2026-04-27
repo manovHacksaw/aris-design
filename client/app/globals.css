@@ -1,36 +1,36 @@
 @import "tailwindcss";
 
 :root {
-  /* Light Theme */
-  --color-background: #F4F6FA;
-  --color-foreground: #1A1A1A;
+  /* ─── Premium Light Mode ─────────────────────────── */
+  --color-background: #F7F9FC;
+  --color-foreground: #0E1116;
 
-  /* Primary: Neon Lime (softened for light) */
-  --color-primary: #7ECB2A;
-  --color-primary-foreground: #FFFFFF;
-  --color-primary-dark: #6AB522;
-  --color-primary-light: #A8E65C;
+  /* Primary: Toned lime for light backgrounds */
+  --color-primary: #84E11C;
+  --color-primary-foreground: #0A0A0A;
+  --color-primary-dark: #6BC915;
+  --color-primary-light: #A6F25A;
 
-  /* Secondary: Soft Lavender/Purple */
-  --color-secondary: #EEEEFF;
-  --color-secondary-foreground: #1A1A1A;
+  /* Secondary: Soft indigo/purple */
+  --color-secondary: #6F6FFF;
+  --color-secondary-foreground: #FFFFFF;
 
   /* Accent: Vibrant Orange */
-  --color-accent: #E85D00;
+  --color-accent: #FF6A00;
   --color-accent-foreground: #FFFFFF;
 
-  /* UI Surfaces */
+  /* UI Surfaces — pure white cards on soft gray page */
   --color-card: #FFFFFF;
-  --color-card-border: rgba(0, 0, 0, 0.08);
-  --color-input: #FFFFFF;
-  --color-folder: #EEF0F4;
+  --color-card-border: rgba(0, 0, 0, 0.06);
+  --color-input: #F1F3F5;
+  --color-folder: #F1F3F5;
 
   /* Additional Vibrant Colors */
-  --color-vibrant-yellow: #E5A800;
-  --color-vibrant-pink: #E0459E;
-  --color-vibrant-blue: #3A9BE0;
+  --color-vibrant-yellow: #FFB800;
+  --color-vibrant-pink: #FF4FA3;
+  --color-vibrant-blue: #4FA3FF;
 
-  /* Radius System (Heavily rounded as per image) */
+  /* Radius System */
   --radius-sm: 12px;
   --radius-md: 18px;
   --radius-lg: 28px;
@@ -38,17 +38,17 @@
   --radius-full: 9999px;
 
   /* Theme-adaptive surfaces */
-  --color-surface: #FFFFFF;
-  --color-surface-hover: #F4F5F7;
-  --color-surface-border: rgba(0, 0, 0, 0.08);
+  --color-surface: rgba(0, 0, 0, 0.02);
+  --color-surface-hover: rgba(0, 0, 0, 0.05);
+  --color-surface-border: rgba(0, 0, 0, 0.06);
   --color-surface-border-strong: rgba(0, 0, 0, 0.12);
 
-  /* Shadows (soft and elevated for light mode) */
-  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.08);
-  --shadow-spotify: 0 12px 48px rgba(0, 0, 0, 0.1);
+  /* Elevation shadows — soft, breathable */
+  --shadow-soft: 0 2px 6px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 8px 20px rgba(0, 0, 0, 0.06);
+  --shadow-spotify: 0 20px 60px rgba(0, 0, 0, 0.08);
 
-  --border-thick: 1.5px solid rgba(0, 0, 0, 0.1);
+  --border-thick: 1.5px solid #E5E7EB;
 }
 
 .dark {
@@ -125,6 +125,11 @@
   --color-input: var(--color-input);
   --color-folder: var(--color-folder);
 
+  /* Shadow tokens */
+  --shadow-soft: var(--shadow-soft);
+  --shadow-card: var(--shadow-card);
+  --shadow-spotify: var(--shadow-spotify);
+
   --font-sans: var(--font-outfit), var(--font-inter), sans-serif;
   --font-display: var(--font-bebas), sans-serif;
   --font-mono: var(--font-jetbrains-mono), monospace;
@@ -173,9 +178,17 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-.bg-card {
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+/* Light mode — subtle page gradient */
+:root:not(.dark) body {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F7F9FC 100%);
+  min-height: 100vh;
+}
+
+/* Light mode glass navbar/sidebar helper */
+:root:not(.dark) .glass-nav {
+  background: rgba(255, 255, 255, 0.80) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 /* Custom Scrollbar — Light */
@@ -185,16 +198,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #ECEEF2;
+  background: #EAEAEA;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #C5C9D3;
+  background: #C1C1C1;
   border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9CA3AF;
+  background: #9E9E9E;
 }
 
 /* Custom Scrollbar — Dark */

@@ -49,87 +49,45 @@ export default function VoteSubmissionCard({
         return (
             <motion.div
                 whileTap={!disabled ? { scale: 0.99 } : undefined}
+                onClick={(e) => { e.stopPropagation(); if (!disabled) onVote(); }}
                 className={cn(
-                    "flex items-center gap-6 px-5 py-4 rounded-[24px] transition-all duration-200 border-2",
+                    "relative w-full md:w-4/5 mx-auto overflow-hidden rounded-[20px] cursor-pointer border-2 transition-all duration-200",
                     isVoted
-                        ? "border-lime-400 bg-lime-400/5 shadow-[0_0_0_4px_rgba(163,230,53,0.15)]"
+                        ? "border-lime-400 shadow-[0_0_0_4px_rgba(163,230,53,0.15)]"
                         : isPending
-                            ? "border-lime-400/50 bg-white/[0.04]"
-                            : "border-transparent bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/10",
+                            ? "border-lime-400/50"
+                            : "border-transparent hover:border-white/10",
                 )}
             >
-                {/* Thumbnail */}
-                <div className="relative w-20 h-20 rounded-2xl overflow-hidden shrink-0 bg-white/[0.05] border border-white/5">
-                    {hasImage ? (
-                        isCloudinary ? (
-                            <Image src={submission.media!} alt="" fill sizes="80px" className="object-cover" onError={() => setImgError(true)} />
-                        ) : (
-                            <img src={submission.media} alt="" className="w-full h-full object-cover" onError={() => setImgError(true)} />
-                        )
-                    ) : submission.mediaType === "text" ? (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-card to-secondary p-2">
-                            <span className="text-[10px] font-bold text-foreground/40 text-center leading-tight line-clamp-3">{submission.textContent}</span>
-                        </div>
+                {hasImage ? (
+                    isCloudinary ? (
+                        <Image
+                            src={submission.media!}
+                            alt=""
+                            width={800}
+                            height={600}
+                            sizes="100vw"
+                            className="w-full h-auto block"
+                            onError={() => setImgError(true)}
+                        />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                            <ImageIcon className="w-6 h-6 text-foreground/20" />
-                        </div>
-                    )}
-                    {isVoted && <div className="absolute inset-0 bg-lime-400/15 pointer-events-none" />}
-                </div>
-                
-                {/* Caption */}
-                <div className="flex-1 min-w-0">
-                    {optionIndex !== undefined ? (
-                        <p className="text-xl font-black text-foreground uppercase tracking-tight truncate">
-                            {submission.textContent?.split('\n')[0] || `Option ${optionIndex + 1}`}
-                        </p>
-                    ) : (
-                        <p className="text-lg font-black text-foreground uppercase tracking-tight">
-                            @{submission.creator.handle}
-                        </p>
-                    )}
-                    {submission.mediaType === "text" && submission.textContent && (
-                        <p className="text-sm text-foreground/50 leading-relaxed mt-1 line-clamp-2">{submission.textContent}</p>
-                    )}
-                    {showVoteCount && (
-                        <div className="flex items-center gap-1.5 mt-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-pulse" />
-                            <p className="text-[11px] font-black text-lime-400/70 uppercase tracking-widest">{submission.voteCount?.toLocaleString() ?? 0} votes</p>
-                        </div>
-                    )}
-                </div>
-
-                {/* Vote button */}
-                <div className="shrink-0 ml-4">
-                    {submission.isOwn ? (
-                        <div className="w-12 h-12 rounded-full bg-black/40 border border-white/10 flex items-center justify-center" title="Your submission">
-                            <ThumbsUp className="w-5 h-5 text-white/20" />
-                        </div>
-                    ) : isVoted ? (
-                        <div className="w-12 h-12 rounded-full bg-lime-400 shadow-[0_0_20px_rgba(163,230,53,0.5)] flex items-center justify-center border-4 border-black/20">
-                            <ThumbsUp className="w-5 h-5 text-black fill-black" />
-                        </div>
-                    ) : isPending ? (
-                        <div className="w-12 h-12 rounded-full bg-lime-400/70 flex items-center justify-center animate-pulse">
-                            <Circle className="w-3 h-3 fill-black text-black" />
-                        </div>
-                    ) : (
-                        <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); onVote(); }}
-                            disabled={disabled}
-                            className={cn(
-                                "w-12 h-12 rounded-full flex items-center justify-center transition-all",
-                                disabled
-                                    ? "bg-black/30 border border-white/10 cursor-not-allowed opacity-50"
-                                    : "bg-white/5 border border-white/15 hover:bg-lime-400 hover:border-lime-400 hover:text-black hover:scale-105 active:scale-95"
-                            )}
-                        >
-                            <ThumbsUp className={cn("w-5 h-5", disabled ? "text-white/20" : "text-white")} />
-                        </button>
-                    )}
-                </div>
+                        <img
+                            src={submission.media}
+                            alt=""
+                            className="w-full h-auto block"
+                            onError={() => setImgError(true)}
+                        />
+                    )
+                ) : submission.mediaType === "text" ? (
+                    <div className="w-full min-h-[200px] flex items-center justify-center bg-gradient-to-br from-card to-secondary p-8">
+                        <p className="text-base font-bold text-foreground text-center leading-relaxed">{submission.textContent}</p>
+                    </div>
+                ) : (
+                    <div className="w-full min-h-[200px] flex items-center justify-center bg-secondary/50">
+                        <ImageIcon className="w-8 h-8 text-foreground/20" />
+                    </div>
+                )}
+                {isVoted && <div className="absolute inset-0 bg-lime-400/10 pointer-events-none" />}
             </motion.div>
         );
     }
@@ -154,7 +112,7 @@ export default function VoteSubmissionCard({
                 tabIndex={onOpenImage ? -1 : undefined}
                 onClick={onOpenImage}
                 className={cn(
-                    "relative bg-black overflow-hidden aspect-[3/4]",
+                    "relative bg-black overflow-hidden aspect-[3/4] flex items-center justify-center",
                     onOpenImage ? "cursor-zoom-in" : undefined
                 )}
             >
@@ -179,14 +137,14 @@ export default function VoteSubmissionCard({
                         alt="Submission"
                         fill
                         sizes="(max-width: 768px) 50vw, 33vw"
-                        className="object-cover"
+                        className="object-contain"
                         onError={() => setImgError(true)}
                     />
                 ) : (
                     <img
                         src={submission.media}
                         alt="Submission"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                         onError={() => setImgError(true)}
                     />
                 )}

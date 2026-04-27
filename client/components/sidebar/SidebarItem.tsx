@@ -45,8 +45,8 @@ export default function SidebarItem({
                 isCollapsed ? "justify-center" : "pl-3",
                 "transition-all duration-200 ease-out",
                 isActive
-                    ? "bg-[#6366F1] text-white border border-white/10 dark:shadow-[1px_1px_0px_0px_#FFFFFF] shadow-[1px_1px_0px_0px_#6366F1]"
-                    : "text-foreground/50 hover:bg-foreground/5 hover:text-foreground",
+                    ? "bg-secondary text-secondary-foreground border border-secondary/20 shadow-[0_2px_8px_rgba(111,111,255,0.25)] dark:shadow-[1px_1px_0px_0px_rgba(255,255,255,0.15)]"
+                    : "text-foreground/50 hover:bg-surface-hover hover:text-foreground",
                 "rounded-xl"
             )}
         >
@@ -69,13 +69,13 @@ export default function SidebarItem({
                         )}
                     />
                 ) : isActive && ActiveIcon ? (
-                    <ActiveIcon size={18} className="transition-colors duration-150 text-foreground" />
+                    <ActiveIcon size={18} className="transition-colors duration-150 text-secondary-foreground" />
                 ) : Icon ? (
                     <Icon
                         size={18}
                         className={cn(
                             "transition-colors duration-150",
-                            isActive ? "text-foreground" : "text-foreground/40 group-hover:text-foreground"
+                            isActive ? "text-secondary-foreground" : "text-foreground/40 group-hover:text-foreground"
                         )}
                     />
                 ) : null}
@@ -94,7 +94,8 @@ export default function SidebarItem({
                 className={cn(
                     "whitespace-nowrap overflow-hidden transition-all duration-150 ease-out text-base",
                     isActive ? "font-black text-foreground" : "font-semibold text-foreground",
-                    showExpanded ? "opacity-100 w-auto ml-3" : "opacity-0 w-0 ml-0"
+                    showExpanded ? "opacity-100 w-auto ml-3" : "opacity-0 w-0 ml-0",
+                    isActive ? "text-secondary-foreground" : "text-foreground"
                 )}
             >
                 {label}

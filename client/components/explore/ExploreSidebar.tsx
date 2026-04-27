@@ -55,15 +55,15 @@ export default function ExploreSidebar({
 function BrandSkeleton() {
     return (
         <div className="space-y-4">
-            <div className="h-3 w-32 bg-white/[0.04] rounded animate-pulse" />
+            <div className="h-3 w-32 bg-foreground/6 rounded animate-pulse" />
             {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 animate-pulse">
-                    <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex-shrink-0" />
+                    <div className="w-8 h-8 rounded-lg bg-foreground/6 flex-shrink-0" />
                     <div className="flex-1 space-y-1.5">
-                        <div className="h-2.5 bg-white/[0.04] rounded w-3/4" />
-                        <div className="h-2 bg-white/[0.04] rounded w-1/2" />
+                        <div className="h-2.5 bg-foreground/6 rounded w-3/4" />
+                        <div className="h-2 bg-foreground/6 rounded w-1/2" />
                     </div>
-                    <div className="h-6 w-14 bg-white/[0.04] rounded" />
+                    <div className="h-6 w-14 bg-foreground/6 rounded" />
                 </div>
             ))}
         </div>
@@ -136,16 +136,16 @@ function SuggestedItemCard({ item, type }: { item: SuggestedItem; type: "brand" 
 
     return (
         <div
-            className="flex items-center justify-between group py-2 px-2 -mx-2 rounded-xl hover:bg-white/[0.02] transition-colors cursor-pointer"
+            className="flex items-center justify-between group py-2 px-2 -mx-2 rounded-xl hover:bg-surface-hover transition-colors cursor-pointer"
             onClick={handleNavigate}
         >
             <div className="flex items-center gap-3 min-w-0">
                 <div className="relative shrink-0">
-                    <div className={cn("w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center border border-white/5", bgClass)}>
+                    <div className={cn("w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center border border-surface-border", bgClass)}>
                         {item.avatar ? (
                             <img src={item.avatar} className="w-full h-full object-cover" alt={item.name} />
                         ) : (
-                            <span className={cn("text-xs font-black", type === "brand" ? "text-white" : "text-foreground/30")}>
+                            <span className={cn("text-xs font-black", type === "brand" ? "text-white dark:text-white" : "text-foreground/30")}>
                                 {item.name[0]}
                             </span>
                         )}

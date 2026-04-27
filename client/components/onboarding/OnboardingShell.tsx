@@ -25,7 +25,7 @@ export default function OnboardingShell({ step, total, meta, children }: Onboard
     <div className="min-h-screen bg-background text-foreground font-sans flex">
 
       {/* ── Left Panel ── */}
-      <div className="hidden lg:flex w-5/12 relative bg-[#050505] items-center justify-center overflow-hidden border-r border-white/5">
+      <div className="hidden lg:flex w-5/12 relative bg-foreground dark:bg-[#050505] items-center justify-center overflow-hidden border-r border-surface-border">
         {bg && (
           <div
             className="absolute inset-0 bg-cover bg-center opacity-20 mix-blend-overlay"

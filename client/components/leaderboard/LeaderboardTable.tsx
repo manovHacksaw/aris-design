@@ -267,8 +267,8 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                             </span>
                         )}
                     </div>
-                    <span className="text-[10px] sm:text-[12px] font-black text-violet-300 text-right tabular-nums">{(item.votesReceived || 0).toLocaleString()}</span>
-                    <span className="text-[10px] sm:text-[12px] font-black text-sky-300 text-right tabular-nums">{(item.votesCast || 0).toLocaleString()}</span>
+                    <span className="text-[10px] sm:text-[12px] font-black text-violet-300 text-center sm:text-right tabular-nums">{(item.votesReceived || 0).toLocaleString()}</span>
+                    <span className="text-[10px] sm:text-[12px] font-black text-sky-300 text-center sm:text-right tabular-nums">{(item.votesCast || 0).toLocaleString()}</span>
                     <span className="hidden sm:block text-[12px] font-black text-primary text-right tabular-nums">{(item.xp || 0).toLocaleString()}</span>
                 </Link>
             );
@@ -279,8 +279,8 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                 <div className="grid grid-cols-[18px_minmax(0,1fr)_40px_40px] sm:grid-cols-[24px_minmax(0,1fr)_88px_88px_72px] gap-1 sm:gap-4 px-1.5 sm:px-2 pb-2 sm:pb-2.5 border-b border-border">
                     <ColHead>#</ColHead>
                     <ColHead>User</ColHead>
-                    <ColHead className="text-right">Rcvd</ColHead>
-                    <ColHead className="text-right">Cast</ColHead>
+                    <ColHead className="text-center sm:text-right">Rcvd</ColHead>
+                    <ColHead className="text-center sm:text-right">Cast</ColHead>
                     <ColHead className="text-right hidden sm:block">XP</ColHead>
                 </div>
 
@@ -315,8 +315,8 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                 <div className="grid grid-cols-[20px_1fr_56px_64px] sm:grid-cols-[24px_1fr_80px_88px] gap-1.5 sm:gap-5 px-1.5 sm:px-2 pb-2 sm:pb-2.5 border-b border-border">
                     <ColHead>#</ColHead>
                     <ColHead>Brand</ColHead>
-                    <ColHead className="text-right">Events</ColHead>
-                    <ColHead className="text-right">People</ColHead>
+                    <ColHead className="text-center sm:text-right">Events</ColHead>
+                    <ColHead className="text-center sm:text-right">People</ColHead>
                 </div>
                 <div className="divide-y divide-border">
                     {brandRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((item, i) => {
@@ -346,8 +346,8 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                                         ) : null}
                                     </div>
                                 </div>
-                                <span className="text-[10px] sm:text-[12px] font-black text-foreground/55 text-right tabular-nums">{(item.artMinted || 0).toLocaleString()}</span>
-                                <span className="text-[10px] sm:text-[12px] text-foreground/40 text-right tabular-nums">{(item.participants || 0).toLocaleString()}</span>
+                                <span className="text-[10px] sm:text-[12px] font-black text-foreground/55 text-center sm:text-right tabular-nums">{(item.artMinted || 0).toLocaleString()}</span>
+                                <span className="text-[10px] sm:text-[12px] text-foreground/40 text-center sm:text-right tabular-nums">{(item.participants || 0).toLocaleString()}</span>
                             </Link>
                         );
                     })}
@@ -371,9 +371,9 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
             <div className="grid grid-cols-[20px_1fr_52px_72px] sm:grid-cols-[24px_1fr_80px_80px_100px] gap-1.5 sm:gap-5 px-1.5 sm:px-2 pb-2 sm:pb-2.5 border-b border-border">
                 <ColHead>#</ColHead>
                 <ColHead>Event</ColHead>
-                <ColHead className="text-right">Prize</ColHead>
-                <ColHead className="text-right hidden sm:block">People</ColHead>
-                <ColHead className="text-right">Status</ColHead>
+                <ColHead className="text-center sm:text-right">Prize</ColHead>
+                <ColHead className="text-center sm:text-right hidden sm:block">People</ColHead>
+                <ColHead className="text-center sm:text-right">Status</ColHead>
             </div>
             <div className="divide-y divide-border">
                 {eventRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((item, i) => {
@@ -402,15 +402,15 @@ export default function LeaderboardTable({ activeTab, domain = "ALL", timeline =
                                     )}
                                 </div>
                             </div>
-                            <span className="text-[10px] sm:text-[12px] font-black text-lime-500 text-right tabular-nums">
+                            <span className="text-[10px] sm:text-[12px] font-black text-lime-500 text-center sm:text-right tabular-nums">
                                 {item.prizePool || item.leaderboardPool
                                     ? `$${(item.prizePool ?? item.leaderboardPool ?? 0).toLocaleString()}`
                                     : "—"}
                             </span>
-                            <span className="text-[10px] sm:text-[12px] text-foreground/40 text-right tabular-nums hidden sm:block">
+                            <span className="text-[10px] sm:text-[12px] text-foreground/40 text-center sm:text-right tabular-nums hidden sm:block">
                                 {(item.participants || item._count?.submissions || 0).toLocaleString()}
                             </span>
-                            <div className="flex items-center justify-end gap-1 sm:gap-1.5">
+                            <div className="flex items-center justify-center sm:justify-end gap-1 sm:gap-1.5">
                                 <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", sc.dot)} />
                                 <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-foreground/40">{sc.label}</span>
                             </div>

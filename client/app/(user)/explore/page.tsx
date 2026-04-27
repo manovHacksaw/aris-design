@@ -435,12 +435,12 @@ export default function Explore() {
 
                         {/* Banner */}
                         {loadingEvents ? (
-                            <div className="w-full px-4 md:px-0">
+                            <div className="w-full">
                                 <div className="w-full aspect-[2.8/1] rounded-2xl bg-white/3 border border-white/5 animate-pulse" />
                             </div>
                         ) : (
                             eventsData?.trending && eventsData.trending.length > 0 && (
-                                <div className="w-full px-4 md:px-0">
+                                <div className="w-full">
                                     <TopEventsHero events={eventsData.trending.slice(0, 10)} />
                                 </div>
                             )
@@ -448,7 +448,7 @@ export default function Explore() {
                     </>
 
                     {/* ── Filter Bar ──────────────────────────────────── */}
-                    <div className="w-full px-4 md:px-0 sticky top-0 z-40 bg-background/95 backdrop-blur-md py-2 -my-2">
+                    <div className="w-full sticky top-0 z-40 bg-background/95 backdrop-blur-md py-2 -my-2">
                         <div className="flex flex-col gap-2 w-full">
 
                             {/* Search Input */}
