@@ -83,7 +83,8 @@
       "Bash(echo \"EXIT: $?\")",
       "Bash(git -C /c/Users/manov/Desktop/code/aris status)",
       "Bash(git -C /c/Users/manov/Desktop/code/aris diff --stat)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(npm run *)"
     ]
   }
 }
