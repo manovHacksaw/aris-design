@@ -16,6 +16,16 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_PRIVY_APP_ID=${NEXT_PUBLIC_PRIVY_APP_ID}
+        - NEXT_PUBLIC_PIMLICO_API_KEY=${NEXT_PUBLIC_PIMLICO_API_KEY}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+        - NEXT_PUBLIC_REWARDS_VAULT_ADDRESS=${NEXT_PUBLIC_REWARDS_VAULT_ADDRESS}
+        - NEXT_PUBLIC_TEST_USDC_ADDRESS=${NEXT_PUBLIC_TEST_USDC_ADDRESS}
+        - NEXT_PUBLIC_CHAIN_ID=${NEXT_PUBLIC_CHAIN_ID}
+        - NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}
+        - NEXT_PUBLIC_CLOUDINARY_API_KEY=${NEXT_PUBLIC_CLOUDINARY_API_KEY}
+        - NEXT_PUBLIC_GOOGLE_CLOUD_PROJECT=${NEXT_PUBLIC_GOOGLE_CLOUD_PROJECT}
     ports:
       - "3000:3000"
     env_file:
@@ -23,7 +33,6 @@ services:
     environment:
       - PORT=3000
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
     depends_on:
       - server
     restart: always
