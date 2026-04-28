@@ -108,6 +108,7 @@ export class EventQueryService {
    * Applies visibility rules for submissions based on event status and user role
    */
   static async getEventById(id: string, userId?: string): Promise<any | null> {
+    // Round-trip 1: fetch the event itself.
     const event = await prisma.event.findUnique({
       where: { id },
       include: {
@@ -140,8 +141,15 @@ export class EventQueryService {
       },
     });
 
-    if (event && event.eventAnalytics && event._count) {
-      // Ensure _count reflects eventAnalytics if it's higher (sometimes Prisma count can be out of sync with manual increments)
+    // Early-exit checks before firing any more queries.
+    if (!event || (event as any).isDeleted) return null;
+
+    if (event.blockchainStatus !== 'ACTIVE') {
+      const isBrandOwner = userId && event.brand.ownerId === userId;
+      if (!isBrandOwner) return null;
+    }
+
+    if (event.eventAnalytics && event._count) {
       if (event.eventAnalytics.totalVotes > event._count.votes) {
         (event as any)._count.votes = event.eventAnalytics.totalVotes;
       }
@@ -150,112 +158,56 @@ export class EventQueryService {
       }
     }
 
-    // Fetch a sample of participant avatars (Creators and Voters)
-    if (event) {
-      const [recentSubmissions, recentVotes] = await Promise.all([
-        prisma.submission.findMany({
-          where: { eventId: id, status: 'active' },
-          select: { user: { select: { id: true, avatarUrl: true, username: true } } },
-          take: 5,
-          orderBy: { createdAt: 'desc' },
-        }),
-        prisma.vote.findMany({
-          where: { eventId: id },
-          select: { user: { select: { id: true, avatarUrl: true, username: true } } },
-          take: 5,
-          orderBy: { createdAt: 'desc' },
-          distinct: ['userId'],
-        }),
-      ]);
+    // Determine which submissions query to run (depends on event status + userId).
+    const isBrandOwner = userId && event.brand.ownerId === userId;
+    const needsAllSubmissions = [EventStatus.VOTING, EventStatus.COMPLETED].includes(event.status as any);
+    const needsOwnSubmission = event.status === EventStatus.POSTING && !isBrandOwner && !!userId;
 
-      const participants = new Map();
-      [...recentSubmissions, ...recentVotes].forEach((p: any) => {
-        if (p.user && !participants.has(p.user.id)) {
-          participants.set(p.user.id, {
-            id: p.user.id,
-            avatarUrl: p.user.avatarUrl,
-            username: p.user.username,
-          });
-        }
-      });
-      (event as any).participantAvatars = Array.from(participants.values()).slice(0, 5);
-    }
-
-    // Exclude soft-deleted events
-    if (!event || (event as any).isDeleted) {
-      return null;
-    }
-
-    // CRITICAL: Hide events not yet confirmed on blockchain (except for brand owners)
-    if (event.blockchainStatus !== 'ACTIVE') {
-      const isBrandOwner = userId && event.brand.ownerId === userId;
-      if (!isBrandOwner) {
-        return null;
-      }
-    }
-
-    // Apply submission visibility rules
-    let submissions: any[] = [];
-
-    if (event.status === EventStatus.POSTING) {
-      // POSTING phase: Special visibility rules
-      const isBrandOwner = userId && event.brand.ownerId === userId;
-
-      if (!isBrandOwner && userId) {
-        // Regular users can only see their own submission during POSTING
-        submissions = await prisma.submission.findMany({
-          where: {
-            eventId: id,
-            userId,
-            status: 'active',
-          },
-          include: {
-            user: {
-              select: {
-                id: true,
-                username: true,
-                displayName: true,
-                avatarUrl: true,
-              },
+    // Round-trip 2: run ALL remaining queries in parallel — one DB round-trip.
+    const [
+      recentSubmissions,
+      recentVotes,
+      allSubmissions,
+      uniqueVoters,
+      uniquePosters,
+      userVotes,
+      userSubmission,
+    ] = await Promise.all([
+      // Participant avatars (always fetched)
+      prisma.submission.findMany({
+        where: { eventId: id, status: 'active' },
+        select: { user: { select: { id: true, avatarUrl: true, username: true } } },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.vote.findMany({
+        where: { eventId: id },
+        select: { user: { select: { id: true, avatarUrl: true, username: true } } },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        distinct: ['userId'],
+      }),
+      // Submissions list (conditional on status)
+      needsAllSubmissions
+        ? prisma.submission.findMany({
+            where: { eventId: id, status: 'active' },
+            include: {
+              user: { select: { id: true, username: true, displayName: true, avatarUrl: true } },
+              _count: { select: { votes: true } },
             },
-            _count: {
-              select: { votes: true },
+            orderBy: event.status === EventStatus.COMPLETED ? { finalRank: 'asc' } : { createdAt: 'desc' },
+          })
+        : needsOwnSubmission
+        ? prisma.submission.findMany({
+            where: { eventId: id, userId, status: 'active' },
+            include: {
+              user: { select: { id: true, username: true, displayName: true, avatarUrl: true } },
+              _count: { select: { votes: true } },
             },
-          },
-          orderBy: { createdAt: 'desc' },
-        });
-      }
-      // Brand owners see no submissions during POSTING (submissions remains [])
-    } else if ([EventStatus.VOTING, EventStatus.COMPLETED].includes(event.status as any)) {
-      // VOTING and COMPLETED: All submissions visible to everyone
-      submissions = await prisma.submission.findMany({
-        where: {
-          eventId: id,
-          status: 'active',
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              username: true,
-              displayName: true,
-              avatarUrl: true,
-            },
-          },
-          _count: {
-            select: { votes: true },
-          },
-        },
-        orderBy: event.status === EventStatus.COMPLETED
-          ? { finalRank: 'asc' }
-          : { createdAt: 'desc' },
-      });
-    }
-    // For other states (DRAFT, SCHEDULED, CANCELLED), submissions remains []
-
-    // Calculate total joined (unique users who voted OR submitted)
-    // This is distinct from 'uniqueParticipants' in analytics which tracks views
-    const [uniqueVoters, uniquePosters] = await Promise.all([
+            orderBy: { createdAt: 'desc' },
+          })
+        : Promise.resolve([]),
+      // Unique participant counts (always fetched)
       prisma.vote.findMany({
         where: { eventId: id },
         select: { userId: true, user: { select: { id: true, avatarUrl: true, username: true, displayName: true } } },
@@ -264,40 +216,59 @@ export class EventQueryService {
       }),
       event.eventType === 'post_and_vote'
         ? prisma.submission.findMany({
-          where: { eventId: id, status: 'active' },
-          select: { userId: true, user: { select: { id: true, avatarUrl: true, username: true, displayName: true } } },
-          distinct: ['userId'],
-          take: 50,
-        })
-        : Promise.resolve([])
+            where: { eventId: id, status: 'active' },
+            select: { userId: true, user: { select: { id: true, avatarUrl: true, username: true, displayName: true } } },
+            distinct: ['userId'],
+            take: 50,
+          })
+        : Promise.resolve([]),
+      // User-specific data (only when authenticated)
+      userId
+        ? prisma.vote.findMany({ where: { eventId: id, userId } })
+        : Promise.resolve(null),
+      userId
+        ? prisma.submission.findFirst({ where: { eventId: id, userId } })
+        : Promise.resolve(null),
     ]);
 
-    const participantSet = new Set([
-      ...uniqueVoters.map(v => v.userId),
-      ...(uniquePosters as any[]).map(p => p.userId)
-    ]);
-    const totalParticipants = participantSet.size;
+    // Build participantAvatars from the avatar sample queries.
+    const avatarMap = new Map();
+    [...recentSubmissions, ...recentVotes].forEach((p: any) => {
+      if (p.user && !avatarMap.has(p.user.id)) {
+        avatarMap.set(p.user.id, { id: p.user.id, avatarUrl: p.user.avatarUrl, username: p.user.username });
+      }
+    });
+    (event as any).participantAvatars = Array.from(avatarMap.values()).slice(0, 5);
 
-    // Build avatar list: submitters first, then voters who haven't submitted
-    const submitterIds = new Set((uniquePosters as any[]).map(p => p.userId));
-    const avatarList: { id: string; avatarUrl: string | null; username: string; displayName: string | null }[] = [
-      ...(uniquePosters as any[]).map(p => ({ 
-        id: p.userId, 
+    let submissions: any[] = allSubmissions as any[];
+
+    // Build participantAvatars for the full list (voters + submitters).
+    const submitterIds = new Set((uniquePosters as any[]).map((p: any) => p.userId));
+    const avatarList = [
+      ...(uniquePosters as any[]).map((p: any) => ({
+        id: p.userId,
         avatarUrl: p.user?.avatarUrl ?? null,
         username: p.user?.username ?? 'user',
-        displayName: p.user?.displayName ?? null
+        displayName: p.user?.displayName ?? null,
       })),
-      ...uniqueVoters.filter(v => !submitterIds.has(v.userId)).map(v => ({ 
-        id: v.userId, 
-        avatarUrl: (v as any).user?.avatarUrl ?? null,
-        username: (v as any).user?.username ?? 'user',
-        displayName: (v as any).user?.displayName ?? null
-      })),
+      ...(uniqueVoters as any[])
+        .filter((v: any) => !submitterIds.has(v.userId))
+        .map((v: any) => ({
+          id: v.userId,
+          avatarUrl: v.user?.avatarUrl ?? null,
+          username: v.user?.username ?? 'user',
+          displayName: v.user?.displayName ?? null,
+        })),
     ];
     const participantAvatars = avatarList.slice(0, 50);
 
-    // Strip vote counts for non-completed events — users and brand owners
-    // cannot see individual or total vote counts until the event ends.
+    const participantSet = new Set([
+      ...(uniqueVoters as any[]).map((v: any) => v.userId),
+      ...(uniquePosters as any[]).map((p: any) => p.userId),
+    ]);
+    const totalParticipants = participantSet.size;
+
+    // Strip vote counts for non-completed events.
     if (event.status !== EventStatus.COMPLETED) {
       if ((event as any)._count) (event as any)._count.votes = 0;
       if ((event as any).eventAnalytics) (event as any).eventAnalytics.totalVotes = 0;
@@ -313,30 +284,14 @@ export class EventQueryService {
       }));
     }
 
-    // If userId is provided, check for user's votes and submissions
     if (userId) {
-      const [userVotes, userSubmission] = await Promise.all([
-        prisma.vote.findMany({
-          where: {
-            eventId: id,
-            userId,
-          },
-        }),
-        prisma.submission.findFirst({
-          where: {
-            eventId: id,
-            userId,
-          },
-        }),
-      ]);
-
       return EventQueryService.addImageUrls({
         ...event,
         submissions,
-        userVotes,
-        hasVoted: userVotes.length > 0,
+        userVotes: userVotes ?? [],
+        hasVoted: (userVotes?.length ?? 0) > 0,
         hasSubmitted: !!userSubmission,
-        userSubmission: userSubmission || null,
+        userSubmission: userSubmission ?? null,
         totalParticipants,
         participantAvatars,
       });
@@ -430,8 +385,7 @@ export class EventQueryService {
       where.category = filters.category;
     }
 
-    // Execute query with transaction for consistency
-    const [events, total] = await prisma.$transaction([
+    const [events, total] = await Promise.all([
       prisma.event.findMany({
         where,
         include: {

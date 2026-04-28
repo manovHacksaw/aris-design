@@ -14,7 +14,8 @@ import {
     IoChevronForwardOutline,
     IoLogOutOutline,
     IoEyeOutline,
-    IoRibbonOutline
+    IoRibbonOutline,
+    IoGlobeOutline
 } from "react-icons/io5";
 import { useNotifications } from "@/context/NotificationContext";
 import { useRouter } from "next/navigation";
@@ -148,6 +149,19 @@ export default function BrandSidebar() {
                                 router.push("/");
                             }}
                         />
+
+                        {/* Public Website */}
+                        <a 
+                            href="http://www.aristhrottle.org/" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="block"
+                        >
+                            <SidebarButton
+                                label="Public Website"
+                                icon={IoGlobeOutline}
+                            />
+                        </a>
 
                         {/* Theme Toggle */}
                         <button

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { IoNotificationsOutline, IoEyeOutline, IoMenuOutline, IoCloseOutline, IoMegaphoneOutline, IoSettingsOutline, IoLogOutOutline, IoSunnyOutline, IoMoonOutline, IoHelpCircleOutline } from "react-icons/io5";
+import { IoNotificationsOutline, IoEyeOutline, IoMenuOutline, IoCloseOutline, IoMegaphoneOutline, IoSettingsOutline, IoLogOutOutline, IoSunnyOutline, IoMoonOutline, IoHelpCircleOutline, IoGlobeOutline } from "react-icons/io5";
 import { useNotifications } from "@/context/NotificationContext";
 import { useWallet } from "@/context/WalletContext";
 import { useTheme } from "next-themes";
@@ -14,6 +14,7 @@ const drawerNavItems = [
     { label: "Notifications", href: "/brand/notifications",  icon: IoNotificationsOutline },
     { label: "Settings",      href: "/brand/settings",       icon: IoSettingsOutline },
     { label: "Help",          href: "/brand/help",           icon: IoHelpCircleOutline },
+    { label: "Public Website", href: "http://www.aristhrottle.org/", icon: IoGlobeOutline, isExternal: true },
 ];
 
 export default function BrandMobileHeader() {
@@ -139,6 +140,8 @@ export default function BrandMobileHeader() {
                                 key={item.href}
                                 href={item.href}
                                 onClick={() => setOpen(false)}
+                                target={item.isExternal ? "_blank" : undefined}
+                                rel={item.isExternal ? "noopener noreferrer" : undefined}
                                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-secondary text-foreground/70 hover:text-foreground transition-colors"
                             >
                                 <Icon size={20} />

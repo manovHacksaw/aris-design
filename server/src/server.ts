@@ -6,6 +6,7 @@ import { checkDatabaseConnection, disconnectDatabase } from './utils/dbConnectio
 import { setupSocket, closeSocket } from './socket/index.js';
 import { EventLifecycleService } from './services/events/EventLifecycleService.js';
 import { RewardsDistributionService } from './services/rewards/RewardsDistributionService.js';
+import { privy, PRIVY_VERIFICATION_KEY } from './lib/privy.js';
 
 const PORT = process.env.PORT || 5000;
 
@@ -23,6 +24,17 @@ async function startServer(): Promise<void> {
     }
 
     logger.info('✅ Database connection established');
+
+    // Pre-warm Privy verification key so the first user request doesn't pay the fetch cost.
+    // This is a no-op when PRIVY_VERIFICATION_KEY env var is set (preferred).
+    if (!PRIVY_VERIFICATION_KEY) {
+        logger.warn('⚠️  PRIVY_VERIFICATION_KEY not set — fetching from Privy API at startup (set this env var to eliminate the fetch entirely)');
+        privy.getVerificationKey().catch((err) =>
+            logger.error({ err }, 'Failed to pre-warm Privy verification key')
+        );
+    } else {
+        logger.info('✅ Privy verification key loaded from env (no network call needed for JWT verification)');
+    }
 
     // Create Express app
     const app = createApp();

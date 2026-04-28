@@ -12,7 +12,8 @@ import {
     IoPersonAddOutline,
     IoLinkOutline,
     IoDocumentTextOutline,
-    IoLogOutOutline
+    IoLogOutOutline,
+    IoGlobeOutline
 } from "react-icons/io5";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/context/SidebarContext";
@@ -84,6 +85,7 @@ export default function SidebarMore() {
     ];
 
     const publicMenuItems = [
+        { label: "Public Website", icon: IoGlobeOutline, href: "http://www.aristhrottle.org/" },
         { label: "Report a problem", icon: IoWarningOutline, href: "/report" },
         { label: "Terms and Conditions", icon: IoDocumentTextOutline, href: "/terms" },
     ];

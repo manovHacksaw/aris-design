@@ -1,13 +1,7 @@
 import logger from '../lib/logger';
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../lib/prisma';
-import { PrivyClient } from '@privy-io/server-auth';
-
-// Initialize Privy Client
-const privy = new PrivyClient(
-  process.env.PRIVY_APP_ID || '',
-  process.env.PRIVY_APP_SECRET || ''
-);
+import { privy, PRIVY_VERIFICATION_KEY } from '../lib/privy';
 
 /**
  * Extended Express Request with authenticated user
@@ -69,10 +63,10 @@ export const authenticateJWT = async (
 
     const token = authHeader.split(' ')[1];
 
-    // Verify token with Privy
+    // Verify token with Privy (local crypto — no network call when PRIVY_VERIFICATION_KEY is set)
     let verifiedClaims;
     try {
-      verifiedClaims = await privy.verifyAuthToken(token);
+      verifiedClaims = await privy.verifyAuthToken(token, PRIVY_VERIFICATION_KEY);
     } catch (e) {
       res.status(401).json({
         error: 'Invalid or expired token',
@@ -155,7 +149,7 @@ export const authenticateOptional = async (
 
     let verifiedClaims;
     try {
-      verifiedClaims = await privy.verifyAuthToken(token);
+      verifiedClaims = await privy.verifyAuthToken(token, PRIVY_VERIFICATION_KEY);
     } catch (e) {
       next();
       return;

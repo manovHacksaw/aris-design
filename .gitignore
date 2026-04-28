@@ -53,3 +53,10 @@ client/service-account.json
 mintingscripts
 web3
 lightmode
+
+# ── DB migration (contains hardcoded credentials) ────
+server/db_migration/
+
+# ── Claude local settings ─────────────────────
+.claude/settings.local.json
+.claude/worktrees/

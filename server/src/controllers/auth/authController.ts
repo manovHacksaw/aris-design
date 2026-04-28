@@ -1,6 +1,6 @@
 import logger from '../../lib/logger.js';
 import { Request, Response } from 'express';
-import { PrivyClient } from '@privy-io/server-auth';
+import { privy, PRIVY_VERIFICATION_KEY } from '../../lib/privy.js';
 import { AuthService } from '../../services/auth/authService.js';
 import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
 
@@ -16,12 +16,7 @@ export const privyLogin = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    const privyClient = new PrivyClient(
-      process.env.PRIVY_APP_ID!,
-      process.env.PRIVY_APP_SECRET!
-    );
-
-    const verifiedClaims = await privyClient.verifyAuthToken(privyToken);
+    const verifiedClaims = await privy.verifyAuthToken(privyToken, PRIVY_VERIFICATION_KEY);
     const deviceInfo = req.headers['user-agent'];
     const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.socket.remoteAddress;
 

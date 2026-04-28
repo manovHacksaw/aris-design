@@ -11,6 +11,7 @@ export default function LandingHeader() {
         { label: "How it Works", href: "#how-it-works" },
         { label: "For Brands", href: "#brands" },
         { label: "About", href: "#about" },
+        { label: "Website", href: "http://www.aristhrottle.org/" },
     ];
 
     return (

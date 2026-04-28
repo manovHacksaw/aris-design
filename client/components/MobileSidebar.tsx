@@ -14,6 +14,7 @@ import {
     IoLogOutOutline,
     IoPersonAddOutline,
     IoCloseOutline,
+    IoGlobeOutline,
 } from "react-icons/io5";
 import { useSidebar } from "@/context/SidebarContext";
 import { usePrivy } from "@privy-io/react-auth";
@@ -32,6 +33,7 @@ const authItems = [
 ];
 
 const publicItems = [
+    { label: "Public Website", href: "http://www.aristhrottle.org/", icon: IoGlobeOutline },
     { label: "Report a Problem", href: "/report", icon: IoWarningOutline },
     { label: "Terms & Conditions", href: "/terms", icon: IoDocumentTextOutline },
 ];
