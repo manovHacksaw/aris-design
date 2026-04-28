@@ -194,21 +194,26 @@ export const setupSocket = (httpServer: HTTPServer): Server => {
                     'http://localhost:3001',
                     'https://aris-demo.vercel.app',
                     'https://arisweb-demo.vercel.app',
-                    'http://www.aristhrottle.org',
                     'https://www.aristhrottle.org',
                     'https://aristhrottle.org',
+                    'http://www.aristhrottle.org',
                     'http://aristhrottle.org',
-                    process.env.FRONTEND_URL,
-                ].filter(Boolean);
+                ];
 
-                if (!origin || allowedOrigins.includes(origin) || allowedOrigins.some(o => origin.startsWith(o!))) {
+                const isAllowed = !origin || 
+                    allowedOrigins.includes(origin) || 
+                    allowedOrigins.some(o => origin.startsWith(o!)) ||
+                    (origin.endsWith('.vercel.app') || origin.endsWith('aristhrottle.org'));
+
+                if (isAllowed) {
                     callback(null, true);
                 } else {
                     logger.warn(`Socket CORS blocked for origin: ${origin}`);
-                    callback(new Error('Not allowed by CORS'));
+                    callback(null, false);
                 }
             },
-            credentials: true
+            credentials: true,
+            methods: ['GET', 'POST']
         },
         // Additional Socket.io options
         pingTimeout: 60000,

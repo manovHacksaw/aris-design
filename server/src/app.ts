@@ -11,7 +11,10 @@ export const createApp = () => {
     const app = express();
 
     // Middleware
-    app.use(helmet());
+    app.use(helmet({
+        crossOriginResourcePolicy: false, // Allow cross-origin resources
+    }));
+
     app.use(cors({
         origin: (origin, callback) => {
             const allowedOrigins = [
@@ -19,22 +22,34 @@ export const createApp = () => {
                 'http://localhost:3001',
                 'https://aris-demo.vercel.app',
                 'https://arisweb-demo.vercel.app',
-                'http://www.aristhrottle.org',
                 'https://www.aristhrottle.org',
                 'https://aristhrottle.org',
+                'http://www.aristhrottle.org',
                 'http://aristhrottle.org',
-                process.env.FRONTEND_URL,
-            ].filter(Boolean);
+            ];
 
-            if (!origin || allowedOrigins.includes(origin) || allowedOrigins.some(o => origin.startsWith(o!))) {
+            // In production, also allow any subdomain of vercel.app or aristhrottle.org
+            const isAllowed = !origin || 
+                allowedOrigins.includes(origin) || 
+                allowedOrigins.some(o => origin.startsWith(o)) ||
+                (origin.endsWith('.vercel.app') || origin.endsWith('aristhrottle.org'));
+
+            if (isAllowed) {
                 callback(null, true);
             } else {
                 logger.warn(`CORS blocked for origin: ${origin}`);
-                callback(new Error('Not allowed by CORS'));
+                callback(null, false); // Don't throw error, just don't allow
             }
         },
-        credentials: true
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'x-test-user-id', 'Accept'],
+        preflightContinue: false,
+        optionsSuccessStatus: 204
     }));
+    
+    // Explicitly handle OPTIONS for all routes just in case
+    app.options('*', cors() as any);
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
 
