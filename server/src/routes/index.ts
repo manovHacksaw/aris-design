@@ -26,12 +26,24 @@ import feedRoutes from './feed/feedRoutes.js';
 const router = Router();
 
 // Health check route
-router.get('/health', (_req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    database: 'connected',
-  });
+router.get('/health', async (_req, res) => {
+  try {
+    const { prisma } = await import('../lib/prisma.js');
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      database: 'connected',
+    });
+  } catch (error: any) {
+    logger.error({ err: error }, 'Health check failed:');
+    res.status(503).json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      database: 'disconnected',
+      error: error.message,
+    });
+  }
 });
 
 // API info route

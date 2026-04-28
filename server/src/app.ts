@@ -13,18 +13,26 @@ export const createApp = () => {
     // Middleware
     app.use(helmet());
     app.use(cors({
-        origin: [
-            'http://localhost:3000',
-            // allow local dev running on port 3001 (requested)
-            'http://localhost:3001',
-            'https://aris-demo.vercel.app',
-            'https://arisweb-demo.vercel.app',
-            'http://www.aristhrottle.org',
-            'https://www.aristhrottle.org',
-            'https://aristhrottle.org',
-            'http://aristhrottle.org',
-            process.env.FRONTEND_URL || ''
-        ].filter(Boolean),
+        origin: (origin, callback) => {
+            const allowedOrigins = [
+                'http://localhost:3000',
+                'http://localhost:3001',
+                'https://aris-demo.vercel.app',
+                'https://arisweb-demo.vercel.app',
+                'http://www.aristhrottle.org',
+                'https://www.aristhrottle.org',
+                'https://aristhrottle.org',
+                'http://aristhrottle.org',
+                process.env.FRONTEND_URL,
+            ].filter(Boolean);
+
+            if (!origin || allowedOrigins.includes(origin) || allowedOrigins.some(o => origin.startsWith(o!))) {
+                callback(null, true);
+            } else {
+                logger.warn(`CORS blocked for origin: ${origin}`);
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
         credentials: true
     }));
     app.use(express.json());

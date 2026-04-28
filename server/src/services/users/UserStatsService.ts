@@ -172,8 +172,13 @@ export class UserStatsService {
             logger.info({ stats }, `[UserStatsService.getUserStats] Resulting Stats:`);
 
             return stats;
-        } catch (error) {
-            logger.error(error, '[UserStatsService.getUserStats] Critical error:');
+        } catch (error: any) {
+            logger.error({ 
+                err: error,
+                message: error.message,
+                stack: error.stack,
+                userId 
+            }, '[UserStatsService.getUserStats] Critical error:');
             throw error;
         }
     }

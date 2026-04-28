@@ -188,16 +188,26 @@ export const setupSocket = (httpServer: HTTPServer): Server => {
     // Initialize Socket.io with CORS configuration
     io = new Server(httpServer, {
         cors: {
-            origin: [
-                'http://localhost:3000',
-                'https://aris-demo.vercel.app',
-                'https://arisweb-demo.vercel.app',
-                'http://www.aristhrottle.org',
-                'https://www.aristhrottle.org',
-                'https://aristhrottle.org',
-                'http://aristhrottle.org',
-                process.env.FRONTEND_URL || ''
-            ].filter(Boolean),
+            origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+                const allowedOrigins = [
+                    'http://localhost:3000',
+                    'http://localhost:3001',
+                    'https://aris-demo.vercel.app',
+                    'https://arisweb-demo.vercel.app',
+                    'http://www.aristhrottle.org',
+                    'https://www.aristhrottle.org',
+                    'https://aristhrottle.org',
+                    'http://aristhrottle.org',
+                    process.env.FRONTEND_URL,
+                ].filter(Boolean);
+
+                if (!origin || allowedOrigins.includes(origin) || allowedOrigins.some(o => origin.startsWith(o!))) {
+                    callback(null, true);
+                } else {
+                    logger.warn(`Socket CORS blocked for origin: ${origin}`);
+                    callback(new Error('Not allowed by CORS'));
+                }
+            },
             credentials: true
         },
         // Additional Socket.io options
