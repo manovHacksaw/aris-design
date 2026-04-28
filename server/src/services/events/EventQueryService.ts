@@ -108,7 +108,11 @@ export class EventQueryService {
    * Applies visibility rules for submissions based on event status and user role
    */
   static async getEventById(id: string, userId?: string): Promise<any | null> {
-    // Round-trip 1: fetch the event itself.
+    const startTime = Date.now();
+    logger.info(`[getEventById] Starting fetch for event ${id}`);
+
+    // Round-trip 1: fetch the event itself + related entities + avatar samples
+    console.time(`[getEventById] Query 1: Event + Brand + Proposals + Avatars - ${id}`);
     const event = await prisma.event.findUnique({
       where: { id },
       include: {
@@ -138,10 +142,24 @@ export class EventQueryService {
             votes: true,
           },
         },
+        // NEW: Fetch avatar samples in the first round-trip to eliminate 2 queries from the next step
+        submissions: {
+          where: { status: 'active' },
+          select: { user: { select: { id: true, avatarUrl: true, username: true } } },
+          take: 5,
+          orderBy: { createdAt: 'desc' },
+        },
+        votes: {
+          take: 5,
+          orderBy: { createdAt: 'desc' },
+          distinct: ['userId'], // We want unique voters for the avatar cloud
+          select: { user: { select: { id: true, avatarUrl: true, username: true } } },
+        }
       },
     });
+    console.timeEnd(`[getEventById] Query 1: Event + Brand + Proposals + Avatars - ${id}`);
 
-    // Early-exit checks before firing any more queries.
+    // Early-exit checks
     if (!event || (event as any).isDeleted) return null;
 
     if (event.blockchainStatus !== 'ACTIVE') {
@@ -149,6 +167,7 @@ export class EventQueryService {
       if (!isBrandOwner) return null;
     }
 
+    // Logic to sync analytics counts
     if (event.eventAnalytics && event._count) {
       if (event.eventAnalytics.totalVotes > event._count.votes) {
         (event as any)._count.votes = event.eventAnalytics.totalVotes;
@@ -158,35 +177,20 @@ export class EventQueryService {
       }
     }
 
-    // Determine which submissions query to run (depends on event status + userId).
+    // Determine which submissions list we need
     const isBrandOwner = userId && event.brand.ownerId === userId;
     const needsAllSubmissions = [EventStatus.VOTING, EventStatus.COMPLETED].includes(event.status as any);
     const needsOwnSubmission = event.status === EventStatus.POSTING && !isBrandOwner && !!userId;
 
-    // Round-trip 2: run ALL remaining queries in parallel — one DB round-trip.
+    // Round-trip 2: run remaining queries in parallel
+    console.time(`[getEventById] Query Block 2: Parallel Submissions + UserData - ${id}`);
     const [
-      recentSubmissions,
-      recentVotes,
       allSubmissions,
       uniqueVoters,
       uniquePosters,
       userVotes,
       userSubmission,
     ] = await Promise.all([
-      // Participant avatars (always fetched)
-      prisma.submission.findMany({
-        where: { eventId: id, status: 'active' },
-        select: { user: { select: { id: true, avatarUrl: true, username: true } } },
-        take: 5,
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.vote.findMany({
-        where: { eventId: id },
-        select: { user: { select: { id: true, avatarUrl: true, username: true } } },
-        take: 5,
-        orderBy: { createdAt: 'desc' },
-        distinct: ['userId'],
-      }),
       // Submissions list (conditional on status)
       needsAllSubmissions
         ? prisma.submission.findMany({
@@ -207,7 +211,7 @@ export class EventQueryService {
             orderBy: { createdAt: 'desc' },
           })
         : Promise.resolve([]),
-      // Unique participant counts (always fetched)
+      // Unique participant counts - POTENTIALLY SLOW DUE TO DISTINCT
       prisma.vote.findMany({
         where: { eventId: id },
         select: { userId: true, user: { select: { id: true, avatarUrl: true, username: true, displayName: true } } },
@@ -222,16 +226,21 @@ export class EventQueryService {
             take: 50,
           })
         : Promise.resolve([]),
-      // User-specific data (only when authenticated)
+      // User-specific data
       userId
         ? prisma.vote.findMany({ where: { eventId: id, userId } })
-        : Promise.resolve(null),
+        : Promise.resolve([]),
       userId
         ? prisma.submission.findFirst({ where: { eventId: id, userId } })
         : Promise.resolve(null),
     ]);
+    console.timeEnd(`[getEventById] Query Block 2: Parallel Submissions + UserData - ${id}`);
 
-    // Build participantAvatars from the avatar sample queries.
+    // Extract recent data from the FIRST round-trip's includes
+    const recentSubmissions = event.submissions || [];
+    const recentVotes = event.votes || [];
+
+    // Build participantAvatars
     const avatarMap = new Map();
     [...recentSubmissions, ...recentVotes].forEach((p: any) => {
       if (p.user && !avatarMap.has(p.user.id)) {
@@ -242,7 +251,7 @@ export class EventQueryService {
 
     let submissions: any[] = allSubmissions as any[];
 
-    // Build participantAvatars for the full list (voters + submitters).
+    // Build full participant list (voters + submitters)
     const submitterIds = new Set((uniquePosters as any[]).map((p: any) => p.userId));
     const avatarList = [
       ...(uniquePosters as any[]).map((p: any) => ({
@@ -267,6 +276,9 @@ export class EventQueryService {
       ...(uniquePosters as any[]).map((p: any) => p.userId),
     ]);
     const totalParticipants = participantSet.size;
+
+    const totalTime = Date.now() - startTime;
+    logger.info(`[getEventById] Completed in ${totalTime}ms for event ${id}`);
 
     // Strip vote counts for non-completed events.
     if (event.status !== EventStatus.COMPLETED) {
