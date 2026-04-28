@@ -1,15 +1,10 @@
 import logger from '../lib/logger.js';
 import { Server as HTTPServer } from 'http';
 import { Server, Socket } from 'socket.io';
-import { PrivyClient } from '@privy-io/server-auth';
+import { privy, PRIVY_VERIFICATION_KEY } from '../lib/privy.js';
 import { prisma } from '../lib/prisma.js';
 import { PresenceService } from '../services/presenceService.js';
 import { AnalyticsTrackingService } from '../services/analytics/AnalyticsTrackingService.js';
-
-const privy = new PrivyClient(
-    process.env.PRIVY_APP_ID || '',
-    process.env.PRIVY_APP_SECRET || ''
-);
 
 /**
  * Extended Socket interface with user data
@@ -56,7 +51,7 @@ const authenticateSocket = async (socket: AuthenticatedSocket, next: (err?: Erro
         // Verify Privy access token (matches HTTP authenticateJWT middleware)
         let verifiedClaims;
         try {
-            verifiedClaims = await privy.verifyAuthToken(token);
+            verifiedClaims = await privy.verifyAuthToken(token, PRIVY_VERIFICATION_KEY);
         } catch {
             return next(new Error('Invalid or expired token'));
         }
@@ -197,6 +192,10 @@ export const setupSocket = (httpServer: HTTPServer): Server => {
                 'http://localhost:3000',
                 'https://aris-demo.vercel.app',
                 'https://arisweb-demo.vercel.app',
+                'http://www.aristhrottle.org',
+                'https://www.aristhrottle.org',
+                'https://aristhrottle.org',
+                'http://aristhrottle.org',
                 process.env.FRONTEND_URL || ''
             ].filter(Boolean),
             credentials: true
