@@ -1,4 +1,5 @@
 import { prisma } from '../../lib/prisma';
+import logger from '../../lib/logger';
 import { calculateEventScore } from './exploreService';
 import { enforceEventDemographics } from '../../utils/eventUtils';
 
