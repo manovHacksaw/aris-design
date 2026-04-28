@@ -1,0 +1,943 @@
+"use client";
+
+import { useState, useCallback, useEffect } from "react";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import SidebarLayout from "@/components/home/SidebarLayout";
+import {
+  Copy, Calendar, Edit3, Trophy, Zap, Flame, ImageIcon,
+  ThumbsUp, Crown, Lock, TrendingUp, Building2, Star,
+  Shield, MousePointerClick, X, Users, User2
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useUser } from "@/context/UserContext";
+import { followUser, unfollowUser, getUserSubmissions, getUserVotedContent } from "@/services/user.service";
+import { subscribeToBrand, unsubscribeFromBrand } from "@/services/subscription.service";
+import type { User, UserStats } from "@/types/user";
+
+// ─── Tiers ───────────────────────────────────────────────────────
+const TIERS = [
+  { min: 1, max: 2, name: "Rookie", color: "text-zinc-400", bg: "bg-zinc-500/10", border: "border-zinc-500/30" },
+  { min: 3, max: 5, name: "Hustler", color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/30" },
+  { min: 6, max: 9, name: "Creator", color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/30" },
+  { min: 10, max: 14, name: "Veteran", color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/30" },
+  { min: 15, max: 19, name: "Elite", color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/30" },
+  { min: 20, max: 999, name: "Legend", color: "text-lime-400", bg: "bg-lime-400/10", border: "border-lime-400/40" },
+] as const;
+
+function getTier(level: number) {
+  return TIERS.find(t => level >= t.min && level <= t.max) ?? TIERS[0];
+}
+
+function truncateAddress(addr: string) {
+  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+}
+
+function formatK(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+  return n.toString();
+}
+
+// ─── Milestones (same set as Dashboard) ──────────────────────────
+const MILESTONES = [
+  // Vote
+  { id: "v1", label: "First Vote", desc: "Cast your very first vote", icon: MousePointerClick, target: 1, type: "vote", xp: 50, color: "text-blue-400", bg: "bg-blue-400/10", border: "border-blue-400/20" },
+  { id: "v2", label: "Vote x10", desc: "Cast 10 votes total", icon: Flame, target: 10, type: "vote", xp: 150, color: "text-blue-400", bg: "bg-blue-400/10", border: "border-blue-400/20" },
+  { id: "v3", label: "Vote x50", desc: "50 votes — you're a real judge", icon: Shield, target: 50, type: "vote", xp: 300, color: "text-indigo-400", bg: "bg-indigo-400/10", border: "border-indigo-400/20" },
+  { id: "v4", label: "Vote x100", desc: "Legendary curator status", icon: Star, target: 100, type: "vote", xp: 600, color: "text-purple-400", bg: "bg-purple-400/10", border: "border-purple-400/20" },
+  // Post
+  { id: "p1", label: "First Drop", desc: "Submit your first creation", icon: ImageIcon, target: 1, type: "post", xp: 100, color: "text-lime-400", bg: "bg-lime-400/10", border: "border-lime-400/20" },
+  { id: "p2", label: "5 Drops", desc: "5 submissions and counting", icon: Zap, target: 5, type: "post", xp: 300, color: "text-lime-400", bg: "bg-lime-400/10", border: "border-lime-400/20" },
+  { id: "p3", label: "10 Drops", desc: "Double digits. Serious creator.", icon: Flame, target: 10, type: "post", xp: 600, color: "text-orange-400", bg: "bg-orange-400/10", border: "border-orange-400/20" },
+  { id: "p4", label: "Top Ranker", desc: "Finish #1 in any event", icon: Crown, target: 1, type: "rank", xp: 800, color: "text-yellow-400", bg: "bg-yellow-400/10", border: "border-yellow-400/20" },
+  // All
+  { id: "a1", label: "Event Hopper", desc: "Join 5 different events", icon: Trophy, target: 5, type: "all", xp: 200, color: "text-purple-400", bg: "bg-purple-400/10", border: "border-purple-400/20" },
+  { id: "a2", label: "Event Veteran", desc: "Join 20 events", icon: TrendingUp, target: 20, type: "all", xp: 500, color: "text-orange-400", bg: "bg-orange-400/10", border: "border-orange-400/20" },
+  { id: "a3", label: "Community Builder", desc: "Earn 10 followers", icon: Users, target: 10, type: "subs", xp: 250, color: "text-pink-400", bg: "bg-pink-400/10", border: "border-pink-400/20" },
+];
+
+type ContentFilter = "all" | "live" | "completed";
+
+// ─── Props ───────────────────────────────────────────────────────
+interface ProfileViewProps {
+  isOwnProfile?: boolean;
+  user: User | null;
+  stats: UserStats | null;
+  followers: User[];
+  following: User[];
+  isFollowing?: boolean;
+  isFollowLoading?: boolean;
+  onToggleFollow?: () => void;
+}
+
+export default function ProfileView({
+  isOwnProfile = false,
+  user,
+  stats,
+  followers,
+  following,
+  isFollowing = false,
+  isFollowLoading = false,
+  onToggleFollow,
+}: ProfileViewProps) {
+  const { user: currentUser } = useUser();
+
+  const [copied, setCopied] = useState(false);
+  const [contentFilter, setContentFilter] = useState<ContentFilter>("all");
+  const [activeTab, setActiveTab] = useState<"posted" | "voted">("posted");
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [votedContent, setVotedContent] = useState<any[]>([]);
+  const [subsLoading, setSubsLoading] = useState(true);
+  const [showAllAchievements, setShowAllAchievements] = useState(false);
+  const [showSocialModal, setShowSocialModal] = useState<{
+    show: boolean;
+    type: "followers" | "following";
+  }>({ show: false, type: "followers" });
+  const [modalFollowLoading, setModalFollowLoading] = useState<string | null>(null);
+  const [modalFollowing, setModalFollowing] = useState<Set<string>>(new Set());
+  const [isInitializingModal, setIsInitializingModal] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    setSubsLoading(true);
+    Promise.all([
+      getUserSubmissions(user.id),
+      getUserVotedContent(user.id),
+    ])
+      .then(([subs, voted]) => {
+        setSubmissions(subs);
+        setVotedContent(voted);
+      })
+      .catch((err) => {
+        console.error("Error fetching profile content:", err);
+        setSubmissions([]);
+        setVotedContent([]);
+      })
+      .finally(() => setSubsLoading(false));
+  }, [user?.id]);
+
+  const handleCopy = (val: string) => {
+    navigator.clipboard.writeText(val);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Initialize modalFollowing when modal opens
+  useEffect(() => {
+    const initModal = async () => {
+      if (!showSocialModal.show || !currentUser) return;
+      
+      setIsInitializingModal(true);
+      try {
+        if (isOwnProfile) {
+          // If it's my own profile, I already have the 'following' list
+          setModalFollowing(new Set(following.map(f => f.id)));
+        } else {
+          // If viewing someone else, I need MY following list to see who I follow
+          const { getFollowing } = await import("@/services/user.service");
+          const { getMySubscriptions } = await import("@/services/subscription.service");
+          
+          const [myFollowingUsers, myBrandSubs] = await Promise.all([
+            getFollowing(currentUser.id),
+            getMySubscriptions().catch(() => [])
+          ]);
+          
+          const combined = new Set([
+            ...myFollowingUsers.map(u => u.id),
+            ...myBrandSubs.map(s => s.brandId)
+          ]);
+          setModalFollowing(combined);
+        }
+      } catch (err) {
+        console.error("Error initializing modal follow state:", err);
+      } finally {
+        setIsInitializingModal(false);
+      }
+    };
+
+    initModal();
+  }, [showSocialModal.show, currentUser?.id, isOwnProfile, following]);
+
+  const handleModalFollow = useCallback(async (personId: string, isBrand?: boolean) => {
+    if (!currentUser || modalFollowLoading) return;
+    setModalFollowLoading(personId);
+    const alreadyFollowing = modalFollowing.has(personId);
+    
+    // Optimistic UI update
+    setModalFollowing(prev => {
+      const next = new Set(prev);
+      if (alreadyFollowing) next.delete(personId); else next.add(personId);
+      return next;
+    });
+
+    try {
+      if (isBrand) {
+        if (alreadyFollowing) await unsubscribeFromBrand(personId);
+        else await subscribeToBrand(personId);
+      } else {
+        if (alreadyFollowing) await unfollowUser(personId);
+        else await followUser(personId);
+      }
+    } catch (err) {
+      console.error("Error toggling follow/sub:", err);
+      // Rollback on error
+      setModalFollowing(prev => {
+        const next = new Set(prev);
+        if (alreadyFollowing) next.add(personId); else next.delete(personId);
+        return next;
+      });
+    } finally {
+      setModalFollowLoading(null);
+    }
+  }, [currentUser, modalFollowing, modalFollowLoading]);
+
+  // ── Computed values ──────────────────────────────────────────
+  const xp = user?.xp ?? 0;
+  const level = Math.floor(xp / 1000) + 1;
+  const tier = getTier(level);
+  const displayName = user?.displayName || user?.username || "Anonymous";
+  const username = user?.username || "user";
+  const walletAddr = user?.walletAddress || "";
+  const joinDate = user?.createdAt
+    ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+    : null;
+
+  const ranked = submissions.filter(s => s.finalRank != null);
+  const winRate = ranked.length > 0
+    ? Math.round((ranked.filter(s => s.finalRank <= 3).length / ranked.length) * 100)
+    : 0;
+
+  const mostVoted = submissions.length > 0
+    ? submissions.reduce((best, s) => (s._count?.votes || 0) > (best._count?.votes || 0) ? s : best, submissions[0])
+    : null;
+
+  const bestRank = ranked.length > 0
+    ? Math.min(...ranked.map(s => s.finalRank))
+    : null;
+
+  const streak = user?.currentStreak ?? 0;
+
+  // Milestone helpers
+  function getMilestoneCurrent(type: string) {
+    if (type === "vote") return stats?.votesCast ?? 0;
+    if (type === "post") return stats?.posts ?? 0;
+    if (type === "rank") return bestRank === 1 ? 1 : 0;
+    if (type === "subs") return stats?.subscribers ?? 0;
+    return stats?.events ?? 0;
+  }
+  const visibleMilestones = showAllAchievements ? MILESTONES : MILESTONES.slice(0, 8);
+  const unlockedCount = MILESTONES.filter(m => getMilestoneCurrent(m.type) >= m.target).length;
+
+  const engagementScore = stats
+    ? Math.min(100, Math.floor((stats.votesReceived / Math.max(stats.posts, 1)) * 10))
+    : 0;
+  const engagementLabel = engagementScore >= 80 ? "Legendary" : engagementScore >= 50 ? "High" : engagementScore >= 20 ? "Rising" : "Building";
+  const engagementColor = engagementScore >= 80 ? "text-primary-dark" : engagementScore >= 50 ? "text-vibrant-yellow" : engagementScore >= 20 ? "text-vibrant-blue" : "text-foreground/30";
+
+  const LIVE_STATUSES = ["posting", "voting", "scheduled"];
+
+  const filteredSubmissions = submissions.filter(s => {
+    if (contentFilter === "live") return LIVE_STATUSES.includes(s.event?.status);
+    if (contentFilter === "completed") return s.event?.status === "completed";
+    return true;
+  });
+
+  // Live events always float to the top; within each group sort newest first
+  const sortedSubmissions = [...filteredSubmissions].sort((a, b) => {
+    const aLive = LIVE_STATUSES.includes(a.event?.status ?? "");
+    const bLive = LIVE_STATUSES.includes(b.event?.status ?? "");
+    if (aLive && !bLive) return -1;
+    if (!aLive && bLive) return 1;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  const filteredVotedContent = votedContent.filter(item => {
+    if (contentFilter === "live") return item.isLive;
+    if (contentFilter === "completed") return item.isCompleted;
+    return true;
+  });
+
+  const sortedVotedContent = [...filteredVotedContent].sort((a, b) => {
+    if (a.isLive && !b.isLive) return -1;
+    if (!a.isLive && b.isLive) return 1;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  const socialList = showSocialModal.type === "followers" ? followers : following;
+
+  return (
+    <div className="min-h-screen bg-background text-white font-sans selection:bg-primary/30">
+      <SidebarLayout>
+        <main className="w-full pt-6 lg:pt-10 pb-24 md:pb-12 space-y-6">
+
+          {/* ── Two-column layout ── */}
+          <div className="flex flex-col lg:flex-row gap-6">
+
+            {/* ── Left / Main ── */}
+            <div className="flex-1 min-w-0 space-y-6">
+
+              {/* ── Identity Card ── */}
+              <div className="bg-surface border border-surface-border rounded-3xl p-4 sm:p-6 md:p-8">
+                <div className="flex flex-wrap items-start gap-4 sm:gap-5">
+
+                  {/* Avatar */}
+                  <div className="relative shrink-0">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-surface-border-strong bg-input">
+                      {user?.avatarUrl ? (
+                        <img src={user.avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="font-display text-3xl sm:text-4xl text-foreground/30 uppercase">{displayName[0]}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="absolute bottom-1 right-1 w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-green-500 border-2 border-background shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <h1 className="font-display text-2xl sm:text-4xl md:text-5xl lg:text-6xl text-foreground leading-tight tracking-tight mb-1 break-words">
+                      {displayName}
+                    </h1>
+                    <p className="text-xs font-bold text-foreground/30 tracking-wide mb-3">
+                      @{username}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {walletAddr && (
+                        <button
+                          onClick={() => handleCopy(walletAddr)}
+                          className="flex items-center gap-1.5 px-2.5 py-1 bg-surface-hover border border-surface-border hover:border-surface-border-strong rounded-full transition-colors group"
+                        >
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                          <span className="text-[11px] font-bold text-foreground/40 font-mono group-hover:text-foreground/70 transition-colors">
+                            {copied ? "Copied!" : truncateAddress(walletAddr)}
+                          </span>
+                          <Copy className="w-2.5 h-2.5 text-foreground/20 group-hover:text-foreground/50 transition-colors" />
+                        </button>
+                      )}
+                      {joinDate && (
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-surface-hover border border-surface-border rounded-full">
+                          <Calendar className="w-3 h-3 text-foreground/30" />
+                          <span className="text-[11px] font-bold text-foreground/30 uppercase tracking-wide">Joined {joinDate}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-3 w-full sm:w-auto sm:ml-auto">
+                    {isOwnProfile ? (
+                      <button className="flex items-center gap-2 px-5 py-2.5 bg-input border border-surface-border-strong hover:bg-surface-hover hover:border-surface-border-strong rounded-2xl text-[11px] font-bold text-foreground/80 hover:text-foreground uppercase tracking-widest transition-all w-full sm:w-auto justify-center sm:justify-start shadow-sm active:scale-[0.98]">
+                        <Edit3 className="w-3.5 h-3.5" />
+                        Edit Profile
+                      </button>
+                    ) : (
+                      <button
+                        onClick={onToggleFollow}
+                        disabled={isFollowLoading}
+                        className={cn(
+                          "px-6 py-2.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all w-full sm:w-auto active:scale-[0.98] shadow-lg",
+                          isFollowing
+                            ? "bg-input border border-surface-border-strong text-foreground/50 hover:border-red-500/30 hover:text-red-400"
+                            : "bg-white hover:bg-white/90 text-black shadow-white/10"
+                        )}
+                      >
+                        {isFollowLoading ? "..." : isFollowing ? "Following" : "Follow"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Stats Row ── */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {subsLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="h-[80px] sm:h-[90px] rounded-[20px] bg-surface border border-surface-border animate-pulse" />
+                  ))
+                ) : (
+                  <>
+                    <div className="bg-surface border border-surface-border hover:bg-surface-hover hover:border-surface-border-strong rounded-2xl px-4 sm:px-5 py-4 transition-all flex flex-col justify-center">
+                      <div className="flex items-baseline gap-2">
+                        <p className="font-display text-3xl sm:text-4xl text-white uppercase tracking-tight leading-none">Lvl {level}</p>
+                        <p className={cn("text-[10px] font-black uppercase tracking-widest", tier.color)}>Level</p>
+                      </div>
+                      <p className="text-xs font-bold text-foreground/30 mt-1 uppercase tracking-wide">{tier.name} Tier</p>
+                    </div>
+
+                    <div className="bg-surface border border-surface-border hover:bg-surface-hover hover:border-surface-border-strong rounded-2xl px-4 sm:px-5 py-4 transition-all flex flex-col justify-center">
+                      <div className="flex items-baseline gap-2">
+                        <p className="font-display text-3xl sm:text-4xl text-white uppercase tracking-tight leading-none">
+                          {stats?.earnings ? stats.earnings.toLocaleString() : "0"}
+                        </p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-lime-400">Earnings</p>
+                      </div>
+                      <p className="text-xs font-bold text-foreground/30 mt-1 uppercase tracking-wide">USDC Total</p>
+                    </div>
+
+                    <div className="bg-surface border border-surface-border hover:bg-surface-hover hover:border-surface-border-strong rounded-2xl px-4 sm:px-5 py-4 transition-all flex flex-col justify-center">
+                      <div className="flex items-baseline gap-2">
+                        <p className="font-display text-3xl sm:text-4xl text-white uppercase tracking-tight leading-none">
+                          {stats?.events ?? 0}
+                        </p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-400">Events</p>
+                      </div>
+                      <p className="text-xs font-bold text-foreground/30 mt-1 uppercase tracking-wide">Joined</p>
+                    </div>
+
+                    <div className="bg-surface border border-surface-border hover:bg-surface-hover hover:border-surface-border-strong rounded-2xl px-4 sm:px-5 py-4 transition-all flex flex-col justify-center">
+                      <div className="flex items-baseline gap-2">
+                        <p className={cn("font-display text-3xl sm:text-4xl uppercase tracking-tight leading-none", winRate >= 50 ? "text-lime-400" : "text-white")}>
+                          {winRate}%
+                        </p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-yellow-400">Win Rate</p>
+                      </div>
+                      <p className="text-xs font-bold text-foreground/30 mt-1 uppercase tracking-wide">Success Score</p>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* ── About ── */}
+              {user?.bio && (
+                <div className="bg-surface border border-surface-border rounded-3xl p-6 md:p-8 space-y-5">
+                  <h2 className="font-display text-2xl text-white uppercase tracking-tight">
+                    About {displayName.split(" ")[0]}
+                  </h2>
+                  <p className="text-sm font-medium text-foreground/50 leading-relaxed">{user.bio}</p>
+
+                  <div className="flex items-center gap-6 pt-3 border-t border-surface-border">
+                    <button
+                      onClick={() => setShowSocialModal({ show: true, type: "followers" })}
+                      className="flex items-baseline gap-2 group transition-all"
+                    >
+                      <span className="font-display text-2xl text-white tracking-tight leading-none group-hover:text-primary transition-colors">
+                        {formatK(stats?.subscribers ?? followers.length)}
+                      </span>
+                      <span className="text-[11px] font-bold text-foreground/30 uppercase tracking-widest">Followers</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowSocialModal({ show: true, type: "following" })}
+                      className="flex items-baseline gap-2 group transition-all"
+                    >
+                      <span className="font-display text-2xl text-white tracking-tight leading-none group-hover:text-primary transition-colors">
+                        {following.length}
+                      </span>
+                      <span className="text-[11px] font-bold text-foreground/30 uppercase tracking-widest">Following</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {!user?.bio && (
+                <div className="flex items-center gap-8 px-2">
+                  <button
+                    onClick={() => setShowSocialModal({ show: true, type: "followers" })}
+                    className="flex items-baseline gap-2 group transition-all"
+                  >
+                    <span className="font-display text-2xl text-white tracking-tight leading-none group-hover:text-primary transition-colors">
+                      {formatK(stats?.subscribers ?? followers.length)}
+                    </span>
+                    <span className="text-[11px] font-bold text-foreground/30 uppercase tracking-widest">Followers</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowSocialModal({ show: true, type: "following" })}
+                    className="flex items-baseline gap-2 group transition-all"
+                  >
+                    <span className="font-display text-2xl text-white tracking-tight leading-none group-hover:text-primary transition-colors">
+                      {following.length}
+                    </span>
+                    <span className="text-[11px] font-bold text-foreground/30 uppercase tracking-widest">Following</span>
+                  </button>
+                </div>
+              )}
+
+              {/* ── Showcase Section ── */}
+              <div className="space-y-5">
+                {/* Header + Tabs */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-1 p-1 bg-surface-hover border border-surface-border rounded-2xl h-fit w-full sm:w-auto">
+                    <button
+                      onClick={() => setActiveTab("posted")}
+                      className={cn(
+                        "flex-1 sm:flex-none px-6 py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all",
+                        activeTab === "posted" ? "bg-card text-foreground shadow-soft border border-surface-border" : "text-foreground/40 hover:text-foreground/70"
+                      )}
+                    >
+                      Posts
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("voted")}
+                      className={cn(
+                        "flex-1 sm:flex-none px-6 py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all",
+                        activeTab === "voted" ? "bg-card text-foreground shadow-soft border border-surface-border" : "text-foreground/40 hover:text-foreground/70"
+                      )}
+                    >
+                      Votes
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-1 p-1 bg-surface-hover border border-surface-border rounded-2xl h-fit w-full sm:w-auto overflow-x-auto no-scrollbar">
+                    {(["all", "live", "completed"] as ContentFilter[]).map(f => (
+                      <button
+                        key={f}
+                        onClick={() => setContentFilter(f)}
+                        className={cn(
+                          "flex-1 sm:flex-none px-5 py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all whitespace-nowrap",
+                          contentFilter === f ? "bg-surface-hover text-foreground border border-surface-border" : "text-foreground/30 hover:text-foreground/60"
+                        )}
+                      >
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {subsLoading ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="aspect-[3/4] rounded-[20px] bg-surface border border-surface-border animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
+                    ))}
+                  </div>
+                ) : activeTab === "posted" ? (
+                  sortedSubmissions.length === 0 ? (
+                    <div className="py-16 text-center bg-surface rounded-[24px] border border-dashed border-white/[0.07]">
+                      <div className="w-12 h-12 rounded-2xl bg-surface-hover flex items-center justify-center mx-auto mb-4">
+                        <ImageIcon className="w-5 h-5 text-foreground/20" />
+                      </div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/20">No posts yet</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {sortedSubmissions.map((s, i) => {
+                        const isLive = LIVE_STATUSES.includes(s.event?.status ?? "");
+                        const rank = s.finalRank;
+                        const votes = s._count?.votes || s.voteCount || 0;
+                        const rankColors =
+                          rank === 1 ? "bg-yellow-400 text-black" :
+                          rank === 2 ? "bg-zinc-300 text-black" :
+                          rank === 3 ? "bg-orange-400 text-black" :
+                          "bg-black/60 text-foreground/80";
+                        return (
+                          <motion.div
+                            key={s.id}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: i * 0.04 }}
+                            className="group relative aspect-[3/4] bg-surface border border-surface-border hover:border-surface-border-strong rounded-[20px] overflow-hidden transition-all cursor-pointer"
+                          >
+                            <img
+                              src={s.imageUrls?.medium || s.imageUrl}
+                              alt=""
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+
+                            {/* Rank badge — top left, prominent */}
+                            {rank != null && (
+                              <div className={cn("absolute top-2.5 left-2.5 w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-black shadow-lg", rankColors)}>
+                                #{rank}
+                              </div>
+                            )}
+
+                            {/* Live badge — top right */}
+                            {isLive && (
+                              <div className="absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur-sm border border-lime-400/40 rounded-full">
+                                <div className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-pulse" />
+                                <span className="text-[9px] font-black text-lime-400 uppercase tracking-widest">Live</span>
+                              </div>
+                            )}
+
+                            {/* Bottom: votes + event name */}
+                            <div className="absolute bottom-0 left-0 right-0 p-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1">
+                                  <ThumbsUp className="w-3 h-3 text-foreground/50" />
+                                  <span className="text-[11px] font-black text-foreground/70">{votes.toLocaleString()}</span>
+                                </div>
+                                {isLive && rank == null && (
+                                  <span className="text-[9px] font-black text-lime-400 uppercase tracking-wider">In Progress</span>
+                                )}
+                              </div>
+                              <p className="text-[9px] font-bold text-foreground/30 uppercase tracking-wide mt-1 truncate">{s.event?.title}</p>
+                            </div>
+
+                            <Link href={`/events/${s.eventId}`} className="absolute inset-0 z-10" />
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  )
+                ) : (
+                  sortedVotedContent.length === 0 ? (
+                    <div className="py-16 text-center bg-surface rounded-[24px] border border-dashed border-white/[0.07]">
+                      <div className="w-12 h-12 rounded-2xl bg-surface-hover flex items-center justify-center mx-auto mb-4">
+                        <ThumbsUp className="w-5 h-5 text-foreground/20" />
+                      </div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/20">No votes yet</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {sortedVotedContent.map((item, i) => {
+                        const rank = item.rank;
+                        const rankColors =
+                          rank === 1 ? "bg-yellow-400 text-black" :
+                          rank === 2 ? "bg-zinc-300 text-black" :
+                          rank === 3 ? "bg-orange-400 text-black" :
+                          "bg-black/60 text-foreground/80";
+                        const isImage = !item.isTextProposal && !!item.imageUrl;
+                        const textContent = item.proposalTitle || item.caption;
+
+                        return (
+                          <motion.div
+                            key={item.id}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: i * 0.04 }}
+                            className="group relative aspect-[3/4] border rounded-[20px] overflow-hidden transition-all cursor-pointer bg-surface border-surface-border hover:border-surface-border-strong"
+                          >
+                            {/* ── Image ── */}
+                            {isImage ? (
+                              <img
+                                src={item.imageUrl}
+                                alt=""
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                              />
+                            ) : (
+                              /* ── Text proposal ── */
+                              <div className="w-full h-full flex flex-col items-center justify-center p-5 bg-gradient-to-br from-white/[0.05] to-white/[0.01]">
+                                {textContent ? (
+                                  <p className="font-display text-xl sm:text-2xl text-white text-center leading-tight tracking-tight line-clamp-5 break-words">
+                                    {textContent}
+                                  </p>
+                                ) : (
+                                  <ThumbsUp className="w-8 h-8 text-foreground/10" />
+                                )}
+                              </div>
+                            )}
+
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent pointer-events-none" />
+
+                            {/* Rank badge */}
+                            {rank != null && (
+                              <div className={cn("absolute top-2.5 left-2.5 w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-black shadow-lg", rankColors)}>
+                                #{rank}
+                              </div>
+                            )}
+
+                            {/* Live badge */}
+                            {item.isLive && (
+                              <div className="absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur-sm border border-lime-400/40 rounded-full">
+                                <div className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-pulse" />
+                                <span className="text-[9px] font-black text-lime-400 uppercase tracking-widest">Live</span>
+                              </div>
+                            )}
+
+                            {/* Bottom: votes + event name */}
+                            <div className="absolute bottom-0 left-0 right-0 p-3">
+                              <div className="flex items-center gap-1 mb-1">
+                                <ThumbsUp className="w-3 h-3 text-foreground/50" />
+                                <span className="text-[11px] font-black text-foreground/70">{item.voteCount.toLocaleString()}</span>
+                                {item.isLive && rank == null && (
+                                  <span className="ml-auto text-[9px] font-black text-lime-400 uppercase tracking-wider">Live</span>
+                                )}
+                              </div>
+                              <p className="text-[9px] font-bold text-foreground/30 uppercase tracking-wide truncate">
+                                {item.event?.title}
+                              </p>
+                            </div>
+
+                            <Link href={`/events/${item.event?.id}`} className="absolute inset-0 z-10" />
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+
+            {/* ── Right Column ── */}
+            <div className="lg:w-[300px] xl:w-[320px] flex-shrink-0 space-y-6">
+
+              {/* ── Reputation ── */}
+              <div className="bg-surface border border-surface-border rounded-3xl p-5 sm:p-6 space-y-4">
+                <h3 className="font-display text-xl text-white uppercase tracking-tight">Reputation</h3>
+                <div className="space-y-2">
+
+                  <div className="flex items-center gap-3 p-3 bg-surface border border-surface-border rounded-2xl hover:bg-surface-hover transition-all">
+                    <div className="w-9 h-9 rounded-xl bg-yellow-400/10 border border-yellow-400/20 flex items-center justify-center shrink-0">
+                      <Trophy className="w-4 h-4 text-yellow-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-black text-white">Best Ranking</p>
+                      <p className="text-[11px] font-bold text-foreground/30 uppercase tracking-wide mt-0.5">
+                        {bestRank ? `Global Rank #${bestRank}` : "No rankings yet"}
+                      </p>
+                    </div>
+                    {bestRank && (
+                      <span className="text-[11px] font-bold text-yellow-400 shrink-0">
+                        Top {bestRank === 1 ? "1%" : bestRank <= 3 ? "5%" : "10%"}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 bg-surface border border-surface-border rounded-2xl hover:bg-surface-hover transition-all">
+                    <div className="w-9 h-9 rounded-xl bg-orange-400/10 border border-orange-400/20 flex items-center justify-center shrink-0">
+                      <Flame className="w-4 h-4 text-orange-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-black text-white">Current Streak</p>
+                      <p className="text-[11px] font-bold text-foreground/30 uppercase tracking-wide mt-0.5">Daily submissions</p>
+                    </div>
+                    <span className="text-[11px] font-bold text-orange-400 shrink-0">
+                      {streak > 0 ? `${streak} Days` : "—"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 bg-surface border border-surface-border rounded-2xl hover:bg-surface-hover transition-all">
+                    <div className="w-9 h-9 rounded-xl bg-blue-400/10 border border-blue-400/20 flex items-center justify-center shrink-0">
+                      <TrendingUp className="w-4 h-4 text-blue-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-black text-white">Engagement</p>
+                      <p className="text-[11px] font-bold text-foreground/30 uppercase tracking-wide mt-0.5">Votes & posts</p>
+                    </div>
+                    <span className={cn("text-[11px] font-bold shrink-0", engagementColor)}>
+                      {engagementLabel}
+                    </span>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* ── Achievements ── */}
+              <div className="bg-surface border border-surface-border rounded-3xl p-5 sm:p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-display text-xl text-white uppercase tracking-tight">Achievements</h3>
+                    <p className="text-[10px] font-black text-foreground/30 uppercase tracking-widest mt-0.5">
+                      {unlockedCount}/{MILESTONES.length} Unlocked
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowAllAchievements(v => !v)}
+                    className="text-[10px] font-black text-primary/70 hover:text-primary uppercase tracking-widest transition-colors"
+                  >
+                    {showAllAchievements ? "Show Less" : "See All"}
+                  </button>
+                </div>
+                <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-4 gap-2">
+                  {visibleMilestones.map(m => {
+                    const current = getMilestoneCurrent(m.type);
+                    const done = current >= m.target;
+                    const pct = Math.min(100, (current / m.target) * 100);
+                    const Icon = m.icon;
+                    return (
+                      <div
+                        key={m.id}
+                        title={`${m.label} — ${m.desc}\n${done ? "✓ Unlocked" : `${current}/${m.target}`} (+${m.xp} XP)`}
+                        className={cn(
+                          "aspect-square rounded-2xl flex items-center justify-center border transition-all relative overflow-hidden cursor-default",
+                          done
+                            ? cn(m.bg, m.border)
+                            : pct > 0
+                              ? "bg-surface-hover border-surface-border"
+                              : "bg-surface border-surface-border"
+                        )}
+                      >
+                        {done ? (
+                          <Icon className={cn("w-5 h-5", m.color)} />
+                        ) : pct > 0 ? (
+                          <Icon className={cn("w-5 h-5 opacity-30", m.color)} />
+                        ) : (
+                          <Lock className="w-4 h-4 text-foreground/15" />
+                        )}
+                        {!done && pct > 0 && (
+                          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-input rounded-full overflow-hidden">
+                            <div
+                              className={cn("h-full rounded-full", m.color.replace("text-", "bg-"))}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* ── Brands Followed ── */}
+              {following.length > 0 && (
+                <div className="bg-surface border border-surface-border rounded-3xl p-5 sm:p-6 space-y-4">
+                  <h3 className="font-display text-xl text-white uppercase tracking-tight">Following</h3>
+                  <div className="space-y-3">
+                    {following.slice(0, 5).map((brand: User) => (
+                      <Link 
+                        key={brand.id} 
+                        href={`/profile/${brand.username || brand.id}`}
+                        className="flex items-center gap-3 group/brand hover:bg-surface-hover p-2 -mx-2 rounded-2xl transition-all"
+                      >
+                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-input border border-surface-border shrink-0 group-hover/brand:border-white/20 transition-all">
+                          {brand.avatarUrl ? (
+                            <img src={brand.avatarUrl} alt={brand.displayName || ""} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Building2 className="w-4 h-4 text-foreground/20" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-black text-white truncate group-hover/brand:text-primary transition-colors">{brand.displayName || brand.username}</p>
+                          <p className="text-[9px] font-black text-foreground/30 uppercase tracking-wide">Brand</p>
+                        </div>
+                        <span className="text-[9px] font-black text-foreground/30 border border-surface-border px-2 py-0.5 rounded-full uppercase tracking-widest shrink-0">
+                          Following
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+        </main>
+
+      </SidebarLayout>
+
+      {/* ── Social Modal ── */}
+      {showSocialModal.show && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:px-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowSocialModal(s => ({ ...s, show: false }))}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="relative w-full sm:max-w-md bg-card border border-surface-border-strong rounded-t-[24px] sm:rounded-[24px] overflow-hidden shadow-spotify"
+          >
+            <div className="p-4 sm:p-5 border-b border-surface-border flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">
+                {showSocialModal.type} ({socialList.length})
+              </span>
+              <button
+                onClick={() => setShowSocialModal(s => ({ ...s, show: false }))}
+                className="w-7 h-7 rounded-full bg-surface hover:bg-surface-hover border border-surface-border flex items-center justify-center transition-colors"
+              >
+                <X className="w-3.5 h-3.5 text-foreground/50" />
+              </button>
+            </div>
+            <div className="max-h-[70vh] sm:max-h-[60vh] overflow-y-auto px-2 pb-4">
+              {socialList.length === 0 ? (
+                <p className="text-center text-[11px] font-black text-foreground/20 uppercase tracking-widest py-10">
+                  No {showSocialModal.type} yet
+                </p>
+              ) : (
+                <div className="space-y-4 pt-2">
+                  {/* Brands Section */}
+                  {socialList.some(p => (p as any).role === 'BRAND') && (
+                    <div className="space-y-2">
+                      <p className="text-[9px] font-black text-foreground/20 uppercase tracking-[0.2em] px-3">Brands</p>
+                      {socialList.filter(p => (p as any).role === 'BRAND').map(person => (
+                        <SocialRow 
+                          key={person.id} 
+                          person={person} 
+                          isBrand={true}
+                          currentUser={currentUser}
+                          isFollowed={modalFollowing.has(person.id)}
+                          isLoading={modalFollowLoading === person.id}
+                          onToggle={() => handleModalFollow(person.id, true)}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Users Section */}
+                  {socialList.some(p => (p as any).role !== 'BRAND') && (
+                    <div className="space-y-2">
+                      <p className="text-[9px] font-black text-foreground/20 uppercase tracking-[0.2em] px-3">Users</p>
+                      {socialList.filter(p => (p as any).role !== 'BRAND').map(person => (
+                        <SocialRow 
+                          key={person.id} 
+                          person={person} 
+                          isBrand={false}
+                          currentUser={currentUser}
+                          isFollowed={modalFollowing.has(person.id)}
+                          isLoading={modalFollowLoading === person.id}
+                          onToggle={() => handleModalFollow(person.id, false)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Helper Components ──────────────────────────────────────────
+
+function SocialRow({ person, isBrand, currentUser, isFollowed, isLoading, onToggle }: {
+  person: User;
+  isBrand: boolean;
+  currentUser: User | null;
+  isFollowed: boolean;
+  isLoading: boolean;
+  onToggle: () => void;
+}) {
+  const isSelf = currentUser?.id === person.id;
+
+  return (
+    <div className="flex items-center justify-between p-3 hover:bg-surface-hover rounded-[18px] transition-colors group">
+      <Link
+        href={isBrand ? `/brand/${person.username || person.id}` : `/profile/${person.username || person.id}`}
+        className="flex items-center gap-3 flex-1 min-w-0"
+      >
+        <div className="relative shrink-0">
+          {person.avatarUrl ? (
+            <img src={person.avatarUrl} className="w-10 h-10 rounded-xl object-cover border border-surface-border" alt={person.displayName || ""} />
+          ) : (
+            <div className="w-10 h-10 rounded-xl bg-input border border-surface-border flex items-center justify-center">
+              {isBrand ? <Building2 className="w-5 h-5 text-foreground/20" /> : <User2 className="w-5 h-5 text-foreground/20" />}
+            </div>
+          )}
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-black text-white truncate group-hover:text-primary transition-colors">
+            {person.displayName || person.username || "Unknown"}
+          </p>
+          <p className="text-[10px] text-foreground/30 font-bold tracking-tight">
+            {person.username ? `@${person.username}` : ""}
+          </p>
+        </div>
+      </Link>
+
+      {!isSelf && currentUser && (
+        <button
+          onClick={onToggle}
+          disabled={isLoading}
+          className={cn(
+            "ml-3 shrink-0 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-40",
+            isFollowed
+              ? "bg-surface-hover border border-surface-border-strong text-foreground/60 hover:border-red-500/40 hover:text-red-400"
+              : "bg-primary text-primary-foreground hover:bg-primary-dark"
+          )}
+        >
+          {isLoading ? "..." : isFollowed ? "Following" : "Follow"}
+        </button>
+      )}
+    </div>
+  );
+}

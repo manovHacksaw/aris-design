@@ -1,0 +1,550 @@
+import { EventValidationService } from './EventValidationService';
+import { RewardsPoolService } from '../rewards/RewardsPoolService';
+import { RewardsDistributionService } from '../rewards/RewardsDistributionService';
+import { EventRankingService } from './EventRankingService';
+import logger from '../../lib/logger';
+import { prisma } from '../../lib/prisma';
+import { Event } from '@prisma/client';
+import { NotFoundError, ForbiddenError, ValidationError } from '../../utils/errors';
+import {
+  EventStatus,
+  EventStatusType,
+} from '../../types/event';
+import { NotificationService } from '../social/notificationService';
+
+import { XpService } from '../xp/xpService';
+import { BrandXpService } from '../brands/brandXpService';
+
+import { TrustService } from '../trustService';
+
+export class EventLifecycleService {
+
+
+  /**
+   * Update event status
+   */
+  static async updateEventStatus(
+    id: string,
+    brandId: string,
+    newStatus: EventStatusType
+  ): Promise<Event> {
+    // 1. Fetch event
+    const event = await prisma.event.findUnique({ where: { id } });
+
+    if (!event || (event as any).isDeleted) throw new NotFoundError('Event not found');
+
+    if (event.brandId !== brandId) throw new ForbiddenError('You do not own this event');
+
+    // 3. Validate transition
+    if (!EventValidationService.isValidStatusTransition(event.status, newStatus)) {
+      throw new ValidationError(
+        `Invalid status transition: ${event.status} -> ${newStatus}`
+      );
+    }
+
+    // 4. Event type compatibility check
+    if (newStatus === EventStatus.POSTING && event.eventType === 'vote_only') {
+      throw new ValidationError('Cannot transition vote_only event to posting phase');
+    }
+
+    // 5. Validate timestamps for transition
+    const now = new Date();
+
+    if (newStatus === EventStatus.VOTING && event.postingEnd && now < event.postingEnd) {
+      throw new ValidationError('Cannot transition to voting before posting period ends');
+    }
+
+    // 6. Completing — route through transitionToCompleted for rankings + rewards
+    if (newStatus === EventStatus.COMPLETED) {
+      return EventLifecycleService.transitionToCompleted(id);
+    }
+
+    // 7. Update status
+    const updatedEvent = await prisma.event.update({
+      where: { id },
+      data: { status: newStatus },
+    });
+
+    return updatedEvent;
+  }
+
+
+  /**
+   * Publish event (transition from DRAFT to SCHEDULED)
+   */
+  static async publishEvent(id: string, brandId: string): Promise<Event> {
+    // 1. Fetch event with brand and proposals
+    const event = await prisma.event.findUnique({
+      where: { id },
+      include: {
+        brand: true,
+        proposals: true,
+      },
+    });
+
+    if (!event || (event as any).isDeleted) throw new NotFoundError('Event not found');
+
+    if (event.brandId !== brandId) throw new ForbiddenError('You do not own this event');
+
+    // 3. Can only publish DRAFT events
+    if (event.status !== EventStatus.DRAFT) {
+      throw new ValidationError('Only DRAFT events can be published');
+    }
+
+    // 4. Validate event is complete before publishing
+    if (!event.title || !event.eventType || !event.startTime || !event.endTime) {
+      throw new ValidationError('Event must have title, type, start time, and end time before publishing');
+    }
+
+    // 5. For post_and_vote events, require posting times, leaderboard pool, and samples
+    if (event.eventType === 'post_and_vote') {
+      if (!event.postingStart || !event.postingEnd) {
+        throw new ValidationError('Post and vote events must have posting start and end times before publishing');
+      }
+      if (event.leaderboardPool === null || event.leaderboardPool === undefined) {
+        throw new ValidationError('Post and vote events must have a leaderboard pool before publishing');
+      }
+      if (!event.samples || event.samples.length === 0) {
+        throw new ValidationError('Post and vote events must have at least one sample image before publishing');
+      }
+    }
+
+    // 6. For vote_only events, require at least 2 proposals
+    // Each proposal is ONE voting option now (no more MCQ with multiple choices)
+    if (event.eventType === 'vote_only') {
+      if (!event.proposals || event.proposals.length < 2) {
+        throw new ValidationError('Vote only events must have at least 2 proposals before publishing');
+      }
+    }
+
+    // 7. Validate timestamps one more time
+    const now = new Date();
+    if (event.startTime <= new Date(now.getTime() - 60000)) {
+      throw new ValidationError('Start time must be in the future');
+    }
+    if (event.endTime <= event.startTime) {
+      throw new ValidationError('End time must be after start time');
+    }
+
+    // 8. Publish (transition to SCHEDULED)
+    const updatedEvent = await prisma.event.update({
+      where: { id },
+      data: { status: EventStatus.SCHEDULED },
+    });
+
+    return updatedEvent;
+  }
+
+
+  /**
+   * Transition event to completed status with rankings
+   */
+  static async transitionToCompleted(eventId: string): Promise<Event> {
+    // Rankings and status update are atomic: if either fails, both roll back.
+    const completedEvent = await prisma.$transaction(async (tx) => {
+      await EventRankingService.computeRankings(eventId, tx);
+      return tx.event.update({
+        where: { id: eventId },
+        data: { status: EventStatus.COMPLETED },
+      });
+    }, { timeout: 30000, maxWait: 10000 });
+
+    TrustService.updateTrustScores(eventId).catch((error) => {
+      logger.error({ err: error }, 'Failed to update trust scores:');
+    });
+
+    XpService.processEventCompletion(eventId).catch((error) => {
+      logger.error({ err: error }, 'Failed to process event completion milestones:');
+    });
+
+    BrandXpService.recalculateBrandLevel(
+      completedEvent.brandId,
+      'event_completion',
+      eventId
+    ).catch((error) => {
+      logger.error({ err: error }, 'Failed to recalculate brand level:');
+    });
+
+    RewardsDistributionService.processEventRewards(eventId).catch((error) => {
+      logger.error({ err: error }, `REWARDS FAILED for event ${eventId}:`);
+    });
+
+    return completedEvent;
+  }
+
+
+  /**
+   * Cancel an event with validation rules
+   */
+  static async cancelEvent(id: string, brandId: string): Promise<Event> {
+    const event = await prisma.event.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: { submissions: true, votes: true },
+        },
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundError('Event not found');
+    }
+
+    if (event.isDeleted) {
+      throw new NotFoundError('Event not found');
+    }
+
+    // Ownership check
+    if (event.brandId !== brandId) {
+      throw new ForbiddenError('Forbidden: You do not own this event');
+    }
+
+    // Cannot cancel completed events
+    if (event.status === EventStatus.COMPLETED) {
+      throw new ValidationError('Cannot cancel a completed event');
+    }
+
+    // Already cancelled
+    if (event.status === EventStatus.CANCELLED) {
+      throw new ValidationError('Event is already cancelled');
+    }
+
+    // Cancellation rules by event type
+    if (event.eventType === 'vote_only') {
+      // Can cancel before voting ends, but not if votes exist
+      if (event.status === EventStatus.VOTING && event._count.votes > 0) {
+        throw new ValidationError('Cannot cancel VOTE_ONLY event after votes have been cast');
+      }
+    } else {
+      // POST_VOTE: can only cancel if no submissions
+      if (event._count.submissions > 0) {
+        throw new ValidationError('Cannot cancel POST_VOTE event after submissions exist');
+      }
+    }
+
+    // Update status to cancelled
+    return prisma.event.update({
+      where: { id },
+      data: { status: EventStatus.CANCELLED },
+    });
+  }
+
+
+  /**
+   * Stop a VOTE_ONLY event early (after 24hr minimum)
+   */
+  static async stopEventEarly(id: string, brandId: string): Promise<Event> {
+    const event = await prisma.event.findUnique({ where: { id } });
+
+    if (!event) {
+      throw new NotFoundError('Event not found');
+    }
+
+    if (event.isDeleted) {
+      throw new NotFoundError('Event not found');
+    }
+
+    // Ownership check
+    if (event.brandId !== brandId) {
+      throw new ForbiddenError('Forbidden: You do not own this event');
+    }
+
+    // Only VOTE_ONLY events can be stopped early
+    if (event.eventType !== 'vote_only') {
+      throw new ValidationError('Only VOTE_ONLY events can be stopped early');
+    }
+
+    // Must be in voting status
+    if (event.status !== EventStatus.VOTING) {
+      throw new ValidationError('Event must be in voting status to stop early');
+    }
+
+    // Check minimum 24 hours have passed
+    const votingDuration = Date.now() - event.startTime.getTime();
+    const MIN_VOTING_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+    if (votingDuration < MIN_VOTING_DURATION) {
+      const hoursRemaining = Math.ceil((MIN_VOTING_DURATION - votingDuration) / (60 * 60 * 1000));
+      throw new ValidationError(
+        `Event must run for at least 24 hours before stopping early. ${hoursRemaining} hours remaining.`
+      );
+    }
+
+    // Transition to completed with rankings
+    return EventLifecycleService.transitionToCompleted(id);
+  }
+
+
+  /**
+   * Automatically transition event based on timestamps
+   * Idempotent - safe to run multiple times
+   */
+  static async autoTransitionEvent(eventId: string): Promise<Event | null> {
+    const event = await prisma.event.findUnique({ where: { id: eventId } });
+
+    if (!event || event.isDeleted || event.status === EventStatus.CANCELLED) {
+      return null;
+    }
+
+    // CRITICAL: Prevent auto-transition for unverified events
+    if (event.blockchainStatus !== 'ACTIVE') {
+      logger.info(`⚠️ AutoTransition: Skipping ${eventId} - blockchainStatus is ${event.blockchainStatus}`);
+      return null;
+    }
+
+    // Idempotency guard: only transition if the event is still in a transitionable state.
+    // Prevents double-firing when multiple server instances run the interval simultaneously.
+    const transitionableStatuses: EventStatusType[] = [EventStatus.SCHEDULED, EventStatus.POSTING, EventStatus.VOTING];
+    if (!transitionableStatuses.includes(event.status as EventStatusType)) {
+      return null;
+    }
+
+    const now = new Date();
+    let newStatus: EventStatusType | null = null;
+
+    // State machine: check current status and determine transition
+    if (event.status === EventStatus.SCHEDULED) {
+      // POST_VOTE: transition to posting
+      if (event.eventType === 'post_and_vote' && event.postingStart && now >= event.postingStart) {
+        newStatus = EventStatus.POSTING;
+      }
+      // VOTE_ONLY: skip posting, go straight to voting
+      else if (event.eventType === 'vote_only' && now >= event.startTime) {
+        newStatus = EventStatus.VOTING;
+      }
+    } else if (event.status === EventStatus.POSTING) {
+      // Posting ends
+      if (event.postingEnd && now >= event.postingEnd) {
+        // Check submission count for post_and_vote events
+        if (event.eventType === 'post_and_vote') {
+          const submissionCount = await prisma.submission.count({
+            where: {
+              eventId: eventId,
+              status: 'active'
+            }
+          });
+
+          // Cancel if 1 or fewer submissions
+          if (submissionCount <= 1) {
+            newStatus = EventStatus.CANCELLED;
+          } else {
+            newStatus = EventStatus.VOTING;
+          }
+        } else {
+          newStatus = EventStatus.VOTING;
+        }
+      }
+    } else if (event.status === EventStatus.VOTING) {
+      // Voting ends, event completes
+      if (now >= event.endTime) {
+        const completedEvent = await EventLifecycleService.transitionToCompleted(eventId);
+
+        // Send event result notification (async)
+        (async () => {
+          try {
+            // Notify participants
+            await NotificationService.createEventResultNotification(eventId);
+
+            // Notify brand owner about completion
+            await NotificationService.createEventPhaseChangeNotification(
+              eventId,
+              EventStatus.VOTING,
+              EventStatus.COMPLETED
+            );
+          } catch (error) {
+            logger.error({ err: error }, 'Failed to send event completion notifications:');
+          }
+        })();
+
+        return completedEvent;
+      }
+    }
+
+    // Perform transition if needed
+    if (newStatus) {
+      const updateData: any = { status: newStatus };
+
+      // If cancelling due to lack of posts, handle refund and notifications
+      if (newStatus === EventStatus.CANCELLED) {
+        updateData.description = (event.description || "") + "\n\n[System]: Cancelled: Didn't get enough posts.";
+
+        // Cancel event on blockchain to trigger refund (async but awaited for critical path)
+        try {
+          const { BlockchainService } = await import('../../lib/blockchain');
+
+          logger.info(`🔄 AutoTransition: Cancelling event ${eventId} on-chain for refund...`);
+          const txHash = await BlockchainService.cancelEventOnChain(eventId);
+          logger.info(`✅ AutoTransition: Event cancelled on-chain. TxHash: ${txHash}`);
+
+          // Update pool status in database
+          await RewardsPoolService.cancelPool(eventId);
+
+        } catch (error: any) {
+          logger.error({ err: error }, `❌ AutoTransition: Failed to cancel event on-chain:`);
+          // Continue with DB update even if blockchain call fails
+          // The brand can manually trigger refund later
+        }
+
+        // Update event status in DB
+        const updatedEvent = await prisma.event.update({
+          where: { id: eventId },
+          data: updateData,
+        });
+
+        // Send cancellation notifications to brand owner and subscribers (async)
+        (async () => {
+          try {
+            await NotificationService.createEventCancellationNotification(eventId, 'INSUFFICIENT_POSTS');
+          } catch (error) {
+            logger.error({ err: error }, 'Failed to send cancellation notifications:');
+          }
+        })();
+
+        return updatedEvent;
+      }
+
+      const updatedEvent = await prisma.event.update({
+        where: { id: eventId },
+        data: updateData,
+      });
+
+      // Send voting live notification when transitioning to VOTING (async)
+      if (newStatus === EventStatus.VOTING) {
+        (async () => {
+          try {
+            await NotificationService.createVotingLiveNotification(eventId);
+          } catch (error) {
+            logger.error({ err: error }, 'Failed to send voting live notification:');
+          }
+        })();
+      }
+
+      // Send Brand Post notification if transitioning from SCHEDULED (Event is now live)
+      if (event.status === EventStatus.SCHEDULED && (newStatus === EventStatus.POSTING || newStatus === EventStatus.VOTING)) {
+        (async () => {
+          try {
+            await NotificationService.createBrandPostNotification(event.brandId, eventId);
+          } catch (error) {
+            logger.error({ err: error }, 'Failed to send brand post notification on transition:');
+          }
+        })();
+      }
+
+      // Send Phase Change notification to brand owner
+      (async () => {
+        try {
+          await NotificationService.createEventPhaseChangeNotification(eventId, event.status, newStatus!);
+        } catch (error) {
+          logger.error({ err: error }, 'Failed to send phase change notification:');
+        }
+      })();
+
+      return updatedEvent;
+    }
+
+    return null;
+  }
+
+
+  /**
+   * Update blockchain status and create rewards pool
+   */
+  static async updateBlockchainStatus(
+    eventId: string,
+    brandId: string,
+    txHash: string,
+    onChainEventId: string
+  ): Promise<Event> {
+    const event = await prisma.event.findUnique({ where: { id: eventId } });
+
+    if (!event) throw new NotFoundError('Event not found');
+    if (event.brandId !== brandId) throw new ForbiddenError('Forbidden');
+    // Calculate values based on event data
+    const maxParticipants = event.capacity || 0;
+    const basePoolUsdc = (event.baseReward || 0) * maxParticipants;
+    const topPoolUsdc = event.topReward || 0;
+    // Match smart contract logic: leaderboard pool is 50% of top pool if not explicitly provided
+    const leaderboardPoolUsdc = event.eventType === 'post_and_vote'
+      ? ((event as any).leaderboardPool || (topPoolUsdc / 2))
+      : 0;
+    // Platform fee: $0.02 for post_and_vote, $0.015 for vote_only
+    const platformFeeUsdc = maxParticipants * (event.eventType === 'post_and_vote' ? 0.02 : 0.015);
+    // Creator base pool: $0.05 per vote for post_and_vote (capacity × $0.05)
+    const creatorPoolUsdc = event.eventType === 'post_and_vote' ? maxParticipants * 0.05 : 0;
+
+    // Use transaction to ensure event update and pool creation happen together
+    return await prisma.$transaction(async (tx) => {
+      // Create Rewards Pool
+      await tx.eventRewardsPool.create({
+        data: {
+          eventId,
+          maxParticipants,
+          basePoolUsdc,
+          topPoolUsdc,
+          leaderboardPoolUsdc,
+          platformFeeUsdc,
+          creatorPoolUsdc,
+          status: 'ACTIVE',
+        },
+      });
+
+      // Update Event
+      const updatedEvent = await tx.event.update({
+        where: { id: eventId },
+        data: {
+          blockchainStatus: 'ACTIVE', // Or 'CONFIRMED'
+          poolTxHash: txHash,
+          onChainEventId: onChainEventId,
+        },
+      });
+
+      // Trigger notifications if event is now live
+      if (updatedEvent.status === EventStatus.POSTING || updatedEvent.status === EventStatus.VOTING) {
+        // Send Brand Post Notification (since we skipped it at creation)
+        (async () => {
+          try {
+            await NotificationService.createBrandPostNotification(brandId, eventId);
+          } catch (error) {
+            logger.error({ err: error }, 'Failed to send brand post notification (blockchain confirmed):');
+          }
+        })();
+
+        // If Voting is live, send that too
+        if (updatedEvent.status === EventStatus.VOTING) {
+          (async () => {
+            try {
+              await NotificationService.createVotingLiveNotification(eventId);
+            } catch (error) {
+              logger.error({ err: error }, 'Failed to send voting live notification (blockchain confirmed):');
+            }
+          })();
+        }
+      }
+
+      return updatedEvent;
+    });
+  }
+
+
+  /**
+   * Mark blockchain transaction as failed
+   */
+  static async failBlockchainStatus(
+    eventId: string,
+    brandId: string,
+    _reason?: string
+  ): Promise<Event> {
+    const event = await prisma.event.findUnique({ where: { id: eventId } });
+
+    if (!event) throw new NotFoundError('Event not found');
+    if (event.brandId !== brandId) throw new ForbiddenError('Forbidden');
+
+    return await prisma.event.update({
+      where: { id: eventId },
+      data: {
+        blockchainStatus: 'FAILED',
+        status: 'draft', // Set to draft so brand can edit/retry
+      },
+    });
+  }
+}

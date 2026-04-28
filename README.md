@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Aris Ecosystem
 
-## Getting Started
+Welcome to the Aris Fullstack Application—a modern, high-performance platform for decentralized engagement and digital rewards. Built with **Bun**, **Next.js**, **Express**, and **Prisma**, Aris bridges the gap between brands and users through transparent, reward-driven interactions.
 
-First, run the development server:
+---
+
+## 🚀 Quick Start (Docker)
+
+The fastest way to get Aris running locally is using Docker Compose. Ensure you have Docker Desktop installed.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Build and start the entire stack
+docker compose up --build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Frontend**: [http://localhost:3000](http://localhost:3000)
+- **Backend API**: [http://localhost:8000](http://localhost:8000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🏗️ Repository Structure
 
-## Learn More
+```text
+aris/
+├── client/           # Next.js 15 Frontend
+├── server/           # Bun/Express Backend
+├── db/               # Manual SQL scripts & DB tools
+├── docs/             # Technical audits, roadmap, and docker guides
+├── docker-compose.yml # Main orchestration file
+└── README.md         # (You are here)
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🛠️ Tech Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Frontend (`/client`)
+- **Framework**: Next.js 15 (App Router)
+- **Styling**: Tailwind CSS
+- **Animations**: Framer Motion
+- **Auth**: Privy (Smart Wallet Support)
+- **Charts**: Recharts
+- **Icons**: Lucide React / React Icons
 
-## Deploy on Vercel
+### Backend (`/server`)
+- **Runtime**: Bun 1.x
+- **Framework**: Express (TypeScript)
+- **Database**: PostgreSQL (via Supabase)
+- **ORM**: Prisma
+- **Security**: Arcjet (Rate limiting & Shield)
+- **AI**: Google Gemini Pro
+- **Realtime**: Socket.io
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📖 Documentation Deep-Dives
+
+- [**System Reorganization Walkthrough**](file:///c:/Users/manov/Desktop/code/aris/docs/WALKTHROUGH.md)
+- [**Dockerization Guide**](file:///c:/Users/manov/Desktop/code/aris/docs/DOCKER.md)
+- [**Development Roadmap**](file:///c:/Users/manov/Desktop/code/aris/docs/ROADMAP.md)
+
+---
+
+## 🧑‍💻 Local Development (Manual)
+
+### 1. Prerequisite
+Install [Bun](https://bun.sh/):
+```bash
+powershell -c "irm bun.sh/install.ps1 | iex"
+```
+
+### 2. Backend Setup
+```bash
+cd server
+bun install
+bun prisma generate
+bun run dev
+```
+
+### 3. Frontend Setup
+```bash
+cd client
+bun install
+bun run dev
+```
+
+---
+
+## 🚢 Deployment
+
+The backend is architected for seamless deployment to **Railway** or any container-ready cloud provider. For detailed instructions, see the [Server README](file:///c:/Users/manov/Desktop/code/aris/server/README.md).
+
+---
+
+## 🤝 Contributing
+Please ensure all pull requests follow the established **Service/Controller/Route** pattern as detailed in the `/docs/ARCHITECTURE.md`.
