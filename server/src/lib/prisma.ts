@@ -4,8 +4,8 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-// Use raw DATABASE_URL directly to avoid any parsing/encoding issues
-const databaseUrl = process.env.DATABASE_URL;
+// Trim whitespace Railway/env managers may add around the value
+const databaseUrl = process.env.DATABASE_URL?.trim();
 
 export const prisma =
   globalForPrisma.prisma ??

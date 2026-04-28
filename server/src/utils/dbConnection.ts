@@ -7,6 +7,8 @@ import { prisma } from '../lib/prisma';
  */
 export async function checkDatabaseConnection(): Promise<boolean> {
   try {
+    const url = process.env.DATABASE_URL?.trim();
+    logger.info(`DB URL prefix: ${url?.slice(0, 30)}... (length ${url?.length})`);
     await prisma.$connect();
     // Test query to ensure connection is working
     await prisma.$queryRaw`SELECT 1`;
