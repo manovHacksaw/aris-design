@@ -1,5 +1,5 @@
 import logger from '../../lib/logger.js';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
 import { BrandQueryService } from '../../services/brands/BrandQueryService.js';
 import { BrandMutationService } from '../../services/brands/BrandMutationService.js';

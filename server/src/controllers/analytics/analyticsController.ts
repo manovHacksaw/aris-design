@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
 import { AnalyticsTrackingService } from '../../services/analytics/AnalyticsTrackingService.js';
 import { AnalyticsQueryService } from '../../services/analytics/AnalyticsQueryService.js';

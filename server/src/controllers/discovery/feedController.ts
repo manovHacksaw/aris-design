@@ -1,5 +1,5 @@
 import logger from '../../lib/logger.js';
-import { Request, Response } from "express";
+import { Response } from "express";
 import { HomeService } from "../../services/discovery/homeService.js";
 import { AuthenticatedRequest } from "../../middlewares/authMiddleware.js";
 

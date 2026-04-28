@@ -80,23 +80,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
       setUser(authUser);
       setSyncedAddress(address);
-      perfLog("user", "syncWithBackend auth complete");
+      // Release loading gate immediately — stats are non-critical, fetch in background
+      syncingRef.current = false;
+      setIsLoading(false);
+      perfLog("user", `syncWithBackend auth complete in ${(perfNow() - start).toFixed(1)}ms`);
 
-      // Fetch stats in parallel
-      try {
-        const s = await getUserStats();
-        setStats(s);
-      } catch {
-        // stats failure is non-critical
-      }
+      getUserStats().then(s => setStats(s)).catch(() => { });
     } catch (err) {
       console.error("UserContext: sync failed", err);
       setUser(null);
       setStats(null);
-    } finally {
       syncingRef.current = false;
       setIsLoading(false);
-      perfLog("user", `syncWithBackend finished in ${(perfNow() - start).toFixed(1)}ms`);
+      perfLog("user", `syncWithBackend failed in ${(perfNow() - start).toFixed(1)}ms`);
     }
   }, [isConnected, address, getAccessToken, privyUser]);
 
@@ -172,12 +168,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     getAuthToken().then((token) => {
       if (token && !user) {
-        getCurrentUser()
-          .then((u) => {
+        Promise.all([getCurrentUser(), getUserStats().catch(() => null)])
+          .then(([u, s]) => {
             setUser(u);
-            return getUserStats().catch(() => null);
+            if (s) setStats(s);
           })
-          .then((s) => { if (s) setStats(s); })
           .catch(() => { })
           .finally(() => setIsLoading(false));
       } else {

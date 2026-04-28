@@ -65,6 +65,7 @@ export class UserStatsService {
                 referralsCount,
                 loginStreakData,
                 topRankedEvents,
+                firstRankedEvents,
             ] = await Promise.all([
                 // Followers
                 prisma.userFollowers.count({ where: { followingId: userId } }),

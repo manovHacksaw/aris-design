@@ -78,12 +78,10 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (isLoading) return;
         if (user && !socket) {
-            const timer = setTimeout(() => connect(), 1200);
-            return () => clearTimeout(timer);
+            connect();
         }
         if (!user && socket) {
-            const timer = setTimeout(() => disconnect(), 0);
-            return () => clearTimeout(timer);
+            disconnect();
         }
     }, [user, isLoading, socket, connect, disconnect]);
 

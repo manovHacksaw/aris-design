@@ -115,22 +115,20 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         }
     }, [user?.id]);
 
-    // Initial load
+    // Initial load — deferred to browser idle so it doesn't compete with critical renders.
+    // Falls back to immediate if requestIdleCallback is unavailable (Safari < 16).
     useEffect(() => {
         if (!user?.id) return;
 
         const run = () => fetchPage(null, false);
-        const idle =
-            typeof window !== "undefined" && "requestIdleCallback" in window
-                ? (window as any).requestIdleCallback(run, { timeout: 1500 })
-                : null;
-        const timer = idle ? null : setTimeout(run, 800);
 
-        return () => {
-            if (idle && typeof window !== "undefined" && "cancelIdleCallback" in window)
-                (window as any).cancelIdleCallback(idle);
-            if (timer) clearTimeout(timer);
-        };
+        if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+            const id = (window as any).requestIdleCallback(run, { timeout: 2000 });
+            return () => (window as any).cancelIdleCallback(id);
+        }
+
+        // No requestIdleCallback — run immediately in the background (non-blocking)
+        run();
     }, [user?.id, fetchPage]);
 
     const loadMore = useCallback(async () => {

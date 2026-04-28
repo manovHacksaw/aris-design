@@ -485,7 +485,7 @@ export class RewardsController {
    * GET /api/rewards/constants
    * Get reward system constants
    */
-  static async getConstants(req: Request, res: Response): Promise<void> {
+  static async getConstants(_req: Request, res: Response): Promise<void> {
     res.json({
       success: true,
       data: {
@@ -507,7 +507,7 @@ export class RewardsController {
    * GET /api/rewards/contract-info
    * Get smart contract addresses
    */
-  static async getContractInfo(req: Request, res: Response): Promise<void> {
+  static async getContractInfo(_req: Request, res: Response): Promise<void> {
     res.json({
       success: true,
       data: {

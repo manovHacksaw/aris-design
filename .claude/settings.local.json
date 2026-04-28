@@ -84,7 +84,18 @@
       "Bash(git -C /c/Users/manov/Desktop/code/aris status)",
       "Bash(git -C /c/Users/manov/Desktop/code/aris diff --stat)",
       "Bash(git *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(pg_dump --version)",
+      "Bash(supabase --version)",
+      "Bash(docker --version)",
+      "Bash(psql --version)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(docker run *)",
+      "PowerShell(curl.exe -w \"`nTime: %{time_total}s`n\" -o NUL -s http://localhost:8000/api/events/8724cefb-2fd8-4eff-9688-d6561e777a4d)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(curl.exe -s \"https://auth.privy.io/api/v1/apps/cmluzr5hj00pw0cl7xyb8jhg7/jwks.json\")",
+      "PowerShell(curl.exe -w \"`nTime: %{time_total}s`n\" -o NUL -s https://aris-demo-production.up.railway.app/api/events/8724cefb-2fd8-4eff-9688-d6561e777a4d)",
+      "PowerShell(curl.exe -w \"`nTime: %{time_total}s`n\" -o NUL -s https://aris-demo-production.up.railway.app/api/events/8724cefb-2fd8-4eff-9688-d6561e777a4d; curl.exe -w \"`nTime: %{time_total}s`n\" -o NUL -s https://aris-demo-production.up.railway.app/api/events/8724cefb-2fd8-4eff-9688-d6561e777a4d)"
     ]
   }
 }

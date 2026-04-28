@@ -151,17 +151,11 @@ export default function BrandSidebar() {
                         />
 
                         {/* Public Website */}
-                        <a 
-                            href="http://www.aristhrottle.org/" 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="block"
-                        >
-                            <SidebarButton
-                                label="Public Website"
-                                icon={IoGlobeOutline}
-                            />
-                        </a>
+                        <SidebarButton
+                            label="Public Website"
+                            icon={IoGlobeOutline}
+                            onClick={() => window.open("http://www.aristhrottle.org/", "_blank", "noopener,noreferrer")}
+                        />
 
                         {/* Theme Toggle */}
                         <button
