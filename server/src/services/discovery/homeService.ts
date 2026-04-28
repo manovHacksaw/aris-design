@@ -64,45 +64,73 @@ function calculateHomeScore(
 
 export class HomeService {
     static async getHomeFeed(userId: string) {
+        const startTime = Date.now();
+        logger.info(`[HomeService.getHomeFeed] Starting feed generation for user: ${userId}`);
+
+        // 1. Fetch user + brand/social info
+        console.time(`[HomeService.getHomeFeed] Query 1: User + Brand + Following - ${userId}`);
         const user = await prisma.user.findUnique({
             where: { id: userId },
             include: {
                 brandSubscriptions: { select: { brandId: true } },
                 following: { select: { followingId: true } },
-                submissions: { select: { event: { select: { category: true } } } }
             }
         });
+        console.timeEnd(`[HomeService.getHomeFeed] Query 1: User + Brand + Following - ${userId}`);
 
         if (!user) return { curated: [], voteEvents: [], postEvents: [] };
 
-        const followedBrandIds = new Set(user.brandSubscriptions.map(s => s.brandId));
-        const followedUserIds = new Set(user.following.map(f => f.followingId));
-
+        // 2. Efficiently calculate top category using groupBy
+        console.time(`[HomeService.getHomeFeed] Query 2: Top Category Aggregation - ${userId}`);
+        const categoryStats = await prisma.submission.groupBy({
+            by: ['eventId'],
+            where: { userId },
+            _count: true,
+        });
+        // We need category, but Submission doesn't have category directly. 
+        // It's linked to Event. This is a bit tricky with Prisma groupBy.
+        // Let's use a simpler approach: fetch unique categories from recently participated events.
+        const recentSubmissions = await prisma.submission.findMany({
+            where: { userId },
+            take: 20,
+            select: { event: { select: { category: true } } }
+        });
         const categoriesCount: Record<string, number> = {};
-        user.submissions.forEach(s => {
+        recentSubmissions.forEach(s => {
             if (s.event?.category) {
                 categoriesCount[s.event.category] = (categoriesCount[s.event.category] || 0) + 1;
             }
         });
         const topCategory = Object.entries(categoriesCount).sort((a,b) => b[1] - a[1])[0]?.[0] || null;
+        console.timeEnd(`[HomeService.getHomeFeed] Query 2: Top Category Aggregation - ${userId}`);
 
+        const followedBrandIds = new Set(user.brandSubscriptions.map(s => s.brandId));
+        const followedUserIds = new Set(user.following.map(f => f.followingId));
+
+        // 3. Fetch active events
+        console.time(`[HomeService.getHomeFeed] Query 3: Active Events + Brands - ${userId}`);
         const events = await prisma.event.findMany({
-            where: { status: { in: ['posting', 'voting'] }, isDeleted: false },
+            where: { status: { in: ['posting', 'voting'] }, isDeleted: false, blockchainStatus: 'ACTIVE' },
             include: {
                 brand: { select: { name: true, level: true, isVerified: true, logoCid: true } },
                 _count: { select: { submissions: true, votes: true } },
+                // Social proof: check if friends are in this event
                 submissions: {
                     where: { userId: { in: Array.from(followedUserIds) } },
-                    select: { userId: true }
+                    select: { userId: true },
+                    take: 5
                 }
             }
         });
+        console.timeEnd(`[HomeService.getHomeFeed] Query 3: Active Events + Brands - ${userId}`);
 
-        // Attach participantAvatars (top 5 submitters/voters) for each event
+        // 4. Fetch avatar cloud (limited sample to avoid massive RTT)
+        console.time(`[HomeService.getHomeFeed] Query 4: Avatar Cloud - ${userId}`);
         const eventIds = events.map(e => e.id);
         const topSubmissions = await prisma.submission.findMany({
             where: { eventId: { in: eventIds }, status: 'approved' },
             select: { eventId: true, userId: true, user: { select: { id: true, avatarUrl: true } } },
+            take: 100, // Limit global sample
             orderBy: { createdAt: 'desc' },
         });
         const avatarsByEvent = new Map<string, Array<{ id: string; avatarUrl: string | null }>>();
@@ -113,7 +141,9 @@ export class HomeService {
                 arr.push({ id: sub.userId, avatarUrl: sub.user?.avatarUrl ?? null });
             }
         }
+        console.timeEnd(`[HomeService.getHomeFeed] Query 4: Avatar Cloud - ${userId}`);
 
+        // 5. Ranking
         const rankedEvents = events
             .map(event => ({
                 ...event,
@@ -122,6 +152,9 @@ export class HomeService {
             }))
             .filter(e => e.homeScore >= 0)
             .sort((a,b) => b.homeScore - a.homeScore);
+
+        const totalTime = Date.now() - startTime;
+        logger.info(`[HomeService.getHomeFeed] Completed in ${totalTime}ms for user ${userId}`);
 
         return {
             curated: rankedEvents.slice(0, 15),

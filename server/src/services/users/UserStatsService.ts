@@ -7,10 +7,12 @@ export class UserStatsService {
      * Get user statistics with high accuracy
      */
     static async getUserStats(userId: string) {
+        const startTime = Date.now();
         try {
             logger.info(`[UserStatsService.getUserStats] Fetching stats for user: ${userId}`);
 
-            // 1. Fetch user to verify existence and get denormalized counters
+            // 1. Fetch user + consolidate counts in ONE round-trip
+            console.time(`[UserStatsService.getUserStats] Query 1: User + Counts - ${userId}`);
             const user = await prisma.user.findUnique({
                 where: { id: userId },
                 select: { 
@@ -19,9 +21,23 @@ export class UserStatsService {
                     xp: true,
                     totalSubmissions: true,
                     totalVotes: true,
-                    totalEarnings: true
+                    totalEarnings: true,
+                    _count: {
+                        select: {
+                            followers: true,
+                            following: true,
+                            brandSubscriptions: true,
+                            submissions: true,
+                            votes: true,
+                            referralsMade: true,
+                        }
+                    },
+                    loginStreak: {
+                        select: { currentStreak: true }
+                    }
                 },
             });
+            console.timeEnd(`[UserStatsService.getUserStats] Query 1: User + Counts - ${userId}`);
 
             if (!user) {
                 logger.error(`[UserStatsService.getUserStats] User not found: ${userId}`);
@@ -33,53 +49,17 @@ export class UserStatsService {
                 logger.error(err, '[UserStatsService.getUserStats] Streak update failed:');
             });
 
-            // 2. Aggregate all metrics in parallel
-            // We use direct counts where possible to ensure accuracy even if counters are out of sync
-            
-            // Debug: check first 3 submissions to see if they exist for this user
-            const sampleSubmissions = await prisma.submission.findMany({
-                where: { userId },
-                take: 3,
-                select: { id: true, eventId: true }
-            });
-            logger.info({ sampleSubmissions }, `[UserStatsService.getUserStats] Sample submissions for ${userId}:`);
-
-            const sampleVotes = await prisma.vote.findMany({
-                where: { userId },
-                take: 3,
-                select: { id: true, eventId: true }
-            });
-            logger.info({ sampleVotes }, `[UserStatsService.getUserStats] Sample votes for ${userId}:`);
-
+            // 2. Parallel block for complex aggregations
+            console.time(`[UserStatsService.getUserStats] Query Block 2: Parallel Aggregations - ${userId}`);
             const [
-                followersCount,
-                followingCount,
-                brandSubscriptionsCount,
-                submissionsCount,
-                votesCastCount,
                 votesReceivedSum,
                 votedEvents,
                 submittedEvents,
                 rewardClaimsSum,
                 otherEarningsSum,
-                referralsCount,
-                loginStreakData,
                 topRankedEvents,
                 firstRankedEvents,
             ] = await Promise.all([
-                // Followers
-                prisma.userFollowers.count({ where: { followingId: userId } }),
-                // Following (users)
-                prisma.userFollowers.count({ where: { followerId: userId } }),
-                // Following (brands)
-                prisma.brandSubscription.count({ where: { userId } }),
-
-                // Posts (Submissions)
-                prisma.submission.count({ where: { userId } }),
-
-                // Votes Cast
-                prisma.vote.count({ where: { userId } }),
-
                 // Votes Received (total votes on user's submissions)
                 prisma.vote.count({
                     where: { submission: { userId } }
@@ -97,7 +77,7 @@ export class UserStatsService {
                     where: { userId },
                 }),
 
-                // Reward Earnings — includes PENDING so users see what they've earned even pre-claim
+                // Reward Earnings
                 prisma.rewardClaim.aggregate({
                     where: {
                         userId,
@@ -115,16 +95,7 @@ export class UserStatsService {
                     _sum: { amount: true },
                 }),
 
-                // Referrals
-                prisma.referral.count({ where: { referrerId: userId } }),
-
-                // Login streak
-                prisma.userLoginStreak.findUnique({
-                    where: { userId },
-                    select: { currentStreak: true },
-                }).catch(() => null),
-
-                // Top 3 finishes (submissions where finalRank is 1, 2, or 3)
+                // Top 3 finishes
                 prisma.submission.count({
                     where: { userId, finalRank: { gte: 1, lte: 3 } },
                 }),
@@ -133,6 +104,7 @@ export class UserStatsService {
                     where: { userId, finalRank: 1 },
                 }),
             ]);
+            console.timeEnd(`[UserStatsService.getUserStats] Query Block 2: Parallel Aggregations - ${userId}`);
 
             // Combine event sets to get unique events participated in
             const uniqueEventIds = new Set([
@@ -140,38 +112,28 @@ export class UserStatsService {
                 ...submittedEvents.map(e => e.eventId)
             ]);
 
-            const votesReceivedAggregate = votesReceivedSum;
             const totalEarnings = (rewardClaimsSum._sum.finalAmount || 0) + (otherEarningsSum._sum.amount || 0);
             
-            // Log if there's a significant mismatch with denormalized fields (for debugging)
-            if (submissionsCount !== user.totalSubmissions || votesCastCount !== user.totalVotes) {
-                logger.warn({
-                    userId,
-                    submissionsCount,
-                    totalSubmissions: user.totalSubmissions,
-                    votesCastCount,
-                    totalVotes: user.totalVotes
-                }, `[UserStatsService.getUserStats] Counter mismatch:`);
-            }
-
             const stats = {
-                subscribers: followersCount,
-                subscriptions: followingCount + brandSubscriptionsCount,
-                posts: submissionsCount,
-                votes: votesCastCount,
-                votesCast: votesCastCount,
-                votesReceived: votesReceivedAggregate,
+                subscribers: user._count.followers,
+                subscriptions: user._count.following + user._count.brandSubscriptions,
+                posts: user._count.submissions,
+                votes: user._count.votes,
+                votesCast: user._count.votes,
+                votesReceived: votesReceivedSum,
                 events: uniqueEventIds.size,
                 earnings: totalEarnings,
-                referrals: referralsCount,
-                loginStreak: loginStreakData?.currentStreak ?? 0,
+                referrals: user._count.referralsMade,
+                loginStreak: user.loginStreak?.currentStreak ?? 0,
                 topRankedEvents,
                 firstRankedEvents,
             };
 
-            logger.info({ stats }, `[UserStatsService.getUserStats] Resulting Stats:`);
+            const totalTime = Date.now() - startTime;
+            logger.info(`[UserStatsService.getUserStats] Completed in ${totalTime}ms for user ${userId}`);
 
             return stats;
+
         } catch (error: any) {
             logger.error({ 
                 err: error,
