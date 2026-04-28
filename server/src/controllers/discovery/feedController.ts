@@ -1,7 +1,7 @@
-import logger from '../../lib/logger.js';
+import logger from '../../lib/logger';
 import { Response } from "express";
-import { HomeService } from "../../services/discovery/homeService.js";
-import { AuthenticatedRequest } from "../../middlewares/authMiddleware.js";
+import { HomeService } from "../../services/discovery/homeService";
+import { AuthenticatedRequest } from "../../middlewares/authMiddleware";
 
 /**
  * Get personalized Home event feed

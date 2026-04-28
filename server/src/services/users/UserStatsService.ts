@@ -1,6 +1,6 @@
-import logger from '../../lib/logger.js';
-import { prisma } from '../../lib/prisma.js';
-import { LoginStreakService } from './loginStreakService.js';
+import logger from '../../lib/logger';
+import { prisma } from '../../lib/prisma';
+import { LoginStreakService } from './loginStreakService';
 
 export class UserStatsService {
     /**

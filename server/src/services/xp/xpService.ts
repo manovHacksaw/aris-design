@@ -1,5 +1,5 @@
 import logger from '../../lib/logger';
-import { prisma } from '../../lib/prisma.js';
+import { prisma } from '../../lib/prisma';
 import { MilestoneCategory, XpTransactionType, Prisma } from '@prisma/client';
 import {
   MilestoneConfig,
@@ -12,13 +12,13 @@ import {
   ReferralStats,
   MilestoneCounts,
   MilestoneProgress,
-} from '../../types/xp.js';
-import { NotificationService } from '../social/notificationService.js';
+} from '../../types/xp';
+import { NotificationService } from '../social/notificationService';
 import {
   MILESTONE_CONFIGS,
   USER_LEVEL_THRESHOLDS,
   REFERRAL_BASE_XP,
-} from '../../config/xpConfig.js';
+} from '../../config/xpConfig';
 
 export class XpService {
   // ==================== CONFIGURATIONS (Internal) ====================

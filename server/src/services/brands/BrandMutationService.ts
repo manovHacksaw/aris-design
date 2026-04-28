@@ -1,6 +1,6 @@
-import { prisma } from '../../lib/prisma.js';
+import { prisma } from '../../lib/prisma';
 import { UserRole } from '@prisma/client';
-import { NotFoundError, ValidationError, ConflictError } from '../../utils/errors.js';
+import { NotFoundError, ValidationError, ConflictError } from '../../utils/errors';
 
 const LOCKED_FIELDS = [
   'name', 'companyName', 'categories', 'websiteUrl',

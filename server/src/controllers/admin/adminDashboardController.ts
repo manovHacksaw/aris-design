@@ -1,6 +1,6 @@
-import logger from '../../lib/logger.js';
+import logger from '../../lib/logger';
 import { Request, Response } from 'express';
-import { AdminDashboardService } from '../../services/admin/AdminDashboardService.js';
+import { AdminDashboardService } from '../../services/admin/AdminDashboardService';
 
 /**
  * Get dashboard statistics

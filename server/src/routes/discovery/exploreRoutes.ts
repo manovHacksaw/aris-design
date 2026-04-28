@@ -1,7 +1,7 @@
 import logger from '../../lib/logger';
 import { Router, Request, Response } from 'express';
-import { ExploreService } from '../../services/discovery/exploreService.js';
-import { authenticateOptional } from '../../middlewares/authMiddleware.js';
+import { ExploreService } from '../../services/discovery/exploreService';
+import { authenticateOptional } from '../../middlewares/authMiddleware';
 
 const router = Router();
 

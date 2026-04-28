@@ -1,4 +1,4 @@
-import { prisma } from '../../lib/prisma.js';
+import { prisma } from '../../lib/prisma';
 import { RewardsPoolStatus } from '@prisma/client';
 import {
   REWARDS_CONSTANTS,
@@ -6,7 +6,7 @@ import {
   PoolRequirements,
   PoolCalculationParams,
   PoolInfo,
-} from '../../types/rewards.js';
+} from '../../types/rewards';
 
 export class RewardsPoolService {
 

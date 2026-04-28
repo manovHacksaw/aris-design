@@ -1,5 +1,5 @@
-import { prisma } from '../../lib/prisma.js';
-import logger from '../../lib/logger.js';
+import { prisma } from '../../lib/prisma';
+import logger from '../../lib/logger';
 
 export class AdminDashboardService {
     /**

@@ -1,6 +1,6 @@
 import logger from '../../lib/logger';
-import { prisma } from '../../lib/prisma.js';
-import { enforceEventDemographics } from '../../utils/eventUtils.js';
+import { prisma } from '../../lib/prisma';
+import { enforceEventDemographics } from '../../utils/eventUtils';
 
 /**
  * Universal Ranking Algorithm for Events

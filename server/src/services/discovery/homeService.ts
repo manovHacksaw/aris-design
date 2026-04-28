@@ -1,6 +1,6 @@
-import { prisma } from '../../lib/prisma.js';
-import { calculateEventScore } from './exploreService.js';
-import { enforceEventDemographics } from '../../utils/eventUtils.js';
+import { prisma } from '../../lib/prisma';
+import { calculateEventScore } from './exploreService';
+import { enforceEventDemographics } from '../../utils/eventUtils';
 
 /**
  * Calculates a personalized Home Score for a given user and event.

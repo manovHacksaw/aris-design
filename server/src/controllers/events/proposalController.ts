@@ -1,10 +1,10 @@
 import logger from '../../lib/logger';
 import { Response } from 'express';
-import { ProposalService } from '../../services/events/proposalService.js';
-import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
-import { prisma } from '../../lib/prisma.js';
-import { AppError } from '../../utils/errors.js';
-import { CreateProposalRequest, UpdateProposalRequest } from '../../types/proposal.js';
+import { ProposalService } from '../../services/events/proposalService';
+import { AuthenticatedRequest } from '../../middlewares/authMiddleware';
+import { prisma } from '../../lib/prisma';
+import { AppError } from '../../utils/errors';
+import { CreateProposalRequest, UpdateProposalRequest } from '../../types/proposal';
 
 async function getBrandByOwner(userId: string, res: Response) {
   const brand = await prisma.brand.findFirst({ where: { ownerId: userId }, select: { id: true } });

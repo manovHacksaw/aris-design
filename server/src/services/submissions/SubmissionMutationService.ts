@@ -1,13 +1,13 @@
-import logger from '../../lib/logger.js';
-import { prisma } from '../../lib/prisma.js';
-import { NotificationService } from '../social/notificationService.js';
-import { NotFoundError, ForbiddenError, ValidationError } from '../../utils/errors.js';
+import logger from '../../lib/logger';
+import { prisma } from '../../lib/prisma';
+import { NotificationService } from '../social/notificationService';
+import { NotFoundError, ForbiddenError, ValidationError } from '../../utils/errors';
 import { MilestoneCategory } from '@prisma/client';
-import { CreateSubmissionRequest, UpdateSubmissionRequest } from '../../types/submission.js';
-import { EventStatus } from '../../types/event.js';
-import { XpService } from '../xp/xpService.js';
-import { enforceEventDemographics } from '../../utils/eventUtils.js';
-import { SubmissionUtils } from './SubmissionUtils.js';
+import { CreateSubmissionRequest, UpdateSubmissionRequest } from '../../types/submission';
+import { EventStatus } from '../../types/event';
+import { XpService } from '../xp/xpService';
+import { enforceEventDemographics } from '../../utils/eventUtils';
+import { SubmissionUtils } from './SubmissionUtils';
 
 export class SubmissionMutationService {
   /**

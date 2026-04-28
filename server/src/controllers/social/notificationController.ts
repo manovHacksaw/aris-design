@@ -1,7 +1,7 @@
 import logger from '../../lib/logger';
 import { Request, Response } from 'express';
 import { AuthenticatedRequest } from '../../middlewares/authMiddleware';
-import { NotificationService } from '../../services/social/notificationService.js';
+import { NotificationService } from '../../services/social/notificationService';
 
 const userId = (req: Request) => (req as AuthenticatedRequest).user?.id;
 

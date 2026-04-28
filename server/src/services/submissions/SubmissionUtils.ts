@@ -1,4 +1,4 @@
-import { getIPFSUrl } from '../ipfsService.js';
+import { getIPFSUrl } from '../ipfsService';
 
 export class SubmissionUtils {
   /**

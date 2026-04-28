@@ -1,8 +1,8 @@
 import logger from '../lib/logger';
-import { prisma } from '../lib/prisma.js';
+import { prisma } from '../lib/prisma';
 import { MilestoneCategory, XpTransactionType, Prisma } from '@prisma/client';
-import { XpService } from './xp/xpService.js';
-import { ReferralStats, ProcessReferralResult, ClaimedMilestone } from '../types/xp.js';
+import { XpService } from './xp/xpService';
+import { ReferralStats, ProcessReferralResult, ClaimedMilestone } from '../types/xp';
 
 export class ReferralService {
   // Characters to use in referral codes (avoiding confusing ones like 0/O, 1/I/l)

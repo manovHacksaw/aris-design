@@ -1,16 +1,16 @@
 import logger from '../../lib/logger';
 import { Response } from 'express';
-import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
-import { XpService } from '../../services/xp/xpService.js';
-import { LoginStreakService } from '../../services/users/loginStreakService.js';
-import { ReferralService } from '../../services/referralService.js';
+import { AuthenticatedRequest } from '../../middlewares/authMiddleware';
+import { XpService } from '../../services/xp/xpService';
+import { LoginStreakService } from '../../services/users/loginStreakService';
+import { ReferralService } from '../../services/referralService';
 import {
   LoginPingResponse,
   XpStatusResponse,
   MilestoneProgressResponse,
   ReferralInfoResponse,
   GenerateReferralCodeResponse,
-} from '../../types/xp.js';
+} from '../../types/xp';
 
 /**
  * Record daily login and update streak
@@ -230,7 +230,7 @@ export const getXpTransactions = async (
       return res.status(401).json({ success: false, error: 'Authentication required' });
     }
 
-    const { prisma } = await import('../../lib/prisma.js');
+    const { prisma } = await import('../../lib/prisma');
 
     const transactions = await prisma.xpTransaction.findMany({
       where: { userId },

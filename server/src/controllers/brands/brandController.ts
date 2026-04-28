@@ -1,9 +1,9 @@
-import logger from '../../lib/logger.js';
+import logger from '../../lib/logger';
 import { Response } from 'express';
-import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
-import { BrandQueryService } from '../../services/brands/BrandQueryService.js';
-import { BrandMutationService } from '../../services/brands/BrandMutationService.js';
-import { AppError } from '../../utils/errors.js';
+import { AuthenticatedRequest } from '../../middlewares/authMiddleware';
+import { BrandQueryService } from '../../services/brands/BrandQueryService';
+import { BrandMutationService } from '../../services/brands/BrandMutationService';
+import { AppError } from '../../utils/errors';
 
 export const getCurrentBrand = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {

@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { logout, privyLogin } from '../../controllers/auth/authController.js';
-import { authenticateOptional } from '../../middlewares/authMiddleware.js';
-import { loginRateLimit } from '../../config/rateLimits.js';
+import { logout, privyLogin } from '../../controllers/auth/authController';
+import { authenticateOptional } from '../../middlewares/authMiddleware';
+import { loginRateLimit } from '../../config/rateLimits';
 
 const router = Router();
 

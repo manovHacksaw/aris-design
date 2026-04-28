@@ -6,9 +6,9 @@ import {
     getSubmissionsByEvent,
     getUserSubmission,
     checkIfUserHasSubmitted,
-} from '../../controllers/events/submissionController.js';
-import { authenticateJWT, authenticateOptional } from '../../middlewares/authMiddleware.js';
-import { apiCacheHeaders } from '../../middlewares/cacheMiddleware.js';
+} from '../../controllers/events/submissionController';
+import { authenticateJWT, authenticateOptional } from '../../middlewares/authMiddleware';
+import { apiCacheHeaders } from '../../middlewares/cacheMiddleware';
 
 const router = Router({ mergeParams: true });
 

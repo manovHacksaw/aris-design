@@ -1,6 +1,6 @@
-import aj from '../lib/arcjet.js';
+import aj from '../lib/arcjet';
 import { fixedWindow } from '@arcjet/node';
-import { arcjetMiddleware } from '../middlewares/arcjetMiddleware.js';
+import { arcjetMiddleware } from '../middlewares/arcjetMiddleware';
 
 /**
  * Fingerprint helper for authenticated users or anonymous IPs

@@ -1,7 +1,7 @@
-import logger from '../../lib/logger.js';
+import logger from '../../lib/logger';
 import axios from 'axios';
 import FormData from 'form-data';
-import { AiUtils } from './AiUtils.js';
+import { AiUtils } from './AiUtils';
 
 export class AiImageService {
     /**

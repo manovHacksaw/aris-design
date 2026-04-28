@@ -1,10 +1,10 @@
-import logger from '../../lib/logger.js';
-import { prisma } from '../../lib/prisma.js';
+import logger from '../../lib/logger';
+import { prisma } from '../../lib/prisma';
 import { ClaimType, ClaimStatus, WalletStatus, RewardsPoolStatus } from '@prisma/client';
 import {
   REWARDS_CONSTANTS,
   ProcessEventRewardsResult,
-} from '../../types/rewards.js';
+} from '../../types/rewards';
 
 export class RewardsDistributionService {
 
@@ -267,8 +267,8 @@ export class RewardsDistributionService {
       }
 
       // ==================== ON-CHAIN DISTRIBUTION ====================
-      const BlockchainService = (await import('../../lib/blockchain.js')).BlockchainService;
-      const NotificationService = (await import('../social/notificationService.js')).NotificationService;
+      const BlockchainService = (await import('../../lib/blockchain')).BlockchainService;
+      const NotificationService = (await import('../social/notificationService')).NotificationService;
 
       const usersBatch: string[] = [];
       const amountsBatch: bigint[] = [];
@@ -319,7 +319,7 @@ export class RewardsDistributionService {
           const chainId = parseInt(process.env.CHAIN_ID || '80002');
           const polygonAmoy = defineChain({ id: chainId, name: 'Polygon Amoy', nativeCurrency: { decimals: 18, name: 'MATIC', symbol: 'MATIC' }, rpcUrls: { default: { http: [process.env.RPC_URL || 'https://rpc-amoy.polygon.technology'] } }, testnet: true });
           const publicClient = createPublicClient({ chain: polygonAmoy, transport: http(process.env.RPC_URL || 'https://rpc-amoy.polygon.technology') });
-          const onChainEventId = (await import('../../lib/blockchain.js')).eventIdToBytes32(eventId);
+          const onChainEventId = (await import('../../lib/blockchain')).eventIdToBytes32(eventId);
           const vaultAddress = process.env.REWARDS_VAULT_ADDRESS || '0x34C5A617e32c84BC9A54c862723FA5538f42F221';
 
           const poolData: any = await (publicClient as any).readContract({

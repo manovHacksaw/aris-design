@@ -1,12 +1,12 @@
-import logger from '../../lib/logger.js';
+import logger from '../../lib/logger';
 import { Request, Response } from 'express';
-import { UserQueryService } from '../../services/users/UserQueryService.js';
-import { UserMutationService } from '../../services/users/UserMutationService.js';
-import { UserStatsService } from '../../services/users/UserStatsService.js';
-import { UserSocialService } from '../../services/users/UserSocialService.js';
-import { UserReferralService } from '../../services/users/UserReferralService.js';
-import { VoteService } from '../../services/events/voteService.js';
-import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
+import { UserQueryService } from '../../services/users/UserQueryService';
+import { UserMutationService } from '../../services/users/UserMutationService';
+import { UserStatsService } from '../../services/users/UserStatsService';
+import { UserSocialService } from '../../services/users/UserSocialService';
+import { UserReferralService } from '../../services/users/UserReferralService';
+import { VoteService } from '../../services/events/voteService';
+import { AuthenticatedRequest } from '../../middlewares/authMiddleware';
 
 /**
  * Search users by username or display name

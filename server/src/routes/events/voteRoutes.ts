@@ -6,9 +6,9 @@ import {
     checkIfUserHasVoted,
     getEventParticipants,
     getVoterBreakdown,
-} from '../../controllers/events/voteController.js';
-import { authenticateJWT } from '../../middlewares/authMiddleware.js';
-import { voteRateLimit } from '../../config/rateLimits.js';
+} from '../../controllers/events/voteController';
+import { authenticateJWT } from '../../middlewares/authMiddleware';
+import { voteRateLimit } from '../../config/rateLimits';
 
 const router = Router({ mergeParams: true });
 

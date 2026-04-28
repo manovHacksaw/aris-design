@@ -1,8 +1,8 @@
 import logger from '../../lib/logger';
-import { prisma } from '../../lib/prisma.js';
+import { prisma } from '../../lib/prisma';
 import { MilestoneCategory } from '@prisma/client';
-import { XpService } from '../xp/xpService.js';
-import { StreakResult, StreakStatus, ClaimedMilestone } from '../../types/xp.js';
+import { XpService } from '../xp/xpService';
+import { StreakResult, StreakStatus, ClaimedMilestone } from '../../types/xp';
 
 export class LoginStreakService {
   /**

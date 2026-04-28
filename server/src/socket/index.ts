@@ -1,10 +1,10 @@
-import logger from '../lib/logger.js';
+import logger from '../lib/logger';
 import { Server as HTTPServer } from 'http';
 import { Server, Socket } from 'socket.io';
-import { privy, PRIVY_VERIFICATION_KEY } from '../lib/privy.js';
-import { prisma } from '../lib/prisma.js';
-import { PresenceService } from '../services/presenceService.js';
-import { AnalyticsTrackingService } from '../services/analytics/AnalyticsTrackingService.js';
+import { privy, PRIVY_VERIFICATION_KEY } from '../lib/privy';
+import { prisma } from '../lib/prisma';
+import { PresenceService } from '../services/presenceService';
+import { AnalyticsTrackingService } from '../services/analytics/AnalyticsTrackingService';
 
 /**
  * Extended Socket interface with user data
@@ -293,4 +293,4 @@ export {
     isUserViewing,
     getUserEvents,
     getStats as getPresenceStats
-} from '../services/presenceService.js';
+} from '../services/presenceService';

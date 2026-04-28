@@ -1,8 +1,8 @@
-import { prisma } from '../../lib/prisma.js';
+import { prisma } from '../../lib/prisma';
 import { UserRole } from '@prisma/client';
-import { NotFoundError, ValidationError } from '../../utils/errors.js';
-import { addBrandLogoUrls } from '../brands/BrandQueryService.js';
-import { EventQueryService } from '../events/EventQueryService.js';
+import { NotFoundError, ValidationError } from '../../utils/errors';
+import { addBrandLogoUrls } from '../brands/BrandQueryService';
+import { EventQueryService } from '../events/EventQueryService';
 
 export interface SearchOptions {
   q: string;

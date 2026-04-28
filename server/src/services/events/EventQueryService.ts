@@ -1,10 +1,10 @@
-import { prisma } from '../../lib/prisma.js';
+import { prisma } from '../../lib/prisma';
 import { Event } from '@prisma/client';
 import {
   EventFilters,
   EventStatus,
-} from '../../types/event.js';
-import { getIPFSUrl } from '../ipfsService.js';
+} from '../../types/event';
+import { getIPFSUrl } from '../ipfsService';
 
 
 export class EventQueryService {

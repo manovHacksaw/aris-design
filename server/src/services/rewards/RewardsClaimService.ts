@@ -1,12 +1,12 @@
-import logger from '../../lib/logger.js';
-import { prisma } from '../../lib/prisma.js';
+import logger from '../../lib/logger';
+import { prisma } from '../../lib/prisma';
 import { ClaimType, ClaimStatus, WalletStatus } from '@prisma/client';
 import {
   ClaimInfo,
   UserClaimableRewards,
   ClaimHistoryItem,
   UserClaimHistory,
-} from '../../types/rewards.js';
+} from '../../types/rewards';
 
 export class RewardsClaimService {
 
@@ -67,8 +67,8 @@ export class RewardsClaimService {
       perEventMap.set(eventId, existing);
     }
 
-    const BlockchainService = (await import('../../lib/blockchain.js')).BlockchainService;
-    const NotificationService = (await import('../social/notificationService.js')).NotificationService;
+    const BlockchainService = (await import('../../lib/blockchain')).BlockchainService;
+    const NotificationService = (await import('../social/notificationService')).NotificationService;
 
     for (const [eventId, data] of perEventMap) {
       try {

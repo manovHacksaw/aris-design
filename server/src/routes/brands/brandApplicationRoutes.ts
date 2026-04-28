@@ -9,7 +9,7 @@ import {
 } from '../../controllers/brands/brandApplicationController';
 import { authenticateJWT, AuthenticatedRequest } from '../../middlewares/authMiddleware';
 import { authenticateAdmin } from '../../middlewares/adminMiddleware';
-import { registerRateLimit } from '../../config/rateLimits.js';
+import { registerRateLimit } from '../../config/rateLimits';
 
 const router = Router();
 

@@ -1,16 +1,16 @@
 import logger from '../../lib/logger';
 import { Response } from 'express';
-import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
-import { BrandXpService } from '../../services/brands/brandXpService.js';
+import { AuthenticatedRequest } from '../../middlewares/authMiddleware';
+import { BrandXpService } from '../../services/brands/brandXpService';
 
 import {
   BrandLevelStatusResponse,
   BrandDiscountResponse,
   BrandLevelHistoryResponse,
   RecalculateBrandLevelResponse,
-} from '../../types/brandXp.js';
+} from '../../types/brandXp';
 
-import { BrandService } from '../../services/brands/BrandService.js';
+import { BrandService } from '../../services/brands/BrandService';
 
 // Removed local getBrandForUser helper, using BrandService instead.
 

@@ -1,6 +1,6 @@
-import { RewardsPoolService } from './RewardsPoolService.js';
+import { RewardsPoolService } from './RewardsPoolService';
 import logger from '../../lib/logger';
-import { prisma } from '../../lib/prisma.js';
+import { prisma } from '../../lib/prisma';
 import { RewardsPoolStatus } from '@prisma/client';
 
 export class RewardsRefundService {
@@ -22,7 +22,7 @@ export class RewardsRefundService {
     let onChainBalance = 0;
     if (brand?.walletAddress) {
       try {
-        const { BlockchainService } = await import('../../lib/blockchain.js');
+        const { BlockchainService } = await import('../../lib/blockchain');
         onChainBalance = await BlockchainService.getBrandRefundBalance(brand.walletAddress);
       } catch (e) {
         logger.warn(e, 'Failed to fetch on-chain refund balance:');

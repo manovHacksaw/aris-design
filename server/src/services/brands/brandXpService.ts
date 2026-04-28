@@ -1,10 +1,10 @@
-import { prisma } from '../../lib/prisma.js';
+import { prisma } from '../../lib/prisma';
 import {
   BrandLevelConfig,
   BrandLevelStatus,
   BrandLevelUpdateResult,
   BrandMetrics,
-} from '../../types/brandXp.js';
+} from '../../types/brandXp';
 
 export class BrandXpService {
   // ==================== LEVEL CONFIGURATIONS ====================

@@ -1,12 +1,12 @@
-import './env.js';
-import logger from './lib/logger.js';
+import './env';
+import logger from './lib/logger';
 import http from 'http';
-import { createApp } from './app.js';
-import { checkDatabaseConnection, disconnectDatabase } from './utils/dbConnection.js';
-import { setupSocket, closeSocket } from './socket/index.js';
-import { EventLifecycleService } from './services/events/EventLifecycleService.js';
-import { RewardsDistributionService } from './services/rewards/RewardsDistributionService.js';
-import { privy, PRIVY_VERIFICATION_KEY } from './lib/privy.js';
+import { createApp } from './app';
+import { checkDatabaseConnection, disconnectDatabase } from './utils/dbConnection';
+import { setupSocket, closeSocket } from './socket/index';
+import { EventLifecycleService } from './services/events/EventLifecycleService';
+import { RewardsDistributionService } from './services/rewards/RewardsDistributionService';
+import { privy, PRIVY_VERIFICATION_KEY } from './lib/privy';
 
 const PORT = process.env.PORT || 5000;
 
@@ -54,7 +54,7 @@ async function startServer(): Promise<void> {
     // Start background task for event transitions
     const transitionInterval = setInterval(async () => {
         try {
-            const { prisma } = await import('./lib/prisma.js');
+            const { prisma } = await import('./lib/prisma');
 
             const now = new Date();
             const eventsToTransition = await prisma.event.findMany({
@@ -85,7 +85,7 @@ async function startServer(): Promise<void> {
     // Retry rewards for ACTIVE pools on COMPLETED events (runs every 5 minutes)
     const rewardRetryInterval = setInterval(async () => {
         try {
-            const { prisma } = await import('./lib/prisma.js');
+            const { prisma } = await import('./lib/prisma');
             const MAX_ATTEMPTS = 3;
             const RETRY_COOLDOWN_MS = 5 * 60_000;
 
@@ -132,7 +132,7 @@ async function startServer(): Promise<void> {
     // Reset events stuck in SCHEDULED with no blockchain activity for >24h (runs every 10 minutes)
     const blockchainTimeoutInterval = setInterval(async () => {
         try {
-            const { prisma } = await import('./lib/prisma.js');
+            const { prisma } = await import('./lib/prisma');
             const TIMEOUT_MS = 24 * 60 * 60_000;
 
             const timedOut = await prisma.event.findMany({

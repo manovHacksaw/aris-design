@@ -1,14 +1,14 @@
-import logger from '../../lib/logger.js';
+import logger from '../../lib/logger';
 import { Request, Response } from 'express';
-import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
+import { AuthenticatedRequest } from '../../middlewares/authMiddleware';
 
 import { ClaimType } from '@prisma/client';
-import { EventType, REWARDS_CONSTANTS } from '../../types/rewards.js';
-import { RewardsPoolService } from '../../services/rewards/RewardsPoolService.js';
-import { RewardsClaimService } from '../../services/rewards/RewardsClaimService.js';
-import { RewardsRefundService } from '../../services/rewards/RewardsRefundService.js';
-import { BrandService } from '../../services/brands/BrandService.js';
-import { EventQueryService } from '../../services/events/EventQueryService.js';
+import { EventType, REWARDS_CONSTANTS } from '../../types/rewards';
+import { RewardsPoolService } from '../../services/rewards/RewardsPoolService';
+import { RewardsClaimService } from '../../services/rewards/RewardsClaimService';
+import { RewardsRefundService } from '../../services/rewards/RewardsRefundService';
+import { BrandService } from '../../services/brands/BrandService';
+import { EventQueryService } from '../../services/events/EventQueryService';
 
 /**
  * Rewards Controller

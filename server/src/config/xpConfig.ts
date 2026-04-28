@@ -1,5 +1,5 @@
 import { MilestoneCategory } from '@prisma/client';
-import { MilestoneConfig, LevelConfig } from '../types/xp.js';
+import { MilestoneConfig, LevelConfig } from '../types/xp';
 
 export const REFERRAL_BASE_XP = 5;
 

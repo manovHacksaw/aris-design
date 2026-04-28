@@ -5,8 +5,8 @@ import {
   getBrandLevelHistory,
   recalculateBrandLevel,
   getLevelThresholds,
-} from '../../controllers/brands/brandXpController.js';
-import { authenticateJWT } from '../../middlewares/authMiddleware.js';
+} from '../../controllers/brands/brandXpController';
+import { authenticateJWT } from '../../middlewares/authMiddleware';
 
 const router = Router();
 

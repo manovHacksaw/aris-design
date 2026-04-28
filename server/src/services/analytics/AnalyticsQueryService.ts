@@ -1,13 +1,13 @@
 import logger from '../../lib/logger';
-import { prisma } from '../../lib/prisma.js';
-import { getActiveCount } from '../../socket/index.js';
+import { prisma } from '../../lib/prisma';
+import { getActiveCount } from '../../socket/index';
 import {
   initGenderCounts,
   initAgeGroupCounts,
   normalizeGender,
   getAgeGroup,
   computeEntropy,
-} from './AnalyticsUtils.js';
+} from './AnalyticsUtils';
 
 export class AnalyticsQueryService {
   /**

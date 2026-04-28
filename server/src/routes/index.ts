@@ -1,34 +1,34 @@
-import logger from '../lib/logger.js';
+import logger from '../lib/logger';
 import { Router } from 'express';
-import userRoutes from './users/userRoutes.js';
-import authRoutes from './auth/authRoutes.js';
+import userRoutes from './users/userRoutes';
+import authRoutes from './auth/authRoutes';
 
-import phoneRoutes from './users/phoneRoutes.js';
-import brandApplicationRoutes from './brands/brandApplicationRoutes.js';
-import brandClaimRoutes from './brands/brandClaimRoutes.js';
-import brandRoutes from './brands/brandRoutes.js';
-import adminRoutes from './admin/adminRoutes.js';
-import searchRoutes from './discovery/searchRoutes.js';
-import eventRoutes from './events/eventRoutes.js';
-import leaderboardRoutes from './discovery/leaderboardRoutes.js';
-import notificationRoutes from './social/notificationRoutes.js';
-import analyticsRoutes from './analytics/analyticsRoutes.js';
-import subscriptionRoutes from './social/subscriptionRoutes.js';
-import aiRoutes from './ai/aiRoutes.js';
-import xpRoutes from './xp/xpRoutes.js';
-import brandXpRoutes from './brands/brandXpRoutes.js';
-import rewardsRoutes from './rewards/rewardsRoutes.js';
-import debugRoutes from './debug/debugRoutes.js';
-import exploreRoutes from './discovery/exploreRoutes.js';
-import draftRoutes from './drafts/draftRoutes.js';
-import feedRoutes from './feed/feedRoutes.js';
+import phoneRoutes from './users/phoneRoutes';
+import brandApplicationRoutes from './brands/brandApplicationRoutes';
+import brandClaimRoutes from './brands/brandClaimRoutes';
+import brandRoutes from './brands/brandRoutes';
+import adminRoutes from './admin/adminRoutes';
+import searchRoutes from './discovery/searchRoutes';
+import eventRoutes from './events/eventRoutes';
+import leaderboardRoutes from './discovery/leaderboardRoutes';
+import notificationRoutes from './social/notificationRoutes';
+import analyticsRoutes from './analytics/analyticsRoutes';
+import subscriptionRoutes from './social/subscriptionRoutes';
+import aiRoutes from './ai/aiRoutes';
+import xpRoutes from './xp/xpRoutes';
+import brandXpRoutes from './brands/brandXpRoutes';
+import rewardsRoutes from './rewards/rewardsRoutes';
+import debugRoutes from './debug/debugRoutes';
+import exploreRoutes from './discovery/exploreRoutes';
+import draftRoutes from './drafts/draftRoutes';
+import feedRoutes from './feed/feedRoutes';
 
 const router = Router();
 
 // Health check route
 router.get('/health', async (_req, res) => {
   try {
-    const { prisma } = await import('../lib/prisma.js');
+    const { prisma } = await import('../lib/prisma');
     await prisma.$queryRaw`SELECT 1`;
     res.json({
       status: 'ok',

@@ -1,12 +1,12 @@
 import logger from '../../lib/logger';
-import { prisma } from '../../lib/prisma.js';
+import { prisma } from '../../lib/prisma';
 import {
   initGenderCounts,
   initAgeGroupCounts,
   normalizeGender,
   getAgeGroup,
   computeEntropy,
-} from './AnalyticsUtils.js';
+} from './AnalyticsUtils';
 
 export class AnalyticsBrandService {
   /**

@@ -1,10 +1,10 @@
 import { Response } from 'express';
-import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
-import { AnalyticsTrackingService } from '../../services/analytics/AnalyticsTrackingService.js';
-import { AnalyticsQueryService } from '../../services/analytics/AnalyticsQueryService.js';
-import { AnalyticsBrandService } from '../../services/analytics/AnalyticsBrandService.js';
-import { AiReportService } from '../../services/ai/AiReportService.js';
-import { BrandService } from '../../services/brands/BrandService.js';
+import { AuthenticatedRequest } from '../../middlewares/authMiddleware';
+import { AnalyticsTrackingService } from '../../services/analytics/AnalyticsTrackingService';
+import { AnalyticsQueryService } from '../../services/analytics/AnalyticsQueryService';
+import { AnalyticsBrandService } from '../../services/analytics/AnalyticsBrandService';
+import { AiReportService } from '../../services/ai/AiReportService';
+import { BrandService } from '../../services/brands/BrandService';
 
 // Removed local requireEventOwner and requireBrand helpers, using BrandService instead.
 

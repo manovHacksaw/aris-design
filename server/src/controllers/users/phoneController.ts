@@ -1,7 +1,7 @@
-import logger from '../../lib/logger.js';
+import logger from '../../lib/logger';
 import { Response } from 'express';
-import { PhoneService } from '../../services/users/phoneService.js';
-import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
+import { PhoneService } from '../../services/users/phoneService';
+import { AuthenticatedRequest } from '../../middlewares/authMiddleware';
 
 
 /**

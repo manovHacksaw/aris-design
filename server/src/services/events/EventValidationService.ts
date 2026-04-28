@@ -1,5 +1,5 @@
 import { EventType } from '@prisma/client';
-import { ValidationError } from '../../utils/errors.js';
+import { ValidationError } from '../../utils/errors';
 import {
   CreateEventRequest,
   EventStatusType,
@@ -7,7 +7,7 @@ import {
   LOCKED_FIELDS_MAP,
   TimestampData,
   ValidationResult,
-} from '../../types/event.js';
+} from '../../types/event';
 
 export class EventValidationService {
 

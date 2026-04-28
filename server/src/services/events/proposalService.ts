@@ -1,11 +1,11 @@
-import { prisma } from '../../lib/prisma.js';
+import { prisma } from '../../lib/prisma';
 import { Proposal } from '@prisma/client';
 import {
   CreateProposalRequest,
   UpdateProposalRequest,
-} from '../../types/proposal.js';
-import { EventStatus } from '../../types/event.js';
-import { NotFoundError, ForbiddenError, ValidationError } from '../../utils/errors.js';
+} from '../../types/proposal';
+import { EventStatus } from '../../types/event';
+import { NotFoundError, ForbiddenError, ValidationError } from '../../utils/errors';
 
 export class ProposalService {
   private static validateProposalData(data: CreateProposalRequest | UpdateProposalRequest): void {

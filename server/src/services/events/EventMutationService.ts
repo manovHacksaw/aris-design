@@ -1,14 +1,14 @@
-import { EventValidationService } from './EventValidationService.js';
+import { EventValidationService } from './EventValidationService';
 import logger from '../../lib/logger';
-import { prisma } from '../../lib/prisma.js';
+import { prisma } from '../../lib/prisma';
 import { Event } from '@prisma/client';
-import { NotFoundError, ForbiddenError, ValidationError } from '../../utils/errors.js';
+import { NotFoundError, ForbiddenError, ValidationError } from '../../utils/errors';
 import {
   CreateEventRequest,
   UpdateEventRequest,
   EventStatus,
-} from '../../types/event.js';
-import { NotificationService } from '../social/notificationService.js';
+} from '../../types/event';
+import { NotificationService } from '../social/notificationService';
 
 
 

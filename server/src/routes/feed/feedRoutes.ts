@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import * as feedController from '../../controllers/discovery/feedController.js';
-import { authenticateJWT } from '../../middlewares/authMiddleware.js';
+import * as feedController from '../../controllers/discovery/feedController';
+import { authenticateJWT } from '../../middlewares/authMiddleware';
 
 const router = Router();
 

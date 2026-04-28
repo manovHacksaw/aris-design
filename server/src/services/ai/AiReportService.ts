@@ -1,8 +1,8 @@
-import logger from '../../lib/logger.js';
-import { prisma } from '../../lib/prisma.js';
-import { AnalyticsQueryService } from '../analytics/AnalyticsQueryService.js';
-import { AnalyticsBrandService } from '../analytics/AnalyticsBrandService.js';
-import { AiUtils } from './AiUtils.js';
+import logger from '../../lib/logger';
+import { prisma } from '../../lib/prisma';
+import { AnalyticsQueryService } from '../analytics/AnalyticsQueryService';
+import { AnalyticsBrandService } from '../analytics/AnalyticsBrandService';
+import { AiUtils } from './AiUtils';
 
 export class AiReportService {
     /**

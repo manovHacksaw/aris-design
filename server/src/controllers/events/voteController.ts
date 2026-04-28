@@ -1,11 +1,11 @@
 import logger from '../../lib/logger';
 import { Response } from 'express';
-import { VoteService } from '../../services/events/voteService.js';
-import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
-import { VoteForProposalsRequest, VoteForSubmissionRequest } from '../../types/vote.js';
-import { broadcastToEvent } from '../../socket/index.js';
-import { prisma } from '../../lib/prisma.js';
-import { ExploreService } from '../../services/discovery/exploreService.js';
+import { VoteService } from '../../services/events/voteService';
+import { AuthenticatedRequest } from '../../middlewares/authMiddleware';
+import { VoteForProposalsRequest, VoteForSubmissionRequest } from '../../types/vote';
+import { broadcastToEvent } from '../../socket/index';
+import { prisma } from '../../lib/prisma';
+import { ExploreService } from '../../services/discovery/exploreService';
 
 /**
  * Vote for a submission (POST_VOTE events)

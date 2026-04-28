@@ -4,8 +4,8 @@ import {
     updateProposal,
     deleteProposal,
     getProposalsByEvent,
-} from '../../controllers/events/proposalController.js';
-import { authenticateJWT } from '../../middlewares/authMiddleware.js';
+} from '../../controllers/events/proposalController';
+import { authenticateJWT } from '../../middlewares/authMiddleware';
 
 const router = Router({ mergeParams: true });
 

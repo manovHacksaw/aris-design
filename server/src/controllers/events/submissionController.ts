@@ -1,12 +1,12 @@
 import logger from '../../lib/logger';
 import { Response } from 'express';
-import { SubmissionQueryService } from '../../services/submissions/SubmissionQueryService.js';
-import { SubmissionMutationService } from '../../services/submissions/SubmissionMutationService.js';
-import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
-import { CreateSubmissionRequest, UpdateSubmissionRequest } from '../../types/submission.js';
-import { AppError } from '../../utils/errors.js';
-import { prisma } from '../../lib/prisma.js';
-import { ExploreService } from '../../services/discovery/exploreService.js';
+import { SubmissionQueryService } from '../../services/submissions/SubmissionQueryService';
+import { SubmissionMutationService } from '../../services/submissions/SubmissionMutationService';
+import { AuthenticatedRequest } from '../../middlewares/authMiddleware';
+import { CreateSubmissionRequest, UpdateSubmissionRequest } from '../../types/submission';
+import { AppError } from '../../utils/errors';
+import { prisma } from '../../lib/prisma';
+import { ExploreService } from '../../services/discovery/exploreService';
 
 /**
  * Create a submission for an event

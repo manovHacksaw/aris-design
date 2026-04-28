@@ -7,8 +7,8 @@ import {
   generateReferralCode,
   getRewardMultiplier,
   getXpTransactions,
-} from '../../controllers/xp/xpController.js';
-import { authenticateJWT } from '../../middlewares/authMiddleware.js';
+} from '../../controllers/xp/xpController';
+import { authenticateJWT } from '../../middlewares/authMiddleware';
 
 const router = Router();
 

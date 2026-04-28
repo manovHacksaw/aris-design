@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { checkVotingState, getPendingRewardUsers } from '../../controllers/debug/debugController.js';
-import { authenticateJWT } from '../../middlewares/authMiddleware.js';
-import { authenticateAdmin } from '../../middlewares/adminMiddleware.js';
+import { checkVotingState, getPendingRewardUsers } from '../../controllers/debug/debugController';
+import { authenticateJWT } from '../../middlewares/authMiddleware';
+import { authenticateAdmin } from '../../middlewares/adminMiddleware';
 
 const router = Router();
 

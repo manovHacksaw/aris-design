@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
-import { NotFoundError, ForbiddenError } from '../../utils/errors.js';
+import { NotFoundError, ForbiddenError } from '../../utils/errors';
 
 export class DraftService {
   static async getUserDrafts(userId: string) {

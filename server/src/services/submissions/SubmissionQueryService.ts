@@ -1,7 +1,7 @@
-import { prisma } from '../../lib/prisma.js';
-import { EventStatus } from '../../types/event.js';
-import { SubmissionWithDetails } from '../../types/submission.js';
-import { SubmissionUtils } from './SubmissionUtils.js';
+import { prisma } from '../../lib/prisma';
+import { EventStatus } from '../../types/event';
+import { SubmissionWithDetails } from '../../types/submission';
+import { SubmissionUtils } from './SubmissionUtils';
 
 export class SubmissionQueryService {
   /**

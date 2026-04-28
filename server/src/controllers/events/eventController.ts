@@ -1,13 +1,13 @@
 import logger from '../../lib/logger';
 import { Response } from 'express';
-import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
+import { AuthenticatedRequest } from '../../middlewares/authMiddleware';
 
-import { AppError } from '../../utils/errors.js';
-import { BrandService } from '../../services/brands/BrandService.js';
-import { EventMutationService } from '../../services/events/EventMutationService.js';
-import { EventQueryService } from '../../services/events/EventQueryService.js';
-import { EventLifecycleService } from '../../services/events/EventLifecycleService.js';
-import { EventValidationService } from '../../services/events/EventValidationService.js';
+import { AppError } from '../../utils/errors';
+import { BrandService } from '../../services/brands/BrandService';
+import { EventMutationService } from '../../services/events/EventMutationService';
+import { EventQueryService } from '../../services/events/EventQueryService';
+import { EventLifecycleService } from '../../services/events/EventLifecycleService';
+import { EventValidationService } from '../../services/events/EventValidationService';
 import {
   CreateEventRequest,
   UpdateEventRequest,
@@ -15,7 +15,7 @@ import {
   EventFilters,
   EventStatus,
   EventStatusType,
-} from '../../types/event.js';
+} from '../../types/event';
 
 // ==================== CREATE ====================
 

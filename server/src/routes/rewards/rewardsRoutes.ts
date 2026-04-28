@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { RewardsController } from '../../controllers/rewards/rewardsController.js';
-import { authenticateJWT, authenticateOptional } from '../../middlewares/authMiddleware.js';
-import { claimRateLimit } from '../../config/rateLimits.js';
+import { RewardsController } from '../../controllers/rewards/rewardsController';
+import { authenticateJWT, authenticateOptional } from '../../middlewares/authMiddleware';
+import { claimRateLimit } from '../../config/rateLimits';
 
 const router = Router();
 

@@ -1,8 +1,8 @@
 import logger from '../../lib/logger';
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../../middlewares/authMiddleware';
-import { SearchService } from '../../services/discovery/SearchService.js';
-import { AppError } from '../../utils/errors.js';
+import { SearchService } from '../../services/discovery/SearchService';
+import { AppError } from '../../utils/errors';
 
 const handle = (label: string) => (error: unknown, res: Response) => {
   if (error instanceof AppError) { res.status(error.status).json({ success: false, error: error.message }); return; }

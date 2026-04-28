@@ -13,12 +13,12 @@ import {
   getEventsVotedByUser,
   updateBlockchainStatus,
   failBlockchainStatus,
-} from '../../controllers/events/eventController.js';
-import { authenticateJWT, authenticateOptional } from '../../middlewares/authMiddleware.js';
-import { apiCacheHeaders } from '../../middlewares/cacheMiddleware.js';
-import proposalRoutes from './proposalRoutes.js';
-import submissionRoutes from './submissionRoutes.js';
-import voteRoutes from './voteRoutes.js';
+} from '../../controllers/events/eventController';
+import { authenticateJWT, authenticateOptional } from '../../middlewares/authMiddleware';
+import { apiCacheHeaders } from '../../middlewares/cacheMiddleware';
+import proposalRoutes from './proposalRoutes';
+import submissionRoutes from './submissionRoutes';
+import voteRoutes from './voteRoutes';
 
 const router = Router();
 

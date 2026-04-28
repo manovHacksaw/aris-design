@@ -1,6 +1,6 @@
-import { prisma } from '../../lib/prisma.js';
-import { getIPFSUrl } from '../ipfsService.js';
-import { NotFoundError } from '../../utils/errors.js';
+import { prisma } from '../../lib/prisma';
+import { getIPFSUrl } from '../ipfsService';
+import { NotFoundError } from '../../utils/errors';
 
 export function addBrandLogoUrls(brand: any): any {
   if (!brand) return brand;

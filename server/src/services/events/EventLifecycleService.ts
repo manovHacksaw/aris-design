@@ -1,21 +1,21 @@
-import { EventValidationService } from './EventValidationService.js';
-import { RewardsPoolService } from '../rewards/RewardsPoolService.js';
-import { RewardsDistributionService } from '../rewards/RewardsDistributionService.js';
-import { EventRankingService } from './EventRankingService.js';
-import logger from '../../lib/logger.js';
-import { prisma } from '../../lib/prisma.js';
+import { EventValidationService } from './EventValidationService';
+import { RewardsPoolService } from '../rewards/RewardsPoolService';
+import { RewardsDistributionService } from '../rewards/RewardsDistributionService';
+import { EventRankingService } from './EventRankingService';
+import logger from '../../lib/logger';
+import { prisma } from '../../lib/prisma';
 import { Event } from '@prisma/client';
-import { NotFoundError, ForbiddenError, ValidationError } from '../../utils/errors.js';
+import { NotFoundError, ForbiddenError, ValidationError } from '../../utils/errors';
 import {
   EventStatus,
   EventStatusType,
-} from '../../types/event.js';
-import { NotificationService } from '../social/notificationService.js';
+} from '../../types/event';
+import { NotificationService } from '../social/notificationService';
 
-import { XpService } from '../xp/xpService.js';
-import { BrandXpService } from '../brands/brandXpService.js';
+import { XpService } from '../xp/xpService';
+import { BrandXpService } from '../brands/brandXpService';
 
-import { TrustService } from '../trustService.js';
+import { TrustService } from '../trustService';
 
 export class EventLifecycleService {
 
@@ -370,7 +370,7 @@ export class EventLifecycleService {
 
         // Cancel event on blockchain to trigger refund (async but awaited for critical path)
         try {
-          const { BlockchainService } = await import('../../lib/blockchain.js');
+          const { BlockchainService } = await import('../../lib/blockchain');
 
           logger.info(`🔄 AutoTransition: Cancelling event ${eventId} on-chain for refund...`);
           const txHash = await BlockchainService.cancelEventOnChain(eventId);

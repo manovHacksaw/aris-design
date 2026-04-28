@@ -1,6 +1,6 @@
-import logger from '../../lib/logger.js';
-import { prisma } from '../../lib/prisma.js';
-import { XpService } from '../xp/xpService.js';
+import logger from '../../lib/logger';
+import { prisma } from '../../lib/prisma';
+import { XpService } from '../xp/xpService';
 
 export class UserMutationService {
     /**

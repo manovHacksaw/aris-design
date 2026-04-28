@@ -1,5 +1,5 @@
-import logger from '../../lib/logger.js';
-import { AiUtils } from './AiUtils.js';
+import logger from '../../lib/logger';
+import { AiUtils } from './AiUtils';
 
 export class AiContentService {
     /**

@@ -1,8 +1,8 @@
-import logger from '../../lib/logger.js';
+import logger from '../../lib/logger';
 import { Request, Response } from 'express';
-import { prisma } from '../../lib/prisma.js';
-import { SubscriptionService } from '../../services/social/subscriptionService.js';
-import { AuthenticatedRequest } from '../../middlewares/authMiddleware.js';
+import { prisma } from '../../lib/prisma';
+import { SubscriptionService } from '../../services/social/subscriptionService';
+import { AuthenticatedRequest } from '../../middlewares/authMiddleware';
 
 /**
  * Subscribe to a brand

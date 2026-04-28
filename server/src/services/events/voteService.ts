@@ -1,16 +1,16 @@
-import logger from '../../lib/logger.js';
-import { prisma } from '../../lib/prisma.js';
-import { NotificationService } from '../social/notificationService.js';
+import logger from '../../lib/logger';
+import { prisma } from '../../lib/prisma';
+import { NotificationService } from '../social/notificationService';
 import { Vote, MilestoneCategory } from '@prisma/client';
-import { EventLifecycleService } from './EventLifecycleService.js';
+import { EventLifecycleService } from './EventLifecycleService';
 import {
     VoteForProposalsRequest,
     VoteForSubmissionRequest,
     VoteWithDetails,
-} from '../../types/vote.js';
-import { EventStatus } from '../../types/event.js';
-import { XpService } from '../xp/xpService.js';
-import { enforceEventDemographics } from '../../utils/eventUtils.js';
+} from '../../types/vote';
+import { EventStatus } from '../../types/event';
+import { XpService } from '../xp/xpService';
+import { enforceEventDemographics } from '../../utils/eventUtils';
 
 
 export class VoteService {

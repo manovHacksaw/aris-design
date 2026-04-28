@@ -11,7 +11,7 @@ import logger from '../lib/logger';
  * where alignment = 1.0 if user voted for the winner, 0.0 otherwise.
  */
 
-import { prisma } from '../lib/prisma.js';
+import { prisma } from '../lib/prisma';
 
 const ALPHA = 0.1; // Weight for the new event outcome
 
