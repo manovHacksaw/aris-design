@@ -2,12 +2,12 @@ import type { NextConfig } from "next";
 
 const ContentSecurityPolicy = [
   "default-src 'self'",
-  // Allow Privy, Cloudflare Turnstile, WalletConnect, and common CDN scripts
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://*.privy.io https://auth.privy.io",
+  // Allow Privy, Cloudflare Turnstile, WalletConnect, Cloudinary editor, and CF Analytics scripts
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://static.cloudflareinsights.com https://*.privy.io https://auth.privy.io https://media-editor.cloudinary.com",
   // Allow Turnstile + Privy iframes
   "frame-src 'self' https://challenges.cloudflare.com https://*.privy.io https://auth.privy.io https://verify.walletconnect.com",
-  // Allow connections to backend, Privy, Cloudflare, Supabase, WalletConnect
-  "connect-src 'self' https://challenges.cloudflare.com https://*.privy.io https://auth.privy.io https://*.supabase.co wss://*.supabase.co https://relay.walletconnect.com wss://relay.walletconnect.com https://aris-demo-production.up.railway.app https://api.pimlico.io https://polygon-amoy.g.alchemy.com https://rpc-amoy.polygon.technology",
+  // Allow connections to backend, Privy, Cloudflare, Supabase, WalletConnect, WalletConnect Explorer
+  "connect-src 'self' https://challenges.cloudflare.com https://*.privy.io https://auth.privy.io https://*.supabase.co wss://*.supabase.co https://relay.walletconnect.com wss://relay.walletconnect.com https://explorer-api.walletconnect.com https://aris-demo-production.up.railway.app https://api.pimlico.io https://polygon-amoy.g.alchemy.com https://rpc-amoy.polygon.technology https://static.cloudflareinsights.com",
   // Allow images from anywhere (Cloudinary, IPFS gateways, Unsplash, etc.)
   "img-src 'self' data: blob: https:",
   "style-src 'self' 'unsafe-inline'",
